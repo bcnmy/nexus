@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -36,7 +36,7 @@ jobs:
           flags: foundry
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      
+
       - name: Upload Hardhat Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:

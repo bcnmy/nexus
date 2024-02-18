@@ -33,7 +33,6 @@ This repository serves as a comprehensive foundation for smart contract projects
   - [License](#license)
   - [Connect with Biconomy 🍊](#connect-with-biconomy-)
 
-
 ## Getting Started
 
 To kickstart, follow these steps:
