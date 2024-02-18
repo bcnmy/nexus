@@ -1,0 +1,19 @@
+name: Branch Naming Check
+on: pull_request
+jobs:
+  branch-naming-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: deepakputhraya/action-branch-name@master
+        with:
+          regex: '^(feat|fix|release|chore)\/.+$'
+          ignore: master,main,dev
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if branch name is valid
+        run: |
+          if [[ ! ${{ github.head_ref }} =~ ^(fix/|release/) ]] && [[ ! "${{ github.head_ref }}" == "dev" ]]; then
+            echo "Branch name ${{ github.head_ref }} is not allowed."
+            exit 1
+          fi
