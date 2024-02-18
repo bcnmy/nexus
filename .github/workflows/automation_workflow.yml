@@ -12,7 +12,7 @@ jobs:
   check-files:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Check package.json
         uses: tj-actions/changed-files@v42.0.4
@@ -45,25 +45,27 @@ jobs:
   auto-create-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Auto-create PR to dev for release branches targeting main
+      # Your steps to make changes
+
+      - name: Create PR to dev for release branches targeting main
         if: github.event.pull_request.base.ref == 'main' && startsWith(github.head_ref, 'release/')
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v6
         with:
           branch: sync-${{ github.head_ref }}-to-dev
           base: dev
-          title: "[AUTO] Sync ${{ github.head_ref }} to dev"
+          title: "Sync ${{ github.head_ref }} to dev"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-create PR to main for release branches targeting dev
+      - name: Create PR to main for release branches targeting dev
         if: github.event.pull_request.base.ref == 'dev' && startsWith(github.head_ref, 'release/')
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v6
         with:
           branch: sync-${{ github.head_ref }}-to-main
           base: main
-          title: "[AUTO] Sync ${{ github.head_ref }} to main"
+          title: "Sync ${{ github.head_ref }} to main"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to main."
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -71,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.base.ref == 'main' && contains(github.head_ref, 'fix/')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Auto-create PR to dev for fix branches
         uses: peter-evans/create-pull-request@v3
         with:
