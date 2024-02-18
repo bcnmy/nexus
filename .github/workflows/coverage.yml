@@ -30,15 +30,17 @@ jobs:
         run: yarn coverage:report
 
       - name: Upload Foundry Coverage Report to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4.0.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage/foundry/lcov.info
           flags: foundry
-
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      
       - name: Upload Hardhat Coverage Report to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4.0.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage/lcov.info
           flags: hardhat
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
