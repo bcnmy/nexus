@@ -36,7 +36,7 @@ jobs:
           flags: foundry
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      
+
       - name: Upload Hardhat Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
