@@ -28,13 +28,6 @@ jobs:
           files: |
             CHANGELOG.md
 
-      - name: Check LICENSE
-        uses: tj-actions/changed-files@v42.0.4
-        id: license
-        with:
-          files: |
-            LICENSE
-
       - name: Verify Changes
         run: |
           MISSING_UPDATES=()
@@ -44,11 +37,8 @@ jobs:
           if [[ "${{ steps.changelog.outputs.any_changed }}" == 'false' ]]; then
             MISSING_UPDATES+=("CHANGELOG.md")
           fi
-          if [[ "${{ steps.license.outputs.any_changed }}" == 'false' ]]; then
-            MISSING_UPDATES+=("LICENSE")
-          fi
           if [ ${#MISSING_UPDATES[@]} -ne 0 ]; then
-            echo "Error: The following files must be updated: ${MISSING_UPDATES[*]}"
+            echo "Error: The version should be updated on following files: ${MISSING_UPDATES[*]}"
             exit 1
           fi
 
