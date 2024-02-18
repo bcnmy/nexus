@@ -57,7 +57,7 @@ jobs:
           base: dev
           title: "Sync ${{ github.head_ref }} to dev"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Create PR to main for release branches targeting dev
         if: github.event.pull_request.base.ref == 'dev' && startsWith(github.head_ref, 'release/')
@@ -67,7 +67,7 @@ jobs:
           base: main
           title: "Sync ${{ github.head_ref }} to main"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to main."
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
 
   mirror-fix-to-dev:
     runs-on: ubuntu-latest
@@ -81,4 +81,4 @@ jobs:
           base: dev
           title: "[AUTO] Sync ${{ github.head_ref }} to dev"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
