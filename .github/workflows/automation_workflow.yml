@@ -13,16 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.head_ref, 'fix/') || contains(github.head_ref, 'release/')
     steps:
-      - uses: actions/checkout@v2
-      - name: Check for versioning changes in package.json and CHANGELOG.md
-        run: |
-          git fetch --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-          PACKAGE_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} -- 'package.json')
-          CHANGELOG_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} -- 'CHANGELOG.md')
-          if [[ -z "$PACKAGE_CHANGED" || -z "$CHANGELOG_CHANGED" ]]; then
-              echo "::error::package.json and CHANGELOG.md must be updated."
-              exit 1
-          fi
+        - uses: actions/checkout@v2
+        - uses: dorny/paths-filter@v2
+          id: changes
+          with:
+            filters: |
+              package:
+                - 'package.json'
+              changelog:
+                - 'CHANGELOG.md'
+        - name: Fail if package.json or CHANGELOG.md are not updated
+          if: ${{ !steps.changes.outputs.package && !steps.changes.outputs.changelog }}
+          run: |
+            echo "package.json and CHANGELOG.md must be updated in this PR."
+            exit 1
 
   auto-create-pr-to-dev-main:
     runs-on: ubuntu-latest
