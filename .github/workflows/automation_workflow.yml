@@ -37,8 +37,18 @@ jobs:
 
       - name: Verify Changes
         run: |
-          if [[ "${{ steps.package-json.outputs.any_changed }}" == 'false' ]] || [[ "${{ steps.changelog.outputs.any_changed }}" == 'false' ]] || [[ "${{ steps.license.outputs.any_changed }}" == 'false' ]]; then
-            echo "Error: package.json, CHANGELOG.md, and LICENSE must all be updated."
+          MISSING_UPDATES=()
+          if [[ "${{ steps.package-json.outputs.any_changed }}" == 'false' ]]; then
+            MISSING_UPDATES+=("package.json")
+          fi
+          if [[ "${{ steps.changelog.outputs.any_changed }}" == 'false' ]]; then
+            MISSING_UPDATES+=("CHANGELOG.md")
+          fi
+          if [[ "${{ steps.license.outputs.any_changed }}" == 'false' ]]; then
+            MISSING_UPDATES+=("LICENSE")
+          fi
+          if [ ${#MISSING_UPDATES[@]} -ne 0 ]; then
+            echo "Error: The following files must be updated: ${MISSING_UPDATES[*]}"
             exit 1
           fi
 
