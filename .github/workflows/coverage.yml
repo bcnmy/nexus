@@ -1,0 +1,44 @@
+name: Coverage
+on: push
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Install lcov (for genhtml)
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Foundry Dependencies
+        run: forge install
+
+      - name: Generate Hardhat & Foundry Coverage Report
+        run: yarn coverage:report
+
+      - name: Upload Foundry Coverage Report to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/foundry/lcov.info
+          flags: foundry
+
+      - name: Upload Hardhat Coverage Report to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/lcov.info
+          flags: hardhat

@@ -1,0 +1,50 @@
+name: Test workflow
+on: push
+jobs:
+  lint:
+    name: Lint sources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install foundry dependencies
+        run: forge install
+
+      - name: Lint sources
+        run: yarn lint:sol
+
+  unit_test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Create a fake .secret file
+        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install foundry dependencies
+        run: forge install
+
+      - name: Build Typechain and Foundry
+        run: yarn build
+
+      - name: Run Forge and Hardhat Tests
+        run: yarn test
