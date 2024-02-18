@@ -16,12 +16,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check for versioning changes in package.json and CHANGELOG.md
         run: |
-          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
-          PACKAGE_CHANGED=$(git diff --name-only ${{ github.base_ref }}...HEAD -- package.json)
-          CHANGELOG_CHANGED=$(git diff --name-only ${{ github.base_ref }}...HEAD -- CHANGELOG.md)
-          if [ -z "$PACKAGE_CHANGED" ] || [ -z "$CHANGELOG_CHANGED" ]; then
-            echo "::error::package.json and CHANGELOG.md must be updated."
-            exit 1
+          git fetch --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+          PACKAGE_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} -- 'package.json')
+          CHANGELOG_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} -- 'CHANGELOG.md')
+          if [[ -z "$PACKAGE_CHANGED" || -z "$CHANGELOG_CHANGED" ]]; then
+              echo "::error::package.json and CHANGELOG.md must be updated."
+              exit 1
           fi
 
   auto-create-pr-to-dev-main:
