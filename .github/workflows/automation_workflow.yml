@@ -14,20 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Changed Files
+      - name: Check package.json
         uses: tj-actions/changed-files@v42.0.4
-        id: changed-files
+        id: package-json
         with:
           files: |
             package.json
+
+      - name: Check CHANGELOG.md
+        uses: tj-actions/changed-files@v42.0.4
+        id: changelog
+        with:
+          files: |
             CHANGELOG.md
+
+      - name: Check LICENSE
+        uses: tj-actions/changed-files@v42.0.4
+        id: license
+        with:
+          files: |
             LICENSE
 
       - name: Verify Changes
-        if: ${{ steps.changed-files.outputs.any_changed == 'false' }}
         run: |
-          echo "Error: package.json or CHANGELOG.md must be updated."
-          exit 1
+          if [[ "${{ steps.package-json.outputs.any_changed }}" == 'false' ]] || [[ "${{ steps.changelog.outputs.any_changed }}" == 'false' ]] || [[ "${{ steps.license.outputs.any_changed }}" == 'false' ]]; then
+            echo "Error: package.json, CHANGELOG.md, and LICENSE must all be updated."
+            exit 1
+          fi
 
   auto-create-pr-to-dev-main:
     runs-on: ubuntu-latest
