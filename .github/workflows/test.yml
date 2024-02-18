@@ -5,6 +5,7 @@ on:
     paths:
       - 'package.json'
       - 'CHANGELOG.md'
+      - 'LICENSE'
 
 jobs:
   check-files:
