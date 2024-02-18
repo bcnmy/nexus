@@ -42,33 +42,6 @@ jobs:
             exit 1
           fi
 
-  auto-create-pr:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Your steps to make changes
-
-      - name: Create PR to dev for release branches targeting main
-        if: github.event.pull_request.base.ref == 'main' && startsWith(github.head_ref, 'release/')
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: ${{ github.head_ref }}
-          base: dev
-          title: "Sync ${{ github.head_ref }} to dev"
-          body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
-          token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Create PR to main for release branches targeting dev
-        if: github.event.pull_request.base.ref == 'dev' && startsWith(github.head_ref, 'release/')
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: ${{ github.head_ref }}
-          base: main
-          title: "Sync ${{ github.head_ref }} to main"
-          body: "Automated PR to sync changes from ${{ github.head_ref }} to main."
-          token: ${{ secrets.PAT_TOKEN }}
-
   mirror-fix-to-dev:
     runs-on: ubuntu-latest
     if: github.event.pull_request.base.ref == 'main' && contains(github.head_ref, 'fix/')
