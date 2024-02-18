@@ -16,7 +16,7 @@ We'll work with you to assess and understand the scope of the issue.
 
 For vulnerabilities that are less critical and do not immediately affect our users:
 
-1. Open an issue in our GitHub repository (`https://github.com/bcnmy/sc-template/issues`).
+1. Open an issue in our GitHub repository (`https://github.com/bcnmy/erc7579-modular-smart-account/issues`).
 
 2. Provide detailed information about the issue and steps to reproduce.
 

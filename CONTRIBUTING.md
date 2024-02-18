@@ -1,10 +1,10 @@
-# Contributing to sc-template
+# Contributing to erc7579-modular-smart-account
 
-First off, thanks for taking the time to contribute to the `sc-template`! ❤️ Your efforts help build a strong, collaborative environment for developing robust smart contracts.
+First off, thanks for taking the time to contribute to the `erc7579-modular-smart-account`! ❤️ Your efforts help build a strong, collaborative environment for developing robust smart contracts.
 
 ## Table of Contents
 
-- [Contributing to sc-template](#contributing-to-sc-template)
+- [Contributing to erc7579-modular-smart-account](#contributing-to-erc7579-modular-smart-account)
   - [Table of Contents](#table-of-contents)
   - [I Have a Question](#i-have-a-question)
   - [I Want To Contribute](#i-want-to-contribute)
@@ -25,7 +25,7 @@ If you have a question, please make sure to go through our [Documentation](https
 
 For questions that remain unanswered, feel free to ask by:
 
-- Opening an [Issue](https://github.com/bcnmy/sc-template/issues/new) with a detailed description of your query.
+- Opening an [Issue](https://github.com/bcnmy/erc7579-modular-smart-account/issues/new) with a detailed description of your query.
 - Joining our community discussions on [Discord](https://discord.gg/biconomy) or [Telegram](https://t.me/biconomy).
 
 ## I Want To Contribute
@@ -36,13 +36,13 @@ When contributing to this project, you agree that you have authored 100% of the 
 
 ### Reporting Bugs
 
-A detailed bug report plays a crucial role in improving the `sc-template`. Before submitting a bug report:
+A detailed bug report plays a crucial role in improving the `erc7579-modular-smart-account`. Before submitting a bug report:
 
 - Ensure you're using the latest version.
 - Verify if it's a real bug and not an error on your side by consulting the [documentation](https://docs.biconomy.io/).
-- Search both open and closed [issues](https://github.com/bcnmy/sc-template/issues?q=label%3Abug) to avoid duplicates.
+- Search both open and closed [issues](https://github.com/bcnmy/erc7579-modular-smart-account/issues?q=label%3Abug) to avoid duplicates.
 
-To submit a bug report, open an [issue](https://github.com/bcnmy/sc-template/issues/new) and include as much relevant information as possible.
+To submit a bug report, open an [issue](https://github.com/bcnmy/erc7579-modular-smart-account/issues/new) and include as much relevant information as possible.
 
 ### Suggesting Enhancements
 
@@ -50,9 +50,9 @@ We welcome suggestions for enhancements, including new features or improvements 
 
 - Ensure you're using the latest version.
 - Check the [documentation](https://docs.biconomy.io/) to see if the enhancement is already implemented.
-- Search existing [issues](https://github.com/bcnmy/sc-template/issues) to avoid duplicates.
+- Search existing [issues](https://github.com/bcnmy/erc7579-modular-smart-account/issues) to avoid duplicates.
 
-To suggest an enhancement, open an [issue](https://github.com/bcnmy/sc-template/issues/new) with a clear title and detailed description.
+To suggest an enhancement, open an [issue](https://github.com/bcnmy/erc7579-modular-smart-account/issues/new) with a clear title and detailed description.
 
 ### Your First Code Contribution
 
@@ -81,7 +81,7 @@ Use clear, concise commit messages that describe the changes you've made. Follow
 
 ## Join The Project Team
 
-Interested in becoming a more integral part of the `sc-template` team? Great! Start by consistently contributing to the project, and don't hesitate to reach out to us on [Discord](https://discord.gg/biconomy) or [Telegram](https://t.me/biconomy) to express your interest.
+Interested in becoming a more integral part of the `erc7579-modular-smart-account` team? Great! Start by consistently contributing to the project, and don't hesitate to reach out to us on [Discord](https://discord.gg/biconomy) or [Telegram](https://t.me/biconomy) to express your interest.
 
 ## **Recognition and Rewards**
 

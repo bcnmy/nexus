@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "erc7579-modular-smart-account",
+  "description": "ERC7579 Modular Smart Account",
   "version": "1.0.0",
   "author": {
     "name": "Biconomy",
@@ -41,6 +41,12 @@
     "typescript": ">=5.3.3"
   },
   "keywords": [
+    "erc7579",
+    "erc-7579",
+    "modular smart account",
+    "smart account",
+    "account abstraction",
+    "erc4337",
     "blockchain",
     "ethereum",
     "forge",
