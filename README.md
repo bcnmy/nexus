@@ -1,6 +1,6 @@
 [![Biconomy](https://img.shields.io/badge/Made_with_%F0%9F%8D%8A_by-Biconomy-ff4e17?style=flat)](https://biconomy.io) [![License MIT](https://img.shields.io/badge/License-MIT-blue?&style=flat)](./LICENSE) [![Hardhat](https://img.shields.io/badge/Built%20with-Hardhat-FFDB1C.svg)](https://hardhat.org/) [![Foundry](https://img.shields.io/badge/Built%20with-Foundry-FFBD10.svg)](https://getfoundry.sh/)
 
-![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/gh/bcnmy/erc7579-modular-smart-account?token=2BYDIFQ56W&flag=hardhat&label=Hardhat-coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/gh/bcnmy/erc7579-modular-smart-account?token=2BYDIFQ56W&flag=foundry&label=Foundry-coverage&logo=codecov)
+![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/github/bcnmy/erc7579-modular-smart-account?token=oyX38XKbO9&flag=hardhat&label=Hardhat%20Coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/github/bcnmy/erc7579-modular-smart-account?token=oyX38XKbO9&flag=foundry&label=Foundry%20Coverage&logo=codecov)
 
 # ERC-7579 Modular Smart Account Base 🚀
 
