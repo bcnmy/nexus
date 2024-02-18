@@ -1,4 +1,4 @@
-name: Branch Naming Check
+name: Branch Check
 on: pull_request
 jobs:
   branch-naming-rules:
@@ -8,7 +8,7 @@ jobs:
         with:
           regex: '^(feat|fix|release|chore)\/.+$'
           ignore: master,main,dev
-  check-branch-name:
+  check-branch-flow:
     runs-on: ubuntu-latest
     steps:
       - name: Check if branch name is valid for dev
