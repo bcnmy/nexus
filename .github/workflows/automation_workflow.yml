@@ -15,19 +15,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Get all changed files
-        id: files
-        uses: jitterbit/get-changed-files@v1
+      - name: Check for Changed Files
+        uses: brettcannon/check-for-changed-files@v1.2.0
         with:
-          format: "space"
-
-      - name: Check for updated files
-        run: |
-          CHANGED_FILES="${{ steps.files.outputs.all }}"
-          if [[ ! "$CHANGED_FILES" =~ "package.json" ]] || [[ ! "$CHANGED_FILES" =~ "CHANGELOG.md" ]]; then
-            echo "Error: package.json or CHANGELOG.md must be updated."
-            exit 1
-          fi
+          file-pattern: |
+            package.json
+            CHANGELOG.md
+            RELEASE
 
   auto-create-pr-to-dev-main:
     runs-on: ubuntu-latest
