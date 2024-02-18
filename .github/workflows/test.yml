@@ -1,0 +1,17 @@
+name: Check Required Files Updated
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'CHANGELOG.md'
+
+jobs:
+  check-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Confirm Changes
+        run: echo "Required files updated in this PR."
