@@ -9,24 +9,25 @@ on:
       - fix/*
 
 jobs:
-  check-updates:
+  check-files:
     runs-on: ubuntu-latest
-    if: contains(github.head_ref, 'fix/') || contains(github.head_ref, 'release/')
     steps:
-        - uses: actions/checkout@v2
-        - uses: dorny/paths-filter@v2
-          id: changes
-          with:
-            filters: |
-              package:
-                - 'package.json'
-              changelog:
-                - 'CHANGELOG.md'
-        - name: Fail if package.json or CHANGELOG.md are not updated
-          if: ${{ !steps.changes.outputs.package && !steps.changes.outputs.changelog }}
-          run: |
-            echo "package.json and CHANGELOG.md must be updated in this PR."
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get all changed files
+        id: files
+        uses: jitterbit/get-changed-files@v1
+        with:
+          format: "space"
+
+      - name: Check for updated files
+        run: |
+          CHANGED_FILES="${{ steps.files.outputs.all }}"
+          if [[ ! "$CHANGED_FILES" =~ "package.json" ]] || [[ ! "$CHANGED_FILES" =~ "CHANGELOG.md" ]]; then
+            echo "Error: package.json or CHANGELOG.md must be updated."
             exit 1
+          fi
 
   auto-create-pr-to-dev-main:
     runs-on: ubuntu-latest
