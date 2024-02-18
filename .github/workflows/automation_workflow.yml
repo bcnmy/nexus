@@ -53,7 +53,7 @@ jobs:
         if: github.event.pull_request.base.ref == 'main' && startsWith(github.head_ref, 'release/')
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: sync-${{ github.head_ref }}-to-dev
+          branch: ${{ github.head_ref }}
           base: dev
           title: "Sync ${{ github.head_ref }} to dev"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
@@ -63,7 +63,7 @@ jobs:
         if: github.event.pull_request.base.ref == 'dev' && startsWith(github.head_ref, 'release/')
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: sync-${{ github.head_ref }}-to-main
+          branch: ${{ github.head_ref }}
           base: main
           title: "Sync ${{ github.head_ref }} to main"
           body: "Automated PR to sync changes from ${{ github.head_ref }} to main."
