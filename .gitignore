@@ -44,3 +44,4 @@ node_modules
 
 # Foundry cache
 cache_forge/solidity-files-cache.json
+.vscode/settings.json
