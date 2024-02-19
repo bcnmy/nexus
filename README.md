@@ -1,40 +1,41 @@
 [![Biconomy](https://img.shields.io/badge/Made_with_%F0%9F%8D%8A_by-Biconomy-ff4e17?style=flat)](https://biconomy.io) [![License MIT](https://img.shields.io/badge/License-MIT-blue?&style=flat)](./LICENSE) [![Hardhat](https://img.shields.io/badge/Built%20with-Hardhat-FFDB1C.svg)](https://hardhat.org/) [![Foundry](https://img.shields.io/badge/Built%20with-Foundry-FFBD10.svg)](https://getfoundry.sh/)
 
-![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/gh/bcnmy/sc-template?token=2BYDIFQ56W&flag=hardhat&label=Hardhat-coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/gh/bcnmy/sc-template?token=2BYDIFQ56W&flag=foundry&label=Foundry-coverage&logo=codecov)
+![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/github/bcnmy/erc7579-modular-smart-account?token=oyX38XKbO9&flag=hardhat&label=Hardhat%20Coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/github/bcnmy/erc7579-modular-smart-account?token=oyX38XKbO9&flag=foundry&label=Foundry%20Coverage&logo=codecov)
 
-# Smart Contract Template Base 🚀
+# ERC-7579 Modular Smart Account Base 🚀
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bcnmy/sc-template)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bcnmy/erc7579-modular-smart-account)
 
 This repository serves as a comprehensive foundation for smart contract projects, streamlining the development process with a focus on best practices, security, and efficiency.
 
 ## 📚 Table of Contents
 
-- [🚀 Introduction](#smart-contract-template-base-)
-- [🌟 Features](#features)
-- [🏁 Getting Started](#getting-started)
-- [🔧 Essential Scripts](#️-essential-scripts)
-- [🔒 Security Audits](#-security-audits)
-- [🏆 Biconomy Champions League](#-biconomy-champions-league-)
-- [📖 Documentation and Resources](#documentation-and-resources)
-- [📄 License](#license)
-- [🤝 Connect with Biconomy](#connect-with-biconomy-)
-
-## Features
-
-- **Smart Contract Template Base**: A robust foundation for future smart contract projects.
-- **Hardhat & Foundry Support**: Equipped with both Hardhat and Foundry tools and an adapted folder structure for seamless development.
-- **Best Practices**: Adheres to industry best practices in smart contract programming to ensure code quality and security.
-- **Continuous Integration & Deployment**: Utilizes GitHub Actions for automated testing and deployment, ensuring code reliability.
-- **Strict Linting**: Implements Solhint based on the Solidity style guide, enhancing code quality and consistency.
-- **Comprehensive Testing**: Includes a wide range of tests (unit, fuzz, fork) for both Foundry and Hardhat environments.
-- **Environment Configuration**: Comes with `.env.example` for easy setup of API keys and environmental variables.
-- **Code Formatting**: Uses Prettier to maintain a consistent code style across the project.
-- **Configurations for Foundry & Hardhat**: Provides essential settings and scripts for building, testing, and deployment, tailored for both development environments.
+- [ERC-7579 Modular Smart Account Base 🚀](#erc-7579-modular-smart-account-base-)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+  - [🛠️ Essential Scripts](#️-essential-scripts)
+    - [🏗️ Build Contracts](#️-build-contracts)
+    - [🧪 Run Tests](#-run-tests)
+    - [⛽ Gas Report](#-gas-report)
+    - [📊 Coverage Report](#-coverage-report)
+    - [📄 Documentation](#-documentation)
+    - [🚀 Deploy Contracts](#-deploy-contracts)
+    - [🎨 Lint Code](#-lint-code)
+    - [🖌️ Auto-fix Linting Issues](#️-auto-fix-linting-issues)
+    - [🚀 Generating Storage Layout](#-generating-storage-layout)
+  - [🔒 Security Audits](#-security-audits)
+  - [🏆 Biconomy Champions League 🏆](#-biconomy-champions-league-)
+    - [Champions Roster](#champions-roster)
+    - [Entering the League](#entering-the-league)
+  - [Documentation and Resources](#documentation-and-resources)
+  - [License](#license)
+  - [Connect with Biconomy 🍊](#connect-with-biconomy-)
 
 ## Getting Started
 
-To kickstart your smart contract development with this template, follow these steps:
+To kickstart, follow these steps:
 
 ### Prerequisites
 
@@ -47,8 +48,8 @@ To kickstart your smart contract development with this template, follow these st
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/bcnmy/sc-template.git
-cd sc-template
+git clone https://github.com/bcnmy/erc7579-modular-smart-account.git
+cd erc7579-modular-smart-account
 ```
 
 2. **Install dependencies:**

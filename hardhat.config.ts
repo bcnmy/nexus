@@ -17,8 +17,8 @@ const config: HardhatUserConfig = {
     },
   },
   docgen: {
-    projectName: "Biconomy",
-    projectDescription: "Sc-Template Description",
+    projectName: "Biconomy Modular Smart Account",
+    projectDescription: "ERC-7579 Modular Smart Account",
   },
 };
 
