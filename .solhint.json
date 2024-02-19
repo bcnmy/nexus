@@ -29,7 +29,8 @@
     "no-unused-import": "error",
     "one-contract-per-file": "warn",
     "reason-string": "error",
-    "custom-errors": "off"
+    "custom-errors": "off",
+    "no-inline-assembly": "off"
   },
   "plugins": ["prettier"]
 }
