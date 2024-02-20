@@ -4,34 +4,45 @@ on: [push]
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      
+          node-version: "20"
+
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Foundry Dependencies
+        run: forge install
+
       # Run Slither static analyzer
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
         with:
           # Modify or remove the next line if your project does not require specific compilation steps
           ignore-compile: true # Set to false and adjust if your project has specific compilation needs
-          fail-on: 'medium' # Options: all, low, medium, high, none, config - choose based on your requirements
+          fail-on: "medium" # Options: all, low, medium, high, none, config - choose based on your requirements
           # Optional: Specify a custom Slither version if needed
-          slither-version: '0.8.3'
+          slither-version: "0.8.3"
           # Optional: Specify a custom Solidity compiler version
-          solc-version: '0.8.24'
+          solc-version: "0.8.24"
           # Optional: Specify the project target if it's not the repo root
-          target: 'contracts/'
+          target: "contracts/"
           # Optional: Generate a SARIF report for GitHub Code Scanning integration
-          sarif: 'slither-results.sarif'
-      
+          sarif: "slither-results.sarif"
+
       - name: Upload SARIF file
         if: always() # Ensure this runs even if the Slither step fails
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'slither-results.sarif'
+          sarif_file: "slither-results.sarif"
