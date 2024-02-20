@@ -1,50 +1,103 @@
-name: Test workflow
-on: push
-jobs:
-  lint:
-    name: Lint sources
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+name: Unified CI Workflow
 
-      - name: Install dependencies
+on:
+  push:
+  pull_request:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-setup.outputs.cache-key }}
+    steps:
+      - uses: actions/checkout@v4.1.1
+
+      - name: Set up Node.js
+        uses: actions/actions/setup-node@v4.0.2
+        with:
+          node-version: '20.x'
+      
+      - name: Cache Node modules and Foundry
+        id: cache-setup
+        uses: actions/cache@v4.0.0
+        with:
+          path: |
+            **/node_modules
+            ~/.foundry
+          key: ${{ runner.os }}-build-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install JavaScript Dependencies
+        if: steps.cache-setup.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
 
-      - name: Install Foundry
+      - name: Install Foundry and dependencies
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
 
-      - name: Install foundry dependencies
-        run: forge install
+      - name: Install lcov (for genhtml)
+        run: sudo apt-get update && sudo apt-get install -y lcov
 
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
       - name: Lint sources
         run: yarn lint:sol
 
   unit_test:
-    name: Unit tests
+    needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
+      - uses: actions/checkout@v4.1.1
       - name: Create a fake .secret file
         run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install foundry dependencies
-        run: forge install
-
       - name: Build Typechain and Foundry
         run: yarn build
-
       - name: Run Forge and Hardhat Tests
         run: yarn test
+
+  coverage:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Generate Hardhat & Foundry Coverage Report
+        run: yarn coverage:report
+      - name: Upload Foundry Coverage Report to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          file: ./coverage/foundry/lcov.info
+          flags: foundry
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload Hardhat Coverage Report to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          file: ./coverage/lcov.info
+          flags: hardhat
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  slither_analysis:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Run Slither
+        uses: crytic/slither-action@v0.3.1
+        with:
+          slither-version: "0.10.0"
+          fail-on: "none"
+          slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
+      - name: Create/update checklist as PR comment
+        uses: actions/github-script@v7.0.1
+        env:
+          REPORT: ${{ steps.slither.outputs.stdout }}
+        with:
+          script: |
+            const script = require('.github/scripts/comment')
+            const header = '# Slither report'
+            const body = process.env.REPORT
+            await script({ github, context, header, body })
