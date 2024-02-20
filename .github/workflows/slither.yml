@@ -1,6 +1,7 @@
 name: Slither Analysis
 
-on: push
+on:
+  pull_request:
 
 jobs:
   analyze:
@@ -28,4 +29,3 @@ jobs:
             const header = '# Slither report'
             const body = process.env.REPORT
             await script({ github, context, header, body })
-            
