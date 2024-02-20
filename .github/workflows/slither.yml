@@ -29,7 +29,6 @@ jobs:
         with:
           ignore-compile: true  # Assume pre-compilation or custom compilation steps
           fail-on: "medium"     # Action will fail if issues of medium severity or higher are found
-          slither-version: "0.8.3"  # Use a specific Slither version
           solc-version: "0.8.24"    # Use a specific Solidity compiler version
           target: "contracts/"     # Specify the target directory for analysis
           sarif: "slither-results.sarif"  # Generate a SARIF report for Code Scanning integration
