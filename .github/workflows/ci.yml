@@ -1,123 +1,40 @@
-name: Unified CI Workflow
+name: CI Workflow
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  setup:
+  build_and_test:
     runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4.1.1
 
-      - name: Get cache key
-        id: cache-keys
-        run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-node-$(cat yarn.lock | sha256sum | cut -d' ' -f1))"
-
-      - name: Cache node modules
-        uses: actions/cache@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.0.2
         with:
-          path: |
-            **/node_modules
-          key: ${{ steps.cache-keys.outputs.cache-key }}
+          node-version: "20.x"
+          cache: "yarn"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-  lint:
-    name: Lint sources
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-
-      - name: Install Foundry
+      - name: Setup Foundry
         uses: foundry-rs/foundry-toolchain@v1.1.1
         with:
           version: nightly
-          cache: true
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
+      - name: Lint, Build, and Test
+        run: |
+          yarn lint:sol
+          yarn build
+          yarn test
 
-      - name: Lint sources
-        run: yarn lint:sol
-
-  unit_test:
-    name: Unit tests
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: Create a fake .secret file
-        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-          cache: true
-
-      - name: Install foundry dependencies
-        run: forge install
-
-      - name: Build Typechain and Foundry
-        run: yarn build
-
-      - name: Run Forge and Hardhat Tests
-        run: yarn test
-
-  coverage:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4.1.1
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: Install lcov (for genhtml)
+      - name: Install lcov for coverage reporting
         run: sudo apt-get update && sudo apt-get install -y lcov
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.1.1
-        with:
-          version: nightly
-          cache: true
-
-      - name: Generate Hardhat & Foundry Coverage Report
-        run: yarn coverage:report
 
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -135,31 +52,16 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  slither_analysis:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4.1.1
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
+      - name: Run Slither Analysis
+        run: slither . --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/
 
-      - name: Run Slither
-        uses: crytic/slither-action@v0.3.1
-        with:
-          slither-version: "0.10.0"
-          fail-on: "none"
-          slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
-      - name: Create/update checklist as PR comment
+      - name: Post Slither Analysis as PR Comment
         uses: actions/github-script@v7.0.1
-        env:
-          REPORT: ${{ steps.slither_analysis.outputs.stdout }}
         with:
           script: |
-            const script = require('.github/scripts/comment')
-            const header = '# Slither report'
-            const body: ${{ steps.slither_analysis.outputs.stdout }}
-            await script({ github, context, header, body })
+            const header = '# Slither report';
+            const body = process.env.REPORT;
+            const script = require('.github/scripts/comment');
+            await script({ github, context, header, body });
+        env:
+          REPORT: ${{ steps.slither_analysis.outputs.stdout }}
