@@ -33,11 +33,3 @@ jobs:
           solc-version: "0.8.24"    # Use a specific Solidity compiler version
           target: "contracts/"     # Specify the target directory for analysis
           sarif: "slither-results.sarif"  # Generate a SARIF report for Code Scanning integration
-
-      # Upload the generated SARIF file to GitHub Security tab
-      - name: Upload SARIF file
-        if: always()  # Ensure this step runs even if the previous step fails
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: "slither-results.sarif"
-          token: ${{ secrets.PAT_TOKEN }}  # Use a PAT with 'security_events' permission
