@@ -4,7 +4,7 @@
 pragma solidity 0.8.24;
 
 interface IStorage {
-    /// @custom:storage-location erc7201:openzeppelin.storage.ERC20
+    /// @custom:storage-location erc7201:biconomy.storage.SmartAccount
     struct AccountStorage {
         mapping(address => address) modules;
     }

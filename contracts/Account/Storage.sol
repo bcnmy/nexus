@@ -5,7 +5,7 @@ import { IStorage } from "../interfaces/IStorage.sol";
 
 contract Storage is IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.SmartAccount
-    /// ERC-7201 namespaced via `keccak256(encode(uint256(keccak256("id")) - 1)) & ~0xff`
+    /// ERC-7201 namespaced via `keccak256(encode(uint256(keccak256("biconomy.storage.SmartAccount")) - 1)) & ~0xff`
     bytes32 private constant _STORAGE_LOCATION = 0x34e06d8d82e2a2cc69c6a8a18181d71c19765c764b52180b715db4be61b27a00;
 
     /**
