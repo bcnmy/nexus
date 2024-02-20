@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import { IModule } from "../interfaces/IModule.sol";
 
 contract Module is IModule {
-    uint256 constant public TYPE_ID = 1;
+    uint256 public constant TYPE_ID = 1;
 
     /**
      * @notice Called by the smart account during installation of the module.
