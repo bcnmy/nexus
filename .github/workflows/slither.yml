@@ -14,12 +14,11 @@ jobs:
         id: slither
         with:
           node-version: '18'
-          fail-on: 'none'
+          fail-on: 'medium' # Fail the action on medium severity issues
           slither-args: '--checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/'
 
       - name: Create/update checklist as PR comment
         uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
         env:
           REPORT: ${{ steps.slither.outputs.stdout }}
         with:
