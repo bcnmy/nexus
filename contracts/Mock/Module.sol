@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import { IModule } from "../interfaces/IModule.sol";
 
 contract Module is IModule {
-    uint constant public TYPE_ID = 1;
+    uint256 constant public TYPE_ID = 1;
 
     /**
      * @notice Called by the smart account during installation of the module.
@@ -28,6 +28,7 @@ contract Module is IModule {
      * @return True if the module is of the given type, false otherwise.
      */
     function isModuleType(uint256 typeID) external view returns (bool) {
+        typeID;
         return true;
     }
 
