@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import { IModule } from "../interfaces/IModule.sol";
+
 contract Module is IModule {
     uint constant public TYPE_ID = 1;
 

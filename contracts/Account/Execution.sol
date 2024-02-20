@@ -33,7 +33,7 @@ contract Execution is IExecution {
     {
         mode;
         executionCalldata;
-        bytes[] memory returnData = new bytes[](0);
+        returnData = new bytes[](0);
         return returnData;
     }
 
