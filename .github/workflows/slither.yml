@@ -35,4 +35,3 @@ jobs:
         uses: crytic/slither-action@v0.3.1
         with:
           fail-on: "medium"     # Action will fail if issues of medium severity or higher are found
-          target: "contracts/"     # Specify the target directory for analysis
