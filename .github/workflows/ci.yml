@@ -42,6 +42,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.1
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1.1.1
+        with:
+          version: nightly
+          cache: true
+
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -101,14 +107,14 @@ jobs:
             **/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
 
-      - name: Generate Hardhat & Foundry Coverage Report
-        run: yarn coverage:report
-
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@v1.1.1
         with:
           version: nightly
           cache: true
+
+      - name: Generate Hardhat & Foundry Coverage Report
+        run: yarn coverage:report
 
       - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
