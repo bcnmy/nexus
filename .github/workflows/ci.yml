@@ -17,7 +17,17 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'yarn'
-      
+
+      - name: Cache Foundry Toolchain
+        id: cache-foundry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.foundry
+          key: ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-foundry-
+
       - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
 
@@ -25,9 +35,8 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1.1.1
         with:
           version: nightly
-      
-      - name: Install lcov (for genhtml)
-        run: sudo apt-get update && sudo apt-get install -y lcov
+        # Conditionally install Foundry only if it wasn't restored from cache
+        if: steps.cache-foundry.outputs.cache-hit != 'true'
 
       - name: Add Foundry to PATH
         run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
