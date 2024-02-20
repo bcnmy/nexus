@@ -16,30 +16,21 @@ jobs:
         uses: actions/setup-node@v4.0.2
         with:
           node-version: '20.x'
+          cache: 'yarn'
       
-      - name: Cache Node modules and Foundry
-        id: cache-setup
-        uses: actions/cache@v4.0.0
-        with:
-          path: |
-            **/node_modules
-            ~/.foundry
-          key: ${{ runner.os }}-build-${{ hashFiles('**/yarn.lock') }}
-
       - name: Install JavaScript Dependencies
-        if: steps.cache-setup.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile
 
       - name: Install Foundry and dependencies
         uses: foundry-rs/foundry-toolchain@v1.1.1
         with:
           version: nightly
+      
+      - name: Install lcov (for genhtml)
+        run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Add Foundry to PATH
         run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
-
-      - name: Install lcov (for genhtml)
-        run: sudo apt-get update && sudo apt-get install -y lcov
 
   lint:
     needs: setup
@@ -54,12 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
-      - name: Create a fake .secret file
-        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-      - name: Build Typechain and Foundry
-        run: yarn build
       - name: Run Forge and Hardhat Tests
-        run: yarn test
+        run: |
+          echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+          yarn build
+          yarn test
 
   coverage:
     needs: setup
@@ -68,18 +58,11 @@ jobs:
       - uses: actions/checkout@v4.1.1
       - name: Generate Hardhat & Foundry Coverage Report
         run: yarn coverage:report
-      - name: Upload Foundry Coverage Report to Codecov
+      - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
-          file: ./coverage/foundry/lcov.info
-          flags: foundry
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload Hardhat Coverage Report to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          file: ./coverage/lcov.info
-          flags: hardhat
+          files: ./coverage/foundry/lcov.info,./coverage/lcov.info
+          flags: foundry,hardhat
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
