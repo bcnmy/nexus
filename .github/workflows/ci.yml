@@ -9,16 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       node-cache-key: ${{ steps.cache-keys.outputs.cache-key }}
-      foundry-cache-key: ${{ steps.cache-foundry.outputs.cache-key }} # Ensure this is correctly outputted
+      foundry-cache-key: ${{ steps.cache-foundry.outputs.cache-key }}
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
 
       - name: Get node cache key
         id: cache-keys
         run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-node-$(cat yarn.lock | sha256sum | cut -d' ' -f1))"
 
       - name: Cache node modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             **/node_modules
@@ -38,21 +39,15 @@ jobs:
 
       - name: Get Foundry cache key
         id: cache-foundry
-        run: |
-          echo "Foundry cache key: $(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
-          echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
+        run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-$(date +%s))"
 
-      # Cache Foundry Toolchain specifically
       - name: Cache Foundry Toolchain
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.foundry
           key: ${{ steps.cache-foundry.outputs.cache-key }}
-          restore-keys: |
-            ${{ runner.os }}-foundry-
 
-      # Conditionally install Foundry only if it wasn't restored from cache
       - name: Install Foundry and dependencies
         if: steps.cache-foundry.outputs.cache-hit != 'true'
         uses: foundry-rs/foundry-toolchain@v1.1.1
@@ -61,26 +56,13 @@ jobs:
 
       - name: Add Foundry to PATH
         run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
-    
 
   lint:
     name: Lint sources
     runs-on: ubuntu-latest
     needs: setup
-    strategy:
-      matrix:
-        node-version: [18.x]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
+      - uses: actions/checkout@v4.1.1
       - name: Lint sources
         run: yarn lint:sol
 
@@ -88,53 +70,21 @@ jobs:
     name: Unit tests
     runs-on: ubuntu-latest
     needs: setup
-    strategy:
-      matrix:
-        node-version: [18.x]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
+      - uses: actions/checkout@v4.1.1
       - name: Create a fake .secret file
         run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install foundry dependencies
-        run: forge install
-
-      - name: Build Typechain and Foundry
-        run: yarn build
-
       - name: Run Forge and Hardhat Tests
-        run: yarn test
+        run: yarn build && yarn test
 
   coverage:
+    name: Generate coverage report
     needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
       - name: Generate Hardhat & Foundry Coverage Report
         run: yarn coverage:report
-
       - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
@@ -144,17 +94,11 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   slither_analysis:
+    name: Slither Analysis
     needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
         with:
@@ -163,8 +107,6 @@ jobs:
           slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
       - name: Create/update checklist as PR comment
         uses: actions/github-script@v7.0.1
-        env:
-          REPORT: ${{ steps.slither_analysis.outputs.stdout }}
         with:
           script: |
             const script = require('.github/scripts/comment')
