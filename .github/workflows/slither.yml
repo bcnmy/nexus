@@ -1,37 +1,19 @@
 name: Slither Analysis
 on: [push]
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Optionally, set up Node.js if your project requires it
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      # Optionally, install JavaScript dependencies if your project requires it
-      - name: Install JavaScript Dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install Foundry Dependencies
-        run: forge install
-
-      - name: Build Contracts
-        run: yarn build
-
-      # Run Slither static analyzer
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
+        id: slither
         with:
-          fail-on: "medium"     # Action will fail if issues of medium severity or higher are found
+          sarif: results.sarif
+          fail-on: medium
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
