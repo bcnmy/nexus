@@ -8,91 +8,90 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-          cache-key: ${{ steps.cache-foundry.outputs.cache-key }}
-        steps:
-          - uses: actions/checkout@v4.1.1
+      cache-key: ${{ steps.cache-foundry.outputs.cache-key }}
+    steps:
+      - uses: actions/checkout@v4.1.1
 
-          - name: Set up Node.js
-            uses: actions/setup-node@v4.0.2
-            with:
-              node-version: '20.x'
-              cache: 'yarn'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
 
-          - name: Cache Foundry Toolchain
-            id: cache-foundry
-            uses: actions/cache@v3
-            with:
-              path: |
-                ~/.foundry
-              key: ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml') }}
-              restore-keys: |
-                ${{ runner.os }}-foundry-
+      - name: Cache Foundry Toolchain
+        id: cache-foundry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.foundry
+          key: ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-foundry-
 
-          - name: Install JavaScript Dependencies
-            run: yarn install --frozen-lockfile
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
 
-          - name: Install Foundry and dependencies
-            uses: foundry-rs/foundry-toolchain@v1.1.1
-            with:
-              version: nightly
-            # Conditionally install Foundry only if it wasn't restored from cache
-            if: steps.cache-foundry.outputs.cache-hit != 'true'
+      - name: Install Foundry and dependencies
+        uses: foundry-rs/foundry-toolchain@v1.1.1
+        with:
+          version: nightly
+        if: steps.cache-foundry.outputs.cache-hit != 'true'
 
-          - name: Add Foundry to PATH
-            run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
+      - name: Add Foundry to PATH
+        run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
 
-      lint:
-        needs: setup
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4.1.1
-          - name: Lint sources
-            run: yarn lint:sol
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Lint sources
+        run: yarn lint:sol
 
-      unit_test:
-        needs: setup
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4.1.1
-          - name: Run Forge and Hardhat Tests
-            run: |
-              echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-              yarn build
-              yarn test
+  unit_test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Run Forge and Hardhat Tests
+        run: |
+          echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+          yarn build
+          yarn test
 
-      coverage:
-        needs: setup
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4.1.1
-          - name: Generate Hardhat & Foundry Coverage Report
-            run: yarn coverage:report
-          - name: Upload Coverage Report to Codecov
-            uses: codecov/codecov-action@v4.0.1
-            with:
-              files: ./coverage/foundry/lcov.info,./coverage/lcov.info
-              flags: foundry,hardhat
-            env:
-              CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  coverage:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Generate Hardhat & Foundry Coverage Report
+        run: yarn coverage:report
+      - name: Upload Coverage Report to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          files: ./coverage/foundry/lcov.info,./coverage/lcov.info
+          flags: foundry,hardhat
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      slither_analysis:
-        needs: setup
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4.1.1
-          - name: Run Slither
-            uses: crytic/slither-action@v0.3.1
-            with:
-              slither-version: "0.10.0"
-              fail-on: "none"
-              slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
-          - name: Create/update checklist as PR comment
-            uses: actions/github-script@v7.0.1
-            env:
-              REPORT: ${{ steps.slither_analysis.outputs.stdout }}
+  slither_analysis:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Run Slither
+        uses: crytic/slither-action@v0.3.1
+        with:
+          slither-version: "0.10.0"
+          fail-on: "none"
+          slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
+      - name: Create/update checklist as PR comment
+        uses: actions/github-script@v7.0.1
+        env:
+          REPORT: ${{ steps.slither_analysis.outputs.stdout }}
         with:
           script: |
             const script = require('.github/scripts/comment')
             const header = '# Slither report'
-            const body = process.env.REPORT
+            const body: ${{ steps.slither_analysis.outputs.stdout }}
             await script({ github, context, header, body })
