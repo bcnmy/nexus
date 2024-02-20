@@ -13,10 +13,9 @@ jobs:
         uses: crytic/slither-action@v0.3.1
         id: slither
         with:
-          target: ./contracts
           node-version: '18'
           fail-on: 'medium' # Fail the action on medium severity issues
-          slither-args: '--checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/'
+          slither-args: '--filter-paths "contracts/mock" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/'
 
       - name: Create/update checklist as PR comment
         uses: actions/github-script@v7
@@ -28,3 +27,4 @@ jobs:
             const header = '# Slither report'
             const body = process.env.REPORT
             await script({ github, context, header, body })
+            
