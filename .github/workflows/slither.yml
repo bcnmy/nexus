@@ -1,10 +1,6 @@
 name: Slither Analysis
 on: [push]
 
-permissions:
-  contents: read
-  security-events: write
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -23,12 +19,20 @@ jobs:
       - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Foundry Dependencies
+        run: forge install
+
+      - name: Build Contracts
+        run: yarn build
+
       # Run Slither static analyzer
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
         with:
-          ignore-compile: true  # Assume pre-compilation or custom compilation steps
           fail-on: "medium"     # Action will fail if issues of medium severity or higher are found
-          solc-version: "0.8.24"    # Use a specific Solidity compiler version
           target: "contracts/"     # Specify the target directory for analysis
-          sarif: "slither-results.sarif"  # Generate a SARIF report for Code Scanning integration
