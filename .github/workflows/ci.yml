@@ -123,31 +123,28 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  slither_analysis:
-    needs: setup
+  analyze:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.1
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
+        id: slither
         with:
           slither-version: "0.10.0"
+          node-version: "18"
           fail-on: "none"
           slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
+
       - name: Create/update checklist as PR comment
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v7
+        env:
+          REPORT: ${{ steps.slither.outputs.stdout }}
         with:
           script: |
-            const script = require('.github/scripts/comment');
-            const header = '# Slither report';
-            const body = `${{ env.REPORT }}`; // Use template literal to assign REPORT env var to body
-            await script({ github, context, header, body });
-        env:
-          REPORT: ${{ steps.slither_analysis.outputs.stdout }}
+            const script = require('.github/scripts/comment')
+            const header = '# Slither report'
+            const body = process.env.REPORT
+            await script({ github, context, header, body })
