@@ -8,84 +8,97 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      node-cache-key: ${{ steps.cache-keys.outputs.cache-key }}
-      foundry-cache-key: ${{ steps.cache-foundry.outputs.cache-key }}
+      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
 
-      # Generate cache key for node_modules based on the hash of yarn.lock
-      - name: Get node cache key
+      - name: Get cache key
         id: cache-keys
         run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-node-$(cat yarn.lock | sha256sum | cut -d' ' -f1))"
 
-      # Cache node_modules
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             **/node_modules
           key: ${{ steps.cache-keys.outputs.cache-key }}
 
-      # Setup Node.js and Yarn cache
-      - name: Set up Node.js
-        uses: actions/setup-node@v4.0.2
-        with:
-          node-version: '20.x'
-          cache: 'yarn'
-
-      # Install JavaScript Dependencies
-      - name: Install JavaScript Dependencies
+      - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Generate a unique cache key for Foundry based on the Foundry version
-      - name: Get Foundry cache key
-        id: cache-foundry-key
-        run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
+  lint:
+    name: Lint sources
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
 
-      # Cache Foundry Toolchain
-      - name: Cache Foundry Toolchain
-        id: cache-foundry
-        uses: actions/cache@v2
+      - name: Cache node modules
+        uses: actions/cache@v3
         with:
           path: |
-            ~/.foundry
-          key: ${{ steps.cache-foundry-key.outputs.cache-key }}
-          restore-keys: |
-            ${{ runner.os }}-foundry-
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
 
-      # Conditionally install Foundry only if it wasn't restored from cache
-      - name: Install Foundry and dependencies
-        uses: foundry-rs/foundry-toolchain@v1.1.1
-        with:
-          version: nightly
-        if: steps.cache-foundry.outputs.cache-hit != 'true'
-
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4.1.1
       - name: Lint sources
         run: yarn lint:sol
 
   unit_test:
-    needs: setup
+    name: Unit tests
     runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        node-version: [18.x]
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Create a fake .secret file
+        run: echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install foundry dependencies
+        run: forge install
+
+      - name: Build Typechain and Foundry
+        run: yarn build
+
       - name: Run Forge and Hardhat Tests
-        run: |
-          echo "primary twist rack vendor diagram image used route theme frown either will" > .secret
-          yarn build
-          yarn test
+        run: yarn test
 
   coverage:
     needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
       - name: Generate Hardhat & Foundry Coverage Report
         run: yarn coverage:report
+
       - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
@@ -99,6 +112,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
         with:
