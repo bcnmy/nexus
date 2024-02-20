@@ -33,11 +33,15 @@ jobs:
       - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
 
-      # Generate a specific cache key for Foundry
+      - name: Ensure Foundry directory exists
+        run: mkdir -p ~/.foundry
+
       - name: Get Foundry cache key
         id: cache-foundry
-        run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
-      
+        run: |
+          echo "Foundry cache key: $(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
+          echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
+
       # Cache Foundry Toolchain specifically
       - name: Cache Foundry Toolchain
         uses: actions/cache@v3
