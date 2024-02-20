@@ -35,6 +35,9 @@ jobs:
         with:
           version: nightly
 
+      - name: Add Foundry to PATH
+        run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
+
       - name: Install lcov (for genhtml)
         run: sudo apt-get update && sudo apt-get install -y lcov
 
