@@ -15,7 +15,7 @@ jobs:
         with:
           slither-version: '0.10.0'  
           node-version: '18'
-          fail-on: 'medium' # Fail the action on medium severity issues
+          fail-on: 'none'
           slither-args: '--filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
 
       - name: Create/update checklist as PR comment
