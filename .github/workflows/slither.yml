@@ -1,49 +1,8 @@
 name: Slither Analysis
 on: [push]
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install JavaScript Dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install Foundry Dependencies
-        run: forge install
-
-      # Ensure the forge command is available to Slither
-      # This step may need adjustment based on your project's specific requirements
-      - name: Ensure tool availability
-        run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
-
-      # Run Slither static analyzer
-      - name: Run Slither
-        uses: crytic/slither-action@v0.3.1
-        with:
-          ignore-compile: true
-          fail-on: "medium"
-          slither-version: "0.8.3"
-          solc-version: "0.8.24"
-          target: "contracts/"
-          sarif: "slither-results.sarif"
-
-      # Upload SARIF file, conditional on Advanced Security being enabled
-      - name: Upload SARIF file
-        if: always() # Ensure this runs even if the Slither step fails
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: "slither-results.sarif"
+      - uses: actions/checkout@v4
+      - uses: crytic/slither-action@v0.3.1
