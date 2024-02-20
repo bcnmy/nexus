@@ -1,19 +1,43 @@
 name: Slither Analysis
 on: [push]
+
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Optionally, set up Node.js if your project requires it
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Optionally, install JavaScript dependencies if your project requires it
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
+
+      # Run Slither static analyzer
       - name: Run Slither
         uses: crytic/slither-action@v0.3.1
-        id: slither
         with:
-          sarif: results.sarif
-          fail-on: none
+          ignore-compile: true  # Assume pre-compilation or custom compilation steps
+          fail-on: "medium"     # Action will fail if issues of medium severity or higher are found
+          slither-version: "0.8.3"  # Use a specific Slither version
+          solc-version: "0.8.24"    # Use a specific Solidity compiler version
+          target: "contracts/"     # Specify the target directory for analysis
+          sarif: "slither-results.sarif"  # Generate a SARIF report for Code Scanning integration
 
+      # Upload the generated SARIF file to GitHub Security tab
       - name: Upload SARIF file
+        if: always()  # Ensure this step runs even if the previous step fails
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.slither.outputs.sarif }}
+          sarif_file: "slither-results.sarif"
+          token: ${{ secrets.PAT_TOKEN }}  # Use a PAT with 'security_events' permission
