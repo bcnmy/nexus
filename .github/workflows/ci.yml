@@ -8,12 +8,12 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
+      node-cache-key: ${{ steps.cache-keys.outputs.cache-key }}
+      foundry-cache-key: ${{ steps.cache-foundry.outputs.cache-key }} # Ensure this is correctly outputted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4.1.1
 
-      - name: Get cache key
+      - name: Get node cache key
         id: cache-keys
         run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-node-$(cat yarn.lock | sha256sum | cut -d' ' -f1))"
 
@@ -24,8 +24,40 @@ jobs:
             **/node_modules
           key: ${{ steps.cache-keys.outputs.cache-key }}
 
-      - name: Install dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
+
+      - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
+
+      # Generate a specific cache key for Foundry
+      - name: Get Foundry cache key
+        id: cache-foundry
+        run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-foundry-${{ hashFiles('**/foundry.toml', '**/.foundry/**') }})"
+      
+      # Cache Foundry Toolchain specifically
+      - name: Cache Foundry Toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.foundry
+          key: ${{ steps.cache-foundry.outputs.cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-foundry-
+
+      # Conditionally install Foundry only if it wasn't restored from cache
+      - name: Install Foundry and dependencies
+        if: steps.cache-foundry.outputs.cache-hit != 'true'
+        uses: foundry-rs/foundry-toolchain@v1.1.1
+        with:
+          version: nightly
+
+      - name: Add Foundry to PATH
+        run: echo "$HOME/.foundry/bin" >> $GITHUB_PATH
+    
 
   lint:
     name: Lint sources
