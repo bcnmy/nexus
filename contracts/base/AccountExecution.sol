@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { IExecution } from "../interfaces/IExecution.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 
-contract Execution is IExecution {
-    /// @inheritdoc IExecution
+contract AccountExecution is IAccountExecution {
+    /// @inheritdoc IAccountExecution
     function execute(bytes32 mode, bytes calldata executionCalldata) external payable {
         mode;
         executionCalldata;
     }
 
-    /// @inheritdoc IExecution
+    /// @inheritdoc IAccountExecution
     function executeFromExecutor(
         bytes32 mode,
         bytes calldata executionCalldata
@@ -26,7 +26,7 @@ contract Execution is IExecution {
         return returnData;
     }
 
-    /// @inheritdoc IExecution
+    /// @inheritdoc IAccountExecution
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable {
         userOp;
         userOpHash;

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { IModuleConfig } from "../interfaces/IModuleConfig.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Storage } from "./Storage.sol";
 
-contract ModuleManager is Storage, IModuleConfig {
+contract ModuleManager is Storage, IModuleManager {
     /**
      * @notice Installs a Module of a certain type on the smart account.
      * @param moduleType The module type ID.

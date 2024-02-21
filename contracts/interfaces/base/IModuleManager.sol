@@ -5,7 +5,7 @@ pragma solidity 0.8.24;
  * @title ERC-7579 Module Configuration Interface
  * @dev Interface for configuring modules in a smart account.
  */
-interface IModuleConfig {
+interface IModuleManager {
     /**
      * @notice Installs a Module of a certain type on the smart account.
      * @param moduleType The module type ID.

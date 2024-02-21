@@ -2,4 +2,4 @@
 @prb/test/=node_modules/@prb/test/
 forge-std/=node_modules/forge-std/
 modulekit/=node_modules/modulekit/src/
-account-abstraction/=node_modules/account-abstraction/
+account-abstraction/=node_modules/account-abstraction/contracts/

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 interface IAccount {
     /**
@@ -13,7 +13,7 @@ interface IAccount {
      *
      * @dev Must validate caller is the entryPoint.
      *      Must validate the signature and nonce
-     * @param userOp              - The operation that is about to be executed.
+     * @param userOp              - The user operation that is about to be executed.
      * @param userOpHash          - Hash of the user's request data. can be used as the basis for signature.
      * @param missingAccountFunds - Missing funds on the account's deposit in the entrypoint.
      *                              This is the minimum amount to transfer to the sender(entryPoint) to be

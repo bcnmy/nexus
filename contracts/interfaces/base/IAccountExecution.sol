@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /**
- * @title ERC-7579 Execution Interface for Smart Accounts
- * @dev Interface for executing transactions on behalf of the smart account, including ERC-4337 user operations.
+ * @title Execution Interface for Biconomy Smart Accounts
+ * @dev Interface for executing transactions on behalf of the smart account,
+ * including ERC7579 executions and ERC-4337 user operations as per ERC-4337-v-0.7
  */
-interface IExecution {
+interface IAccountExecution {
     /**
-     * @notice Executes a transaction on behalf of the account.
+     * @notice ERC7579 Main Execution flow.
+     * Executes a transaction on behalf of the account.
      * @dev Must ensure adequate authorization control.
      * @param mode The encoded execution mode of the transaction.
      * @param executionCalldata The encoded execution call data.
@@ -17,7 +19,8 @@ interface IExecution {
     function execute(bytes32 mode, bytes calldata executionCalldata) external payable;
 
     /**
-     * @notice Executes a transaction on behalf of the account via an Executor Module.
+     * @notice ERC7579 Execution from Executor flow.
+     * Executes a transaction from an Executor Module.
      * @dev Must ensure adequate authorization control.
      * @param mode The encoded execution mode of the transaction.
      * @param executionCalldata The encoded execution call data.
