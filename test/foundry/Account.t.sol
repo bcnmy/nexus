@@ -91,9 +91,11 @@ contract SmartAccountTest is PRBTest, StdCheats {
     }
 
     function testValidateUserOp() public {
+        MockValidator mockValidator = new MockValidator();
+
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(this),
-            nonce: 1,
+            nonce: getNonce(address(this), address(mockValidator)),
             initCode: "",
             callData: abi.encodeWithSignature("test()"),
             accountGasLimits: bytes32(0),
@@ -107,5 +109,14 @@ contract SmartAccountTest is PRBTest, StdCheats {
         uint256 missingAccountFunds = 0;
         uint256 res = smartAccount.validateUserOp(userOp, userOpHash, missingAccountFunds);
         assertEq(res, 0);
+    }
+
+    // HELPERS
+    // @TODO : move to a common file
+    // @TODO : make the proper nonce retrieval via EP
+    function getNonce(address account, address validator) internal returns (uint256 nonce) {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        //nonce = entrypoint.getNonce(address(account), key);
+        nonce = 1 | (uint256(key) << 64);
     }
 }

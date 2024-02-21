@@ -2,10 +2,9 @@
 pragma solidity 0.8.24;
 
 import { IModule } from "../../interfaces/IModule.sol";
+import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
 
 contract Module is IModule {
-    uint256 public constant TYPE_ID = 1;
-
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external {
         data;
@@ -23,7 +22,7 @@ contract Module is IModule {
     }
 
     /// @inheritdoc IModule
-    function getModuleTypes() external view returns (uint256) {
-        return TYPE_ID;
+    function getModuleTypes() external view returns (EncodedModuleTypes) {
+        // solhint-disable-previous-line no-empty-blocks
     }
 }
