@@ -11,7 +11,7 @@ contract SmartAccountTest is PRBTest, StdCheats {
     }
 
     function testAccountId() public {
-        string memory expectedAccountId = "ModularSmartAccount";
+        string memory expectedAccountId = "biconomy.modular-smart-account.3.0.0-alpha";
         // Assuming `accountId` is set in the `SmartAccount` constructor or through some initialization function
         assertEq(smartAccount.accountId(), expectedAccountId);
     }

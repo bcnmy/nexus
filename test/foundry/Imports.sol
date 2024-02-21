@@ -9,13 +9,13 @@ import "../../contracts/interfaces/IModuleConfig.sol";
 import "../../contracts/interfaces/IStorage.sol";
 
 // Importing contract implementations
-import "../../contracts/Account/AccountConfig.sol";
-import "../../contracts/Account/Execution.sol";
-import "../../contracts/Account/ModuleConfig.sol";
-import "../../contracts/Account/Validator.sol";
+import "../../contracts/base/AccountConfig.sol";
+import "../../contracts/base/Execution.sol";
+import "../../contracts/base/ModuleManager.sol";
+import "../../contracts/base/Validator.sol";
 import "../../contracts/SmartAccount.sol";
 
-import "account-abstraction/contracts/core/EntryPoint.sol";
+import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 import { PRBTest } from "@prb/test/src/PRBTest.sol";
 import { StdCheats } from "forge-std/src/StdCheats.sol";
 

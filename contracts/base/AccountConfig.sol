@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
+
+import { IAccountConfig } from "../interfaces/IAccountConfig.sol";
+
+contract AccountConfig is IAccountConfig {
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.3.0.0-alpha";
+
+    /// @inheritdoc IAccountConfig
+    function supportsAccountMode(bytes32 encodedMode) external view returns (bool) {
+        encodedMode;
+        return true;
+    }
+
+    /// @inheritdoc IAccountConfig
+    function supportsModule(uint256 moduleTypeId) external view returns (bool) {
+        moduleTypeId;
+        return true;
+    }
+
+    /// @inheritdoc IAccountConfig
+    function accountId() external pure returns (string memory) {
+        return ACCOUNT_IMPLEMENTATION_ID;
+    }
+}

@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import { IModuleConfig } from "../interfaces/IModuleConfig.sol";
 import { Storage } from "./Storage.sol";
 
-contract ModuleConfig is Storage, IModuleConfig {
+contract ModuleManager is Storage, IModuleConfig {
     /**
      * @notice Installs a Module of a certain type on the smart account.
      * @param moduleType The module type ID.

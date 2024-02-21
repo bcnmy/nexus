@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-contract Validator {
+interface IAccount {
     /**
      * Validate user's signature and nonce
      * the entryPoint will make the call to the recipient only if this validation call returns successfully.
@@ -37,10 +37,5 @@ contract Validator {
         uint256 missingAccountFunds
     )
         external
-        returns (uint256 validationData)
-    {
-        userOp;
-        userOpHash;
-        missingAccountFunds;
-    }
+        returns (uint256 validationData);
 }

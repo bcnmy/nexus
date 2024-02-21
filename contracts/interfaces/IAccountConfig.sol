@@ -10,7 +10,7 @@ interface IAccountConfig {
      * @notice Returns the account id of the smart account.
      * @return accountImplementationId The account id of the smart account.
      */
-    function accountId() external view returns (string memory accountImplementationId);
+    function accountId() external view returns (string memory);
 
     /**
      * @notice Checks if the account supports a certain execution mode.
