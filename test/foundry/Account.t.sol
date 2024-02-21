@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.24 <0.9.0;
 
-import "./Imports.sol";
+import "./utils/BicoTestBase.t.sol";
 
-contract SmartAccountTest is PRBTest, StdCheats {
-    SmartAccount public smartAccount;
-
-    function setUp() public {
-        smartAccount = new SmartAccount();
+contract SmartAccountTest is BicoTestBase {
+    function setUp() public override {
+        super.setUp();
     }
 
     function testAccountId() public {
@@ -56,10 +54,15 @@ contract SmartAccountTest is PRBTest, StdCheats {
     function testExecute() public {
         // Prepare test data
         bytes32 mode = keccak256("TEST_MODE");
-        bytes memory executionCalldata = abi.encodeWithSignature("testFunction()");
+        uint256 amountToSend = 1 ether;
+        uint256 targetBalanceBefore = address(target).balance;
+
+        bytes memory callData = "0x";
+        bytes memory packedCalldata = abi.encodePacked(target, amountToSend, callData);
 
         // Since the execute function doesn't have actual logic, can't directly test its effects.
-        smartAccount.execute(mode, executionCalldata);
+        smartAccount.execute(mode, packedCalldata);
+        assertEq(address(target).balance, targetBalanceBefore + amountToSend);
     }
 
     function testExecuteFromExecutor() public {
@@ -91,11 +94,9 @@ contract SmartAccountTest is PRBTest, StdCheats {
     }
 
     function testValidateUserOp() public {
-        MockValidator mockValidator = new MockValidator();
-
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: address(this),
-            nonce: getNonce(address(this), address(mockValidator)),
+            nonce: getNonce(address(smartAccount), address(mockValidator)),
             initCode: "",
             callData: abi.encodeWithSignature("test()"),
             accountGasLimits: bytes32(0),
@@ -111,12 +112,32 @@ contract SmartAccountTest is PRBTest, StdCheats {
         assertEq(res, 0);
     }
 
-    // HELPERS
-    // @TODO : move to a common file
-    // @TODO : make the proper nonce retrieval via EP
-    function getNonce(address account, address validator) internal returns (uint256 nonce) {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        //nonce = entrypoint.getNonce(address(account), key);
-        nonce = 1 | (uint256(key) << 64);
+    function testExecuteViaEntryPoint() public {
+        uint256 amountToSend = 1 ether;
+        uint256 targetBalanceBefore = address(target).balance;
+
+        // Mock a target address and call data
+        PackedUserOperation memory userOp = PackedUserOperation({
+            sender: address(smartAccount),
+            nonce: getNonce(address(smartAccount), address(mockValidator)),
+            initCode: "",
+            callData: abi.encodeCall(
+                IAccountExecution.execute, (keccak256("TEST_MODE"), abi.encodePacked(target, amountToSend, "0x"))
+                ),
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            paymasterAndData: "",
+            signature: ""
+        });
+        bytes32 userOpHash = keccak256(abi.encode(userOp));
+
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+
+        // Handle Ops via entrypoint
+        entrypoint.handleOps(userOps, alice);
+
+        assertEq(address(target).balance, targetBalanceBefore + amountToSend);
     }
 }

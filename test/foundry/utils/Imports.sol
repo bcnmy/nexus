@@ -2,22 +2,23 @@
 pragma solidity ^0.8.24;
 
 // Importing interfaces
-import "../../contracts/interfaces/base/IAccountConfig.sol";
-import "../../contracts/interfaces/base/IAccountExecution.sol";
-import "../../contracts/interfaces/base/IModuleManager.sol";
-import "../../contracts/interfaces/IModule.sol";
-import "../../contracts/interfaces/IStorage.sol";
+import "contracts/interfaces/base/IAccountConfig.sol";
+import "contracts/interfaces/base/IAccountExecution.sol";
+import "contracts/interfaces/base/IModuleManager.sol";
+import "contracts/interfaces/IModule.sol";
+import "contracts/interfaces/IStorage.sol";
 
 // Importing contract implementations
-import "../../contracts/base/AccountConfig.sol";
-import "../../contracts/base/AccountExecution.sol";
-import "../../contracts/base/ModuleManager.sol";
-import "../../contracts/SmartAccount.sol";
+import "contracts/base/AccountConfig.sol";
+import "contracts/base/AccountExecution.sol";
+import "contracts/base/ModuleManager.sol";
+import "contracts/SmartAccount.sol";
 
 // Importing Mock contracts
-import "../../contracts/test/mocks/MockValidator.sol";
+import "contracts/test/mocks/MockValidator.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { PRBTest } from "@prb/test/src/PRBTest.sol";
 import { StdCheats } from "forge-std/src/StdCheats.sol";
 
