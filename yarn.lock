@@ -753,6 +753,11 @@
     "@nomicfoundation/solidity-analyzer-win32-ia32-msvc" "0.1.1"
     "@nomicfoundation/solidity-analyzer-win32-x64-msvc" "0.1.1"
 
+"@nomiclabs/hardhat-ethers@^2.2.3":
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.2.3.tgz#b41053e360c31a32c2640c9a45ee981a7e603fe0"
+  integrity sha512-YhzPdzb612X591FOe68q+qXVXGG2ANZRvDo0RRUtimev85rCrAlv/TLMEZw5c+kq9AbzocLTVX/h2jVIFPL9Xg==
+
 "@nomiclabs/hardhat-etherscan@^2.1.6":
   version "2.1.8"
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-etherscan/-/hardhat-etherscan-2.1.8.tgz#e206275e96962cd15e5ba9148b44388bc922d8c2"
@@ -2811,7 +2816,12 @@ hardhat-deploy-ethers@^0.3.0-beta.11:
   resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.3.0-beta.13.tgz#b96086ff768ddf69928984d5eb0a8d78cfca9366"
   integrity sha512-PdWVcKB9coqWV1L7JTpfXRCI91Cgwsm7KLmBcwZ8f0COSm1xtABHZTyz3fvF6p42cTnz1VM0QnfDvMFlIRkSNw==
 
-hardhat-deploy@^0.11.23:
+hardhat-deploy-ethers@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.4.1.tgz#dd70b0cc413ed99e98994047b383a004cf1c14f8"
+  integrity sha512-RM6JUcD0dOCjemxnKLtK7XQQI7NWn+LxF5qicGYax0PtWayEUXAewOb4WIHZ/yearhj+s2t6dL0MnHyLTENwJg==
+
+hardhat-deploy@^0.11.23, hardhat-deploy@^0.11.45:
   version "0.11.45"
   resolved "https://registry.yarnpkg.com/hardhat-deploy/-/hardhat-deploy-0.11.45.tgz#bed86118175a38a03bb58aba2ce1ed5e80a20bc8"
   integrity sha512-aC8UNaq3JcORnEUIwV945iJuvBwi65tjHVDU3v6mOcqik7WAzHVCJ7cwmkkipsHrWysrB5YvGF1q9S1vIph83w==
@@ -4421,6 +4431,10 @@ slice-ansi@^4.0.0:
     ansi-styles "^4.0.0"
     astral-regex "^2.0.0"
     is-fullwidth-code-point "^3.0.0"
+
+"solady@github:Vectorized/solady":
+  version "0.0.168"
+  resolved "https://codeload.github.com/Vectorized/solady/tar.gz/1372606383445c0a247e6c58eb255a529734258a"
 
 "solady@github:vectorized/solady":
   version "0.0.168"
