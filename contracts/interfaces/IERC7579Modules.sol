@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { IModule } from "./IModule.sol";
-import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 uint256 constant VALIDATION_SUCCESS = 0;
 uint256 constant VALIDATION_FAILED = 1;

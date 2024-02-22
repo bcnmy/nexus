@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import { IValidator, IModule, VALIDATION_SUCCESS } from "../../interfaces/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
-import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 contract MockValidator is IValidator {
     /// @inheritdoc IValidator

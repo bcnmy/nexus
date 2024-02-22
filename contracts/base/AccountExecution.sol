@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
+import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 contract AccountExecution is IAccountExecution {
     /// @inheritdoc IAccountExecution

@@ -17,8 +17,8 @@ import "contracts/SmartAccount.sol";
 // Importing Mock contracts
 import "contracts/test/mocks/MockValidator.sol";
 
-import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
-import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PRBTest } from "@prb/test/src/PRBTest.sol";
 import { StdCheats } from "forge-std/src/StdCheats.sol";
 
