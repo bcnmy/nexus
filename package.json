@@ -90,11 +90,12 @@
     "lint:ts-fix": "yarn prettier --write 'test/**/*.ts' 'scripts/**/*.ts'",
     "lint": "yarn run lint:sol && yarn run lint:ts",
     "lint:fix": "yarn run lint:sol-fix && yarn run lint:ts-fix",
-    "check-branch-name": "node scripts/checkBranchName.js"
+    "check-branch-name": "node scripts/git-hooks/checkBranchNames.js"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run check-branch-name && npm run lint-fix",
+      "post-checkout": "yarn install",
+      "pre-commit": "yarn run check-branch-name && npm run lint-fix",
       "pre-push": "npm run check-branch-name",
       "post-checkout": "npm run check-branch-name"
     }
