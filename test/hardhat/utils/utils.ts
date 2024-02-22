@@ -1,4 +1,7 @@
 import { artifacts, ethers } from "hardhat";
+import { PackedUserOperation, UserOperation } from "./types";
+import { Signer } from "ethers";
+import { sign } from "crypto";
 
 // Conversion to Bytes32
 export const toBytes32 = (text: string): string => {
@@ -20,61 +23,51 @@ export const from18Decimals = (value: bigint): string => {
   return ethers.formatUnits(value, 18);
 };
 
-export function buildUserOp({
-  sender,
-  nonce,
-  initCode = "",
-  callData = "",
-  callGasLimit,
-  executionGasLimit, // For the execution of callData
-  verificationGasLimit, // For the validateUserOp
-  preVerificationGas,
-  maxFeePerGas,
-  maxPriorityFeePerGas,
-  paymaster = ethers.ZeroAddress,
-  paymasterData = "0x",
-  signature = "0x",
-}: {
-  sender: string;
-  nonce: number;
-  initCode?: string;
-  callData?: string;
-  callGasLimit: number;
-  executionGasLimit: number; // For the execution of callData
-  verificationGasLimit: number; // For the validateUserOp
-  preVerificationGas: number;
-  maxFeePerGas: number;
-  maxPriorityFeePerGas: number;
-  paymaster?: string;
-  paymasterData?: string;
-  signature?: string;
-}) {
-  // Ensure maxFeePerGas and maxPriorityFeePerGas are provided in wei
+export function toGwei(amount: number | string | bigint): string | bigint {
+  return ethers.parseUnits(amount.toString(), "gwei");
+}
+
+export function buildPackedUserOp(userOp: UserOperation): PackedUserOperation {
+  const {
+    sender,
+    nonce,
+    initCode = "0x",
+    callData = "0x",
+    callGasLimit = 1_000_000,
+    verificationGasLimit = 1_000_000,
+    preVerificationGas = 1_500_000,
+    maxFeePerGas = toGwei(10),
+    maxPriorityFeePerGas = toGwei(5),
+    paymaster = ethers.ZeroAddress,
+    paymasterData = "0x",
+    signature = "0x",
+  } = userOp;
+
+  // Pack gasFees and accountGasLimits as bytes32
   const gasFees = ethers.solidityPacked(
     ["uint128", "uint128"],
-    [maxFeePerGas, maxPriorityFeePerGas],
+    [maxPriorityFeePerGas, maxFeePerGas],
   );
 
   // Pack accountGasLimits as bytes32 combining callGasLimit and verificationGasLimit
   const accountGasLimits = ethers.solidityPacked(
     ["uint128", "uint128"],
-    [executionGasLimit, verificationGasLimit],
+    [callGasLimit, verificationGasLimit],
   );
 
-  // Combine paymaster address and additional data into paymasterAndData
   const paymasterAndData = ethers.AbiCoder.defaultAbiCoder().encode(
     ["address", "bytes"],
     [paymaster, paymasterData],
   );
 
   // Construct the PackedUserOperation object
-  const packedUserOp = {
+  const packedUserOp: PackedUserOperation = {
     sender,
-    nonce,
+    nonce: nonce,
     initCode,
     callData,
-    accountGasLimits: ethers.hexlify(accountGasLimits),
-    preVerificationGas,
+    accountGasLimits: accountGasLimits,
+    preVerificationGas: preVerificationGas,
     gasFees: ethers.hexlify(gasFees),
     paymasterAndData,
     signature,

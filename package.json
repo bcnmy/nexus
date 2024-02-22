@@ -18,23 +18,27 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.4",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@prb/test": "^0.6.4",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": ">=10.0.6",
     "@types/node": ">=20.11.19",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "chai": "^4.3.7",
     "codecov": "^3.8.3",
     "ethers": "^6.11.1",
     "forge-std": "github:foundry-rs/forge-std#v1.7.6",
+    "hardhat-deploy": "^0.11.45",
+    "hardhat-deploy-ethers": "^0.4.1",
     "hardhat-gas-reporter": "^1.0.10",
     "hardhat-storage-layout": "^0.1.7",
     "husky": "^9.0.11",
     "modulekit": "github:rhinestonewtf/modulekit",
-    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
+    "solady": "github:Vectorized/solady",
     "solhint": "^4.1.1",
     "solhint-plugin-prettier": "^0.1.0",
     "solidity-coverage": "^0.8.7",
@@ -86,11 +90,12 @@
     "lint:ts-fix": "yarn prettier --write 'test/**/*.ts' 'scripts/**/*.ts'",
     "lint": "yarn run lint:sol && yarn run lint:ts",
     "lint:fix": "yarn run lint:sol-fix && yarn run lint:ts-fix",
-    "check-branch-name": "node scripts/checkBranchName.js"
+    "check-branch-name": "node scripts/git-hooks/checkBranchNames.js"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run check-branch-name && npm run lint-fix",
+      "post-checkout": "yarn install",
+      "pre-commit": "yarn run check-branch-name && npm run lint-fix",
       "pre-push": "npm run check-branch-name",
       "post-checkout": "npm run check-branch-name"
     }
