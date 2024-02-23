@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import { IAccountConfig } from "../interfaces/base/IAccountConfig.sol";
 
 contract AccountConfig is IAccountConfig {
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.3.0.0-alpha";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 
     /// @inheritdoc IAccountConfig
     function supportsAccountMode(bytes32 encodedMode) external view returns (bool) {
