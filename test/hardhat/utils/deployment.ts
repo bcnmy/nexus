@@ -120,7 +120,6 @@ export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
     moduleAddress,
     ModuleType.Validation,
   );
-  
 
   // Get the counterfactual address of the smart account before deployment
   const accountAddress = await getAccountAddress(
