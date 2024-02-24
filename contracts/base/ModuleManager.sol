@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Storage } from "./Storage.sol";
+import { IModule } from "../interfaces/IModule.sol";
 
 contract ModuleManager is Storage, IModuleManager {
     /**
@@ -14,6 +15,8 @@ contract ModuleManager is Storage, IModuleManager {
     function installModule(uint256 moduleType, address module, bytes calldata initData) external payable {
         AccountStorage storage $ = _getAccountStorage();
         $.modules[module] = module;
+
+        IModule(module).onInstall(initData);
         moduleType;
         initData;
     }
