@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import { IValidator, IModule, VALIDATION_SUCCESS } from "../../interfaces/IERC7579Modules.sol";
+import { IValidator, IModule, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract MockValidator is IValidator {
+    mapping(address => address) public owners;
+
     /// @inheritdoc IValidator
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external returns (uint256) {
-        userOp;
-        userOpHash;
-        return VALIDATION_SUCCESS;
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        returns (uint256 validation)
+    {
+        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
+            == owners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @inheritdoc IValidator
@@ -31,18 +40,22 @@ contract MockValidator is IValidator {
 
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external {
-        data;
+        owners[msg.sender] = address(bytes20(data));
     }
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external {
-        data;
+        delete owners[msg.sender];
     }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 typeID) external view returns (bool) {
         typeID;
         return true;
+    }
+
+    function isOwner(address account, address owner) external view returns (bool) {
+        return owners[account] == owner;
     }
 
     /// @inheritdoc IModule
