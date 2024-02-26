@@ -62,4 +62,8 @@ contract MockValidator is IValidator {
     function getModuleTypes() external view returns (EncodedModuleTypes) {
         // solhint-disable-previous-line no-empty-blocks
     }
+
+    function test(uint256 a) public {
+        a;
+    }
 }
