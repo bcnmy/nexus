@@ -25,4 +25,8 @@ library ModuleTypeLib {
         }
         return EncodedModuleTypes.wrap(result);
     }
+
+    function test(uint256 a) private {
+        a;
+    }
 }
