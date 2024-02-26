@@ -1,143 +1,148 @@
-// // SPDX-License-Identifier: UNLICENSED
-// pragma solidity >=0.8.24 <0.9.0;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.8.24 <0.9.0;
 
-// import "./utils/BicoTestBase.t.sol";
+import "./utils/BicoTestBase.t.sol";
+import "./utils/Imports.sol";
 
-// contract SmartAccountTest is BicoTestBase {
-//     function setUp() public override {
-//         super.setUp();
-//     }
+contract SmartAccountTest is BicoTestBase {
+    SmartAccount public BOB_ACCOUNT;
+    SmartAccount public ALICE_ACCOUNT;
+    SmartAccount public CHARLIE_ACCOUNT;
+    Counter public COUNTER;
+    uint256 public snapshotId;
 
-//     function testAccountId() public {
-//         string memory expectedAccountId = "biconomy.modular-smart-account.3.0.0-alpha";
-//         // Assuming `accountId` is set in the `SmartAccount` constructor or through some initialization function
-//         assertEq(smartAccount.accountId(), expectedAccountId);
-//     }
+    function setUp() public {
+        init();
+        BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
+        ALICE_ACCOUNT = SmartAccount(deploySmartAccount(ALICE));
+        CHARLIE_ACCOUNT = SmartAccount(deploySmartAccount(CHARLIE));
+        COUNTER = new Counter();
+    }
 
-//     function testSupportsAccountMode() public {
-//         // Example encodedMode, replace with actual data
-//         bytes32 encodedMode = keccak256("exampleMode");
-//         // Assuming the SmartAccount contract has logic to support certain modes
-//         assertTrue(smartAccount.supportsAccountMode(encodedMode));
-//     }
+    function testAccountAddress() public {
+        address validatorModuleAddress = address(VALIDATOR_MODULE);
+        uint256 validationModuleType = uint256(ModuleType.Validation);
 
-//     function testSupportsModule() public {
-//         uint256 moduleTypeId = 1; // Example module type ID
-//         // Assuming the SmartAccount contract has logic to support certain module types
-//         assertTrue(smartAccount.supportsModule(moduleTypeId));
-//     }
+        // Compute and assert the account addresses for BOB, ALICE, and CHARLIE
+        assertEq(
+            address(BOB_ACCOUNT),
+            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(BOB.addr))
+        );
+        assertEq(
+            address(ALICE_ACCOUNT),
+            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(ALICE.addr))
+        );
+        assertEq(
+            address(CHARLIE_ACCOUNT),
+            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(CHARLIE.addr))
+        );
+    }
 
-//     function testInstallAndCheckModule(
-//         uint256 dummyModuleType,
-//         address dummyModuleAddress,
-//         bytes calldata dummyInitData
-//     )
-//         public
-//     {
-//         vm.assume(dummyModuleAddress != address(0));
-//         vm.assume(dummyModuleType != 0);
-//         smartAccount.installModule(dummyModuleType, dummyModuleAddress, dummyInitData);
-//         assertTrue(smartAccount.isModuleInstalled(dummyModuleType, dummyModuleAddress, dummyInitData));
-//     }
+    function testAccountId() public {
+        string memory expectedAccountId = "biconomy.modular-smart-account.1.0.0-alpha";
+        // Assuming `accountId` is set in the `SmartAccount` constructor or through some initialization function
+        assertEq(BOB_ACCOUNT.accountId(), expectedAccountId);
+        assertEq(ALICE_ACCOUNT.accountId(), expectedAccountId);
+        assertEq(CHARLIE_ACCOUNT.accountId(), expectedAccountId);
+    }
 
-//     function testUninstallAndCheckModule(
-//         uint256 dummyModuleType,
-//         address dummyModuleAddress,
-//         bytes calldata dummyInitData
-//     )
-//         public
-//     {
-//         smartAccount.uninstallModule(dummyModuleType, dummyModuleAddress, dummyInitData);
-//         // assertFalse(smartAccount.isModuleInstalled(dummyModuleType, dummyModuleAddress, "0x"));
-//     }
+    function testSupportsAccountMode() public {
+        // Example encodedMode, replace with actual data
+        bytes32 encodedMode = keccak256("exampleMode");
+        // Assuming the SmartAccount contract has logic to support certain modes
+        assertTrue(BOB_ACCOUNT.supportsAccountMode(encodedMode));
+        assertTrue(ALICE_ACCOUNT.supportsAccountMode(encodedMode));
+        assertTrue(CHARLIE_ACCOUNT.supportsAccountMode(encodedMode));
+    }
 
-//     function testExecute() public {
-//         // Prepare test data
-//         bytes32 mode = keccak256("TEST_MODE");
-//         uint256 amountToSend = 1 ether;
-//         uint256 targetBalanceBefore = address(target).balance;
+    function testSupportsModule() public {
+        uint256 moduleTypeId = 1; // Example module type ID
+        // Assuming the SmartAccount contract has logic to support certain module types
+        assertTrue(BOB_ACCOUNT.supportsModule(moduleTypeId));
+        assertTrue(ALICE_ACCOUNT.supportsModule(moduleTypeId));
+        assertTrue(CHARLIE_ACCOUNT.supportsModule(moduleTypeId));
+    }
 
-//         bytes memory callData = "0x";
-//         bytes memory packedCalldata = abi.encodePacked(target, amountToSend, callData);
+    function testInstallAndCheckModule(bytes calldata dummyInitData) public {
+        uint256 moduleType = uint256(ModuleType.Validation);
+        BOB_ACCOUNT.installModule(moduleType, address(VALIDATOR_MODULE), dummyInitData);
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), dummyInitData));
+        snapshotId = createSnapshot();
+    }
 
-//         // Since the execute function doesn't have actual logic, can't directly test its effects.
-//         smartAccount.execute(mode, packedCalldata);
-//         assertEq(address(target).balance, targetBalanceBefore + amountToSend);
-//     }
+    function testUninstallAndCheckModule(bytes calldata dummyInitData) public {
+        revertToSnapshot(snapshotId);
+        uint256 moduleType = uint256(ModuleType.Validation);
+        vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), dummyInitData));
+        BOB_ACCOUNT.uninstallModule(moduleType, address(VALIDATOR_MODULE), dummyInitData);
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), "0x"));
+    }
 
-//     function testExecuteFromExecutor() public {
-//         // Similar setup to testExecute, adapted for executeFromExecutor specifics
-//         bytes32 mode = keccak256("EXECUTOR_MODE");
-//         bytes memory executionCalldata = abi.encodeWithSignature("executorFunction()");
+    function testExecute() public {
+        assertEq(COUNTER.getNumber(), 0);
+        bytes32 mode = keccak256("EXECUTE_MODE");
 
-//         // Since the execute function doesn't have actual logic, can't directly test its effects.
-//         bytes[] memory res = smartAccount.executeFromExecutor(mode, executionCalldata);
-//         assertEq(res.length, 0);
-//     }
+        bytes memory counterCallData = abi.encodeWithSignature("incrementNumber()");
 
-//     function testExecuteUserOp() public {
-//         // Mock a PackedUserOperation struct
-//         PackedUserOperation memory userOp = PackedUserOperation({
-//             sender: address(this),
-//             nonce: 1,
-//             initCode: "",
-//             callData: abi.encodeWithSignature("test()"),
-//             accountGasLimits: bytes32(0),
-//             preVerificationGas: 0,
-//             gasFees: bytes32(0),
-//             paymasterAndData: "",
-//             signature: ""
-//         });
-//         bytes32 userOpHash = keccak256(abi.encode(userOp));
+        bytes memory executionCalldata = abi.encode(address(COUNTER), 0, counterCallData);
 
-//         smartAccount.executeUserOp(userOp, userOpHash);
-//     }
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
-//     function testValidateUserOp() public {
-//         PackedUserOperation memory userOp = PackedUserOperation({
-//             sender: address(this),
-//             nonce: _getNonce(address(smartAccount), address(mockValidator)),
-//             initCode: "",
-//             callData: abi.encodeWithSignature("test()"),
-//             accountGasLimits: bytes32(0),
-//             preVerificationGas: 0,
-//             gasFees: bytes32(0),
-//             paymasterAndData: "",
-//             signature: ""
-//         });
-//         bytes32 userOpHash = keccak256(abi.encode(userOp));
+        userOps[0] =
+            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0].callData = abi.encodeWithSignature("execute(bytes32,bytes)", mode, executionCalldata);
 
-//         uint256 missingAccountFunds = 0;
-//         uint256 res = smartAccount.validateUserOp(userOp, userOpHash, missingAccountFunds);
-//         assertEq(res, 0);
-//     }
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessageAndGetSignatureBytes(ALICE, userOpHash);
 
-//     function testExecuteViaEntryPoint() public {
-//         uint256 amountToSend = 1 ether;
-//         uint256 targetBalanceBefore = address(target).balance;
+        ENTRYPOINT.handleOps(userOps, payable(ALICE.addr));
+        assertEq(COUNTER.getNumber(), 1);
+    }
 
-//         // Mock a target address and call data
-//         PackedUserOperation memory userOp = PackedUserOperation({
-//             sender: address(smartAccount),
-//             nonce: _getNonce(address(smartAccount), address(mockValidator)),
-//             initCode: "",
-//             callData: abi.encodeCall(
-//                 IAccountExecution.execute, (keccak256("TEST_MODE"), abi.encodePacked(target, amountToSend, "0x"))
-//                 ),
-//             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
-//             preVerificationGas: 2e6,
-//             gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
-//             paymasterAndData: "",
-//             signature: ""
-//         });
-//         bytes32 userOpHash = keccak256(abi.encode(userOp));
+    function testExecuteFromExecutor() public {
+        // Similar setup to testExecute, adapted for executeFromExecutor specifics
+        assertEq(COUNTER.getNumber(), 0);
+        COUNTER.incrementNumber();
+        assertEq(COUNTER.getNumber(), 1);
 
-//         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-//         userOps[0] = userOp;
+        bytes32 mode = keccak256("EXECUTOR_MODE");
 
-//         // Handle Ops via entrypoint
-//         entrypoint.handleOps(userOps, alice);
+        bytes memory counterCallData = abi.encodeWithSignature("decrementNumber()");
 
-//         assertEq(address(target).balance, targetBalanceBefore + amountToSend);
-//     }
-// }
+        bytes memory executionCalldata = abi.encode(address(COUNTER), 0, counterCallData);
+
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+
+        userOps[0] =
+            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0].callData = abi.encodeWithSignature("executeFromExecutor(bytes32,bytes)", mode, executionCalldata);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessageAndGetSignatureBytes(ALICE, userOpHash);
+
+        ENTRYPOINT.handleOps(userOps, payable(ALICE.addr));
+        assertEq(COUNTER.getNumber(), 0);
+    }
+
+    function testExecuteUserOp() public {
+        assertEq(COUNTER.getNumber(), 0);
+        bytes32 mode = keccak256("EXECUTOR_MODE");
+
+        bytes memory counterCallData = abi.encodeWithSignature("incrementNumber()");
+
+        bytes memory executionCalldata = abi.encode(address(COUNTER), 0, counterCallData);
+
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+
+        userOps[0] =
+            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        BOB_ACCOUNT.executeUserOp(userOps[0], userOpHash);
+    }
+
+    function testIsValidSignatureWithSender() public {
+        bytes memory data = abi.encodeWithSignature("incrementNumber()");
+        bytes4 result = VALIDATOR_MODULE.isValidSignatureWithSender(ALICE.addr, keccak256(data), "0x");
+    }
+}
