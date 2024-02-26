@@ -60,6 +60,7 @@ contract CheatCodes is Test {
     function setBaseFee(uint256 baseFee) internal {
         vm.fee(baseFee);
     }
+
     // Load storage slot directly from a contract
     function loadStorageAtSlot(address contractAddress, bytes32 slot) internal returns (bytes32) {
         return vm.load(contractAddress, slot);

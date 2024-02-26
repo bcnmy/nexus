@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.24 <0.9.0;
 
-
 import "./Helpers.sol";
 import "forge-std/src/console2.sol";
 
@@ -32,7 +31,6 @@ contract BicoTestBase is Helpers {
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
         return account;
     }
-
 
     function testBico(uint256 a) public {
         a;
