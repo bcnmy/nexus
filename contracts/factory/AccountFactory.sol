@@ -5,7 +5,6 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 import { IModuleConfig } from "../interfaces/IModuleConfig.sol";
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
-import "forge-std/src/console2.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
     function createAccount(address module, uint256 index, bytes calldata data) external returns (address account) {

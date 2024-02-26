@@ -3,4 +3,6 @@
 forge-std/=node_modules/forge-std/
 modulekit/=node_modules/modulekit/src/
 account-abstraction/=node_modules/account-abstraction/
-solady=node_modules/solady
+solady/=node_modules/solady
+ds-test/=node_modules/forge-std/lib/ds-test/src/
+forge-std/=node_modules/forge-std
