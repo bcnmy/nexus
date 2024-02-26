@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 import { SmartAccount } from "../SmartAccount.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
-import { IModuleConfig } from "../interfaces/IModuleConfig.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
@@ -16,7 +16,7 @@ contract AccountFactory is IAccountFactory, StakeManager {
             return account;
         }
         account = Create2.deploy(0, salt, bytecode);
-        IModuleConfig(account).installModule(index, module, data);
+        IModuleManager(account).installModule(index, module, data);
     }
 
     /**
