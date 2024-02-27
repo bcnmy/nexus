@@ -44,8 +44,4 @@ interface IModule {
      */
     function getModuleTypes() external view returns (EncodedModuleTypes);
 
-    /**
-     * @dev Returns if the module was already initialized for a provided smartaccount
-     */
-    // function isInitialized(address smartAccount) external view returns (bool);
 }
