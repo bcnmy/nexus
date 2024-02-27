@@ -43,5 +43,4 @@ interface IModule {
      * MUST return all the bit-encoded typeIds of the module
      */
     function getModuleTypes() external view returns (EncodedModuleTypes);
-
 }
