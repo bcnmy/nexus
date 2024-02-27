@@ -26,6 +26,7 @@ library ModuleTypeLib {
         return EncodedModuleTypes.wrap(result);
     }
 
+    // TODO: marked for deletion
     function test(uint256 a) private {
         a;
     }
