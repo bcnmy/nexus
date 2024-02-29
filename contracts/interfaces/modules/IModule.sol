@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
 
 /**
  * @title ERC-7579 Module Interface

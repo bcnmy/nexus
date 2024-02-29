@@ -1,16 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "./IModule.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-
-uint256 constant VALIDATION_SUCCESS = 0;
-uint256 constant VALIDATION_FAILED = 1;
-
-uint256 constant MODULE_TYPE_VALIDATOR = 1;
-uint256 constant MODULE_TYPE_EXECUTOR = 2;
-uint256 constant MODULE_TYPE_FALLBACK = 3;
-uint256 constant MODULE_TYPE_HOOK = 4;
+import { IModule } from "./IModule.sol";
 
 interface IValidator is IModule {
     error InvalidTargetAddress(address target);
@@ -38,17 +30,4 @@ interface IValidator is IModule {
         external
         view
         returns (bytes4);
-}
-
-interface IExecutor is IModule {
-// solhint-disable-previous-line no-empty-blocks
-}
-
-interface IHook is IModule {
-    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData);
-    function postCheck(bytes calldata hookData) external returns (bool success);
-}
-
-interface IFallback is IModule {
-// solhint-disable-previous-line no-empty-blocks
 }

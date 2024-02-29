@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 /**
- * @title ERC-7579 Module Configuration Interface
+ * @title ERC-7579 Module Manager Interface
  * @dev Interface for configuring modules in a smart account.
  */
 interface IModuleManager {
+    event ModuleInstalled(uint256 moduleTypeId, address module);
+    event ModuleUninstalled(uint256 moduleTypeId, address module);
+
     /**
      * @notice Installs a Module of a certain type on the smart account.
      * @param moduleTypeId The module type ID.

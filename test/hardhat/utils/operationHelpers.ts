@@ -8,6 +8,24 @@ import {
 } from "./types";
 import { Signer, AddressLike, BytesLike, BigNumberish } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
+import { Hexable } from "@ethersproject/bytes";
+
+export const DefaultsForUserOp: UserOperation = {
+  sender: ethers.ZeroAddress,
+  nonce: 0,
+  initCode: '0x',
+  callData: '0x',
+  callGasLimit: 0,
+  verificationGasLimit: 150000, // default verification gas. Should add create2 cost (3200+200*length) if initCode exists
+  preVerificationGas: 21000, // should also cover calldata cost.
+  maxFeePerGas: 0,
+  maxPriorityFeePerGas: 1e9,
+  paymaster: ethers.ZeroAddress,
+  paymasterData: '0x',
+  paymasterVerificationGasLimit: 3e5,
+  paymasterPostOpGasLimit: 0,
+  signature: '0x'
+}
 
 /**
  * Simplifies the creation of a PackedUserOperation object by abstracting repetitive logic and enhancing readability.
@@ -27,6 +45,8 @@ export function buildPackedUserOp(userOp: UserOperation): PackedUserOperation {
     maxPriorityFeePerGas = toGwei("10"),
     paymaster = ethers.ZeroAddress,
     paymasterData = "0x",
+    paymasterVerificationGasLimit = 3_00_000,
+    paymasterPostOpGasLimit = 0,
     signature = "0x",
   } = userOp;
 
@@ -103,6 +123,16 @@ export async function buildSignedUserOp(
   return packedUserOp;
 }
 
+// TODO
+// export function packPaymasterData(paymaster: string, paymasterVerificationGasLimit: BytesLike | number | bigint, postOpGasLimit: BytesLike | number | bigint, paymasterData: string): string {
+//   return hexConcat([
+//       paymaster,
+//       hexZeroPad(BigNumber.from(paymasterVerificationGasLimit).toHexString(), 16),
+//       hexZeroPad(BigNumber.from(postOpGasLimit).toHexString(), 16),
+//       paymasterData
+//   ]);
+// }
+
 export async function signUserOperation(
   accountAddress: AddressLike,
   initCode: BytesLike,
@@ -125,14 +155,14 @@ export async function signUserOperation(
  * @param factoryAddress - The address of the AccountFactory contract.
  * @param moduleAddress - The address of the module to be installed in the smart account.
  * @param ownerAddress - The address of the owner of the new smart account.
- * @param moduleTypeId - The type of module to install, defaulting to "1".
+ * @param moduleType - The type of module to install, defaulting to "1".
  * @returns The full initialization code as a hex string.
  */
 export async function generateFullInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
-  moduleTypeId: ModuleType = ModuleType.Validation,
+  moduleType: ModuleType = ModuleType.Validation,
 ): Promise<string> {
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
@@ -141,7 +171,7 @@ export async function generateFullInitCode(
   const initCode = AccountFactory.interface
     .encodeFunctionData("createAccount", [
       moduleAddress,
-      moduleTypeId,
+      moduleType,
       moduleInitData,
     ])
     .slice(2);
@@ -154,14 +184,14 @@ export async function generateFullInitCode(
  * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
  * @param {AddressLike} factoryAddress - The address of the AccountFactory contract.
  * @param {AddressLike} moduleAddress - The address of the module to be installed in the smart account.
- * @param {number | string} moduleTypeId - The type of module to install.
+ * @param {number | string} moduleType - The type of module to install.
  * @returns {Promise<string>} The calculated CREATE2 address.
  */
 export async function getAccountAddress(
   signerAddress: AddressLike,
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
-  moduleTypeId: ModuleType = ModuleType.Validation,
+  moduleType: ModuleType = ModuleType.Validation,
 ): Promise<string> {
   // Ensure SmartAccount bytecode is fetched dynamically in case of contract upgrades
   const SmartAccount = await ethers.getContractFactory("SmartAccount");
@@ -173,7 +203,7 @@ export async function getAccountAddress(
   // Salt for CREATE2, based on module address, type, and initialization data
   const salt = ethers.solidityPackedKeccak256(
     ["address", "uint256", "bytes"],
-    [moduleAddress, moduleTypeId, moduleInitData],
+    [moduleAddress, moduleType, moduleInitData],
   );
 
   // Calculate CREATE2 address using ethers utility function

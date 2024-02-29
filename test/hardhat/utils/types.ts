@@ -17,8 +17,11 @@ export interface DeploymentFixture {
   accounts: Signer[];
   addresses: string[];
 }
+
+// Todo
+// Review: check for need of making these optional
 export interface UserOperation {
-  sender: AddressLike;
+  sender: AddressLike; // Or string
   nonce?: BigNumberish;
   initCode?: BytesLike;
   callData?: BytesLike;
@@ -27,13 +30,15 @@ export interface UserOperation {
   preVerificationGas?: BigNumberish;
   maxFeePerGas?: BigNumberish;
   maxPriorityFeePerGas?: BigNumberish;
-  paymaster?: AddressLike;
+  paymaster?: AddressLike; // Or string
+  paymasterVerificationGasLimit?: BigNumberish;
+  paymasterPostOpGasLimit?: BigNumberish;
   paymasterData?: BytesLike;
   signature?: BytesLike;
 }
 
 export interface PackedUserOperation {
-  sender: AddressLike;
+  sender: AddressLike; // Or string
   nonce: BigNumberish;
   initCode: BytesLike;
   callData: BytesLike;

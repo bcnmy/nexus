@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import { IValidator, IModule, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/IERC7579Modules.sol";
+import { IValidator, IModule, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract MockValidator is IValidator {
-    mapping(address => address) public owners;
+    mapping(address => address) public smartAccountOwners;
 
     /// @inheritdoc IValidator
     function validateUserOp(
@@ -19,7 +19,7 @@ contract MockValidator is IValidator {
         returns (uint256 validation)
     {
         return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
-            == owners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+            == smartAccountOwners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @inheritdoc IValidator
@@ -40,12 +40,12 @@ contract MockValidator is IValidator {
 
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external {
-        owners[msg.sender] = address(bytes20(data));
+        smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external {
-        delete owners[msg.sender];
+        delete smartAccountOwners[msg.sender];
     }
 
     /// @inheritdoc IModule
@@ -55,7 +55,7 @@ contract MockValidator is IValidator {
     }
 
     function isOwner(address account, address owner) external view returns (bool) {
-        return owners[account] == owner;
+        return smartAccountOwners[account] == owner;
     }
 
     /// @inheritdoc IModule

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Storage } from "./Storage.sol";
-import { IModule } from "../interfaces/IModule.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
 
+// Todo: Implement methods for installing specific module types
 contract ModuleManager is Storage, IModuleManager {
     /**
      * @notice Installs a Module of a certain type on the smart account.
@@ -12,7 +13,7 @@ contract ModuleManager is Storage, IModuleManager {
      * @param module The module address.
      * @param initData Initialization data for the module.
      */
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable virtual {
         AccountStorage storage $ = _getAccountStorage();
         $.modules[module] = module;
 
@@ -27,7 +28,7 @@ contract ModuleManager is Storage, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual {
         AccountStorage storage $ = _getAccountStorage();
         moduleTypeId;
         deInitData;

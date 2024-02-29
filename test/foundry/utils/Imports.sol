@@ -20,7 +20,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import "contracts/interfaces/base/IAccountConfig.sol";
 import "contracts/interfaces/base/IAccountExecution.sol";
 import "contracts/interfaces/base/IModuleManager.sol";
-import "contracts/interfaces/IModule.sol";
+import "contracts/interfaces/modules/IModule.sol";
 import "contracts/interfaces/base/IStorage.sol";
 import "contracts/interfaces/factory/IAccountFactory.sol";
 
