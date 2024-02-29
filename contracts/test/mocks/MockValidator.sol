@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IValidator, IModule, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/modules/IERC7579Modules.sol";
+import { IModule } from "../../interfaces/modules/IModule.sol";
+import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";

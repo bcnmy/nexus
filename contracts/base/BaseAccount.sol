@@ -39,7 +39,10 @@ abstract contract BaseAccount is IAccount {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual returns (uint256);
+    )
+        external
+        virtual
+        returns (uint256);
 
     // Todo
     /*function nonce(

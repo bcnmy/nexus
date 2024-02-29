@@ -28,7 +28,15 @@ contract ModuleManager is Storage, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual {
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    )
+        external
+        payable
+        virtual
+    {
         AccountStorage storage $ = _getAccountStorage();
         moduleTypeId;
         deInitData;

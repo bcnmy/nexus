@@ -13,19 +13,19 @@ import { Hexable } from "@ethersproject/bytes";
 export const DefaultsForUserOp: UserOperation = {
   sender: ethers.ZeroAddress,
   nonce: 0,
-  initCode: '0x',
-  callData: '0x',
+  initCode: "0x",
+  callData: "0x",
   callGasLimit: 0,
   verificationGasLimit: 150000, // default verification gas. Should add create2 cost (3200+200*length) if initCode exists
   preVerificationGas: 21000, // should also cover calldata cost.
   maxFeePerGas: 0,
   maxPriorityFeePerGas: 1e9,
   paymaster: ethers.ZeroAddress,
-  paymasterData: '0x',
+  paymasterData: "0x",
   paymasterVerificationGasLimit: 3e5,
   paymasterPostOpGasLimit: 0,
-  signature: '0x'
-}
+  signature: "0x",
+};
 
 /**
  * Simplifies the creation of a PackedUserOperation object by abstracting repetitive logic and enhancing readability.

@@ -161,7 +161,7 @@ contract Helpers is CheatCodes {
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
-            address(FACTORY), 
+            address(FACTORY),
             abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleTypeId, moduleInitData)
         );
     }
