@@ -17,7 +17,7 @@ interface IAccountConfig {
      * @param encodedMode The encoded mode.
      * @return True if the account supports the mode, false otherwise.
      */
-    function supportsAccountMode(bytes32 encodedMode) external view returns (bool);
+    function supportsExecutionMode(bytes32 encodedMode) external view returns (bool);
 
     /**
      * @notice Checks if the account supports a certain module typeId.

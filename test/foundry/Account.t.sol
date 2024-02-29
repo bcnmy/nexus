@@ -46,13 +46,13 @@ contract SmartAccountTest is BicoTestBase {
         assertEq(CHARLIE_ACCOUNT.accountId(), expectedAccountId);
     }
 
-    function testSupportsAccountMode() public {
+    function testSupportsExecutionMode() public {
         // Example encodedMode, replace with actual data
         bytes32 encodedMode = keccak256("exampleMode");
         // Assuming the SmartAccount contract has logic to support certain modes
-        assertTrue(BOB_ACCOUNT.supportsAccountMode(encodedMode));
-        assertTrue(ALICE_ACCOUNT.supportsAccountMode(encodedMode));
-        assertTrue(CHARLIE_ACCOUNT.supportsAccountMode(encodedMode));
+        assertTrue(BOB_ACCOUNT.supportsExecutionMode(encodedMode));
+        assertTrue(ALICE_ACCOUNT.supportsExecutionMode(encodedMode));
+        assertTrue(CHARLIE_ACCOUNT.supportsExecutionMode(encodedMode));
     }
 
     function testSupportsModule() public {

@@ -7,7 +7,7 @@ contract AccountConfig is IAccountConfig {
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 
     /// @inheritdoc IAccountConfig
-    function supportsAccountMode(bytes32 encodedMode) external view returns (bool) {
+    function supportsExecutionMode(bytes32 encodedMode) external view returns (bool) {
         encodedMode;
         return true;
     }

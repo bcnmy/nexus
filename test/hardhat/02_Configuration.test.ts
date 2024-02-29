@@ -28,9 +28,9 @@ describe("SmartAccount Configuration Tests", function () {
     });
 
     it("Should verify supported account modes", async function () {
-      expect(await smartAccount.supportsAccountMode(toBytes32("0x01"))).to.be
+      expect(await smartAccount.supportsExecutionMode(toBytes32("0x01"))).to.be
         .true;
-      expect(await smartAccount.supportsAccountMode(toBytes32("0xFF"))).to.be
+      expect(await smartAccount.supportsExecutionMode(toBytes32("0xFF"))).to.be
         .true;
     });
 
