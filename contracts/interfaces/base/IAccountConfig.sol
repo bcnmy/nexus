@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 /**
  * @title ERC-7579 Account Configuration Interface
@@ -10,14 +10,14 @@ interface IAccountConfig {
      * @notice Returns the account id of the smart account.
      * @return accountImplementationId The account id of the smart account.
      */
-    function accountId() external view returns (string memory accountImplementationId);
+    function accountId() external view returns (string memory);
 
     /**
      * @notice Checks if the account supports a certain execution mode.
      * @param encodedMode The encoded mode.
      * @return True if the account supports the mode, false otherwise.
      */
-    function supportsAccountMode(bytes32 encodedMode) external view returns (bool);
+    function supportsExecutionMode(bytes32 encodedMode) external view returns (bool);
 
     /**
      * @notice Checks if the account supports a certain module typeId.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import { IStorage } from "../interfaces/IStorage.sol";
+import { IStorage } from "../interfaces/base/IStorage.sol";
 
 contract Storage is IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.SmartAccount
