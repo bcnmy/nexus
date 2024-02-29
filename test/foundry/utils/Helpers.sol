@@ -116,9 +116,9 @@ contract Helpers is CheatCodes {
     function getAccountAddress(address signer) internal view returns (address account) {
         bytes memory initData = abi.encodePacked(signer);
 
-        uint256 moduleType = uint256(ModuleType.Validation);
+        uint256 moduleTypeId = uint256(ModuleType.Validation);
 
-        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), moduleType, initData);
+        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), moduleTypeId, initData);
 
         return account;
     }
@@ -156,12 +156,12 @@ contract Helpers is CheatCodes {
         returns (bytes memory initCode)
     {
         address module = address(VALIDATOR_MODULE);
-        uint256 moduleType = uint256(ModuleType.Validation);
+        uint256 moduleTypeId = uint256(ModuleType.Validation);
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
-            address(FACTORY), abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleType, moduleInitData)
+            address(FACTORY), abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleTypeId, moduleInitData)
         );
     }
 

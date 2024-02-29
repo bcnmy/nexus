@@ -6,8 +6,8 @@ type EncodedModuleTypes is uint256;
 type ModuleType is uint256;
 
 library ModuleTypeLib {
-    function isType(EncodedModuleTypes self, ModuleType moduleType) internal pure returns (bool) {
-        return (EncodedModuleTypes.unwrap(self) & (2 ** ModuleType.unwrap(moduleType))) != 0;
+    function isType(EncodedModuleTypes self, ModuleType moduleTypeId) internal pure returns (bool) {
+        return (EncodedModuleTypes.unwrap(self) & (2 ** ModuleType.unwrap(moduleTypeId))) != 0;
     }
 
     function bitEncode(ModuleType[] memory moduleTypes) internal pure returns (EncodedModuleTypes) {

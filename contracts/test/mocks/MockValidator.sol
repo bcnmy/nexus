@@ -49,8 +49,8 @@ contract MockValidator is IValidator {
     }
 
     /// @inheritdoc IModule
-    function isModuleType(uint256 typeID) external view returns (bool) {
-        typeID;
+    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
+        moduleTypeId;
         return true;
     }
 

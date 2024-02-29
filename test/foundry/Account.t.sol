@@ -64,18 +64,18 @@ contract SmartAccountTest is BicoTestBase {
     }
 
     function testInstallAndCheckModule(bytes calldata dummyInitData) public {
-        uint256 moduleType = uint256(ModuleType.Validation);
-        BOB_ACCOUNT.installModule(moduleType, address(VALIDATOR_MODULE), dummyInitData);
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), dummyInitData));
+        uint256 moduleTypeId = uint256(ModuleType.Validation);
+        BOB_ACCOUNT.installModule(moduleTypeId, address(VALIDATOR_MODULE), dummyInitData);
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, address(VALIDATOR_MODULE), dummyInitData));
         snapshotId = createSnapshot();
     }
 
     function testUninstallAndCheckModule(bytes calldata dummyInitData) public {
         revertToSnapshot(snapshotId);
-        uint256 moduleType = uint256(ModuleType.Validation);
-        vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), dummyInitData));
-        BOB_ACCOUNT.uninstallModule(moduleType, address(VALIDATOR_MODULE), dummyInitData);
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleType, address(VALIDATOR_MODULE), "0x"));
+        uint256 moduleTypeId = uint256(ModuleType.Validation);
+        vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, address(VALIDATOR_MODULE), dummyInitData));
+        BOB_ACCOUNT.uninstallModule(moduleTypeId, address(VALIDATOR_MODULE), dummyInitData);
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, address(VALIDATOR_MODULE), "0x"));
     }
 
     function testExecute() public {

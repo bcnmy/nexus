@@ -8,41 +8,41 @@ import { IModule } from "../interfaces/IModule.sol";
 contract ModuleManager is Storage, IModuleManager {
     /**
      * @notice Installs a Module of a certain type on the smart account.
-     * @param moduleType The module type ID.
+     * @param moduleTypeId The module type ID.
      * @param module The module address.
      * @param initData Initialization data for the module.
      */
-    function installModule(uint256 moduleType, address module, bytes calldata initData) external payable {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
         AccountStorage storage $ = _getAccountStorage();
         $.modules[module] = module;
 
         IModule(module).onInstall(initData);
-        moduleType;
+        moduleTypeId;
         initData;
     }
 
     /**
      * @notice Uninstalls a Module of a certain type from the smart account.
-     * @param moduleType The module type ID.
+     * @param moduleTypeId The module type ID.
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(uint256 moduleType, address module, bytes calldata deInitData) external payable {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable {
         AccountStorage storage $ = _getAccountStorage();
-        moduleType;
+        moduleTypeId;
         deInitData;
         delete $.modules[module];
     }
 
     /**
      * @notice Checks if a module is installed on the smart account.
-     * @param moduleType The module type ID.
+     * @param moduleTypeId The module type ID.
      * @param module The module address.
      * @param additionalContext Additional context for checking installation.
      * @return True if the module is installed, false otherwise.
      */
     function isModuleInstalled(
-        uint256 moduleType,
+        uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
     )
@@ -52,7 +52,7 @@ contract ModuleManager is Storage, IModuleManager {
     {
         AccountStorage storage $ = _getAccountStorage();
         additionalContext;
-        moduleType;
+        moduleTypeId;
         return $.modules[module] != address(0);
     }
 }

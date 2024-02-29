@@ -125,14 +125,14 @@ export async function signUserOperation(
  * @param factoryAddress - The address of the AccountFactory contract.
  * @param moduleAddress - The address of the module to be installed in the smart account.
  * @param ownerAddress - The address of the owner of the new smart account.
- * @param moduleType - The type of module to install, defaulting to "1".
+ * @param moduleTypeId - The type of module to install, defaulting to "1".
  * @returns The full initialization code as a hex string.
  */
 export async function generateFullInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
-  moduleType: ModuleType = ModuleType.Validation,
+  moduleTypeId: ModuleType = ModuleType.Validation,
 ): Promise<string> {
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
@@ -141,7 +141,7 @@ export async function generateFullInitCode(
   const initCode = AccountFactory.interface
     .encodeFunctionData("createAccount", [
       moduleAddress,
-      moduleType,
+      moduleTypeId,
       moduleInitData,
     ])
     .slice(2);
@@ -154,14 +154,14 @@ export async function generateFullInitCode(
  * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
  * @param {AddressLike} factoryAddress - The address of the AccountFactory contract.
  * @param {AddressLike} moduleAddress - The address of the module to be installed in the smart account.
- * @param {number | string} moduleType - The type of module to install.
+ * @param {number | string} moduleTypeId - The type of module to install.
  * @returns {Promise<string>} The calculated CREATE2 address.
  */
 export async function getAccountAddress(
   signerAddress: AddressLike,
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
-  moduleType: ModuleType = ModuleType.Validation,
+  moduleTypeId: ModuleType = ModuleType.Validation,
 ): Promise<string> {
   // Ensure SmartAccount bytecode is fetched dynamically in case of contract upgrades
   const SmartAccount = await ethers.getContractFactory("SmartAccount");
@@ -173,7 +173,7 @@ export async function getAccountAddress(
   // Salt for CREATE2, based on module address, type, and initialization data
   const salt = ethers.solidityPackedKeccak256(
     ["address", "uint256", "bytes"],
-    [moduleAddress, moduleType, moduleInitData],
+    [moduleAddress, moduleTypeId, moduleInitData],
   );
 
   // Calculate CREATE2 address using ethers utility function
