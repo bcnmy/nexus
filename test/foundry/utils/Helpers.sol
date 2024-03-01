@@ -18,7 +18,7 @@ contract Helpers is CheatCodes {
     address public BOB_ADDRESS;
     address public CHARLIE_ADDRESS;
     address public BUNDLER_ADDRESS;
-    IEntryPoint public ENTRYPOINT;
+    IEntryPointPatch public ENTRYPOINT;
     AccountFactory public FACTORY;
     MockValidator public VALIDATOR_MODULE;
 
@@ -43,9 +43,13 @@ contract Helpers is CheatCodes {
         BUNDLER_ADDRESS = BUNDLER.addr;
         vm.deal(BUNDLER_ADDRESS, 1000 ether);
 
-        ENTRYPOINT = new EntryPoint();
+        /* ENTRYPOINT = new EntryPoint();
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
-        ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032); */
+
+        ENTRYPOINT = new EntryPointPatch();
+        changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        ENTRYPOINT = IEntryPointPatch(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
 
         FACTORY = new AccountFactory();
 
@@ -169,6 +173,61 @@ contract Helpers is CheatCodes {
     function _getNonce(address account, address validator) internal returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = ENTRYPOINT.getNonce(address(account), key);
+    }
+
+    /**
+     * @dev Helper to log gas usage for an external call
+     * USAGE example:
+     * W/o logging: ENTRYPOINT.handleOpsLogGas(userOps, payable(ALICE.addr));
+     * With logging: _gasLog(address(ENTRYPOINT), 0, abi.encodeCall(IEntryPoint.handleOps, (userOps,
+     * payable(wallet.addr))));
+     */
+    function _gasLog(address dest, uint256 value, bytes memory data) internal {
+        _gasLogExecutionGas(dest, value, data);
+        _gasLogCalldataGas(data);
+    }
+
+    /**
+     * @dev Console logs the execution gas
+     */
+    function _gasLogExecutionGas(address dest, uint256 value, bytes memory data) internal {
+        console2.log("Execution gas cost (external call): ", _estimateExecutionGas(dest, value, data));
+    }
+
+    /**
+     * @dev Logs calldata gas
+     */
+    function _gasLogCalldataGas(bytes memory data) internal {
+        uint256 calldataGas = _estimateCallDataGas(data);
+        console2.log("Calldata gas cost: ", calldataGas);
+    }
+
+    /**
+     * @dev Executes the external call
+     * And returns the gasleft() difference
+     */
+    function _estimateExecutionGas(address dest, uint256 value, bytes memory data) internal returns (uint256) {
+        uint256 gasStart = gasleft();
+        (bool success, bytes memory returnData) = dest.call{ value: value }(data);
+        require(success, "Call failed");
+        return gasStart - gasleft();
+    }
+
+    /**
+     * @dev Estimates the gas cost of the calldata
+     * 0x00 costs 4 gas, 0x01-0xff costs 16 gas
+     * https://ethereum.org/en/developers/tutorials/short-abi/#cost-of-l2-transactions
+     */
+    function _estimateCallDataGas(bytes memory data) internal view returns (uint256) {
+        uint256 cost = 0;
+        for (uint256 i = 0; i < data.length; i++) {
+            if (data[i] == 0x00) {
+                cost += 4;
+            } else {
+                cost += 16;
+            }
+        }
+        return cost;
     }
 
     function testHelpers(uint256 a) public {

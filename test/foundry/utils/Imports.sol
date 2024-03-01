@@ -16,6 +16,10 @@ import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
+// EP Patch
+import { EntryPointPatch } from "contracts/test/utils/EntryPointPatch.sol";
+import { IEntryPointPatch } from "contracts/test/utils/IEntryPointPatch.sol";
+
 // Interface imports
 import "contracts/interfaces/base/IAccountConfig.sol";
 import "contracts/interfaces/base/IAccountExecution.sol";

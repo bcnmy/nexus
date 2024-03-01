@@ -95,7 +95,9 @@ contract SmartAccountTest is BicoTestBase {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessageAndGetSignatureBytes(ALICE, userOpHash);
 
-        ENTRYPOINT.handleOps(userOps, payable(ALICE.addr));
+        // See _gasLog natspec for more details
+        _gasLog(address(ENTRYPOINT), 0, abi.encodeCall(IEntryPoint.handleOps, (userOps, payable(ALICE.addr))));
+
         assertEq(COUNTER.getNumber(), 1);
     }
 
