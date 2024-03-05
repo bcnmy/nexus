@@ -1,21 +1,22 @@
 pragma solidity ^0.8.24;
 
-import { SmartAccount } from "../SmartAccount.sol";
+import { SmartAccount } from "../SmartAccount.sol"; // Review: should just use interface IMSA 
+import { LibClone } from "solady/src/utils/LibClone.sol"; // to be implemented
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
-    function createAccount(address module, uint256 index, bytes calldata data) external returns (address account) {
+    function createAccount(address module, uint256 index, bytes calldata data) external returns (address payable account) {
         bytes32 salt = keccak256(abi.encodePacked(module, index, data));
 
         bytes memory bytecode = abi.encodePacked(type(SmartAccount).creationCode);
-        account = Create2.computeAddress(salt, keccak256(bytecode));
+        account = payable(Create2.computeAddress(salt, keccak256(bytecode)));
         if (account.code.length > 0) {
             return account;
         }
-        account = Create2.deploy(0, salt, bytecode);
+        account = payable(Create2.deploy(0, salt, bytecode));
         IModuleManager(account).installModule(index, module, data);
     }
 
@@ -33,10 +34,10 @@ contract AccountFactory is IAccountFactory, StakeManager {
     )
         external
         view
-        returns (address expectedAddress)
+        returns (address payable expectedAddress)
     {
         bytes32 salt = keccak256(abi.encodePacked(module, index, data));
         bytes memory bytecode = abi.encodePacked(type(SmartAccount).creationCode);
-        expectedAddress = Create2.computeAddress(salt, keccak256(bytecode));
+        expectedAddress = payable(Create2.computeAddress(salt, keccak256(bytecode)));
     }
 }

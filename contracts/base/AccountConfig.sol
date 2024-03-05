@@ -3,6 +3,8 @@ pragma solidity ^0.8.24;
 
 import { IAccountConfig } from "../interfaces/base/IAccountConfig.sol";
 
+// TODO
+// implement methods and consider making abstract contract
 contract AccountConfig is IAccountConfig {
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 

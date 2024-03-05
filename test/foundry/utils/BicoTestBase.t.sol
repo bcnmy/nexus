@@ -13,8 +13,8 @@ contract BicoTestBase is Helpers {
         implementation = new SmartAccount();
     }
 
-    function deploySmartAccount(Vm.Wallet memory wallet) public returns (address) {
-        address account = getAccountAddress(wallet.addr);
+    function deploySmartAccount(Vm.Wallet memory wallet) public returns (address payable) {
+        address payable account = getAccountAddress(wallet.addr);
         address signer = wallet.addr;
 
         bytes memory initCode = createInitCode(wallet.addr, FACTORY.createAccount.selector);

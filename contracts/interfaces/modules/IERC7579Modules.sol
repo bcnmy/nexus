@@ -9,6 +9,8 @@ import { IHook } from "./IHook.sol";
 uint256 constant VALIDATION_SUCCESS = 0;
 uint256 constant VALIDATION_FAILED = 1;
 
+// TODO
+// Review agaisnt ModuleType enum in Structs.sol
 uint256 constant MODULE_TYPE_VALIDATOR = 1;
 uint256 constant MODULE_TYPE_EXECUTOR = 2;
 uint256 constant MODULE_TYPE_FALLBACK = 3;

@@ -5,7 +5,7 @@ import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 // TODO
-// Review this could be an abtract contract
+// Review this could be an abtract contract (or just implement interface in child contract)
 contract AccountExecution is IAccountExecution {
     /// @inheritdoc IAccountExecution
     function execute(bytes32 mode, bytes calldata executionCalldata) external payable virtual {

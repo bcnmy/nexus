@@ -6,7 +6,7 @@ import "./utils/Imports.sol";
 
 contract SmartAccountTest is BicoTestBase {
     SmartAccount public BOB_ACCOUNT;
-    SmartAccount public ALICE_ACCOUNT;
+    SmartAccount public  ALICE_ACCOUNT;
     SmartAccount public CHARLIE_ACCOUNT;
     Counter public COUNTER;
     uint256 public snapshotId;

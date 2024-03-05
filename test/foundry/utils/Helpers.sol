@@ -113,7 +113,7 @@ contract Helpers is CheatCodes {
         signature = abi.encodePacked(r, s, v);
     }
 
-    function getAccountAddress(address signer) internal view returns (address account) {
+    function getAccountAddress(address signer) internal view returns (address payable account) {
         bytes memory initData = abi.encodePacked(signer);
 
         uint256 moduleTypeId = uint256(ModuleType.Validation);
