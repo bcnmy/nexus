@@ -8,6 +8,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { Base4337Account } from "./base/Base4337Account.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import {MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR} from "./interfaces/modules/IERC7579Modules.sol";
+// import { IModularSmartAccount } from "./interfaces/IModularSmartAccount.sol";
 import "./lib/ModeLib.sol";
 
 contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base4337Account {
@@ -55,7 +56,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base433
         if (!success) revert ExecutionFailed();
     }
 
-    /*function installModule(
+    function installModule(
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
@@ -89,7 +90,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base433
         // else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         // else revert UnsupportedModuleType(moduleTypeId);
         emit ModuleUninstalled(moduleTypeId, module);
-    }*/
+    }
 
      function supportsModule(uint256 modulTypeId) external view virtual override returns (bool) {
         if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
@@ -119,7 +120,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base433
         else return false;
     }
 
-    /*function isModuleInstalled(
+    function isModuleInstalled(
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
@@ -135,5 +136,20 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base433
         // else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
         // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
-    }*/
+    }
+
+    // TODO // Review for initialize modifiers
+    // Review natspec
+    /**
+     * @dev Initializes the account. Function might be called directly, or by a Factory
+     * @param initData. encoded data that can be used during the initialization phase
+     */
+    function initialize(address firstValidator, bytes calldata initData) public payable virtual {
+        // checks if already initialized and reverts before setting the state to initialized
+        _initModuleManager();
+        _installValidator(firstValidator, initData);
+    }
+
+    // TODO
+    // Add means to upgrade
 }

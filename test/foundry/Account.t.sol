@@ -23,19 +23,20 @@ contract SmartAccountTest is BicoTestBase {
     function testAccountAddress() public {
         address validatorModuleAddress = address(VALIDATOR_MODULE);
         uint256 validationModuleType = uint256(ModuleType.Validation);
+        uint256 saDeploymentIndex = 0;
 
         // Compute and assert the account addresses for BOB, ALICE, and CHARLIE
         assertEq(
             address(BOB_ACCOUNT),
-            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(BOB.addr))
+            FACTORY.getAddress(validatorModuleAddress, abi.encodePacked(BOB.addr), saDeploymentIndex)
         );
         assertEq(
             address(ALICE_ACCOUNT),
-            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(ALICE.addr))
+            FACTORY.getAddress(validatorModuleAddress, abi.encodePacked(ALICE.addr), saDeploymentIndex)
         );
         assertEq(
             address(CHARLIE_ACCOUNT),
-            FACTORY.computeAccountAddress(validatorModuleAddress, validationModuleType, abi.encodePacked(CHARLIE.addr))
+            FACTORY.getAddress(validatorModuleAddress, abi.encodePacked(CHARLIE.addr), saDeploymentIndex)
         );
     }
 

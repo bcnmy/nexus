@@ -5,39 +5,60 @@ import { LibClone } from "solady/src/utils/LibClone.sol"; // to be implemented
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
+import { IModularSmartAccount } from "../interfaces/IModularSmartAccount.sol";
+import { MODULE_TYPE_VALIDATOR } from "../interfaces/modules/IERC7579Modules.sol";
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
-    function createAccount(address module, uint256 index, bytes calldata data) external returns (address payable account) {
-        bytes32 salt = keccak256(abi.encodePacked(module, index, data));
 
-        bytes memory bytecode = abi.encodePacked(type(SmartAccount).creationCode);
-        account = payable(Create2.computeAddress(salt, keccak256(bytecode)));
-        if (account.code.length > 0) {
-            return account;
-        }
-        account = payable(Create2.deploy(0, salt, bytecode));
-        IModuleManager(account).installModule(index, module, data);
+    address public immutable ACCOUNT_IMPLEMENTATION;
+
+    constructor(address implementation) {
+        ACCOUNT_IMPLEMENTATION = implementation;
     }
 
     /**
      * @dev Computes the expected address of a SmartAccount contract created via the factory.
-     * @param module The address of the module to be used in the SmartAccount.
+     * @param validationModule The address of the module to be used in the SmartAccount.
+     * @param moduleInstallData The initialization data for the module.
      * @param index The index or type of the module, for differentiation if needed.
-     * @param data The initialization data for the module.
      * @return expectedAddress The address at which the new SmartAccount contract will be deployed.
      */
-    function computeAccountAddress(
-        address module,
-        uint256 index,
-        bytes calldata data
+    function createAccount(address validationModule, bytes calldata moduleInstallData, uint256 index) external payable returns (address payable) {
+        bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
+
+        (bool alreadyDeployed, address account) = LibClone
+            .createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
+
+        if (!alreadyDeployed) {
+            IModularSmartAccount(account).initialize(validationModule, moduleInstallData);
+        }
+        // IModuleManager(account).installModule(MODULE_TYPE_VALIDATOR, validationModule, moduleInstallData);
+        return payable(account);
+    }
+
+    /**
+     * @dev Computes the expected address of a SmartAccount contract created via the factory.
+     * @param validationModule The address of the module to be used in the SmartAccount.
+     * @param moduleInstallData The initialization data for the module.
+     * @param index The index or type of the module, for differentiation if needed.
+     * @return expectedAddress The address at which the new SmartAccount contract will be deployed.
+     */
+    function getAddress(
+        address validationModule, bytes calldata moduleInstallData, uint256 index
     )
         external
         view
         returns (address payable expectedAddress)
     {
-        bytes32 salt = keccak256(abi.encodePacked(module, index, data));
-        bytes memory bytecode = abi.encodePacked(type(SmartAccount).creationCode);
-        expectedAddress = payable(Create2.computeAddress(salt, keccak256(bytecode)));
+        bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
+        expectedAddress = 
+          payable(
+                LibClone.predictDeterministicAddressERC1967(
+                ACCOUNT_IMPLEMENTATION,
+                salt,
+                address(this)
+            )
+          );
     }
 }

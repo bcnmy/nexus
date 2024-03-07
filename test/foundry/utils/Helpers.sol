@@ -21,6 +21,7 @@ contract Helpers is CheatCodes {
     IEntryPoint public ENTRYPOINT;
     AccountFactory public FACTORY;
     MockValidator public VALIDATOR_MODULE;
+    SmartAccount public ACCOUNT_IMPLEMENTATION;
 
     function setAddress() public virtual {
         DEPLOYER = newWallet("DEPLOYER");
@@ -47,7 +48,9 @@ contract Helpers is CheatCodes {
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
 
-        FACTORY = new AccountFactory();
+        ACCOUNT_IMPLEMENTATION = new SmartAccount();
+
+        FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
 
         VALIDATOR_MODULE = new MockValidator();
     }
@@ -118,7 +121,9 @@ contract Helpers is CheatCodes {
 
         uint256 moduleTypeId = uint256(ModuleType.Validation);
 
-        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), moduleTypeId, initData);
+        uint256 saDeploymentIndex = 0;
+
+        account = FACTORY.getAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
 
         return account;
     }

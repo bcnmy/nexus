@@ -19,10 +19,11 @@ interface IModularSmartAccount is IAccount, IAccountConfig, IAccountExecution, I
     // Error thrown when account initialization fails
     error AccountInitializationFailed();
 
+    // Review natspec
     /**
      * @dev Initializes the account. Function might be called directly, or by a Factory
-     * @param data. encoded data that can be used during the initialization phase
+     * @param initData. encoded data that can be used during the initialization phase
      */
-    function initialize(bytes calldata data) external payable;
+    function initialize(address firstValidator, bytes calldata initData) external payable;
     
 }
