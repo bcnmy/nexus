@@ -123,7 +123,7 @@ contract Helpers is CheatCodes {
 
         uint256 saDeploymentIndex = 0;
 
-        account = FACTORY.getAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
+        account = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
 
         return account;
     }
@@ -162,12 +162,13 @@ contract Helpers is CheatCodes {
     {
         address module = address(VALIDATOR_MODULE);
         uint256 moduleTypeId = uint256(ModuleType.Validation);
+        uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
             address(FACTORY),
-            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleTypeId, moduleInitData)
+            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleInitData, saDeploymentIndex)
         );
     }
 

@@ -55,6 +55,26 @@ export async function deployEntrypoint(): Promise<EntryPoint> {
 }
 
 /**
+ * Deploys the AccountFactory contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed EntryPoint contract instance.
+ */
+export async function deployAccountFactory(implementationAddress: string): Promise<AccountFactory> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const AccountFactory = await ethers.getContractFactory("AccountFactory");
+  const deterministicAccountFactory = await deployments.deploy("AccountFactory", {
+    from: addresses[0],
+    deterministicDeployment: true,
+    args: [implementationAddress]
+  });
+
+  return AccountFactory.attach(deterministicAccountFactory.address) as AccountFactory;
+}
+
+/**
  * Deploys the smart contract infrastructure required for testing.
  * This includes the EntryPoint, SmartAccount, AccountFactory, MockValidator, and Counter contracts.
  *
@@ -71,10 +91,13 @@ export async function deploySmartAccountFixture(): Promise<DeploymentFixture> {
     "SmartAccount",
     deployer,
   );
-  const factory = await deployContract<AccountFactory>(
-    "AccountFactory",
-    deployer,
-  );
+  // Review: Need to pass constructor args
+  // const factory = await deployContract<AccountFactory>(
+  //   "AccountFactory",
+  //   deployer,
+  // );
+
+  const factory = await deployAccountFactory(await smartAccount.getAddress());
   const module = await deployContract<MockValidator>("MockValidator", deployer);
   const counter = await deployContract<Counter>("Counter", deployer);
 
@@ -96,16 +119,22 @@ export async function deploySmartAccountFixture(): Promise<DeploymentFixture> {
  * @returns The deployment fixture including deployed contracts and the smart account owner.
  */
 export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
+  const saDeploymentIndex = 0;
   const owner = ethers.Wallet.createRandom();
   const [deployer, ...accounts] = await ethers.getSigners();
 
   const entryPoint = await deployEntrypoint();
-  const smartAccountFactory = await ethers.getContractFactory("SmartAccount");
-  const module = await deployContract<MockValidator>("MockValidator", deployer);
-  const factory = await deployContract<AccountFactory>(
-    "AccountFactory",
+  const smartAccountImplementation = await deployContract<SmartAccount>(
+    "SmartAccount",
     deployer,
   );
+  const smartAccountFactory = await ethers.getContractFactory("SmartAccount");
+  const module = await deployContract<MockValidator>("MockValidator", deployer);
+  // const factory = await deployContract<AccountFactory>(
+  //   "AccountFactory",
+  //   deployer,
+  // );
+  const factory = await deployAccountFactory(await smartAccountImplementation.getAddress());
   const counter = await deployContract<Counter>("Counter", deployer);
 
   // Get the addresses of the deployed contracts
@@ -121,13 +150,19 @@ export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
     ModuleType.Validation,
   );
 
+  // TODO: merked for deletion as same create2 utils can not be used
   // Get the counterfactual address of the smart account before deployment
-  const accountAddress = await getAccountAddress(
-    ownerAddress,
-    factoryAddress,
-    moduleAddress,
-    ModuleType.Validation,
-  );
+  // const accountAddress = await getAccountAddress(
+  //   ownerAddress,
+  //   factoryAddress,
+  //   moduleAddress,
+  //   ModuleType.Validation,
+  // );
+
+  // Module initialization data, encoded
+  const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+
+  const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
 
   // Sign the user operation for deploying the smart account
   const packedUserOp = await signUserOperation(

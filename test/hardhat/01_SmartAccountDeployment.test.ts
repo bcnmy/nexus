@@ -69,6 +69,8 @@ describe("SmartAccount Contract Integration Tests", function () {
     it("Should handle account creation correctly, including when the account already exists", async function () {
       const SmartAccount = await ethers.getContractFactory("SmartAccount");
 
+      const saDeploymentIndex = 0;
+
       const data = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address"],
         [ownerAddress],
@@ -77,21 +79,24 @@ describe("SmartAccount Contract Integration Tests", function () {
       // Calculate expected account address
       const salt = ethers.keccak256(
         ethers.solidityPacked(
-          ["address", "uint256", "bytes"],
-          [moduleAddress, ModuleType.Validation, data],
+          ["address", "bytes", "uint256"],
+          [moduleAddress, data, saDeploymentIndex],
         ),
       );
       const bytecodeHash = ethers.keccak256(SmartAccount.bytecode);
 
+      // Todo: Marked for deletion. same Create2 utils would not work here as we're not using it directly
       // First account creation attempt
-      const expectedAccountAddress = ethers.getCreate2Address(
-        factoryAddress.toString(),
-        salt,
-        bytecodeHash,
-      );
+      // const expectedAccountAddress = ethers.getCreate2Address(
+      //   factoryAddress.toString(),
+      //   salt,
+      //   bytecodeHash,
+      // );
+
+      const expectedAccountAddress = await factory.getCounterFactualAddress(moduleAddress, data, saDeploymentIndex);
 
       // First account creation attempt
-      await factory.createAccount(moduleAddress, ModuleType.Validation, data);
+      await factory.createAccount(moduleAddress, data, saDeploymentIndex);
 
       // Verify that the account was created
       const codeAfterFirstCreation = await ethers.provider.getCode(
@@ -103,7 +108,7 @@ describe("SmartAccount Contract Integration Tests", function () {
       );
 
       // Second account creation attempt with the same parameters
-      await factory.createAccount(moduleAddress, ModuleType.Validation, data);
+      await factory.createAccount(moduleAddress, data, saDeploymentIndex);
 
       // Verify that the account address remains the same and no additional deployment occurred
       const codeAfterSecondCreation = await ethers.provider.getCode(
@@ -118,6 +123,7 @@ describe("SmartAccount Contract Integration Tests", function () {
 
   describe("SmartAccount Deployment via EntryPoint", function () {
     it("Should successfully deploy a SmartAccount via the EntryPoint", async function () {
+      const saDeploymentIndex = 0;
       // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
       const initCode = await generateFullInitCode(
         ownerAddress,
@@ -126,13 +132,19 @@ describe("SmartAccount Contract Integration Tests", function () {
         ModuleType.Validation,
       );
 
+      // Module initialization data, encoded
+      const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+
+      const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
+
+      // TODO: marked for deletion as it can not work with same create2 utils
       // Calculate the expected account address
-      const accountAddress = await getAccountAddress(
-        ownerAddress,
-        factoryAddress,
-        moduleAddress,
-        ModuleType.Validation,
-      );
+      // const accountAddress = await getAccountAddress(
+      //   ownerAddress,
+      //   factoryAddress,
+      //   moduleAddress,
+      //   ModuleType.Validation,
+      // );
 
       const nonce = await entryPoint.getNonce(
         accountAddress,
@@ -157,18 +169,26 @@ describe("SmartAccount Contract Integration Tests", function () {
     });
 
     it("Should fail SmartAccount deployment with an unauthorized signer", async function () {
+      const saDeploymentIndex = 0;
       const initCode = await generateFullInitCode(
         ownerAddress,
         factoryAddress,
         moduleAddress,
         ModuleType.Validation,
       );
-      const accountAddress = await getAccountAddress(
-        ownerAddress,
-        factoryAddress,
-        moduleAddress,
-        ModuleType.Validation,
-      );
+       // Module initialization data, encoded
+       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+
+       const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
+ 
+       // TODO: marked for deletion as it can not work with same create2 utils
+       // Calculate the expected account address
+       // const accountAddress = await getAccountAddress(
+       //   ownerAddress,
+       //   factoryAddress,
+       //   moduleAddress,
+       //   ModuleType.Validation,
+       // );
 
       const nonce = await entryPoint.getNonce(
         accountAddress,

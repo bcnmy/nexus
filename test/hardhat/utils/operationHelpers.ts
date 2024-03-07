@@ -163,6 +163,7 @@ export async function generateFullInitCode(
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
   moduleType: ModuleType = ModuleType.Validation,
+  saDeploymentIndex: number = 0,
 ): Promise<string> {
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
@@ -171,13 +172,15 @@ export async function generateFullInitCode(
   const initCode = AccountFactory.interface
     .encodeFunctionData("createAccount", [
       moduleAddress,
-      moduleType,
       moduleInitData,
+      saDeploymentIndex
     ])
     .slice(2);
 
   return factoryAddress + initCode;
 }
+
+// REVIEW 
 
 /**
  * Calculates the CREATE2 address for a smart account deployment.
@@ -192,6 +195,7 @@ export async function getAccountAddress(
   factoryAddress: AddressLike,
   moduleAddress: AddressLike,
   moduleType: ModuleType = ModuleType.Validation,
+  saDeploymentIndex: number = 0,
 ): Promise<string> {
   // Ensure SmartAccount bytecode is fetched dynamically in case of contract upgrades
   const SmartAccount = await ethers.getContractFactory("SmartAccount");
@@ -202,8 +206,8 @@ export async function getAccountAddress(
 
   // Salt for CREATE2, based on module address, type, and initialization data
   const salt = ethers.solidityPackedKeccak256(
-    ["address", "uint256", "bytes"],
-    [moduleAddress, moduleType, moduleInitData],
+    ["address", "bytes", "uint256"],
+    [moduleAddress, moduleInitData, saDeploymentIndex],
   );
 
   // Calculate CREATE2 address using ethers utility function

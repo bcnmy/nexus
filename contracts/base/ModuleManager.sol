@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import {Receiver} from "solady/src/accounts/Receiver.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";

@@ -44,7 +44,7 @@ contract AccountFactory is IAccountFactory, StakeManager {
      * @param index The index or type of the module, for differentiation if needed.
      * @return expectedAddress The address at which the new SmartAccount contract will be deployed.
      */
-    function getAddress(
+    function getCounterFactualAddress(
         address validationModule, bytes calldata moduleInstallData, uint256 index
     )
         external

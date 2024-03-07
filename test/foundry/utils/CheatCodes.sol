@@ -34,6 +34,10 @@ contract CheatCodes is Test {
         vm.assume(condition);
     }
 
+    function prank(address addr) internal {
+        vm.prank(addr);
+    }
+
     function startPrank(address addr) internal {
         vm.startPrank(addr);
     }
