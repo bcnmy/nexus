@@ -3,12 +3,14 @@ pragma solidity ^0.8.24;
 
 import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { ModeCode } from "../lib/ModeLib.sol";
 
-// TODO
-// Review this could be an abtract contract (or just implement interface in child contract)
-contract AccountExecution is IAccountExecution {
+// Review interface may not be needed at all if child account uses full holistic interface
+// Note: execution helper internal methods can be added here
+abstract contract AccountExecution is IAccountExecution {
+    error ExecutionFailed();
     /// @inheritdoc IAccountExecution
-    function execute(bytes32 mode, bytes calldata executionCalldata) external payable virtual {
+    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
         mode;
         (address target, uint256 value, bytes memory callData) =
             abi.decode(executionCalldata, (address, uint256, bytes));
@@ -17,7 +19,7 @@ contract AccountExecution is IAccountExecution {
 
     /// @inheritdoc IAccountExecution
     function executeFromExecutor(
-        bytes32 mode,
+        ModeCode mode,
         bytes calldata executionCalldata
     )
         external
@@ -31,9 +33,11 @@ contract AccountExecution is IAccountExecution {
         target.call{ value: value }(callData);
     }
 
+    // Review: could make internal virtual function and call from executeUserOp
     /// @inheritdoc IAccountExecution
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual {
-        userOp;
-        userOpHash;
-    }
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual; 
+    // {
+    //     userOp;
+    //     userOpHash;
+    // }
 }

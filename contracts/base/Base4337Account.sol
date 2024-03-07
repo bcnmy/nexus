@@ -2,8 +2,9 @@
 pragma solidity ^0.8.24;
 
 import { IAccount, PackedUserOperation } from "../interfaces/IAccount.sol";
+import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
-abstract contract BaseAccount is IAccount {
+abstract contract Base4337Account is IAccount {
     error AccountAccessUnauthorized();
     /////////////////////////////////////////////////////
     // Access Control
@@ -44,12 +45,11 @@ abstract contract BaseAccount is IAccount {
         virtual
         returns (uint256);
 
-    // Todo
-    /*function nonce(
+    function nonce(
         uint192 key
-    ) public view virtual override returns (uint256) {
-        return entryPoint().getNonce(address(this), key);
-    }*/
+    ) public view virtual returns (uint256) {
+        return IEntryPoint(entryPoint()).getNonce(address(this), key);
+    }
 
     function entryPoint() public view virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;

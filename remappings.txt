@@ -4,4 +4,5 @@ forge-std/=node_modules/forge-std/
 modulekit/=node_modules/modulekit/src/
 account-abstraction/=node_modules/account-abstraction/
 solady/=node_modules/solady
+sentinellist/=node_modules/sentinellist/
 ds-test/=node_modules/ds-test/src/

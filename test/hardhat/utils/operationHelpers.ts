@@ -255,7 +255,7 @@ export async function generateExecutionCallData(
   userOpHash = "0x",
 ): Promise<string> {
   // Fetch the signer from the contract object
-  const AccountExecution = await ethers.getContractFactory("AccountExecution");
+  const AccountExecution = await ethers.getContractFactory("SmartAccount");
 
   const targetAddress = await targetContract.getAddress();
   // Encode the target function call data

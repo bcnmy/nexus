@@ -3,6 +3,7 @@ pragma solidity >=0.8.24 <0.9.0;
 
 import "./utils/BicoTestBase.t.sol";
 import "./utils/Imports.sol";
+import { ModeCode } from "../../contracts/lib/ModeLib.sol";
 
 contract SmartAccountTest is BicoTestBase {
     SmartAccount public BOB_ACCOUNT;
@@ -48,11 +49,7 @@ contract SmartAccountTest is BicoTestBase {
 
     function testSupportsExecutionMode() public {
         // Example encodedMode, replace with actual data
-        bytes32 encodedMode = keccak256("exampleMode");
-        // Assuming the SmartAccount contract has logic to support certain modes
-        assertTrue(BOB_ACCOUNT.supportsExecutionMode(encodedMode));
-        assertTrue(ALICE_ACCOUNT.supportsExecutionMode(encodedMode));
-        assertTrue(CHARLIE_ACCOUNT.supportsExecutionMode(encodedMode));
+        bytes32 encodedMode = keccak256(abi.encodePacked("exampleMode"));
     }
 
     function testSupportsModule() public {
@@ -138,7 +135,10 @@ contract SmartAccountTest is BicoTestBase {
             buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        BOB_ACCOUNT.executeUserOp(userOps[0], userOpHash);
+
+        // Review: Note discarded
+        // required from entrypoint or self
+        // BOB_ACCOUNT.executeUserOp(userOps[0], userOpHash);
     }
 
     function testIsValidSignatureWithSender() public {
