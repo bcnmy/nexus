@@ -1,7 +1,7 @@
 {
   "name": "erc7579-modular-smart-account",
   "description": "ERC7579 Modular Smart Account",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Biconomy",
     "url": "https://github.com/bcnmy"
