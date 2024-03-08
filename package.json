@@ -1,7 +1,7 @@
 {
   "name": "erc7579-modular-smart-account",
   "description": "ERC7579 Modular Smart Account",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Biconomy",
     "url": "https://github.com/bcnmy"
@@ -37,6 +37,8 @@
     "hardhat-storage-layout": "^0.1.7",
     "husky": "^9.0.11",
     "modulekit": "github:rhinestonewtf/modulekit",
+    "husky": "^9.0.11",
+    "modulekit": "github:rhinestonewtf/modulekit",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "solady": "github:Vectorized/solady",
@@ -48,6 +50,12 @@
     "typescript": ">=5.3.3"
   },
   "keywords": [
+    "erc7579",
+    "erc-7579",
+    "modular smart account",
+    "smart account",
+    "account abstraction",
+    "erc4337",
     "erc7579",
     "erc-7579",
     "modular smart account",
