@@ -30,7 +30,6 @@ import "contracts/base/AccountExecution.sol";
 import "contracts/base/ModuleManager.sol";
 import "contracts/SmartAccount.sol";
 import "contracts/factory/AccountFactory.sol";
-import "contracts/SmartAccount.sol";
 
 // Mock contracts for testing
 import "contracts/test/mocks/MockValidator.sol";
