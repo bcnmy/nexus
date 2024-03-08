@@ -10,6 +10,10 @@ import { ModeCode } from "../../lib/ModeLib.sol";
  * including ERC7579 executions and ERC-4337 user operations as per ERC-4337-v-0.7
  */
 interface IAccountExecution {
+    error ExecutionFailed();
+
+    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+
     /**
      * @notice ERC7579 Main Execution flow.
      * Executes a transaction on behalf of the account.
