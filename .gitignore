@@ -1,10 +1,13 @@
 # directories
 cache
+cache_forge
 coverage
 node_modules
 out
 docs
 storageLayout
+.husky
+deployments
 
 # files
 *.env
@@ -42,3 +45,4 @@ node_modules
 
 # Foundry cache
 cache_forge/solidity-files-cache.json
+.vscode/settings.json

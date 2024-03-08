@@ -3,8 +3,6 @@ name: PR Automation Workflow
 on:
   pull_request:
     branches:
-      - main
-      - dev
       - release/*
       - fix/*
 
@@ -41,17 +39,3 @@ jobs:
             echo "Error: The version should be updated on following files: ${MISSING_UPDATES[*]}"
             exit 1
           fi
-
-  mirror-fix-to-dev:
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.base.ref == 'main' && contains(github.head_ref, 'fix/')
-    steps:
-      - uses: actions/checkout@v4
-      - name: Auto-create PR to dev for fix branches
-        uses: peter-evans/create-pull-request@v3
-        with:
-          branch: sync-${{ github.head_ref }}-to-dev
-          base: dev
-          title: "[AUTO] Sync ${{ github.head_ref }} to dev"
-          body: "Automated PR to sync changes from ${{ github.head_ref }} to dev."
-          token: ${{ secrets.PAT_TOKEN }}
