@@ -4,7 +4,7 @@ pragma solidity >=0.8.24 <0.9.0;
 import "./utils/BicoTestBase.t.sol";
 import "./utils/Imports.sol";
 import { ModeCode, ModeLib } from "../../contracts/lib/ModeLib.sol";
-import { Exec } from "../../contracts/utils/Exec.sol";
+import { ExecLib } from "../../contracts/lib/ExecLib.sol";
 
 contract SmartAccountTest is BicoTestBase {
     SmartAccount public BOB_ACCOUNT;
@@ -98,6 +98,20 @@ contract SmartAccountTest is BicoTestBase {
         userOps[0] =
             buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
         userOps[0].callData = abi.encodeWithSignature("execute(bytes32,bytes)", mode, executionCalldata);
+
+bytes memory userOpCalldata = abi.encodeCall(
+            IAccountExecution.execute,
+            (
+                ModeLib.encodeSimpleSingle(),
+                ExecLib.encodeSingle(
+                    address(COUNTER),
+                    uint256(0),
+                    counterCallData
+                )
+            )
+        );
+
+        userOps[0].callData = userOpCalldata;
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessageAndGetSignatureBytes(ALICE, userOpHash);
