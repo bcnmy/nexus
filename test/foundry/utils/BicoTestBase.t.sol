@@ -13,6 +13,10 @@ contract BicoTestBase is Helpers {
         implementation = new SmartAccount();
     }
 
+    // Note: could be renamed to getDeployedSmartAccount 
+    // Note: should have method to get counterfactual account and initcode
+    // Refer to the reference implementatino repo for this 
+
     function deploySmartAccount(Vm.Wallet memory wallet) public returns (address payable) {
         address payable account = getAccountAddress(wallet.addr);
         address signer = wallet.addr;

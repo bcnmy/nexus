@@ -3,8 +3,8 @@ pragma solidity >=0.8.24 <0.9.0;
 
 import "./utils/BicoTestBase.t.sol";
 import "./utils/Imports.sol";
-import { ModeCode } from "../../contracts/lib/ModeLib.sol";
-import {MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR} from "../../contracts/interfaces/modules/IERC7579Modules.sol";
+import { ModeCode, ModeLib } from "../../contracts/lib/ModeLib.sol";
+import { Exec } from "../../contracts/utils/Exec.sol";
 
 contract SmartAccountTest is BicoTestBase {
     SmartAccount public BOB_ACCOUNT;
@@ -52,13 +52,13 @@ contract SmartAccountTest is BicoTestBase {
     }
 
     function testSupportsExecutionMode() public {
-        // Example encodedMode, replace with actual data
-        bytes32 encodedMode = keccak256(abi.encodePacked("exampleMode"));
+        assertEq(BOB_ACCOUNT.supportsExecutionMode(ModeLib.encodeSimpleSingle()), true);
+        assertEq(BOB_ACCOUNT.supportsExecutionMode(ModeLib.encodeSimpleBatch()), true);
     }
 
     function testSupportsModule() public {
-        uint256 moduleTypeId = 1; // Example module type ID
-        // Assuming the SmartAccount contract has logic to support certain module types
+        uint256 moduleTypeId = MODULE_TYPE_VALIDATOR;
+        // SmartAccount (by means of deployment and implementation) has logic to support certain module types
         assertTrue(BOB_ACCOUNT.supportsModule(moduleTypeId));
         assertTrue(ALICE_ACCOUNT.supportsModule(moduleTypeId));
         assertTrue(CHARLIE_ACCOUNT.supportsModule(moduleTypeId));
