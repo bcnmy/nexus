@@ -27,7 +27,7 @@ abstract contract Base4337Account is IAccount {
     modifier payPrefund(uint256 missingAccountFunds) virtual {
         _;
         /// @solidity memory-safe-assembly
-        assembly ("memory-safe") {
+        assembly {
             if missingAccountFunds {
                 // Ignore failure (it's EntryPoint's job to verify, not the account's).
                 pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))

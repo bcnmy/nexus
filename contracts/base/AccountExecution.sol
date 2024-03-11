@@ -68,7 +68,7 @@ abstract contract AccountExecution is IAccountExecution {
         bytes calldata callData
     ) internal virtual returns (bytes memory result) {
         /// @solidity memory-safe-assembly
-        assembly ("memory-safe") {
+        assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             if iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00)) {
@@ -89,7 +89,7 @@ abstract contract AccountExecution is IAccountExecution {
         bytes calldata callData
     ) internal virtual returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
-        assembly ("memory-safe") {
+        assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             success := iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00))
@@ -103,7 +103,7 @@ abstract contract AccountExecution is IAccountExecution {
     /// @dev Execute a delegatecall with `delegate` on this account.
     function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
         /// @solidity memory-safe-assembly
-        assembly ("memory-safe") {
+        assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             // Forwards the `data` to `delegate` via delegatecall.
@@ -125,7 +125,7 @@ abstract contract AccountExecution is IAccountExecution {
         bytes calldata callData
     ) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
-        assembly ("memory-safe") {
+        assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             // Forwards the `data` to `delegate` via delegatecall.
