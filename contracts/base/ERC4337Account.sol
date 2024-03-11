@@ -17,6 +17,13 @@ abstract contract ERC4337Account is IERC4337Account {
         _;
     }
 
+    modifier onlyEntryPoint() virtual {
+        if (msg.sender != entryPoint()) {
+            revert AccountAccessUnauthorized();
+        }
+        _;
+    }
+
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
     /// Subclass MAY override this modifier for better funds management.
     /// (e.g. send to the EntryPoint more than the minimum required, so that in future transactions
