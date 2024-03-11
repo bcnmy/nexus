@@ -17,7 +17,7 @@ library ExecLib {
         abi.encode(IERC7579Execution.Execution[])
          */
         // solhint-disable-next-line no-inline-assembly
-        assembly ("memory-safe") {
+        assembly {
             let dataPointer := add(callData.offset, calldataload(callData.offset))
 
             // Extract the ERC7579 Executions
