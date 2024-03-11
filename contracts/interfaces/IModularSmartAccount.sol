@@ -9,7 +9,6 @@ import { IModuleManager } from "./base/IModuleManager.sol";
 import { CallType, ExecType } from "../lib/ModeLib.sol";
 
 interface IModularSmartAccount is IAccount, IAccountConfig, IAccountExecution, IModuleManager {
-
     // Error thrown when an unsupported ModuleType is requested
     error UnsupportedModuleType(uint256 moduleTypeId);
     // Error thrown when an execution with an unsupported CallType was made
@@ -25,5 +24,4 @@ interface IModularSmartAccount is IAccount, IAccountConfig, IAccountExecution, I
      * @param initData. encoded data that can be used during the initialization phase
      */
     function initialize(address firstValidator, bytes calldata initData) external payable;
-    
 }

@@ -9,10 +9,10 @@ abstract contract AccountConfig is IAccountConfig {
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 
     /// @inheritdoc IAccountConfig
-    function supportsExecutionMode(ModeCode encodedMode) external virtual view returns (bool);
+    function supportsExecutionMode(ModeCode encodedMode) external view virtual returns (bool);
 
     /// @inheritdoc IAccountConfig
-    function supportsModule(uint256 moduleTypeId) external virtual view returns (bool);
+    function supportsModule(uint256 moduleTypeId) external view virtual returns (bool);
 
     /// @inheritdoc IAccountConfig
     function accountId() external pure virtual returns (string memory) {

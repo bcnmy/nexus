@@ -12,8 +12,10 @@ abstract contract AccountExecution is IAccountExecution {
     /// @inheritdoc IAccountExecution
     function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
         mode;
-        (address target, uint256 value, bytes memory callData) =
-            abi.decode(executionCalldata, (address, uint256, bytes));
+        (address target, uint256 value, bytes memory callData) = abi.decode(
+            executionCalldata,
+            (address, uint256, bytes)
+        );
         target.call{ value: value }(callData);
     }
 
@@ -21,21 +23,18 @@ abstract contract AccountExecution is IAccountExecution {
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        virtual
-        returns (bytes[] memory returnData)
-    {
+    ) external payable virtual returns (bytes[] memory returnData) {
         mode;
-        (address target, uint256 value, bytes memory callData) =
-            abi.decode(executionCalldata, (address, uint256, bytes));
+        (address target, uint256 value, bytes memory callData) = abi.decode(
+            executionCalldata,
+            (address, uint256, bytes)
+        );
         target.call{ value: value }(callData);
     }
 
     // Review: could make internal virtual function and call from executeUserOp
     /// @inheritdoc IAccountExecution
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual; 
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
     // {
     //     userOp;
     //     userOpHash;
@@ -51,15 +50,12 @@ abstract contract AccountExecution is IAccountExecution {
         }
     }
 
-    function _tryExecute(Execution[] calldata executions)
-        internal
-        returns (bytes[] memory result)
-    {
+    function _tryExecute(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
         result = new bytes[](length);
 
         for (uint256 i; i < length; i++) {
-            Execution calldata _exec = executions[i];
+            Execution calldata exec = executions[i];
             bool success;
             (success, result[i]) = _tryExecute(_exec.target, _exec.value, _exec.callData);
             if (!success) emit TryExecuteUnsuccessful(i, result[i]);
@@ -70,11 +66,7 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    )
-        internal
-        virtual
-        returns (bytes memory result)
-    {
+    ) internal virtual returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly ("memory-safe") {
             result := mload(0x40)
@@ -95,11 +87,7 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    )
-        internal
-        virtual
-        returns (bool success, bytes memory result)
-    {
+    ) internal virtual returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly ("memory-safe") {
             result := mload(0x40)
@@ -113,13 +101,7 @@ abstract contract AccountExecution is IAccountExecution {
     }
 
     /// @dev Execute a delegatecall with `delegate` on this account.
-    function _executeDelegatecall(
-        address delegate,
-        bytes calldata callData
-    )
-        internal
-        returns (bytes memory result)
-    {
+    function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly ("memory-safe") {
             result := mload(0x40)
@@ -141,23 +123,17 @@ abstract contract AccountExecution is IAccountExecution {
     function _tryExecuteDelegatecall(
         address delegate,
         bytes calldata callData
-    )
-        internal
-        returns (bool success, bytes memory result)
-    {
+    ) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly ("memory-safe") {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             // Forwards the `data` to `delegate` via delegatecall.
-            success :=
-                iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00))
+            success := iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00))
             mstore(result, returndatasize()) // Store the length.
             let o := add(result, 0x20)
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
         }
     }
-
-
 }

@@ -40,16 +40,11 @@ abstract contract Base4337Account is IAccount {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    )
-        external
-        virtual
-        returns (uint256);
+    ) external virtual returns (uint256);
 
     // Review
     // We would need util method to getNonce based on validator as validator gets encoded in the nonce
-    function nonce(
-        uint192 key
-    ) public view virtual returns (uint256) {
+    function nonce(uint192 key) public view virtual returns (uint256) {
         return IEntryPoint(entryPoint()).getNonce(address(this), key);
     }
 

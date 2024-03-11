@@ -1,6 +1,6 @@
 pragma solidity ^0.8.24;
 
-import { SmartAccount } from "../SmartAccount.sol"; // Review: should just use interface IMSA 
+import { SmartAccount } from "../SmartAccount.sol"; // Review: should just use interface IMSA
 import { LibClone } from "solady/src/utils/LibClone.sol"; // to be implemented
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
@@ -10,7 +10,6 @@ import { MODULE_TYPE_VALIDATOR } from "../interfaces/modules/IERC7579Modules.sol
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
-
     address public immutable ACCOUNT_IMPLEMENTATION;
 
     constructor(address implementation) {
@@ -24,11 +23,18 @@ contract AccountFactory is IAccountFactory, StakeManager {
      * @param index The index or type of the module, for differentiation if needed.
      * @return expectedAddress The address at which the new SmartAccount contract will be deployed.
      */
-    function createAccount(address validationModule, bytes calldata moduleInstallData, uint256 index) external payable returns (address payable) {
+    function createAccount(
+        address validationModule,
+        bytes calldata moduleInstallData,
+        uint256 index
+    ) external payable returns (address payable) {
         bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
 
-        (bool alreadyDeployed, address account) = LibClone
-            .createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
+        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(
+            msg.value,
+            ACCOUNT_IMPLEMENTATION,
+            salt
+        );
 
         if (!alreadyDeployed) {
             IModularSmartAccount(account).initialize(validationModule, moduleInstallData);
@@ -45,20 +51,13 @@ contract AccountFactory is IAccountFactory, StakeManager {
      * @return expectedAddress The address at which the new SmartAccount contract will be deployed.
      */
     function getCounterFactualAddress(
-        address validationModule, bytes calldata moduleInstallData, uint256 index
-    )
-        external
-        view
-        returns (address payable expectedAddress)
-    {
+        address validationModule,
+        bytes calldata moduleInstallData,
+        uint256 index
+    ) external view returns (address payable expectedAddress) {
         bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
-        expectedAddress = 
-          payable(
-                LibClone.predictDeterministicAddressERC1967(
-                ACCOUNT_IMPLEMENTATION,
-                salt,
-                address(this)
-            )
-          );
+        expectedAddress = payable(
+            LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this))
+        );
     }
 }

@@ -34,10 +34,7 @@ interface IAccountExecution {
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        returns (bytes[] memory returnData);
+    ) external payable returns (bytes[] memory returnData);
 
     /**
      * @notice Executes a user operation as per ERC-4337.

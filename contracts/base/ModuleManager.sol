@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
-import {Receiver} from "solady/src/accounts/Receiver.sol";
+import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
@@ -40,13 +40,11 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         ams.validators.init();
     }
 
-    function isAlreadyInitialized() internal view virtual returns (bool) {
+    function _isAlreadyInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized();
     }
-
-    
 
     // /////////////////////////////////////////////////////
     // //  Manage Validators
@@ -73,7 +71,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         return validators.contains(validator);
     }
-
 
     //  /////////////////////////////////////////////////////
     // //  Manage Executors
@@ -114,7 +111,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule( uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
      * @notice Checks if a module is installed on the smart account.
@@ -123,5 +120,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param additionalContext Additional context for checking installation.
      * @return True if the module is installed, false otherwise.
      */
-    function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view virtual returns (bool);
+    function isModuleInstalled(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    ) external view virtual returns (bool);
 }

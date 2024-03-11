@@ -15,12 +15,12 @@ contract MockValidator is IValidator {
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    )
-        external
-        returns (uint256 validation)
-    {
-        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
-            == smartAccountOwners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+    ) external returns (uint256 validation) {
+        return
+            ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) ==
+                smartAccountOwners[msg.sender]
+                ? VALIDATION_SUCCESS
+                : VALIDATION_FAILED;
     }
 
     /// @inheritdoc IValidator
@@ -28,11 +28,7 @@ contract MockValidator is IValidator {
         address sender,
         bytes32 hash,
         bytes calldata data
-    )
-        external
-        view
-        returns (bytes4)
-    {
+    ) external view returns (bytes4) {
         sender;
         hash;
         data;

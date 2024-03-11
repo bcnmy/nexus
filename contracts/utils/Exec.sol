@@ -15,11 +15,7 @@ import { Execution } from "../interfaces/modules/IExecutor.sol";
 // can extend as necessary for Execution Lib
 
 library Exec {
-    function decodeBatch(bytes calldata callData)
-        internal
-        pure
-        returns (Execution[] calldata executionBatch)
-    {
+    function decodeBatch(bytes calldata callData) internal pure returns (Execution[] calldata executionBatch) {
         /*
          * Batch Call Calldata Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
@@ -37,19 +33,13 @@ library Exec {
         }
     }
 
-    function encodeBatch(Execution[] memory executions)
-        internal
-        pure
-        returns (bytes memory callData)
-    {
+    function encodeBatch(Execution[] memory executions) internal pure returns (bytes memory callData) {
         callData = abi.encode(executions);
     }
 
-    function decodeSingle(bytes calldata executionCalldata)
-        internal
-        pure
-        returns (address target, uint256 value, bytes calldata callData)
-    {
+    function decodeSingle(
+        bytes calldata executionCalldata
+    ) internal pure returns (address target, uint256 value, bytes calldata callData) {
         target = address(bytes20(executionCalldata[0:20]));
         value = uint256(bytes32(executionCalldata[20:52]));
         callData = executionCalldata[52:];
@@ -59,11 +49,7 @@ library Exec {
         address target,
         uint256 value,
         bytes memory callData
-    )
-        internal
-        pure
-        returns (bytes memory userOpCalldata)
-    {
+    ) internal pure returns (bytes memory userOpCalldata) {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }
 }
