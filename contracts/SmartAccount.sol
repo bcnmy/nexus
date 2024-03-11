@@ -5,20 +5,20 @@ import { AccountConfig } from "./base/AccountConfig.sol";
 import { AccountExecution } from "./base/AccountExecution.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { Base4337Account } from "./base/Base4337Account.sol";
+import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "./interfaces/modules/IERC7579Modules.sol";
 // import { IModularSmartAccount } from "./interfaces/IModularSmartAccount.sol";
 import "./lib/ModeLib.sol";
 
-contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, Base4337Account {
+contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337Account {
     using ModeLib for ModeCode;
 
     constructor() {
         // solhint-disable-previous-line no-empty-blocks
     }
 
-    /// @inheritdoc Base4337Account
+    /// @inheritdoc ERC4337Account
     /// @dev expects IValidator module address to be encoded in the nonce
     function validateUserOp(
         PackedUserOperation calldata userOp,

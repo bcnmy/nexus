@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IAccount, PackedUserOperation } from "../interfaces/IAccount.sol";
+import { IERC4337Account, PackedUserOperation } from "../interfaces/IERC4337Account.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
-abstract contract Base4337Account is IAccount {
+abstract contract ERC4337Account is IERC4337Account {
     error AccountAccessUnauthorized();
     /////////////////////////////////////////////////////
     // Access Control
@@ -35,7 +35,7 @@ abstract contract Base4337Account is IAccount {
         }
     }
 
-    /// @inheritdoc IAccount
+    /// @inheritdoc IERC4337Account
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,

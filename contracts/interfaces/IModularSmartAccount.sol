@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IAccount } from "./IAccount.sol";
+import { IERC4337Account } from "./IERC4337Account.sol";
 import { IAccountConfig } from "./base/IAccountConfig.sol";
 import { IAccountExecution } from "./base/IAccountExecution.sol";
 import { IModuleManager } from "./base/IModuleManager.sol";
 
 import { CallType, ExecType } from "../lib/ModeLib.sol";
 
-interface IModularSmartAccount is IAccount, IAccountConfig, IAccountExecution, IModuleManager {
+interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecution, IModuleManager {
     // Error thrown when an unsupported ModuleType is requested
     error UnsupportedModuleType(uint256 moduleTypeId);
     // Error thrown when an execution with an unsupported CallType was made

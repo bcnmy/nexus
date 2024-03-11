@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-interface IAccount {
+interface IERC4337Account {
     /**
      * Validate user's signature and nonce
      * the entryPoint will make the call to the recipient only if this validation call returns successfully.

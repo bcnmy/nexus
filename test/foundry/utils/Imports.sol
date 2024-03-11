@@ -15,6 +15,7 @@ import { PRBTest } from "@prb/test/src/PRBTest.sol";
 import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { VerifyingPaymaster } from "account-abstraction/contracts/samples/VerifyingPaymaster.sol";
 
 // Interface imports
 import "contracts/interfaces/base/IAccountConfig.sol";
@@ -23,6 +24,7 @@ import "contracts/interfaces/base/IModuleManager.sol";
 import "contracts/interfaces/modules/IModule.sol";
 import "contracts/interfaces/base/IStorage.sol";
 import "contracts/interfaces/factory/IAccountFactory.sol";
+import "contracts/interfaces/IModularSmartAccount.sol";
 
 // Contract implementations
 import "contracts/base/AccountConfig.sol";
