@@ -2,13 +2,13 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/src/Test.sol";
-import "../../contracts/utils/Exec.sol";
+import "../../contracts/lib/ExecLib.sol";
 
 contract ExecLibTest is Test {
     function setUp() public { }
 
     function test_encode_decode(address target, uint256 value, bytes memory callData) public {
-        bytes memory encoded = Exec.encodeSingle(target, value, callData);
+        bytes memory encoded = ExecLib.encodeSingle(target, value, callData);
         console2.logBytes(encoded);
         console2.log("calldata");
         console2.logBytes(callData);
@@ -24,6 +24,6 @@ contract ExecLibTest is Test {
         pure
         returns (address _target, uint256 _value, bytes calldata _callData)
     {
-        (_target, _value, _callData) = Exec.decodeSingle(encoded);
+        (_target, _value, _callData) = ExecLib.decodeSingle(encoded);
     }
 }
