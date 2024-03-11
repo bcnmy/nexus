@@ -76,23 +76,7 @@ describe("SmartAccount Contract Integration Tests", function () {
         [ownerAddress],
       ); // Example data, customize as needed
 
-      // Calculate expected account address
-      const salt = ethers.keccak256(
-        ethers.solidityPacked(
-          ["address", "bytes", "uint256"],
-          [moduleAddress, data, saDeploymentIndex],
-        ),
-      );
-      const bytecodeHash = ethers.keccak256(SmartAccount.bytecode);
-
-      // Todo: Marked for deletion. same Create2 utils would not work here as we're not using it directly
-      // First account creation attempt
-      // const expectedAccountAddress = ethers.getCreate2Address(
-      //   factoryAddress.toString(),
-      //   salt,
-      //   bytecodeHash,
-      // );
-
+      // Read the expectec account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(moduleAddress, data, saDeploymentIndex);
 
       // First account creation attempt
@@ -137,15 +121,6 @@ describe("SmartAccount Contract Integration Tests", function () {
 
       const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
 
-      // TODO: marked for deletion as it can not work with same create2 utils
-      // Calculate the expected account address
-      // const accountAddress = await getAccountAddress(
-      //   ownerAddress,
-      //   factoryAddress,
-      //   moduleAddress,
-      //   ModuleType.Validation,
-      // );
-
       const nonce = await entryPoint.getNonce(
         accountAddress,
         ethers.zeroPadBytes(moduleAddress.toString(), 24),
@@ -181,15 +156,6 @@ describe("SmartAccount Contract Integration Tests", function () {
 
        const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
  
-       // TODO: marked for deletion as it can not work with same create2 utils
-       // Calculate the expected account address
-       // const accountAddress = await getAccountAddress(
-       //   ownerAddress,
-       //   factoryAddress,
-       //   moduleAddress,
-       //   ModuleType.Validation,
-       // );
-
       const nonce = await entryPoint.getNonce(
         accountAddress,
         ethers.zeroPadBytes(moduleAddress.toString(), 24),

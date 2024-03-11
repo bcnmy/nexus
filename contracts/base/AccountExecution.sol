@@ -76,7 +76,7 @@ abstract contract AccountExecution is IAccountExecution {
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             if iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00)) {
@@ -101,7 +101,7 @@ abstract contract AccountExecution is IAccountExecution {
         returns (bool success, bytes memory result)
     {
         /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             success := iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00))
@@ -121,7 +121,7 @@ abstract contract AccountExecution is IAccountExecution {
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             // Forwards the `data` to `delegate` via delegatecall.
@@ -146,7 +146,7 @@ abstract contract AccountExecution is IAccountExecution {
         returns (bool success, bytes memory result)
     {
         /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
             // Forwards the `data` to `delegate` via delegatecall.

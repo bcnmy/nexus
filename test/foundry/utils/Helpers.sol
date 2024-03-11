@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./CheatCodes.sol";
 import "./Imports.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
 
 contract Helpers is CheatCodes {
     // Pre-defined roles
@@ -119,7 +120,7 @@ contract Helpers is CheatCodes {
     function getAccountAddress(address signer) internal view returns (address payable account) {
         bytes memory initData = abi.encodePacked(signer);
 
-        uint256 moduleTypeId = uint256(ModuleType.Validation);
+        uint256 moduleTypeId = uint256(MODULE_TYPE_VALIDATOR);
 
         uint256 saDeploymentIndex = 0;
 
@@ -161,7 +162,7 @@ contract Helpers is CheatCodes {
         returns (bytes memory initCode)
     {
         address module = address(VALIDATOR_MODULE);
-        uint256 moduleTypeId = uint256(ModuleType.Validation);
+        uint256 moduleTypeId = uint256(MODULE_TYPE_VALIDATOR);
         uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 

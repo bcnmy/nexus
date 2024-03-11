@@ -4,10 +4,11 @@ pragma solidity >=0.8.24 <0.9.0;
 import "./utils/BicoTestBase.t.sol";
 import "./utils/Imports.sol";
 import { ModeCode } from "../../contracts/lib/ModeLib.sol";
+import {MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR} from "../../contracts/interfaces/modules/IERC7579Modules.sol";
 
 contract SmartAccountTest is BicoTestBase {
     SmartAccount public BOB_ACCOUNT;
-    SmartAccount public  ALICE_ACCOUNT;
+    SmartAccount public ALICE_ACCOUNT;
     SmartAccount public CHARLIE_ACCOUNT;
     Counter public COUNTER;
     uint256 public snapshotId;
@@ -24,7 +25,7 @@ contract SmartAccountTest is BicoTestBase {
 
     function testAccountAddress() public {
         address validatorModuleAddress = address(VALIDATOR_MODULE);
-        uint256 validationModuleType = uint256(ModuleType.Validation);
+        uint256 validationModuleType = uint256(MODULE_TYPE_VALIDATOR);
         uint256 saDeploymentIndex = 0;
 
         // Compute and assert the account addresses for BOB, ALICE, and CHARLIE
@@ -65,7 +66,7 @@ contract SmartAccountTest is BicoTestBase {
 
      // TODO: prank should be removed and it should happen from real userOp via EP / account calling itself
     function testInstallAndCheckModule(bytes calldata dummyInitData) public {
-        uint256 moduleTypeId = uint256(ModuleType.Validation);
+        uint256 moduleTypeId = uint256(MODULE_TYPE_VALIDATOR);
         prank(address(ENTRYPOINT));
         BOB_ACCOUNT.installModule(moduleTypeId, mockNewValidator, dummyInitData);
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, mockNewValidator, dummyInitData));
@@ -76,7 +77,7 @@ contract SmartAccountTest is BicoTestBase {
     // Review onUninstall does not work (sending wrong 'prev')
     // function testUninstallAndCheckModule(bytes calldata dummyInitData) public {
     //     revertToSnapshot(snapshotId);
-    //     uint256 moduleTypeId = uint256(ModuleType.Validation); // comes from own defined enum
+    //     uint256 moduleTypeId = uint256(MODULE_TYPE_VALIDATOR); // comes from own defined enum
     //     // vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, mockNewValidator, dummyInitData));
     //     bytes memory uninstallData = abi.encode(address(VALIDATOR_MODULE), dummyInitData);
     //     prank(address(ENTRYPOINT));

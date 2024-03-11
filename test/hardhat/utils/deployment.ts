@@ -150,15 +150,6 @@ export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
     ModuleType.Validation,
   );
 
-  // TODO: merked for deletion as same create2 utils can not be used
-  // Get the counterfactual address of the smart account before deployment
-  // const accountAddress = await getAccountAddress(
-  //   ownerAddress,
-  //   factoryAddress,
-  //   moduleAddress,
-  //   ModuleType.Validation,
-  // );
-
   // Module initialization data, encoded
   const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 

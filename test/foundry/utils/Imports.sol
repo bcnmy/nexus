@@ -36,7 +36,6 @@ import "contracts/test/mocks/MockValidator.sol";
 import "contracts/test/mocks/Counter.sol";
 
 // Helper and Struct imports
-import "./Structs.sol";
 import "./Helpers.sol";
 
 contract Imports {
