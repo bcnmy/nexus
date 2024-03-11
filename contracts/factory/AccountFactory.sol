@@ -1,12 +1,8 @@
 pragma solidity ^0.8.24;
 
-import { SmartAccount } from "../SmartAccount.sol"; // Review: should just use interface IMSA
-import { LibClone } from "solady/src/utils/LibClone.sol"; // to be implemented
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { LibClone } from "solady/src/utils/LibClone.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
-import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { IModularSmartAccount } from "../interfaces/IModularSmartAccount.sol";
-import { MODULE_TYPE_VALIDATOR } from "../interfaces/modules/IERC7579Modules.sol";
 import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
 
 contract AccountFactory is IAccountFactory, StakeManager {
@@ -39,7 +35,6 @@ contract AccountFactory is IAccountFactory, StakeManager {
         if (!alreadyDeployed) {
             IModularSmartAccount(account).initialize(validationModule, moduleInstallData);
         }
-        // IModuleManager(account).installModule(MODULE_TYPE_VALIDATOR, validationModule, moduleInstallData);
         return payable(account);
     }
 

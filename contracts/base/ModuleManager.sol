@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
-import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
@@ -38,12 +38,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
         ams.validators.init();
-    }
-
-    function _isAlreadyInitialized() internal view virtual returns (bool) {
-        // account module storage
-        AccountStorage storage ams = _getAccountStorage();
-        return ams.validators.alreadyInitialized();
     }
 
     // /////////////////////////////////////////////////////
@@ -95,6 +89,14 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.contains(executor);
+    }
+
+    // /////////////////////////////////////////////////////
+
+    function _isAlreadyInitialized() internal view virtual returns (bool) {
+        // account module storage
+        AccountStorage storage ams = _getAccountStorage();
+        return ams.validators.alreadyInitialized();
     }
 
     /**

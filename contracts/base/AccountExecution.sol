@@ -57,7 +57,7 @@ abstract contract AccountExecution is IAccountExecution {
         for (uint256 i; i < length; i++) {
             Execution calldata exec = executions[i];
             bool success;
-            (success, result[i]) = _tryExecute(_exec.target, _exec.value, _exec.callData);
+            (success, result[i]) = _tryExecute(exec.target, exec.value, exec.callData);
             if (!success) emit TryExecuteUnsuccessful(i, result[i]);
         }
     }
