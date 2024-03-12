@@ -5,40 +5,23 @@ import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ModeCode } from "../lib/ModeLib.sol";
 import { Execution } from "../interfaces/modules/IExecutor.sol";
-import { ExecLib } from "../lib/ExecLib.sol";
 
-// Review interface may not be needed at all if child account uses full holistic interface
-// Note: execution helper internal methods can be added here
 abstract contract AccountExecution is IAccountExecution {
     /// @inheritdoc IAccountExecution
-    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
-        mode;
-        (address target, uint256 value, bytes memory callData) = ExecLib.decodeSingle(
-            executionCalldata
-        );
-        target.call{ value: value }(callData);
-    }
+    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual;
 
     /// @inheritdoc IAccountExecution
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
-    ) external payable virtual returns (bytes[] memory returnData) {
-        mode;
-        (address target, uint256 value, bytes memory callData) = abi.decode(
-            executionCalldata,
-            (address, uint256, bytes)
-        );
-        target.call{ value: value }(callData);
-    }
-
-    // Review: could make internal virtual function and call from executeUserOp
+    ) external payable virtual returns (bytes[] memory returnData);
+       
     /// @inheritdoc IAccountExecution
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
-    // {
-    //     userOp;
-    //     userOpHash;
-    // }
+    
+    // /////////////////////////////////////////////////////
+    // //  Execution Helpers
+    // ////////////////////////////////////////////////////
 
     function _execute(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;

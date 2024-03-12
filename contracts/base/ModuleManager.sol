@@ -14,10 +14,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
-    // Review: could be part of IMSA
-    // Error thrown when an unsupported ModuleType is requested
-    error UnsupportedModuleType(uint256 moduleTypeId);
-
     error InvalidModule(address module);
     error CannotRemoveLastValidator();
 

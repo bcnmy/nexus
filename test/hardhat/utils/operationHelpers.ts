@@ -253,6 +253,11 @@ export function packGasValues(
  * @param userOpHash - The hash of the user operation (optional).
  * @returns The execution call data as a string.
  */
+
+
+// TODO: need to take an argument for CallType and ExecType as well. if it's single or batch / revert or try
+// Whole method needs to be refactored
+
 export async function generateExecutionCallData(
   { executionMethod, targetContract, functionName, args = [], mode, value = 0 },
   packedUserOp = "0x",
@@ -274,6 +279,8 @@ export async function generateExecutionCallData(
   switch (executionMethod) {
     case ExecutionMethod.Execute:
     case ExecutionMethod.ExecuteFromExecutor:
+      // in case of EncodeSingle : abi.encodePacked(target, value, callData);
+      // in case of encodeBatch:  abi.encode(executions);
       executionCalldata = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
