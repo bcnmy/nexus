@@ -3,8 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./CheatCodes.sol";
 import "./Imports.sol";
+import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
+import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
+import { MockValidator } from "../mocks/MockValidator.sol";
+import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 
 contract Helpers is CheatCodes {
     // Pre-defined roles
@@ -142,7 +146,7 @@ contract Helpers is CheatCodes {
         // Constructing the UserOperation with the signed hash
         userOp = PackedUserOperation({
             sender: accountAddress,
-            nonce: _getNonce(accountAddress, module),
+            nonce: getNonce(accountAddress, module),
             initCode: "",
             callData: "",
             accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
@@ -173,9 +177,60 @@ contract Helpers is CheatCodes {
         );
     }
 
-    function _getNonce(address account, address validator) internal returns (uint256 nonce) {
+    function getNonce(address account, address validator) internal returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = ENTRYPOINT.getNonce(address(account), key);
+    }
+
+    function prepareExecutionUserOp(
+        Vm.Wallet memory signer,
+        SmartAccount account,
+        ModeCode mode,
+        address target,
+        uint256 value,
+        bytes memory functionCall
+    )
+        internal
+        returns (PackedUserOperation[] memory userOps)
+    {
+        bytes memory executionCalldata =
+            abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(target, value, functionCall)));
+
+        userOps = new PackedUserOperation[](1);
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
+        userOps[0].callData = executionCalldata;
+
+        // Generating and signing the hash of the user operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessageAndGetSignatureBytes(signer, userOpHash);
+
+        return userOps;
+    }
+
+    function prepareBatchExecutionUserOp(
+        Vm.Wallet memory signer,
+        SmartAccount account,
+        ModeCode mode,
+        Execution[] memory executions
+    )
+        internal
+        returns (PackedUserOperation[] memory userOps)
+    {
+        // Encode the call into the calldata for the userOp
+        bytes memory executionCalldata =
+            abi.encodeCall(AccountExecution.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
+        // Initializing the userOps array with the same size as the targets array
+        userOps = new PackedUserOperation[](1);
+
+        // Building the UserOperation for each execution
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
+        userOps[0].callData = executionCalldata;
+
+        // Generating and attaching the signature for each operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessageAndGetSignatureBytes(signer, userOpHash);
+
+        return userOps;
     }
 
     function testHelpers(uint256 a) public {
