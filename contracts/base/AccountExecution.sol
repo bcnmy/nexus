@@ -5,46 +5,25 @@ import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import "../lib/ModeLib.sol";
 import { Execution } from "../interfaces/modules/IExecutor.sol";
-import { ExecLib } from "../lib/ExecLib.sol";
 
-// Review interface may not be needed at all if child account uses full holistic interface
-// Note: execution helper internal methods can be added here
 abstract contract AccountExecution is IAccountExecution {
     using ModeLib for ModeCode;
 
     /// @inheritdoc IAccountExecution
-    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
-        (CallType callType,,,) = mode.decode();
-
-        if (callType == CALLTYPE_SINGLE) {
-            (address target, uint256 value, bytes calldata callData) = ExecLib.decodeSingle(executionCalldata);
-            _execute(target, value, callData);
-        } else if (callType == CALLTYPE_BATCH) {
-            Execution[] calldata executions = ExecLib.decodeBatch(executionCalldata);
-            _executeBatch(executions);
-        } else {
-            revert("Unsupported CallType");
-        }
-    }
+    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual;
 
     /// @inheritdoc IAccountExecution
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        virtual
-        returns (bytes[] memory returnData)
-    {
-        mode;
-        (address target, uint256 value, bytes memory callData) =
-            abi.decode(executionCalldata, (address, uint256, bytes));
-        target.call{ value: value }(callData);
-    }
-
+    ) external payable virtual returns (bytes[] memory returnData);
+       
     /// @inheritdoc IAccountExecution
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
+    
+    // /////////////////////////////////////////////////////
+    // //  Execution Helpers
+    // ////////////////////////////////////////////////////
 
     function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
