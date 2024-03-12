@@ -2,7 +2,6 @@
 pragma solidity >=0.8.24 <0.9.0;
 
 import "./Helpers.sol";
-import "forge-std/src/console2.sol";
 
 contract BicoTestBase is Helpers {
     SmartAccount public implementation;
@@ -13,9 +12,9 @@ contract BicoTestBase is Helpers {
         implementation = new SmartAccount();
     }
 
-    // Note: could be renamed to getDeployedSmartAccount 
+    // Note: could be renamed to getDeployedSmartAccount
     // Note: should have method to get counterfactual account and initcode
-    // Refer to the reference implementatino repo for this 
+    // Refer to the reference implementatino repo for this
 
     function deploySmartAccount(Vm.Wallet memory wallet) public returns (address payable) {
         address payable account = getAccountAddress(wallet.addr);
@@ -24,7 +23,7 @@ contract BicoTestBase is Helpers {
         bytes memory initCode = createInitCode(wallet.addr, FACTORY.createAccount.selector);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(account, _getNonce(account, address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(account, getNonce(account, address(VALIDATOR_MODULE)));
 
         userOps[0].initCode = initCode;
 
