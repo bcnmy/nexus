@@ -7,38 +7,40 @@ import "forge-std/src/Test.sol";
 import "forge-std/src/Vm.sol";
 
 // Utility libraries
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { PRBTest } from "@prb/test/src/PRBTest.sol";
-
+import "solady/src/utils/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+// import "@prb/test/src/PRBTest.sol";
 
 // Account Abstraction imports
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
+import "account-abstraction/contracts/core/EntryPoint.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { VerifyingPaymaster } from "account-abstraction/contracts/samples/VerifyingPaymaster.sol";
+import "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+// import "account-abstraction/contracts/samples/VerifyingPaymaster.sol";
 
-import { ModeCode } from "contracts/lib/ModeLib.sol";
+// ModeLib import
+import "../../../contracts/lib/ModeLib.sol";
+import "../../../contracts/lib/ExecLib.sol";
+import "../../../contracts/lib/ModuleTypeLib.sol";
+
 // Interface imports
-import "contracts/interfaces/base/IAccountConfig.sol";
-import "contracts/interfaces/base/IAccountExecution.sol";
-import "contracts/interfaces/base/IModuleManager.sol";
-import "contracts/interfaces/modules/IModule.sol";
-import "contracts/interfaces/base/IStorage.sol";
-import "contracts/interfaces/factory/IAccountFactory.sol";
-import "contracts/interfaces/IModularSmartAccount.sol";
-
+import "../../../contracts/interfaces/base/IAccountConfig.sol";
+import "../../../contracts/interfaces/base/IAccountExecution.sol";
+import "../../../contracts/interfaces/base/IModuleManager.sol";
+import "../../../contracts/interfaces/modules/IModule.sol";
+import "../../../contracts/interfaces/base/IStorage.sol";
+import "../../../contracts/interfaces/factory/IAccountFactory.sol";
+import "../../../contracts/interfaces/IModularSmartAccount.sol";
 
 // Contract implementations
-import "contracts/base/AccountConfig.sol";
-import "contracts/base/AccountExecution.sol";
-import "contracts/base/ModuleManager.sol";
-import "contracts/SmartAccount.sol";
-import "contracts/factory/AccountFactory.sol";
+import "../../../contracts/base/AccountConfig.sol";
+import "../../../contracts/base/AccountExecution.sol";
+import "../../../contracts/base/ModuleManager.sol";
+import "../../../contracts/SmartAccount.sol";
+import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing
-import "contracts/test/mocks/MockValidator.sol";
-import "contracts/test/mocks/Counter.sol";
+import "../mocks/MockValidator.sol";
+import "../mocks/Counter.sol";
 
 // Helper and Struct imports
 import "./Helpers.sol";
