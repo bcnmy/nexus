@@ -33,6 +33,46 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         _;
     }
 
+    /**
+     * @notice Installs a Module of a certain type on the smart account.
+     * @param moduleTypeId The module type ID.
+     * @param module The module address.
+     * @param initData Initialization data for the module.
+     */
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable virtual;
+
+    /**
+     * @notice Uninstalls a Module of a certain type from the smart account.
+     * @param moduleTypeId The module type ID.
+     * @param module The module address.
+     * @param deInitData De-initialization data for the module.
+     */
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    )
+        external
+        payable
+        virtual;
+
+    /**
+     * @notice Checks if a module is installed on the smart account.
+     * @param moduleTypeId The module type ID.
+     * @param module The module address.
+     * @param additionalContext Additional context for checking installation.
+     * @return True if the module is installed, false otherwise.
+     */
+    function isModuleInstalled(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    )
+        external
+        view
+        virtual
+        returns (bool);
+
     function _initModuleManager() internal virtual {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
@@ -61,15 +101,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         IValidator(validator).onUninstall(disableModuleData);
     }
 
-    function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        return validators.contains(validator);
-    }
-
-    //  /////////////////////////////////////////////////////
-    // //  Manage Executors
-    // ////////////////////////////////////////////////////
-
     //  // TODO
     // // Review this agaisnt required hook/permissions at the time of installations
 
@@ -86,6 +117,11 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         IExecutor(executor).onUninstall(disableModuleData);
     }
 
+    function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        return validators.contains(validator);
+    }
+
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.contains(executor);
@@ -98,33 +134,4 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized();
     }
-
-    /**
-     * @notice Installs a Module of a certain type on the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param initData Initialization data for the module.
-     */
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable virtual;
-
-    /**
-     * @notice Uninstalls a Module of a certain type from the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param deInitData De-initialization data for the module.
-     */
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
-
-    /**
-     * @notice Checks if a module is installed on the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param additionalContext Additional context for checking installation.
-     * @return True if the module is installed, false otherwise.
-     */
-    function isModuleInstalled(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata additionalContext
-    ) external view virtual returns (bool);
 }
