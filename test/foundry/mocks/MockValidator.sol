@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "../../interfaces/modules/IModule.sol";
-import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../interfaces/modules/IERC7579Modules.sol";
-import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
+import { IModule } from "contracts/interfaces/modules/IModule.sol";
+import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/interfaces/modules/IERC7579Modules.sol";
+import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -15,12 +15,12 @@ contract MockValidator is IValidator {
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) external returns (uint256 validation) {
-        return
-            ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) ==
-                smartAccountOwners[msg.sender]
-                ? VALIDATION_SUCCESS
-                : VALIDATION_FAILED;
+    )
+        external
+        returns (uint256 validation)
+    {
+        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
+            == smartAccountOwners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @inheritdoc IValidator
@@ -28,7 +28,11 @@ contract MockValidator is IValidator {
         address sender,
         bytes32 hash,
         bytes calldata data
-    ) external view returns (bytes4) {
+    )
+        external
+        view
+        returns (bytes4)
+    {
         sender;
         hash;
         data;
