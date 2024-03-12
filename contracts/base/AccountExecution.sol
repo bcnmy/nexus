@@ -3,13 +3,15 @@ pragma solidity ^0.8.24;
 
 import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ModeCode } from "../lib/ModeLib.sol";
+import "../lib/ModeLib.sol";
 import { Execution } from "../interfaces/modules/IExecutor.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 
 // Review interface may not be needed at all if child account uses full holistic interface
 // Note: execution helper internal methods can be added here
 abstract contract AccountExecution is IAccountExecution {
+    using ModeLib for ModeCode;
+
     /// @inheritdoc IAccountExecution
     function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
         (CallType callType,,,) = mode.decode();
@@ -29,24 +31,22 @@ abstract contract AccountExecution is IAccountExecution {
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
-    ) external payable virtual returns (bytes[] memory returnData) {
+    )
+        external
+        payable
+        virtual
+        returns (bytes[] memory returnData)
+    {
         mode;
-        (address target, uint256 value, bytes memory callData) = abi.decode(
-            executionCalldata,
-            (address, uint256, bytes)
-        );
+        (address target, uint256 value, bytes memory callData) =
+            abi.decode(executionCalldata, (address, uint256, bytes));
         target.call{ value: value }(callData);
     }
 
-    // Review: could make internal virtual function and call from executeUserOp
     /// @inheritdoc IAccountExecution
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
-    // {
-    //     userOp;
-    //     userOpHash;
-    // }
 
-    function _execute(Execution[] calldata executions) internal returns (bytes[] memory result) {
+    function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
         result = new bytes[](length);
 
@@ -72,7 +72,11 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    ) internal virtual returns (bytes memory result) {
+    )
+        internal
+        virtual
+        returns (bytes memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -93,7 +97,11 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    ) internal virtual returns (bool success, bytes memory result) {
+    )
+        internal
+        virtual
+        returns (bool success, bytes memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -129,7 +137,10 @@ abstract contract AccountExecution is IAccountExecution {
     function _tryExecuteDelegatecall(
         address delegate,
         bytes calldata callData
-    ) internal returns (bool success, bytes memory result) {
+    )
+        internal
+        returns (bool success, bytes memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
