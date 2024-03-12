@@ -26,7 +26,13 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override(ERC4337Account, IERC4337Account) payPrefund(missingAccountFunds) returns (uint256) {
+    )
+        external
+        virtual
+        override(ERC4337Account, IERC4337Account)
+        payPrefund(missingAccountFunds)
+        returns (uint256)
+    {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -40,7 +46,8 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         uint256 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         return validationData;
     }
-
+    
+    // TODO // Add execute_try and calltype delegatecall
     function execute(
         ModeCode mode,
         bytes calldata executionCalldata
@@ -57,7 +64,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
             // destructure executionCallData according to batched exec
             Execution[] calldata executions = executionCalldata.decodeBatch();
             // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) _execute(executions);
+            if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
             // else if (execType == EXECTYPE_TRY) _tryExecute(executions);
             else revert UnsupportedExecType(execType);
         } else if (callType == CALLTYPE_SINGLE) {
@@ -93,7 +100,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
             // destructure executionCallData according to batched exec
             Execution[] calldata executions = executionCalldata.decodeBatch();
             // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) returnData = _execute(executions);
+            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
             // else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
             else revert UnsupportedExecType(execType);
         } else if (callType == CALLTYPE_SINGLE) {
@@ -127,13 +134,12 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
     }
 
 
-
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
+        (bool success,) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
@@ -143,11 +149,14 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         bytes calldata initData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR)
+        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             _installExecutor(module, initData);
-            // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
-            // else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
-        else revert UnsupportedModuleType(moduleTypeId);
+        }
+        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
+        // else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
+        else {
+            revert UnsupportedModuleType(moduleTypeId);
+        }
         emit ModuleInstalled(moduleTypeId, module);
     }
 
@@ -175,17 +184,23 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
     function supportsExecutionMode(ModeCode mode) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) isSupported = true;
-        else if (callType == CALLTYPE_SINGLE)
+        else if (callType == CALLTYPE_SINGLE) {
             isSupported = true;
-            // else if (callType == CALLTYPE_DELEGATECALL) isSupported = true;
-            // if callType is not single, batch /*or delegatecall*/ return false
-        else return false;
+        }
+        // else if (callType == CALLTYPE_DELEGATECALL) isSupported = true;
+        // if callType is not single, batch /*or delegatecall*/ return false
+        else {
+            return false;
+        }
 
-        if (execType == EXECTYPE_DEFAULT)
+        if (execType == EXECTYPE_DEFAULT) {
             isSupported = true;
-            // else if (execType == EXECTYPE_TRY) isSupported = true;
-            // if execType is not default /*or try,*/ return false
-        else return false;
+        }
+        // else if (execType == EXECTYPE_TRY) isSupported = true;
+        // if execType is not default /*or try,*/ return false
+        else {
+            return false;
+        }
     }
 
     function isModuleInstalled(

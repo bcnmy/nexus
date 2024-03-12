@@ -3,7 +3,10 @@ import { expect } from "chai";
 import { AddressLike, Signer } from "ethers";
 import { MockValidator, SmartAccount } from "../../typechain-types";
 import { ModuleType } from "./utils/types";
-import { deploySmartAccountFixture, deploySmartAccountWithEntrypointFixture } from "./utils/deployment";
+import {
+  deploySmartAccountFixture,
+  deploySmartAccountWithEntrypointFixture,
+} from "./utils/deployment";
 
 describe("SmartAccount Module Management", () => {
   let smartAccount: SmartAccount;
@@ -13,7 +16,8 @@ describe("SmartAccount Module Management", () => {
   let moduleAddress: AddressLike;
 
   before(async function () {
-    ({ smartAccount, module } = await deploySmartAccountWithEntrypointFixture());
+    ({ smartAccount, module } =
+      await deploySmartAccountWithEntrypointFixture());
     owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
     moduleAddress = await module.getAddress();

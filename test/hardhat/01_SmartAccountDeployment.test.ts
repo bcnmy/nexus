@@ -77,7 +77,11 @@ describe("SmartAccount Contract Integration Tests", function () {
       ); // Example data, customize as needed
 
       // Read the expectec account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(moduleAddress, data, saDeploymentIndex);
+      const expectedAccountAddress = await factory.getCounterFactualAddress(
+        moduleAddress,
+        data,
+        saDeploymentIndex,
+      );
 
       // First account creation attempt
       await factory.createAccount(moduleAddress, data, saDeploymentIndex);
@@ -119,7 +123,11 @@ describe("SmartAccount Contract Integration Tests", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
+      const accountAddress = await factory.getCounterFactualAddress(
+        moduleAddress,
+        moduleInitData,
+        saDeploymentIndex,
+      );
 
       const nonce = await entryPoint.getNonce(
         accountAddress,
@@ -151,11 +159,15 @@ describe("SmartAccount Contract Integration Tests", function () {
         moduleAddress,
         ModuleType.Validation,
       );
-       // Module initialization data, encoded
-       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+      // Module initialization data, encoded
+      const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-       const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
- 
+      const accountAddress = await factory.getCounterFactualAddress(
+        moduleAddress,
+        moduleInitData,
+        saDeploymentIndex,
+      );
+
       const nonce = await entryPoint.getNonce(
         accountAddress,
         ethers.zeroPadBytes(moduleAddress.toString(), 24),
