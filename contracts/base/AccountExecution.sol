@@ -12,11 +12,17 @@ import { ExecLib } from "../lib/ExecLib.sol";
 abstract contract AccountExecution is IAccountExecution {
     /// @inheritdoc IAccountExecution
     function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual {
-        mode;
-        (address target, uint256 value, bytes memory callData) = ExecLib.decodeSingle(
-            executionCalldata
-        );
-        target.call{ value: value }(callData);
+        (CallType callType,,,) = mode.decode();
+
+        if (callType == CALLTYPE_SINGLE) {
+            (address target, uint256 value, bytes calldata callData) = ExecLib.decodeSingle(executionCalldata);
+            _execute(target, value, callData);
+        } else if (callType == CALLTYPE_BATCH) {
+            Execution[] calldata executions = ExecLib.decodeBatch(executionCalldata);
+            _executeBatch(executions);
+        } else {
+            revert("Unsupported CallType");
+        }
     }
 
     /// @inheritdoc IAccountExecution
