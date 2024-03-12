@@ -24,7 +24,13 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override payPrefund(missingAccountFunds) returns (uint256) {
+    )
+        external
+        virtual
+        override
+        payPrefund(missingAccountFunds)
+        returns (uint256)
+    {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -42,9 +48,14 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    ) external payable override onlyEntryPointOrSelf {
+    )
+        external
+        payable
+        override
+        onlyEntryPointOrSelf
+    {
         bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
+        (bool success,) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
@@ -52,13 +63,22 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
-    ) external payable override onlyEntryPointOrSelf {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR)
+    )
+        external
+        payable
+        override
+        onlyEntryPointOrSelf
+    {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            _installValidator(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             _installExecutor(module, initData);
-            // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
-            // else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
-        else revert UnsupportedModuleType(moduleTypeId);
+        }
+        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
+        // else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
+        else {
+            revert UnsupportedModuleType(moduleTypeId);
+        }
         emit ModuleInstalled(moduleTypeId, module);
     }
 
@@ -66,7 +86,12 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         uint256 moduleTypeId,
         address module,
         bytes calldata deInitData
-    ) external payable override onlyEntryPointOrSelf {
+    )
+        external
+        payable
+        override
+        onlyEntryPointOrSelf
+    {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
@@ -84,26 +109,38 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
     }
 
     function supportsExecutionMode(ModeCode mode) external view virtual override returns (bool isSupported) {
-        (CallType callType, ExecType execType, , ) = mode.decode();
-        if (callType == CALLTYPE_BATCH) isSupported = true;
-        else if (callType == CALLTYPE_SINGLE)
+        (CallType callType, ExecType execType,,) = mode.decode();
+        if (callType == CALLTYPE_BATCH) {
             isSupported = true;
-            // else if (callType == CALLTYPE_DELEGATECALL) isSupported = true;
-            // if callType is not single, batch /*or delegatecall*/ return false
-        else return false;
+        } else if (callType == CALLTYPE_SINGLE) {
+            isSupported = true;
+        }
+        // else if (callType == CALLTYPE_DELEGATECALL) isSupported = true;
+        // if callType is not single, batch /*or delegatecall*/ return false
+        else {
+            return false;
+        }
 
-        if (execType == EXECTYPE_DEFAULT)
+        if (execType == EXECTYPE_DEFAULT) {
             isSupported = true;
-            // else if (execType == EXECTYPE_TRY) isSupported = true;
-            // if execType is not default /*or try,*/ return false
-        else return false;
+        }
+        // else if (execType == EXECTYPE_TRY) isSupported = true;
+        // if execType is not default /*or try,*/ return false
+        else {
+            return false;
+        }
     }
 
     function isModuleInstalled(
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    ) external view override returns (bool) {
+    )
+        external
+        view
+        override
+        returns (bool)
+    {
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
