@@ -58,20 +58,27 @@ export async function deployEntrypoint(): Promise<EntryPoint> {
  * Deploys the AccountFactory contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
-export async function deployAccountFactory(implementationAddress: string): Promise<AccountFactory> {
+export async function deployAccountFactory(
+  implementationAddress: string,
+): Promise<AccountFactory> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
-  const deterministicAccountFactory = await deployments.deploy("AccountFactory", {
-    from: addresses[0],
-    deterministicDeployment: true,
-    args: [implementationAddress]
-  });
+  const deterministicAccountFactory = await deployments.deploy(
+    "AccountFactory",
+    {
+      from: addresses[0],
+      deterministicDeployment: true,
+      args: [implementationAddress],
+    },
+  );
 
-  return AccountFactory.attach(deterministicAccountFactory.address) as AccountFactory;
+  return AccountFactory.attach(
+    deterministicAccountFactory.address,
+  ) as AccountFactory;
 }
 
 /**
@@ -134,7 +141,9 @@ export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
   //   "AccountFactory",
   //   deployer,
   // );
-  const factory = await deployAccountFactory(await smartAccountImplementation.getAddress());
+  const factory = await deployAccountFactory(
+    await smartAccountImplementation.getAddress(),
+  );
   const counter = await deployContract<Counter>("Counter", deployer);
 
   // Get the addresses of the deployed contracts
@@ -153,7 +162,11 @@ export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
   // Module initialization data, encoded
   const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-  const accountAddress = await factory.getCounterFactualAddress(moduleAddress, moduleInitData, saDeploymentIndex);
+  const accountAddress = await factory.getCounterFactualAddress(
+    moduleAddress,
+    moduleInitData,
+    saDeploymentIndex,
+  );
 
   // Sign the user operation for deploying the smart account
   const packedUserOp = await signUserOperation(

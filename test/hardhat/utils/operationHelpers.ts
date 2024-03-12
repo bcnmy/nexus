@@ -6,7 +6,14 @@ import {
   PackedUserOperation,
   UserOperation,
 } from "./types";
-import { Signer, AddressLike, BytesLike, BigNumberish, hexlify, toBeHex } from "ethers";
+import {
+  Signer,
+  AddressLike,
+  BytesLike,
+  BigNumberish,
+  hexlify,
+  toBeHex,
+} from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import { Hexable } from "@ethersproject/bytes";
 
@@ -60,9 +67,14 @@ export function buildPackedUserOp(userOp: UserOperation): PackedUserOperation {
 
   // Construct paymasterAndData only if a paymaster is specified
   // paymasterData can be generated before this stage
-  let paymasterAndData: BytesLike = '0x'
+  let paymasterAndData: BytesLike = "0x";
   if (paymaster.toString().length >= 20 && paymaster !== ethers.ZeroAddress) {
-    paymasterAndData = packPaymasterData(userOp.paymaster as string, paymasterVerificationGasLimit, paymasterPostOpGasLimit, paymasterData as string)
+    paymasterAndData = packPaymasterData(
+      userOp.paymaster as string,
+      paymasterVerificationGasLimit,
+      paymasterPostOpGasLimit,
+      paymasterData as string,
+    );
   }
 
   // Return the PackedUserOperation, leveraging the simplicity of the refactored logic
@@ -124,12 +136,17 @@ export async function buildSignedUserOp(
   return packedUserOp;
 }
 
-export function packPaymasterData(paymaster: string, paymasterVerificationGasLimit: BigNumberish, postOpGasLimit: BigNumberish, paymasterData: BytesLike): BytesLike {
+export function packPaymasterData(
+  paymaster: string,
+  paymasterVerificationGasLimit: BigNumberish,
+  postOpGasLimit: BigNumberish,
+  paymasterData: BytesLike,
+): BytesLike {
   return ethers.concat([
-      paymaster,
-      ethers.zeroPadValue(toBeHex(Number(paymasterVerificationGasLimit)), 16),
-      ethers.zeroPadValue(toBeHex(Number(postOpGasLimit)), 16),
-      paymasterData
+    paymaster,
+    ethers.zeroPadValue(toBeHex(Number(paymasterVerificationGasLimit)), 16),
+    ethers.zeroPadValue(toBeHex(Number(postOpGasLimit)), 16),
+    paymasterData,
   ]);
 }
 
@@ -173,14 +190,14 @@ export async function generateFullInitCode(
     .encodeFunctionData("createAccount", [
       moduleAddress,
       moduleInitData,
-      saDeploymentIndex
+      saDeploymentIndex,
     ])
     .slice(2);
 
   return factoryAddress + initCode;
 }
 
-// REVIEW 
+// REVIEW
 
 /**
  * Calculates the CREATE2 address for a smart account deployment.

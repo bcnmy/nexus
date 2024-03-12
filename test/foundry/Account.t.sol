@@ -64,7 +64,7 @@ contract SmartAccountTest is BicoTestBase {
         assertTrue(CHARLIE_ACCOUNT.supportsModule(moduleTypeId));
     }
 
-     // TODO: prank should be removed and it should happen from real userOp via EP / account calling itself
+    // TODO: prank should be removed and it should happen from real userOp via EP / account calling itself
     function testInstallAndCheckModule(bytes calldata dummyInitData) public {
         uint256 moduleTypeId = uint256(MODULE_TYPE_VALIDATOR);
         prank(address(ENTRYPOINT));
@@ -96,19 +96,12 @@ contract SmartAccountTest is BicoTestBase {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
         userOps[0] =
-            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+            buildPackedUserOp(address(ALICE_ACCOUNT), getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
         userOps[0].callData = abi.encodeWithSignature("execute(bytes32,bytes)", mode, executionCalldata);
 
-bytes memory userOpCalldata = abi.encodeCall(
+        bytes memory userOpCalldata = abi.encodeCall(
             IAccountExecution.execute,
-            (
-                ModeLib.encodeSimpleSingle(),
-                ExecLib.encodeSingle(
-                    address(COUNTER),
-                    uint256(0),
-                    counterCallData
-                )
-            )
+            (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(COUNTER), uint256(0), counterCallData))
         );
 
         userOps[0].callData = userOpCalldata;
@@ -135,7 +128,7 @@ bytes memory userOpCalldata = abi.encodeCall(
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
         userOps[0] =
-            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+            buildPackedUserOp(address(ALICE_ACCOUNT), getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
         userOps[0].callData = abi.encodeWithSignature("executeFromExecutor(bytes32,bytes)", mode, executionCalldata);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -156,7 +149,7 @@ bytes memory userOpCalldata = abi.encodeCall(
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
         userOps[0] =
-            buildPackedUserOp(address(ALICE_ACCOUNT), _getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+            buildPackedUserOp(address(ALICE_ACCOUNT), getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
