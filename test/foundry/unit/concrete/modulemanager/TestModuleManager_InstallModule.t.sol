@@ -71,18 +71,19 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
     }
 
     function test_InstallModule_Revert_AlreadyInstalled() public {
-
         // Setup: Install the module first
         test_InstallModule_Success(); // Use the test case directly for setup
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
-
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            "Module should not be installed initially"
+        );
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should not be installed initially"
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, 
-            MODULE_TYPE_VALIDATOR, 
-            address(mockValidator), 
-            ""
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
 
         PackedUserOperation[] memory userOps = prepareExecutionUserOp(
