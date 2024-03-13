@@ -230,4 +230,18 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
 
     // TODO
     // Add means to upgrade
+
+    function _isModuleInstalled(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    ) private view returns (bool) {
+        additionalContext;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
+        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
+        // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        else return false;
+    }
+
 }
