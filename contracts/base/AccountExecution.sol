@@ -17,10 +17,10 @@ abstract contract AccountExecution is IAccountExecution {
         ModeCode mode,
         bytes calldata executionCalldata
     ) external payable virtual returns (bytes[] memory returnData);
-       
+
     /// @inheritdoc IAccountExecution
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
-    
+
     // /////////////////////////////////////////////////////
     // //  Execution Helpers
     // ////////////////////////////////////////////////////
@@ -51,11 +51,7 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    )
-        internal
-        virtual
-        returns (bytes memory result)
-    {
+    ) internal virtual returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -76,11 +72,7 @@ abstract contract AccountExecution is IAccountExecution {
         address target,
         uint256 value,
         bytes calldata callData
-    )
-        internal
-        virtual
-        returns (bool success, bytes memory result)
-    {
+    ) internal virtual returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -116,10 +108,7 @@ abstract contract AccountExecution is IAccountExecution {
     function _tryExecuteDelegatecall(
         address delegate,
         bytes calldata callData
-    )
-        internal
-        returns (bool success, bytes memory result)
-    {
+    ) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)

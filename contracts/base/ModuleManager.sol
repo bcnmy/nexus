@@ -14,8 +14,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
-
-
     modifier onlyExecutorModule() virtual {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         if (!executors.contains(msg.sender)) revert InvalidModule(msg.sender);

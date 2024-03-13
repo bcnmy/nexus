@@ -7,8 +7,5 @@ interface IAccountFactory {
         address validationModule,
         bytes calldata moduleInstallData,
         uint256 index
-    )
-        external
-        payable
-        returns (address payable account);
+    ) external payable returns (address payable account);
 }

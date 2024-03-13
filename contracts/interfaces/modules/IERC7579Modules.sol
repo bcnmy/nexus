@@ -16,5 +16,5 @@ uint256 constant MODULE_TYPE_HOOK = 4;
 
 // TODO // Review
 interface IERC7579Modules is IValidator, IExecutor, IFallback, IHook {
-// solhint-disable-previous-line no-empty-blocks
+    // solhint-disable-previous-line no-empty-blocks
 }

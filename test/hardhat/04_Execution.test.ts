@@ -46,9 +46,7 @@ describe("SmartAccount Execution and Validation", () => {
   describe("SmartAccount Transaction Execution", () => {
     it("Should execute a single transaction through the EntryPoint using execute", async () => {
       // Generate calldata for executing the 'incrementNumber' function on the counter contract.
-
       // TODO
-
       /*const callData = await generateExecutionCallData({
         executionMethod: ExecutionMethod.Execute,
         targetContract: counter,
@@ -77,7 +75,7 @@ describe("SmartAccount Execution and Validation", () => {
 
     it("Should handle transactions via the ExecuteFromExecutor method correctly", async () => {
       // Generate calldata for 'executeFromExecutor' method, targeting the 'incrementNumber' function of the counter contract.
-     /* const callData = await generateExecutionCallData({
+      /* const callData = await generateExecutionCallData({
         executionMethod: ExecutionMethod.ExecuteFromExecutor,
         targetContract: counter,
         functionName: "incrementNumber",
