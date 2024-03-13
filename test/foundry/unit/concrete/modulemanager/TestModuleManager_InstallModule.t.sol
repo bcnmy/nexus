@@ -4,21 +4,13 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 import "../../../utils/BicoTestBase.t.sol";
 import { MockValidator } from "../../../mocks/MockValidator.sol";
+import { MockExecutor } from "../../../mocks/MockExecutor.sol";
 
-    /**
-     * An event emitted if the UserOperation "callData" reverted with non-zero length.
-     * @param userOpHash   - The request unique identifier.
-     * @param sender       - The sender of this request.
-     * @param nonce        - The nonce used in the request.
-     * @param revertReason - The return bytes from the (reverted) call to "callData".
-     */
-    event UserOperationRevertReason(
-        bytes32 indexed userOpHash,
-        address indexed sender,
-        uint256 nonce,
-        bytes revertReason
-    );
+event ModuleInstalled(uint256 moduleTypeId, address module);
 
+event ModuleUninstalled(uint256 moduleTypeId, address module);
+
+event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 contract TestModuleManager_InstallModule is Test, BicoTestBase {
     MockValidator public mockValidator;
