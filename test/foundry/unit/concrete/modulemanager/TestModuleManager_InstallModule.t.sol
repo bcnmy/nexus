@@ -86,67 +86,50 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
 
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
-            BOB,
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(BOB_ACCOUNT),
-            0,
-            callData
-        );
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        
+
         bytes memory expectedRevertReason = abi.encodeWithSignature(
-        "ModuleAlreadyInstalled(uint256,address)", 
-        MODULE_TYPE_VALIDATOR, 
-        address(mockValidator)
+            "ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator)
         );
-        
+
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
 
         emit UserOperationRevertReason(
-          userOpHash, // userOpHash
-          address(BOB_ACCOUNT), // sender
-          userOps[0].nonce, // nonce
-          expectedRevertReason
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
         );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallModule_Revert_InvalidModule() public {
-
+    function test_InstallModule_Revert_InvalidModuleTypeId() public {
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, 
-            99, 
+            IModuleManager.installModule.selector,
+            99,
             address(0), // Invalid module address
             ""
         );
 
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
-            BOB,
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(BOB_ACCOUNT),
-            0,
-            callData
-        );
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature(
-           "InvalidModuleTypeId(uint256)",  
-           99);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidModuleTypeId(uint256)", 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        
+
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
 
         emit UserOperationRevertReason(
-          userOpHash, // userOpHash
-          address(BOB_ACCOUNT), // sender
-          userOps[0].nonce, // nonce
-          expectedRevertReason
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
         );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
