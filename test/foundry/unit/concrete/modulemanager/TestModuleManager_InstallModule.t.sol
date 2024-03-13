@@ -14,6 +14,7 @@ event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed send
 
 contract TestModuleManager_InstallModule is Test, BicoTestBase {
     MockValidator public mockValidator;
+    MockExecutor public mockExecutor;
     SmartAccount public BOB_ACCOUNT;
     address constant INVALID_MODULE_ADDRESS = address(0);
     uint256 constant MODULE_TYPE_VALIDATOR = 1;
