@@ -164,16 +164,18 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         emit ModuleInstalled(moduleTypeId, module);
     }
 
+    // Review
     function uninstallModule(
         uint256 moduleTypeId,
         address module,
         bytes calldata deInitData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        // Note: Review should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         // else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
-        // else revert UnsupportedModuleType(moduleTypeId);
+        else revert UnsupportedModuleType(moduleTypeId);
         emit ModuleUninstalled(moduleTypeId, module);
     }
 

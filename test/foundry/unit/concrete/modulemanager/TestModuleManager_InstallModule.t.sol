@@ -23,14 +23,12 @@ import { MockValidator } from "../../../mocks/MockValidator.sol";
 contract TestModuleManager_InstallModule is Test, BicoTestBase {
     MockValidator public mockValidator;
     SmartAccount public BOB_ACCOUNT;
-    uint256 constant MODULE_TYPE_VALIDATOR = 1;
-    uint256 constant MODULE_TYPE_EXECUTOR = 2;
-    uint256 constant MODULE_TYPE_FALLBACK = 3;
-    uint256 constant MODULE_TYPE_HOOK = 4;
 
     function setUp() public {
         init();
         BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
+        // New copy of mock validator
+        // Different address than one already installed as part of smart account deployment
         mockValidator = new MockValidator();
     }
 
@@ -63,6 +61,7 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
 
         // Setup: Install the module first
         test_InstallModule_Success(); // Use the test case directly for setup
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
 
@@ -84,21 +83,21 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         
- bytes memory expectedRevertReason = abi.encodeWithSignature(
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
         "ModuleAlreadyInstalled(uint256,address)", 
         MODULE_TYPE_VALIDATOR, 
         address(mockValidator)
-    );
+        );
         
-    // Expect the UserOperationRevertReason event
-    vm.expectEmit(true, true, true, true);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
 
-    emit UserOperationRevertReason(
-        userOpHash, // userOpHash
-        address(BOB_ACCOUNT), // sender
-        userOps[0].nonce, // nonce
-        expectedRevertReason
-    );
+        emit UserOperationRevertReason(
+          userOpHash, // userOpHash
+          address(BOB_ACCOUNT), // sender
+          userOps[0].nonce, // nonce
+          expectedRevertReason
+        );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -121,21 +120,20 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
             callData
         );
 
-         bytes memory expectedRevertReason = abi.encodeWithSignature(
-        "InvalidModuleTypeId(uint256)",  
-        99
-    );
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+           "InvalidModuleTypeId(uint256)",  
+           99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         
-    // Expect the UserOperationRevertReason event
-    vm.expectEmit(true, true, true, true);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
 
-    emit UserOperationRevertReason(
-        userOpHash, // userOpHash
-        address(BOB_ACCOUNT), // sender
-        userOps[0].nonce, // nonce
-        expectedRevertReason
-    );
+        emit UserOperationRevertReason(
+          userOpHash, // userOpHash
+          address(BOB_ACCOUNT), // sender
+          userOps[0].nonce, // nonce
+          expectedRevertReason
+        );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
