@@ -11,7 +11,6 @@ import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } fr
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
 import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
-import {console2 } from "forge-std/src/console2.sol";
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337Account, IModularSmartAccount {
@@ -170,6 +169,11 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         address module,
         bytes calldata deInitData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        SentinelListLib.SentinelList storage moduleList;
+
+        if(!_isModuleInstalled(moduleTypeId, module, deInitData)) {
+                revert ModuleNotInstalled(moduleTypeId, module);
+        }
         // Note: Review should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
