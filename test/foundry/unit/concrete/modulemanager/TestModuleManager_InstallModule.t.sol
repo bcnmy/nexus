@@ -152,5 +152,26 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    receive() external payable {} // To allow receiving ether
+    function test_InstallModule_InvalidModuleAddress() public {
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_VALIDATOR, // Using Validator module type for this test
+            address(0), // Invalid module address
+            ""
+        );
+
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expected revert reason encoded
+        bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_InvalidEntry(address)", address(0));
+
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
 }
