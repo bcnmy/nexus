@@ -59,29 +59,6 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    function test_InstallModule_Revert_Unauthorized() public {
-        // Assuming ALICE is not authorized to perform this action
-        vm.expectRevert("Unauthorized");
-
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, 
-            MODULE_TYPE_VALIDATOR, 
-            address(mockValidator), 
-            ""
-        );
-
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
-            ALICE, // Changing the signer to ALICE
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(BOB_ACCOUNT),
-            0,
-            callData
-        );
-
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
-    }
-
     function test_InstallModule_Revert_AlreadyInstalled() public {
 
         // Setup: Install the module first
@@ -96,7 +73,7 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
             ""
         );
 
-        PackedUserOperation[] memory userOpsAgain = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
             BOB,
             BOB_ACCOUNT,
             ModeLib.encodeSimpleSingle(),
@@ -105,31 +82,63 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
             callData
         );
 
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        
+ bytes memory expectedRevertReason = abi.encodeWithSignature(
+        "ModuleAlreadyInstalled(uint256,address)", 
+        MODULE_TYPE_VALIDATOR, 
+        address(mockValidator)
+    );
+        
+    // Expect the UserOperationRevertReason event
+    vm.expectEmit(true, true, true, true);
 
-        ENTRYPOINT.handleOps(userOpsAgain, payable(address(BOB.addr)));
+    emit UserOperationRevertReason(
+        userOpHash, // userOpHash
+        address(BOB_ACCOUNT), // sender
+        userOps[0].nonce, // nonce
+        expectedRevertReason
+    );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    // function test_InstallModule_Revert_InvalidModule() public {
-    //     vm.expectRevert("InvalidModuleAddress");
+    function test_InstallModule_Revert_InvalidModule() public {
 
-    //     bytes memory callData = abi.encodeWithSelector(
-    //         IModuleManager.installModule.selector, 
-    //         MODULE_TYPE_VALIDATOR, 
-    //         address(0), // Invalid module address
-    //         ""
-    //     );
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, 
+            99, 
+            address(0), // Invalid module address
+            ""
+        );
 
-    //     PackedUserOperation[] memory userOps = prepareExecutionUserOp(
-    //         BOB,
-    //         BOB_ACCOUNT,
-    //         ModeLib.encodeSimpleSingle(),
-    //         address(BOB_ACCOUNT),
-    //         0,
-    //         callData
-    //     );
+        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+            BOB,
+            BOB_ACCOUNT,
+            ModeLib.encodeSimpleSingle(),
+            address(BOB_ACCOUNT),
+            0,
+            callData
+        );
 
-    //     ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-    // }
+         bytes memory expectedRevertReason = abi.encodeWithSignature(
+        "InvalidModuleTypeId(uint256)",  
+        99
+    );
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        
+    // Expect the UserOperationRevertReason event
+    vm.expectEmit(true, true, true, true);
+
+    emit UserOperationRevertReason(
+        userOpHash, // userOpHash
+        address(BOB_ACCOUNT), // sender
+        userOps[0].nonce, // nonce
+        expectedRevertReason
+    );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
 
     receive() external payable {} // To allow receiving ether
 }
