@@ -208,12 +208,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         address module,
         bytes calldata additionalContext
     ) external view override(IModuleManager, ModuleManager) returns (bool) {
-        additionalContext;
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
-        // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
+        return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
     // TODO // Review for initialize modifiers
