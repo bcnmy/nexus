@@ -51,6 +51,23 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
             "Module should be installed"
         );
     }
+
+    function test_InstallModule_Success_Validator() public {
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+        _installModule(
+            callData, MODULE_TYPE_VALIDATOR, address(mockValidator), "Validator module should be installed successfully"
+        );
+    }
+
+    function test_InstallModule_Success_Executor() public {
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+        );
+        _installModule(
+            callData, MODULE_TYPE_EXECUTOR, address(mockExecutor), "Executor module should be installed successfully"
+        );
     }
 
     function test_InstallModule_Revert_AlreadyInstalled() public {
