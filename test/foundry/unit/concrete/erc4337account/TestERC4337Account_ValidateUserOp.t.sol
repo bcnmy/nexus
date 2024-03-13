@@ -10,6 +10,7 @@ contract TestERC4337Account_ValidateUserOp is Test, BicoTestBase {
     MockValidator public validator;
     address public userAddress;
     SmartAccount public BOB_ACCOUNT;
+
     function setUp() public {
         init();
         userAddress = address(BOB.addr);
@@ -25,7 +26,7 @@ contract TestERC4337Account_ValidateUserOp is Test, BicoTestBase {
         userOps[0].signature = signMessageAndGetSignatureBytes(BOB, userOpHash);
 
         // Attempt to validate the user operation, expecting success
-        uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
+        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         assertTrue(res == 0, "Valid operation should pass validation");
     }
 
@@ -37,7 +38,7 @@ contract TestERC4337Account_ValidateUserOp is Test, BicoTestBase {
         userOps[0].signature = signMessageAndGetSignatureBytes(ALICE, userOpHash); // Incorrect signer simulated
 
         // Attempt to validate the user operation, expecting failure due to invalid signature
-        uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         assertTrue(res == 1, "Operation with invalid signature should fail validation");
     }
 }
