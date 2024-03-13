@@ -6,6 +6,14 @@ pragma solidity ^0.8.24;
  * @dev Interface for configuring modules in a smart account.
  */
 interface IModuleManager {
+
+    error CannotRemoveLastValidator();
+    error InvalidModule(address module);
+    error InvalidModuleTypeId(uint256 moduleTypeId);
+    error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
+    error UnauthorizedOperation(address operator);
+    error ModuleNotInstalled(uint256 moduleTypeId, address module);
+
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
@@ -36,8 +44,5 @@ interface IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 }
