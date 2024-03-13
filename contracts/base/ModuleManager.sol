@@ -42,14 +42,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
-    )
-        external
-        payable
-        virtual;
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
      * @notice Checks if a module is installed on the smart account.
@@ -62,11 +55,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        virtual
-        returns (bool);
+    ) external view virtual returns (bool);
 
     function _initModuleManager() internal virtual {
         // account module storage
@@ -121,8 +110,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.contains(executor);
     }
-
-    // /////////////////////////////////////////////////////
 
     function _isAlreadyInitialized() internal view virtual returns (bool) {
         // account module storage
