@@ -31,28 +31,26 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
     }
 
     function test_InstallModule_Success() public {
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should not be installed initially"
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, 
-            MODULE_TYPE_VALIDATOR, 
-            address(mockValidator), 
-            ""
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
 
         // Preparing UserOperation for installing the module
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
-            BOB,
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(BOB_ACCOUNT),
-            0,
-            callData
-        );
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should be installed"
+        );
+    }
     }
 
     function test_InstallModule_Revert_AlreadyInstalled() public {
