@@ -174,4 +174,23 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    function _installModule(
+        bytes memory callData,
+        uint256 moduleTypeId,
+        address moduleAddress,
+        string memory message
+    )
+        private
+    {
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+
+        vm.expectEmit(true, true, true, true);
+        emit ModuleInstalled(moduleTypeId, moduleAddress);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, ""), message);
+    }
+
+    receive() external payable { } // To allow receiving ether
 }
