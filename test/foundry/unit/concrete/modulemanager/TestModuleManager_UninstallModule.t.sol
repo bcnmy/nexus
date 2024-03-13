@@ -21,7 +21,7 @@ import { MockValidator } from "../../../mocks/MockValidator.sol";
     );
 
 
-contract TestModuleManager_InstallModule is Test, BicoTestBase {
+contract TestModuleManager_UninstallModule is Test, BicoTestBase {
     MockValidator public mockValidator;
     SmartAccount public BOB_ACCOUNT;
 
