@@ -32,8 +32,8 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 
-    function isModuleType(uint256 typeID) external view returns (bool) {
-        return typeID == 2;
+    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
+        return moduleTypeId == 2;
     }
 
     function getModuleTypes() external view returns (EncodedModuleTypes) { }

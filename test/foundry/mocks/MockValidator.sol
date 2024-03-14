@@ -50,9 +50,8 @@ contract MockValidator is IValidator {
     }
 
     /// @inheritdoc IModule
-    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
-        moduleTypeId;
-        return true;
+    function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
+        return moduleTypeId == 1;
     }
 
     function isOwner(address account, address owner) external view returns (bool) {
@@ -64,7 +63,8 @@ contract MockValidator is IValidator {
         // solhint-disable-previous-line no-empty-blocks
     }
 
-    function test_() public pure {
-        // This function is used to ignore file in coverage report
+    // Review
+    function test(uint256 a) public {
+        a;
     }
 }

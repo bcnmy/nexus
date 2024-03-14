@@ -17,8 +17,6 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
     MockExecutor public mockExecutor;
     SmartAccount public BOB_ACCOUNT;
     address constant INVALID_MODULE_ADDRESS = address(0);
-    uint256 constant MODULE_TYPE_VALIDATOR = 1;
-    uint256 constant MODULE_TYPE_EXECUTOR = 2;
     uint256 constant INVALID_MODULE_TYPE = 999;
 
     function setUp() public {
@@ -109,10 +107,11 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
     }
 
     function test_InstallModule_Revert_InvalidModuleTypeId() public {
+        MockValidator newMockValidator = new MockValidator();
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
-            99,
-            address(0), // Invalid module address
+            99, // Invalid module id
+            newMockValidator, // valid new module address
             ""
         );
 
