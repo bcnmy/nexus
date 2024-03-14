@@ -82,7 +82,7 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
 
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Module should not be installed initially"
+            "Module should not be installed anymore"
         );
     }
 
