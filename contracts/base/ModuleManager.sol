@@ -5,8 +5,11 @@ import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
@@ -70,6 +73,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     // // Review this agaisnt required hook/permissions at the time of installations
 
     function _installValidator(address validator, bytes calldata data) internal virtual {
+        // Note: Idea is should be able to check supported interface and module type - eligible validator 
+        // if(!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleModule(validator);
+
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         validators.push(validator);
         IValidator(validator).onInstall(data);
@@ -87,6 +93,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     // // Review this agaisnt required hook/permissions at the time of installations
 
     function _installExecutor(address executor, bytes calldata data) internal virtual {
+        // Note: Idea is should be able to check supported interface and module type - eligible validator 
+        // if(!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleModule(executor);
+
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         executors.push(executor);
         IExecutor(executor).onInstall(data);

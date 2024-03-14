@@ -12,6 +12,7 @@ interface IModuleManager {
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error UnauthorizedOperation(address operator);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
+    error IncompatibleModule(address module);
 
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);
