@@ -37,3 +37,24 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
 
+    // Test single execution via MockExecutor
+    function test_ExecSingleFromExecutor() public {
+        bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
+        bytes memory execCallData = abi.encodeWithSelector(
+            MockExecutor.executeViaAccount.selector,
+            BOB_ACCOUNT,
+            address(counter),
+            0,
+            incrementCallData
+        );
+        PackedUserOperation[] memory userOpsExec = prepareExecutionUserOp(
+            BOB,
+            BOB_ACCOUNT,
+            ModeLib.encodeSimpleSingle(),
+            address(mockExecutor),
+            0,
+            execCallData
+        );
+        ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
+        assertEq(counter.getNumber(), 1, "Counter should have incremented");
+    }
