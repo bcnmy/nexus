@@ -78,3 +78,12 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         unauthorizedExecutor.execBatch(BOB_ACCOUNT, executions);
     }
 
+    // Test value transfer via executor
+    function test_ExecSingleWithValueTransfer() public {
+        address receiver = address(0x123);
+        uint256 sendValue = 1 ether;
+        payable(address(BOB_ACCOUNT)).call{value: 2 ether}(""); // Fund BOB_ACCOUNT
+        bytes[] memory results = mockExecutor.executeViaAccount(BOB_ACCOUNT, receiver, sendValue, "");
+        assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
+    }
+
