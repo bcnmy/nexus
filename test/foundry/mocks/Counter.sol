@@ -12,11 +12,11 @@ contract Counter {
         _number--;
     }
 
-    /**
-     * @dev Return value
-     * @return value of 'number'
-     */
     function getNumber() public view returns (uint256) {
         return _number;
+    }
+
+    function revertOperation() public pure {
+        revert("Counter: Revert operation");
     }
 }
