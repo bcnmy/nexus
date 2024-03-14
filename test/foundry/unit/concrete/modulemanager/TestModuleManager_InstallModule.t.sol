@@ -147,7 +147,29 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expected revert reason encoded
-        bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_InvalidEntry(address)", address(0));
+        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAddressCanNotBeZero()");
+
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    // Installing a module as an executor which does not support executor module type
+    function test_InstallModule_IncompatibleModule() public {
+
+       bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), ""
+        );
+
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        // Expected revert reason encoded
+        bytes memory expectedRevertReason = abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);

@@ -142,6 +142,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         address module,
         bytes calldata initData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        if(module == address(0)) revert ModuleAddressCanNotBeZero();
         if(_isModuleInstalled(moduleTypeId, module, initData)) {
                 revert ModuleAlreadyInstalled(moduleTypeId, module);
         }

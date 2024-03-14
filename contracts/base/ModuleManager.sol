@@ -103,10 +103,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     // // TODO
     // // Review this agaisnt required hook/permissions at the time of installations
-
     function _installValidator(address validator, bytes calldata data) internal virtual {
         // Note: Idea is should be able to check supported interface and module type - eligible validator 
-        // if(!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleModule(validator);
+        if(!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleValidatorModule(validator);
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         validators.push(validator);
@@ -132,7 +131,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     function _installExecutor(address executor, bytes calldata data) internal virtual {
         // Note: Idea is should be able to check supported interface and module type - eligible validator 
-        // if(!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleModule(executor);
+        if(!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleExecutorModule(executor);
 
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         executors.push(executor);
