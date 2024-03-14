@@ -11,8 +11,8 @@ import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } fr
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
 import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
-
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+
 contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337Account, IModularSmartAccount {
     using ModeLib for ModeCode;
     using ExecLib for bytes;
@@ -142,8 +142,6 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         address module,
         bytes calldata initData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
-        SentinelListLib.SentinelList storage moduleList;
-
         if(_isModuleInstalled(moduleTypeId, module, initData)) {
                 revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
@@ -169,8 +167,6 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         address module,
         bytes calldata deInitData
     ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
-        SentinelListLib.SentinelList storage moduleList;
-
         if(!_isModuleInstalled(moduleTypeId, module, deInitData)) {
                 revert ModuleNotInstalled(moduleTypeId, module);
         }

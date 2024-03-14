@@ -49,7 +49,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * THIS IS NOT PART OF THE STANDARD
      * Helper Function to access linked list
      */
-    function getValidatorPaginated(
+    function getValidatorsPaginated(
         address cursor,
         uint256 size
     )
@@ -58,8 +58,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         virtual
         returns (address[] memory array, address next)
     {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        return validators.getEntriesPaginated(cursor, size);
+        (array, next) = _getValidatorsPaginated(cursor, size);
     }
 
     /**
@@ -75,8 +74,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         virtual
         returns (address[] memory array, address next)
     {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        return executors.getEntriesPaginated(cursor, size);
+        (array, next) = _getExecutorsPaginated(cursor, size);
     }
 
     /**
@@ -116,8 +114,14 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     }
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
-        // TODO: check if its the last validator. this might brick the account
+        // check if its the last validator. this might brick the account
+        (address[] memory array,) = _getValidatorsPaginated(address(0x1), 10);
+        if(array.length == 1) {
+            revert CannotRemoveLastValidator();
+        }
+
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
@@ -157,4 +161,29 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized();
     }
+
+    function _getValidatorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        return validators.getEntriesPaginated(cursor, size);
+    }
+
+    function _getExecutorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        return executors.getEntriesPaginated(cursor, size);
+    }
+    
 }
