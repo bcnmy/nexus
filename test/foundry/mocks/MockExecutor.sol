@@ -41,4 +41,8 @@ contract MockExecutor is IExecutor {
     function isInitialized(address smartAccount) external view returns (bool) {
         return false;
     }
+
+        function test_() public pure {
+        // This function is used to ignore file in coverage report
+    }
 }
