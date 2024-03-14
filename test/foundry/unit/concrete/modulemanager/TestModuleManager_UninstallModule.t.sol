@@ -60,12 +60,17 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
             "Module should not be installed initially"
         );
 
+        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorPaginated(address(0x1), 100);
+        address remove = address(mockValidator);
+        address prev = SentinelListHelper.findPrevious(array, remove);
+        console2.log('prev is %s ', prev);
+
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_VALIDATOR, // Todo: Test what if you pass MODULE_TYPE_EXECUTOR here
             address(mockValidator),
             // uninstallData needs to provide prev module address with data to uninstall
-            abi.encode(VALIDATOR_MODULE, "")
+            abi.encode(prev, "")
         );
 
         PackedUserOperation[] memory userOps =
@@ -74,6 +79,11 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should not be installed initially"
+        );
     }
 
     receive() external payable { } // To allow receiving ether

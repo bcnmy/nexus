@@ -46,6 +46,40 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
+     * THIS IS NOT PART OF THE STANDARD
+     * Helper Function to access linked list
+     */
+    function getValidatorPaginated(
+        address cursor,
+        uint256 size
+    )
+        external
+        view
+        virtual
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        return validators.getEntriesPaginated(cursor, size);
+    }
+
+    /**
+     * THIS IS NOT PART OF THE STANDARD
+     * Helper Function to access linked list
+     */
+    function getExecutorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        external
+        view
+        virtual
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        return executors.getEntriesPaginated(cursor, size);
+    }
+
+    /**
      * @notice Checks if a module is installed on the smart account.
      * @param moduleTypeId The module type ID.
      * @param module The module address.
