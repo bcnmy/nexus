@@ -68,3 +68,13 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
         assertEq(counter.getNumber(), 3, "Counter should have incremented three times");
     }
+    // Test execution from an unauthorized executor
+    function test_ExecSingleFromExecutor_Unauthorized() public {
+        MockExecutor unauthorizedExecutor = new MockExecutor();
+        bytes memory callData = abi.encodeWithSelector(Counter.incrementNumber.selector);
+        Execution[] memory executions = new Execution[](1);
+        executions[0] = Execution(address(counter), 0, callData);
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, address(unauthorizedExecutor)));
+        unauthorizedExecutor.execBatch(BOB_ACCOUNT, executions);
+    }
+
