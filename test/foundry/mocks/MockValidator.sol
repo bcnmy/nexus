@@ -64,7 +64,7 @@ contract MockValidator is IValidator {
         // solhint-disable-previous-line no-empty-blocks
     }
 
-    function test(uint256 a) public {
-        a;
+    function test_() public pure {
+        // This function is used to ignore file in coverage report
     }
 }
