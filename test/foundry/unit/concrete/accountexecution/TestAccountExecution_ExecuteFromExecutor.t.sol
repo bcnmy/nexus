@@ -58,3 +58,13 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
     }
+
+    // Test batch execution via MockExecutor
+    function test_ExecuteBatchFromExecutor() public {
+        Execution[] memory executions = new Execution[](3);
+        for (uint i = 0; i < executions.length; i++) {
+            executions[i] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        }
+        bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        assertEq(counter.getNumber(), 3, "Counter should have incremented three times");
+    }
