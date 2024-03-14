@@ -87,3 +87,22 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
     }
 
+    // Test executing an empty batch via executor
+    function test_ExecuteEmptyBatchFromExecutor() public {
+        Execution[] memory executions = new Execution[](0);
+        bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        assertEq(results.length, 0, "Results array should be empty");
+    }
+
+    // Test batch execution with mixed outcomes (success and revert)
+    function test_ExecuteBatchWithMixedOutcomes() public {
+        Execution[] memory executions = new Execution[](3);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        vm.expectRevert("Counter: Revert operation");
+        mockExecutor.execBatch(BOB_ACCOUNT, executions);
+    }
+
+    receive() external payable {} // Allows contract to receive ether
+}
