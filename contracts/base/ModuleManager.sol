@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
-import { Receiver } from "solady/src/accounts/Receiver.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import { Receiver } from "solady/src/accounts/Receiver.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
