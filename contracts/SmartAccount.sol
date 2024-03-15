@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import { AccountConfig } from "./base/AccountConfig.sol";
 import { AccountExecution } from "./base/AccountExecution.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
 import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
 import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
+import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337Account, IModularSmartAccount {
