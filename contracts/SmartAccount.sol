@@ -6,9 +6,9 @@ import { AccountExecution } from "./base/AccountExecution.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
-import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "./interfaces/modules/IERC7579Modules.sol";
+import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
-import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT } from "./lib/ModeLib.sol";
+import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY, CALLTYPE_DELEGATECALL } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
@@ -33,16 +33,21 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         assembly {
             validator := shr(96, nonce)
         }
-        // TODO
         // check if validator is enabled. If terminate the validation phase.
-        //if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
+        if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
 
         // bubble up the return value of the validator module
         uint256 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         return validationData;
     }
 
-    // TODO // Add execute_try and calltype delegatecall
+    /**
+     * @inheritdoc IAccountExecution
+     * @dev this function is only callable by the entry point or the account itself
+     * @dev this function demonstrates how to implement
+     * CallType SINGLE and BATCH and ExecType DEFAULT and TRY
+     * @dev this function could implement hook support (modifier)
+     */
     function execute(
         ModeCode mode,
         bytes calldata executionCalldata
@@ -56,23 +61,33 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
             // check if execType is revert or try
             if (execType == EXECTYPE_DEFAULT)
                 _executeBatch(executions);
-                // else if (execType == EXECTYPE_TRY) _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
+            else if (execType == EXECTYPE_TRY) 
+                _tryExecute(executions);
+            else 
+                revert UnsupportedExecType(execType);
         } else if (callType == CALLTYPE_SINGLE) {
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             // check if execType is revert or try
             if (execType == EXECTYPE_DEFAULT)
                 _execute(target, value, callData);
-                // TODO: implement event emission for tryExecute singleCall
-                // else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
-            else revert UnsupportedExecType(execType);
+            // TODO: implement event emission for tryExecute singleCall
+            else if (execType == EXECTYPE_TRY) 
+                _tryExecute(target, value, callData);
+            else 
+                revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
         }
-
     }
 
+    /**
+     * @inheritdoc IAccountExecution
+     * @dev this function is only callable by an installed executor module
+     * @dev this function demonstrates how to implement
+     * CallType SINGLE and BATCH and ExecType DEFAULT and TRY
+     * @dev this function could implement hook support (modifier)
+     */
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
@@ -94,49 +109,48 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
             // check if execType is revert or try
             if (execType == EXECTYPE_DEFAULT)
                 returnData = _executeBatch(executions);
-                // else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
+            else if (execType == EXECTYPE_TRY) 
+                returnData = _tryExecute(executions);
+            else 
+                revert UnsupportedExecType(execType);
         } else if (callType == CALLTYPE_SINGLE) {
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             returnData = new bytes[](1);
-            // bool success;
-            // check if execType is revert or try
+            bool success;
+            // check if execType is revert(default) or try
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
             }
             // TODO: implement event emission for tryExecute singleCall
-            /*else if (execType == EXECTYPE_TRY) {
+            else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
-            }*/
+            }
             else {
                 revert UnsupportedExecType(execType);
             }
         }
-        /*else if (callType == CALLTYPE_DELEGATECALL) {
-            // destructure executionCallData according to single exec
-            address delegate = address(uint160(bytes20(executionCalldata[0:20])));
-            bytes calldata callData = executionCalldata[20:];
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
-            else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
-            else revert UnsupportedExecType(execType);
-        }*/
         else {
             revert UnsupportedCallType(callType);
         }
     }
 
+    /**
+     * @inheritdoc IAccountExecution
+     */
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         bytes calldata callData = userOp.callData[4:];
         (bool success, ) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
+    /**
+     * @inheritdoc IModuleManager
+     */
     function installModule(
         uint256 moduleTypeId,
         address module,
@@ -146,7 +160,6 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         if(_isModuleInstalled(moduleTypeId, module, initData)) {
                 revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
-
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
         }
@@ -158,11 +171,12 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
-        
         emit ModuleInstalled(moduleTypeId, module);
     }
 
-    // Review
+    /**
+     * @inheritdoc IModuleManager
+     */
     function uninstallModule(
         uint256 moduleTypeId,
         address module,
@@ -171,7 +185,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         if(!_isModuleInstalled(moduleTypeId, module, deInitData)) {
                 revert ModuleNotInstalled(moduleTypeId, module);
         }
-        // Note: Review should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
+        // Note: Should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
@@ -180,6 +194,9 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         emit ModuleUninstalled(moduleTypeId, module);
     }
 
+    /**
+     * @inheritdoc IAccountConfig
+     */
     function supportsModule(
         uint256 modulTypeId
     ) external view virtual override(AccountConfig, IAccountConfig) returns (bool) {
@@ -190,30 +207,28 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         else return false;
     }
 
+    /**
+     * @inheritdoc IAccountConfig
+     */
     function supportsExecutionMode(
         ModeCode mode
     ) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) isSupported = true;
-        else if (callType == CALLTYPE_SINGLE) {
-            isSupported = true;
-        }
-        // else if (callType == CALLTYPE_DELEGATECALL) isSupported = true;
-        // if callType is not single, batch /*or delegatecall*/ return false
-        else {
-            return false;
-        }
+        else if (callType == CALLTYPE_SINGLE) isSupported = true;
+        // if callType is not single or batch return false 
+        // CALLTYPE_DELEGATECALL not supported
+        else return false;
 
-        if (execType == EXECTYPE_DEFAULT) {
-            isSupported = true;
-        }
-        // else if (execType == EXECTYPE_TRY) isSupported = true;
-        // if execType is not default /*or try,*/ return false
-        else {
-            return false;
-        }
+        if (execType == EXECTYPE_DEFAULT) isSupported = true;
+        else if (execType == EXECTYPE_TRY) isSupported = true;
+        // if execType is not default or try, return false
+        else return false;
     }
 
+    /**
+     * @inheritdoc IModuleManager
+     */
     function isModuleInstalled(
         uint256 moduleTypeId,
         address module,
@@ -234,9 +249,13 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         _installValidator(firstValidator, initData);
     }
 
-    // TODO
-    // Add means to upgrade
-
+    /**
+     * @notice Checks if a module is installed on the smart account.
+     * @param moduleTypeId The module type ID.
+     * @param module The module address.
+     * @param additionalContext Additional context for checking installation.
+     * @return True if the module is installed, false otherwise.
+     */
     function _isModuleInstalled(
         uint256 moduleTypeId,
         address module,
@@ -249,5 +268,33 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }
+
+    // TODO
+    // isValidSignature
+    // by base contract ERC1271 or a method like below..
+
+    // /**
+    //  * @dev ERC-1271 isValidSignature
+    //  *         This function is intended to be used to validate a smart account signature
+    //  * and may forward the call to a validator module
+    //  *
+    //  * @param hash The hash of the data that is signed
+    //  * @param data The data that is signed
+    //  */
+    // function isValidSignature(
+    //     bytes32 hash,
+    //     bytes calldata data
+    // )
+    //     external
+    //     view
+    //     virtual
+    //     override
+    //     returns (bytes4)
+    // {
+    //     address validator = address(bytes20(data[0:20]));
+    //     if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
+    //     return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+    // }
+
 
 }
