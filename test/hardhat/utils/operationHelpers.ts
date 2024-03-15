@@ -271,7 +271,6 @@ export function packGasValues(
  * @returns The execution call data as a string.
  */
 
-
 // TODO: need to take an argument for CallType and ExecType as well. if it's single or batch / revert or try
 // Whole method needs to be refactored
 

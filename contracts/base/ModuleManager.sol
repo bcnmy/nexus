@@ -2,20 +2,20 @@
 pragma solidity ^0.8.24;
 
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
-import { Receiver } from "solady/src/accounts/Receiver.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { Storage } from "./Storage.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import { Receiver } from "solady/src/accounts/Receiver.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
 // Review: Kept a different linked list for validators, executors
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
-
-    error InvalidModule(address module);
-    error CannotRemoveLastValidator();
 
     modifier onlyExecutorModule() virtual {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
@@ -43,14 +43,39 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
+
+    /**
+     * THIS IS NOT PART OF THE STANDARD
+     * Helper Function to access linked list
+     */
+    function getValidatorsPaginated(
+        address cursor,
+        uint256 size
     )
         external
-        payable
-        virtual;
+        view
+        virtual
+        returns (address[] memory array, address next)
+    {
+        (array, next) = _getValidatorsPaginated(cursor, size);
+    }
+
+    /**
+     * THIS IS NOT PART OF THE STANDARD
+     * Helper Function to access linked list
+     */
+    function getExecutorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        external
+        view
+        virtual
+        returns (address[] memory array, address next)
+    {
+        (array, next) = _getExecutorsPaginated(cursor, size);
+    }
 
     /**
      * @notice Checks if a module is installed on the smart account.
@@ -63,11 +88,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        virtual
-        returns (bool);
+    ) external view virtual returns (bool);
 
     function _initModuleManager() internal virtual {
         // account module storage
@@ -82,16 +103,24 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     // // TODO
     // // Review this agaisnt required hook/permissions at the time of installations
-
     function _installValidator(address validator, bytes calldata data) internal virtual {
+        // Note: Idea is should be able to check supported interface and module type - eligible validator 
+        if(!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleValidatorModule(validator);
+
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
-        // TODO: check if its the last validator. this might brick the account
+        // check if its the last validator. this might brick the account
+        (address[] memory array,) = _getValidatorsPaginated(address(0x1), 10);
+        if(array.length == 1) {
+            revert CannotRemoveLastValidator();
+        }
+
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
@@ -101,6 +130,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     // // Review this agaisnt required hook/permissions at the time of installations
 
     function _installExecutor(address executor, bytes calldata data) internal virtual {
+        // Note: Idea is should be able to check supported interface and module type - eligible validator 
+        if(!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleExecutorModule(executor);
+
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -123,11 +155,34 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         return executors.contains(executor);
     }
 
-    // /////////////////////////////////////////////////////
-
     function _isAlreadyInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized();
     }
+
+    function _getValidatorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        return validators.getEntriesPaginated(cursor, size);
+    }
+
+    function _getExecutorsPaginated(
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address next)
+    {
+        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        return executors.getEntriesPaginated(cursor, size);
+    }
+    
 }
