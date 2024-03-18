@@ -63,7 +63,7 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log('prev is %s ', prev);
+        console2.log("prev is %s ", prev);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
@@ -103,7 +103,7 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(newValidatorModule);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log('prev for never installed is %s ', prev);
+        console2.log("prev for never installed is %s ", prev);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
@@ -154,12 +154,8 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
 
-
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            remove,
-            abi.encode(address(0x66), "")
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(address(0x66), "")
         );
 
         PackedUserOperation[] memory userOps =
@@ -167,9 +163,7 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "LinkedList_InvalidEntry(address)", remove
-        );
+        bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_InvalidEntry(address)", remove);
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -195,16 +189,13 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
         );
 
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
-        console2.log('array length is %s ', array.length);
+        console2.log("array length is %s ", array.length);
         address remove = address(VALIDATOR_MODULE);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log('prev for last validator module is %s ', prev);
+        console2.log("prev for last validator module is %s ", prev);
 
-         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            remove,
-            abi.encode(prev, "")
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev, "")
         );
 
         PackedUserOperation[] memory userOps =
@@ -212,8 +203,7 @@ contract TestModuleManager_UninstallModule is Test, BicoTestBase {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);

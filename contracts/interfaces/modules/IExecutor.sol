@@ -10,5 +10,5 @@ struct Execution {
 }
 
 interface IExecutor is IModule {
-    // solhint-disable-previous-line no-empty-blocks
+// solhint-disable-previous-line no-empty-blocks
 }

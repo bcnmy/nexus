@@ -20,19 +20,10 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         counter = new Counter();
 
         // Install MockExecutor as executor module on BOB_ACCOUNT
-        bytes memory callDataInstall = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            uint256(2),
-            address(mockExecutor),
-            ""
-        );
+        bytes memory callDataInstall =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
         PackedUserOperation[] memory userOpsInstall = prepareExecutionUserOp(
-            BOB,
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(BOB_ACCOUNT),
-            0,
-            callDataInstall
+            BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callDataInstall
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
@@ -41,19 +32,10 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
     function test_ExecSingleFromExecutor() public {
         bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         bytes memory execCallData = abi.encodeWithSelector(
-            MockExecutor.executeViaAccount.selector,
-            BOB_ACCOUNT,
-            address(counter),
-            0,
-            incrementCallData
+            MockExecutor.executeViaAccount.selector, BOB_ACCOUNT, address(counter), 0, incrementCallData
         );
         PackedUserOperation[] memory userOpsExec = prepareExecutionUserOp(
-            BOB,
-            BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
-            address(mockExecutor),
-            0,
-            execCallData
+            BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(mockExecutor), 0, execCallData
         );
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
@@ -62,7 +44,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
     // Test batch execution via MockExecutor
     function test_ExecuteBatchFromExecutor() public {
         Execution[] memory executions = new Execution[](3);
-        for (uint i = 0; i < executions.length; i++) {
+        for (uint256 i = 0; i < executions.length; i++) {
             executions[i] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         }
         bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
@@ -83,7 +65,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
     function test_ExecSingleWithValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
-        payable(address(BOB_ACCOUNT)).call{value: 2 ether}(""); // Fund BOB_ACCOUNT
+        payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
         bytes[] memory results = mockExecutor.executeViaAccount(BOB_ACCOUNT, receiver, sendValue, "");
         assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
     }
@@ -105,5 +87,5 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
         mockExecutor.execBatch(BOB_ACCOUNT, executions);
     }
 
-    receive() external payable {} // Allows contract to receive ether
+    receive() external payable { } // Allows contract to receive ether
 }

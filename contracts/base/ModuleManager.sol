@@ -7,7 +7,6 @@ import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
-import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
@@ -43,7 +42,14 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    )
+        external
+        payable
+        virtual;
 
     /**
      * THIS IS NOT PART OF THE STANDARD
@@ -88,7 +94,11 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    ) external view virtual returns (bool);
+    )
+        external
+        view
+        virtual
+        returns (bool);
 
     function _initModuleManager() internal virtual {
         // account module storage
@@ -104,8 +114,8 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     // // TODO
     // // Review this agaisnt required hook/permissions at the time of installations
     function _installValidator(address validator, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator 
-        if(!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleValidatorModule(validator);
+        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleValidatorModule(validator);
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         validators.push(validator);
@@ -115,12 +125,12 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
         // check if its the last validator. this might brick the account
         (address[] memory array,) = _getValidatorsPaginated(address(0x1), 10);
-        if(array.length == 1) {
+        if (array.length == 1) {
             revert CannotRemoveLastValidator();
         }
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        
+
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
@@ -130,8 +140,8 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     // // Review this agaisnt required hook/permissions at the time of installations
 
     function _installExecutor(address executor, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator 
-        if(!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleExecutorModule(executor);
+        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleExecutorModule(executor);
 
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         executors.push(executor);
@@ -184,5 +194,4 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.getEntriesPaginated(cursor, size);
     }
-    
 }

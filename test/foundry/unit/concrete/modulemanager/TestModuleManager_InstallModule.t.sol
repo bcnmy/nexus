@@ -158,8 +158,7 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
 
     // Installing a module as an executor which does not support executor module type
     function test_InstallModule_IncompatibleModule() public {
-
-       bytes memory callData = abi.encodeWithSelector(
+        bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), ""
         );
 
@@ -169,7 +168,8 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expected revert reason encoded
-        bytes memory expectedRevertReason = abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
+        bytes memory expectedRevertReason =
+            abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
