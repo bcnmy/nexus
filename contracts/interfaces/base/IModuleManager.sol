@@ -6,6 +6,9 @@ pragma solidity ^0.8.24;
  * @dev Interface for configuring modules in a smart account.
  */
 interface IModuleManager {
+    event ModuleInstalled(uint256 moduleTypeId, address module);
+    event ModuleUninstalled(uint256 moduleTypeId, address module);
+
     error CannotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
@@ -17,9 +20,7 @@ interface IModuleManager {
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
-
-    event ModuleInstalled(uint256 moduleTypeId, address module);
-    event ModuleUninstalled(uint256 moduleTypeId, address module);
+    error FallbackHandlerAlreadyInstalled();
 
     /**
      * @notice Installs a Module of a certain type on the smart account.

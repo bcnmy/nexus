@@ -25,6 +25,10 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
      */
     function initialize(address firstValidator, bytes calldata initData) external payable;
 
+    // Review
+    // Add natspec
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+
     /**
      * @dev ERC-1271 isValidSignature
      *         This function is intended to be used to validate a smart account signature
@@ -34,8 +38,4 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
      * @param data The data that is signed
      */
     function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4);
-
-    // Review
-    // Add natspec
-    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
 }

@@ -68,6 +68,8 @@ contract R1Validator is IValidator {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
+    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
+
     function name() external pure returns (string memory) {
         return "R1Validator";
     }
@@ -79,6 +81,4 @@ contract R1Validator is IValidator {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == MODULE_TYPE_VALIDATOR;
     }
-
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
 }

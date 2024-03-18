@@ -8,12 +8,11 @@ import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
-import { IValidator, IExecutor, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
+import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
-import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY, CALLTYPE_DELEGATECALL } from "./lib/ModeLib.sol";
+import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 contract SmartAccount is
     AccountConfig,
@@ -251,6 +250,13 @@ contract SmartAccount is
         _installValidator(firstValidator, initData);
     }
 
+    function withdrawDepositTo(
+        address payable withdrawAddress,
+        uint256 amount
+    ) public payable virtual onlyEntryPointOrSelf {
+        IEntryPoint(entryPoint()).withdrawTo(withdrawAddress, amount);
+    }
+
     /**
      * @notice Checks if a module is installed on the smart account.
      * @param moduleTypeId The module type ID.
@@ -271,13 +277,6 @@ contract SmartAccount is
         else return false;
     }
 
-    function withdrawDepositTo(
-        address payable withdrawAddress,
-        uint256 amount
-    ) public payable virtual onlyEntryPointOrSelf {
-        IEntryPoint(entryPoint()).withdrawTo(withdrawAddress, amount);
-    }
-
     // TODO
     // isValidSignature
     // by base contract ERC1271 or a method like below..
@@ -296,25 +295,19 @@ contract SmartAccount is
         return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
     }
 
-    function getImplementation()
-        external
-        view
-        returns (address _implementation)
-    {
+    function getImplementation() external view returns (address implementation) {
         assembly {
-            _implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
     }
 
     // Review the need for interface
     // Add natspec
-    function upgradeToAndCall(address newImplementation, bytes calldata data)
-        public
-        payable
-        virtual
-        override(IModularSmartAccount, UUPSUpgradeable)
-    {
-       UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
+    function upgradeToAndCall(
+        address newImplementation,
+        bytes calldata data
+    ) public payable virtual override(IModularSmartAccount, UUPSUpgradeable) {
+        UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
     /// @dev To ensure that the account itself can upgrade the implementation.
