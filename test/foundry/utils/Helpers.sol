@@ -41,32 +41,33 @@ contract Helpers is CheatCodes {
         DEPLOYER_ADDRESS = DEPLOYER.addr;
         vm.deal(DEPLOYER_ADDRESS, 1000 ether);
 
-        ALICE = newWallet("ALICE");
-        ALICE_ADDRESS = ALICE.addr;
-        vm.deal(ALICE_ADDRESS, 1000 ether);
+        initializeWallets();
+        deployContracts();
+    }
 
-        BOB = newWallet("BOB");
-        BOB_ADDRESS = BOB.addr;
-        vm.deal(BOB_ADDRESS, 1000 ether);
+    function createAndFundWallet(string memory name, uint256 amount) internal returns (Vm.Wallet memory) {
+        Vm.Wallet memory wallet = newWallet(name);
+        vm.deal(wallet.addr, amount);
+        return wallet;
+    }
 
-        CHARLIE = newWallet("CHARLIE");
-        CHARLIE_ADDRESS = CHARLIE.addr;
-        vm.deal(CHARLIE_ADDRESS, 1000 ether);
+    function initializeWallets() internal {
+        DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
+        ALICE = createAndFundWallet("ALICE", 1000 ether);
+        BOB = createAndFundWallet("BOB", 1000 ether);
+        CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
+        BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
+    }
 
-        BUNDLER = newWallet("BUNDLER");
-        BUNDLER_ADDRESS = BUNDLER.addr;
-        vm.deal(BUNDLER_ADDRESS, 1000 ether);
-
+    function deployContracts() internal {
         ENTRYPOINT = new EntryPoint();
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
-
         ACCOUNT_IMPLEMENTATION = new SmartAccount();
-
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
-
         VALIDATOR_MODULE = new MockValidator();
     }
+
 
     function sendEther(address to, uint256 amount) internal {
         payable(to).transfer(amount);
