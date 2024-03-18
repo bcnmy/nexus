@@ -224,13 +224,6 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
-        // Note: Review should be able to validate passed moduleTypeId agaisnt the provided module address and
-        // interface?
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            _uninstallValidator(module, deInitData);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            _uninstallExecutor(module, deInitData);
-        }
         // Note: Should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _uninstallValidator(module, deInitData);
