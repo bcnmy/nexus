@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/BicoTestBase.t.sol";
+import "../../../utils/SmartAccountTestLab.t.sol";
 import { MockValidator } from "../../../mocks/MockValidator.sol";
 import { MockExecutor } from "../../../mocks/MockExecutor.sol";
 
@@ -12,16 +12,14 @@ event ModuleUninstalled(uint256 moduleTypeId, address module);
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-contract TestModuleManager_InstallModule is Test, BicoTestBase {
+contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
-    SmartAccount public BOB_ACCOUNT;
     address constant INVALID_MODULE_ADDRESS = address(0);
     uint256 constant INVALID_MODULE_TYPE = 999;
 
     function setUp() public {
         init();
-        BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
         // New copy of mock validator
         // Different address than one already installed as part of smart account deployment
         mockValidator = new MockValidator();
@@ -181,8 +179,7 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
 
     // Installing a module as an executor which does not support executor module type
     function test_InstallModule_IncompatibleModule() public {
-
-       bytes memory callData = abi.encodeWithSelector(
+        bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), ""
         );
 
@@ -192,7 +189,8 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expected revert reason encoded
-        bytes memory expectedRevertReason = abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
+        bytes memory expectedRevertReason =
+            abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);

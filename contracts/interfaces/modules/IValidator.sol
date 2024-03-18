@@ -26,5 +26,8 @@ interface IValidator is IModule {
         address sender,
         bytes32 hash,
         bytes calldata data
-    ) external view returns (bytes4);
+    )
+        external
+        view
+        returns (bytes4);
 }

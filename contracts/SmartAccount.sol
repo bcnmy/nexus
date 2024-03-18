@@ -35,7 +35,13 @@ contract SmartAccount is
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override(ERC4337Account, IERC4337Account) payPrefund(missingAccountFunds) returns (uint256) {
+    )
+        external
+        virtual
+        override(ERC4337Account, IERC4337Account)
+        payPrefund(missingAccountFunds)
+        returns (uint256)
+    {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -59,8 +65,13 @@ contract SmartAccount is
     function execute(
         ModeCode mode,
         bytes calldata executionCalldata
-    ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+    )
+        external
+        payable
+        override(AccountExecution, IAccountExecution)
+        onlyEntryPointOrSelf
+    {
+        (CallType callType, ExecType execType,,) = mode.decode();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_BATCH) {
@@ -74,7 +85,7 @@ contract SmartAccount is
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT)
+            if (execType == EXECTYPE_DEFAULT) 
                 _execute(target, value, callData);
                 // TODO: implement event emission for tryExecute singleCall
             else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
@@ -104,7 +115,7 @@ contract SmartAccount is
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType,,) = mode.decode();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_BATCH) {
@@ -141,9 +152,15 @@ contract SmartAccount is
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+    )
+        external
+        payable
+        virtual
+        override(AccountExecution, IAccountExecution)
+        onlyEntryPointOrSelf
+    {
         bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
+        (bool success,) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
@@ -196,9 +213,13 @@ contract SmartAccount is
     /**
      * @inheritdoc IAccountConfig
      */
-    function supportsModule(
-        uint256 modulTypeId
-    ) external view virtual override(AccountConfig, IAccountConfig) returns (bool) {
+    function supportsModule(uint256 modulTypeId)
+        external
+        view
+        virtual
+        override(AccountConfig, IAccountConfig)
+        returns (bool)
+    {
         if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (modulTypeId == MODULE_TYPE_EXECUTOR) return true;
         // else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
@@ -234,7 +255,12 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    ) external view override(IModuleManager, ModuleManager) returns (bool) {
+    )
+        external
+        view
+        override(IModuleManager, ModuleManager)
+        returns (bool)
+    {
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
@@ -268,7 +294,11 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    ) private view returns (bool) {
+    )
+        private
+        view
+        returns (bool)
+    {
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
