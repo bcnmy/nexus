@@ -4,11 +4,13 @@ pragma solidity >=0.8.24 <0.9.0;
 import "./Helpers.sol";
 
 contract BicoTestBase is Helpers {
+    // Review: current below variable is of no use
     SmartAccount public implementation;
     SmartAccount public smartAccount;
 
     function init() public {
         setAddress();
+        // Review: currently this is of no use
         implementation = new SmartAccount();
     }
 

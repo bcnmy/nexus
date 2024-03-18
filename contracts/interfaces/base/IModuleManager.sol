@@ -15,6 +15,8 @@ interface IModuleManager {
     error IncompatibleValidatorModule(address module);
     error IncompatibleExecutorModule(address module);
     error ModuleAddressCanNotBeZero();
+    error HookPostCheckFailed();
+    error HookAlreadyInstalled(address currentHook);
 
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);

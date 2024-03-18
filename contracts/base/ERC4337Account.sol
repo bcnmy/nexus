@@ -55,6 +55,14 @@ abstract contract ERC4337Account is IERC4337Account {
         return IEntryPoint(entryPoint()).getNonce(address(this), key);
     }
 
+    function addDeposit() public payable virtual {
+        IEntryPoint(entryPoint()).depositTo{value: msg.value}(address(this));
+    }
+
+    function getDeposit() public view virtual returns (uint256) {
+        return IEntryPoint(entryPoint()).balanceOf(address(this));
+    }
+
     function entryPoint() public view virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     }

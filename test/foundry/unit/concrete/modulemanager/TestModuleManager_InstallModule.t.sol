@@ -27,6 +27,29 @@ contract TestModuleManager_InstallModule is Test, BicoTestBase {
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
     }
+    
+    // TODO:
+    // Should be moved in upgrades tests
+    function test_upgradeSA() public {
+        SmartAccount newSA = new SmartAccount();
+        bytes32 slot = ACCOUNT_IMPLEMENTATION.proxiableUUID();
+        assertEq(slot, 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
+        address currentImpl = BOB_ACCOUNT.getImplementation();
+        assertEq(currentImpl, address(ACCOUNT_IMPLEMENTATION));
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModularSmartAccount.upgradeToAndCall.selector, address(newSA), ""
+        );
+
+        // Preparing UserOperation for installing the module
+        PackedUserOperation[] memory userOps =
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        address newImpl = BOB_ACCOUNT.getImplementation();
+        assertEq(newImpl, address(newSA));
+    }
 
     function test_InstallModule_Success() public {
         assertFalse(

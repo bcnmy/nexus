@@ -24,4 +24,18 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
      * @param initData. encoded data that can be used during the initialization phase
      */
     function initialize(address firstValidator, bytes calldata initData) external payable;
+
+    /**
+     * @dev ERC-1271 isValidSignature
+     *         This function is intended to be used to validate a smart account signature
+     * and may forward the call to a validator module
+     *
+     * @param hash The hash of the data that is signed
+     * @param data The data that is signed
+     */
+    function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4);
+
+    // Review
+    // Add natspec
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
 }
