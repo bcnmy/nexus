@@ -55,14 +55,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
-    )
-        external
-        payable
-        virtual;
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
      * THIS IS NOT PART OF THE STANDARD
@@ -97,11 +90,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        virtual
-        returns (bool);
+    ) external view virtual returns (bool);
 
     function _initModuleManager() internal virtual {
         // account module storage
