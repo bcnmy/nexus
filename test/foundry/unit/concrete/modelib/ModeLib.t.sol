@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/src/Test.sol";
-import "../../contracts/lib/ModeLib.sol";
+import "../../../../../contracts/lib/ModeLib.sol";
 
 contract ModeLibTest is Test {
     function setUp() public { }

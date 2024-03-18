@@ -2,20 +2,18 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/BicoTestBase.t.sol";
+import "../../../utils/SmartAccountTestLab.t.sol";
 import { MockExecutor } from "../../../mocks/MockExecutor.sol";
 import { Counter } from "../../../mocks/Counter.sol";
 
 error InvalidModule(address module);
 
-contract TestAccountExecution_ExecuteFromExecutor is Test, BicoTestBase {
-    SmartAccount public BOB_ACCOUNT;
+contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
     MockExecutor public mockExecutor;
     Counter public counter;
 
     function setUp() public {
         init();
-        BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
         mockExecutor = new MockExecutor();
         counter = new Counter();
 

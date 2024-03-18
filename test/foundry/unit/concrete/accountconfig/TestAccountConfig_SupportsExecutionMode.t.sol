@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/BicoTestBase.t.sol";
+import "../../../utils/SmartAccountTestLab.t.sol";
 
-contract TestAccountConfig_SupportsExecutionMode is Test, BicoTestBase {
+contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
     AccountConfig accountConfig;
 
     function setUp() public {
         init();
-        accountConfig = SmartAccount(deploySmartAccount(BOB));
+        accountConfig = AccountConfig(BOB_ACCOUNT);
     }
 
     function test_SupportsBatchExecutionMode() public {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/BicoTestBase.t.sol";
+import "../../../utils/SmartAccountTestLab.t.sol";
 import { MockValidator } from "../../../mocks/MockValidator.sol";
 
 /**
@@ -14,13 +14,11 @@ import { MockValidator } from "../../../mocks/MockValidator.sol";
  */
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-contract TestModuleManager_UninstallModule is Test, BicoTestBase {
+contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
     MockValidator public mockValidator;
-    SmartAccount public BOB_ACCOUNT;
 
     function setUp() public {
         init();
-        BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
         // New copy of mock validator
         // Different address than one already installed as part of smart account deployment
         mockValidator = new MockValidator();
