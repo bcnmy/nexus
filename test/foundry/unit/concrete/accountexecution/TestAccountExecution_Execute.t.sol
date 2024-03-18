@@ -2,18 +2,16 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/BicoTestBase.t.sol";
+import "../../../utils/SmartAccountTestLab.t.sol";
 
-contract TestAccountExecution_Execute is Test, BicoTestBase {
+contract TestAccountExecution_Execute is Test, SmartAccountTestLab {
     ModeCode singleMode;
     ModeCode batchMode;
     ModeCode unsupportedMode;
     Counter counter;
-    SmartAccount public BOB_ACCOUNT;
 
     function setUp() public {
         init();
-        BOB_ACCOUNT = SmartAccount(deploySmartAccount(BOB));
         singleMode = ModeLib.encodeSimpleSingle();
         batchMode = ModeLib.encodeSimpleBatch();
 
