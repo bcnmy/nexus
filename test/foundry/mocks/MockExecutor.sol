@@ -42,7 +42,7 @@ contract MockExecutor is IExecutor {
         return false;
     }
 
-        function test_() public pure {
+    function test_() public pure {
         // This function is used to ignore file in coverage report
     }
 }
