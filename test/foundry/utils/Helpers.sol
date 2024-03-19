@@ -228,7 +228,7 @@ contract Helpers is CheatCodes {
     function prepareExecutionUserOp(
         Vm.Wallet memory signer,
         SmartAccount account,
-        ModeCode mode,
+        ExecType execType,
         address target,
         uint256 value,
         bytes memory functionCall
@@ -236,6 +236,8 @@ contract Helpers is CheatCodes {
         internal
         returns (PackedUserOperation[] memory userOps)
     {
+        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+
         bytes memory executionCalldata =
             abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(target, value, functionCall)));
 
@@ -253,15 +255,18 @@ contract Helpers is CheatCodes {
     function prepareBatchExecutionUserOp(
         Vm.Wallet memory signer,
         SmartAccount account,
-        ModeCode mode,
+        ExecType execType,
         Execution[] memory executions
     )
         internal
         returns (PackedUserOperation[] memory userOps)
     {
+        // Determine the mode based on execType
+        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+
         // Encode the call into the calldata for the userOp
-        bytes memory executionCalldata =
-            abi.encodeCall(AccountExecution.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
+        bytes memory executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+
         // Initializing the userOps array with the same size as the targets array
         userOps = new PackedUserOperation[](1);
 
