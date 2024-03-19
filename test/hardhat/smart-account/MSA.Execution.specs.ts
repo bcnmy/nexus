@@ -4,40 +4,59 @@ import { expect } from "chai";
 import { AddressLike, Signer } from "ethers";
 import {
   AccountFactory,
+  Counter,
   EntryPoint,
   MockValidator,
   SmartAccount,
-} from "../../typechain-types";
+} from "../../../typechain-types";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { ExecutionMethod, ModuleType } from "./utils/types";
-import { deploySmartAccountWithEntrypointFixture } from "./utils/deployment";
-import { encodeData } from "./utils/encoding";
+import { ExecutionMethod, ModuleType } from "../utils/types";
+import { deployContractsAndSAFixture } from "../utils/deployment";
+import { encodeData } from "../utils/encoding";
 import {
   generateExecutionCallData,
   buildSignedUserOp,
   buildPackedUserOp,
-} from "./utils/operationHelpers";
+} from "../utils/operationHelpers";
 
 describe("SmartAccount Execution and Validation", () => {
-  let setup, bundler;
-  let factory, smartAccount, entryPoint, module, counter, owner;
-  let factoryAddress,
-    entryPointAddress,
-    smartAccountAddress,
-    moduleAddress,
-    counterAddress,
-    ownerAddress,
-    bundlerAddress;
+    let factory: AccountFactory;
+    let smartAccount: SmartAccount;
+    let entryPoint: EntryPoint;
+    let module: MockValidator;
+    let counter: Counter;
+    let accounts: Signer[];
+    let addresses: string[] | AddressLike[];
+    let factoryAddress: AddressLike;
+    let entryPointAddress: AddressLike;
+    let smartAccountAddress: AddressLike;
+    let moduleAddress: AddressLike;
+    let owner: Signer;
+    let ownerAddress: AddressLike;
+    let bundler: Signer;
+    let bundlerAddress: AddressLike;
+    let counterAddress: AddressLike;
 
   beforeEach(async () => {
-    setup = await loadFixture(deploySmartAccountWithEntrypointFixture);
-    ({ factory, smartAccount, entryPoint, module, counter, owner } = setup);
 
-    factoryAddress = await factory.getAddress();
+
+    const setup = await loadFixture(deployContractsAndSAFixture);
+    entryPoint = setup.entryPoint;
+    smartAccount = setup.smartAccountImplementation;
+    module = setup.mockValidator;
+    factory = setup.msaFactory;
+    accounts = setup.accounts;
+    addresses = setup.addresses;
+    counter = setup.counter;
+
+    
+
     entryPointAddress = await entryPoint.getAddress();
     smartAccountAddress = await smartAccount.getAddress();
     moduleAddress = await module.getAddress();
+    factoryAddress = await factory.getAddress();
     counterAddress = await counter.getAddress();
+    owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
     bundler = ethers.Wallet.createRandom();
     bundlerAddress = await bundler.getAddress();

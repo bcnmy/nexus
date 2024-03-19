@@ -150,6 +150,7 @@ export function packPaymasterData(
   ]);
 }
 
+// Review: user operation is not even ready here yet
 export async function signUserOperation(
   accountAddress: AddressLike,
   initCode: BytesLike,

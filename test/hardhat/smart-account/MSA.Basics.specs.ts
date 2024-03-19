@@ -7,15 +7,15 @@ import {
   EntryPoint,
   MockValidator,
   SmartAccount,
-} from "../../typechain-types";
-import { ModuleType } from "./utils/types";
-import { deploySmartAccountFixture } from "./utils/deployment";
-import { to18 } from "./utils/encoding";
+} from "../../../typechain-types";
+import { ModuleType } from "../utils/types";
+import { deployContractsFixture } from "../utils/deployment";
+import { to18 } from "../utils/encoding";
 import {
   generateFullInitCode,
   getAccountAddress,
   buildPackedUserOp,
-} from "./utils/operationHelpers";
+} from "../utils/operationHelpers";
 
 describe("SmartAccount Contract Integration Tests", function () {
   let factory: AccountFactory;
@@ -34,11 +34,11 @@ describe("SmartAccount Contract Integration Tests", function () {
   let bundlerAddress: AddressLike;
 
   beforeEach(async function () {
-    const setup = await loadFixture(deploySmartAccountFixture);
+    const setup = await loadFixture(deployContractsFixture);
     entryPoint = setup.entryPoint;
-    smartAccount = setup.smartAccount;
-    module = setup.module;
-    factory = setup.factory;
+    smartAccount = setup.smartAccountImplementation;
+    module = setup.mockValidator;
+    factory = setup.msaFactory;
     accounts = setup.accounts;
     addresses = setup.addresses;
 
@@ -106,6 +106,31 @@ describe("SmartAccount Contract Integration Tests", function () {
         codeAfterFirstCreation,
         "Account bytecode should remain unchanged after the second creation attempt",
       );
+    });
+  });
+
+  describe("Account ID and Supported Modes", function () {
+    it("Should correctly return the SmartAccount's ID", async function () {
+      expect(await smartAccount.accountId()).to.equal(
+        "biconomy.modular-smart-account.1.0.0-alpha",
+      );
+    });
+
+    // it("Should verify supported account modes", async function () {
+    //   expect(await smartAccount.supportsExecutionMode(toBytes32("0x01"))).to.be
+    //     .true;
+    //   expect(await smartAccount.supportsExecutionMode(toBytes32("0xFF"))).to.be
+    //     .true;
+    // });
+
+    it("Should confirm support for specified module types", async function () {
+      // Checks support for predefined module types (e.g., Validation, Execution)
+      expect(await smartAccount.supportsModule(ModuleType.Validation)).to.be
+        .true;
+      expect(await smartAccount.supportsModule(ModuleType.Execution)).to.be
+        .true;
+      // expect(await smartAccount.supportsModule(ModuleType.Hooks)).to.be.true;
+      // expect(await smartAccount.supportsModule(ModuleType.Fallback)).to.be.true;
     });
   });
 

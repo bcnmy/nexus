@@ -1,13 +1,19 @@
-import { Signer } from "ethers";
+import { BytesLike, HDNodeWallet, Signer } from "ethers";
 import { deployments, ethers } from "hardhat";
 import {
   AccountFactory,
   Counter,
   EntryPoint,
+  EntryPoint__factory,
+  MockExecutor,
+  MockHandler,
+  MockHook,
+  MockToken,
   MockValidator,
+  R1Validator,
   SmartAccount,
 } from "../../../typechain-types";
-import { DeploymentFixture, ModuleType } from "./types";
+import { DeploymentFixture, DeploymentFixtureWithSA, ModuleType } from "./types";
 import {
   generateFullInitCode,
   getAccountAddress,
@@ -39,12 +45,22 @@ export async function deployContract<T>(
  * Deploys the EntryPoint contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
-export async function deployEntrypoint(): Promise<EntryPoint> {
-  const accounts: Signer[] = await ethers.getSigners();
+export async function getDeployedEntrypoint(): Promise<EntryPoint> {
+  const [deployer, ...accounts] = await ethers.getSigners();
+
+  // Note: There should be a way to cache deployed addresses 
+
+  // const EntryPointDeployment = await deployments.get("EntryPoint");
+  // if(EntryPointDeployment) {
+  //   return EntryPoint__factory.connect(
+  //     EntryPointDeployment.address,
+  //     deployer
+  //   );
+  // }
+
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
-
   const Entrypoint = await ethers.getContractFactory("EntryPoint");
   const deterministicEntryPoint = await deployments.deploy("EntryPoint", {
     from: addresses[0],
@@ -58,8 +74,9 @@ export async function deployEntrypoint(): Promise<EntryPoint> {
  * Deploys the AccountFactory contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
-export async function deployAccountFactory(
+export async function getDeployedAccountFactory(
   implementationAddress: string,
+  // Note: this could be converted to dto so that additional args can easily be passed
 ): Promise<AccountFactory> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
@@ -82,38 +99,197 @@ export async function deployAccountFactory(
 }
 
 /**
+ * Deploys the Counter contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed Counter contract instance.
+ */
+export async function getDeployedCounter(): Promise<Counter> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const Counter = await ethers.getContractFactory("Counter");
+  const deterministicCounter = await deployments.deploy("Counter", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return Counter.attach(deterministicCounter.address) as Counter;
+}
+
+/**
+ * Deploys the ERC20 MockToken contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed MockToken contract instance.
+ */
+export async function getDeployedMockToken(): Promise<MockToken> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MockToken = await ethers.getContractFactory("MockToken");
+  const deterministicMockToken = await deployments.deploy("MockToken", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return MockToken.attach(deterministicMockToken.address) as MockToken;
+}
+
+/**
+ * Deploys the MockExecutor contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed MockExecutor contract instance.
+ */
+export async function getDeployedMockExecutor(): Promise<MockExecutor> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MockExecutor = await ethers.getContractFactory("MockExecutor");
+  const deterministicMockExecutor = await deployments.deploy("MockExecutor", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return MockExecutor.attach(deterministicMockExecutor.address) as MockExecutor;
+}
+
+/**
+ * Deploys the MockValidator contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed MockValidator contract instance.
+ */
+export async function getDeployedMockValidator(): Promise<MockValidator> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MockValidator = await ethers.getContractFactory("MockValidator");
+  const deterministicMockValidator = await deployments.deploy("MockValidator", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return MockValidator.attach(deterministicMockValidator.address) as MockValidator;
+}
+
+/**
+ * Deploys the MockHook contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed MockHook contract instance.
+ */
+export async function getDeployedMockHook(): Promise<MockHook> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MockHook = await ethers.getContractFactory("MockHook");
+  const deterministicMockHook = await deployments.deploy("MockHook", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return MockHook.attach(deterministicMockHook.address) as MockHook;
+}
+
+/**
+ * Deploys the MockHandler contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed MockHandler contract instance.
+ */
+export async function getDeployedMockHandler(): Promise<MockHandler> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MockHandler = await ethers.getContractFactory("MockHandler");
+  const deterministicMockHandler = await deployments.deploy("MockHandler", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return MockHandler.attach(deterministicMockHandler.address) as MockHandler;
+}
+
+/**
+ * Deploys the ECDSA R1Validator contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed ECDSA R1Validator contract instance.
+ */
+export async function getDeployedR1Validator(): Promise<R1Validator> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const R1Validator = await ethers.getContractFactory("R1Validator");
+  const deterministicR1Validator = await deployments.deploy("R1Validator", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return R1Validator.attach(deterministicR1Validator.address) as R1Validator;
+}
+
+/**
+ * Deploys the (MSA) Smart Account implementation contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed SA implementation contract instance.
+ */
+export async function getDeployedMSAImplementation(): Promise<SmartAccount> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const SmartAccount = await ethers.getContractFactory("SmartAccount");
+  const deterministicMSAImpl = await deployments.deploy("SmartAccount", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return SmartAccount.attach(deterministicMSAImpl.address) as SmartAccount;
+}
+
+/**
  * Deploys the smart contract infrastructure required for testing.
- * This includes the EntryPoint, SmartAccount, AccountFactory, MockValidator, and Counter contracts.
+ * This includes the all the required contracts for tests to run.
  *
  * @returns A promise that resolves to a DeploymentFixture object containing deployed contracts and account information.
+ * @notice This function will not deploy a Smart Account proxy
  */
-export async function deploySmartAccountFixture(): Promise<DeploymentFixture> {
+export async function deployContractsFixture(): Promise<DeploymentFixture> {
   const [deployer, ...accounts] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const entryPoint = await deployEntrypoint();
-  const smartAccount = await deployContract<SmartAccount>(
+  const entryPoint = await getDeployedEntrypoint();
+
+  // Below both ways are fine
+  /*const smartAccountImplementation = await deployContract<SmartAccount>(
     "SmartAccount",
     deployer,
-  );
-  // Review: Need to pass constructor args
-  // const factory = await deployContract<AccountFactory>(
-  //   "AccountFactory",
-  //   deployer,
-  // );
+  );*/
+  const smartAccountImplementation = await getDeployedMSAImplementation();
 
-  const factory = await deployAccountFactory(await smartAccount.getAddress());
-  const module = await deployContract<MockValidator>("MockValidator", deployer);
+  const msaFactory = await getDeployedAccountFactory(await smartAccountImplementation.getAddress());
+
+  const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
+
+  const ecdsaValidator = await getDeployedR1Validator();
+
+  const mockToken = await getDeployedMockToken();
+
   const counter = await deployContract<Counter>("Counter", deployer);
 
   return {
     entryPoint,
-    smartAccount,
-    factory,
-    module,
+    smartAccountImplementation,
+    msaFactory,
+    mockValidator,
+    ecdsaValidator,
     counter,
+    mockToken,
     accounts,
     addresses,
   };
@@ -125,79 +301,130 @@ export async function deploySmartAccountFixture(): Promise<DeploymentFixture> {
  *
  * @returns The deployment fixture including deployed contracts and the smart account owner.
  */
-export async function deploySmartAccountWithEntrypointFixture(): Promise<any> {
+export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWithSA> {
   const saDeploymentIndex = 0;
+  // Review: Should not be random
   const owner = ethers.Wallet.createRandom();
   const [deployer, ...accounts] = await ethers.getSigners();
 
-  const entryPoint = await deployEntrypoint();
-  const smartAccountImplementation = await deployContract<SmartAccount>(
-    "SmartAccount",
-    deployer,
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
   );
-  const smartAccountFactory = await ethers.getContractFactory("SmartAccount");
-  const module = await deployContract<MockValidator>("MockValidator", deployer);
-  // const factory = await deployContract<AccountFactory>(
-  //   "AccountFactory",
-  //   deployer,
-  // );
-  const factory = await deployAccountFactory(
-    await smartAccountImplementation.getAddress(),
-  );
+
+  const entryPoint = await getDeployedEntrypoint();
+
+  const smartAccountImplementation = await getDeployedMSAImplementation();
+
+  const msaFactory = await getDeployedAccountFactory(await smartAccountImplementation.getAddress());
+
+  const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
+
+  const ecdsaValidator = await getDeployedR1Validator();
+
+  const mockToken = await getDeployedMockToken();
+
   const counter = await deployContract<Counter>("Counter", deployer);
 
   // Get the addresses of the deployed contracts
-  const factoryAddress = await factory.getAddress();
-  const moduleAddress = await module.getAddress();
+  const factoryAddress = await msaFactory.getAddress();
+  const mockValidatorAddress = await mockValidator.getAddress();
+  const r1ValidatorAddress = await ecdsaValidator.getAddress();
   const ownerAddress = await owner.getAddress();
 
-  // Generate the initialization code for the smart account
-  const initCode = await generateFullInitCode(
-    ownerAddress,
-    factoryAddress,
-    moduleAddress,
-    ModuleType.Validation,
-  );
-
   // Module initialization data, encoded
-  const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-  const accountAddress = await factory.getCounterFactualAddress(
-    moduleAddress,
-    moduleInitData,
+  const accountAddress = await msaFactory.getCounterFactualAddress(
+    mockValidatorAddress,
+    moduleInstallData,
     saDeploymentIndex,
   );
 
-  // Sign the user operation for deploying the smart account
-  const packedUserOp = await signUserOperation(
-    accountAddress,
-    initCode,
-    entryPoint,
-    moduleAddress,
-    owner,
-  );
+  // deploy SA
+  await msaFactory.createAccount(
+    mockValidatorAddress,
+    moduleInstallData,
+    saDeploymentIndex);
 
   // Deposit ETH to the smart account
   await entryPoint.depositTo(accountAddress, { value: to18(1) });
 
-  // Handle the user operation to deploy the smart account
-  await entryPoint.handleOps([packedUserOp], ownerAddress);
+  await mockToken.mint(accountAddress, to18(100));
+
+  const SmartAccount = await ethers.getContractFactory("SmartAccount");
 
   // Attach the SmartAccount contract to the deployed address
-  const smartAccount = smartAccountFactory.attach(accountAddress);
-
-  // Get the addresses of the other accounts
-  const addresses = await Promise.all(
-    accounts.map(async (acc) => await acc.getAddress()),
-  );
+  const deployedMSA = SmartAccount.attach(accountAddress) as SmartAccount;
 
   return {
     entryPoint,
-    smartAccount,
-    factory,
-    module,
+    smartAccountImplementation,
+    deployedMSA,
+    accountOwner: owner,
+    msaFactory,
+    mockValidator,
+    ecdsaValidator,
     counter,
-    owner,
+    mockToken,
+    accounts,
     addresses,
   };
+}
+
+// WIP
+// Purpose is to serve deployed SA address (directly via factory)
+// using already deployed addresses - EP, factory, implementation, validator/s (plus executors etc if factory supports more bootstrap config)
+export async function getSmartAccountWithValidator(
+  validatorAddress: string,
+  onInstallData: BytesLike,
+  index: number
+) : Promise<SmartAccount>{
+  return null;
+};
+
+// WIP
+// TODO make this more dynamic, think of renaming
+// Currently factory requires single validator and onInstallData for it
+// but in future it could be array of validators and other kinds of modules as part of bootstrap config
+// Also, it could be more generic to support different kinds of validators
+// if onInstallData is provided, install given validator with given data (signer would become optional in this case)
+// otherwise assume R1Validator, extract owner address from signer and generate onInstallData
+// Note: it requires contracts to be passed as well because we need same instaces, entire setup object could be passed.
+// Review/Todo: make a DTO and make some params optional and have conditional paths 
+// If I want to do something using same contracts, I have to write logic in tests before hook itself and use utils from operation helpers
+export async function getDeployedSmartAccountWithValidator(
+  entryPoint: EntryPoint,
+  mockToken: MockToken,
+  signer: HDNodeWallet,
+  accountFactory: AccountFactory,
+  validatorAddress: string,
+  onInstallData: BytesLike,
+  deploymentIndex: number = 0,
+): Promise<SmartAccount> {
+
+  const ownerAddress = await signer.getAddress();
+  // Module initialization data, encoded
+  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
+
+  const accountAddress = await accountFactory.getCounterFactualAddress(
+    validatorAddress,
+    moduleInstallData,
+    deploymentIndex,
+  );
+
+  await entryPoint.depositTo(accountAddress, { value: to18(1) });
+
+  await mockToken.mint(accountAddress, to18(100));
+
+  await accountFactory.createAccount(
+    validatorAddress,
+    moduleInstallData,
+    deploymentIndex);
+
+  const SmartAccount = await ethers.getContractFactory("SmartAccount");
+
+  // Attach the SmartAccount contract to the deployed address
+  const deployedMSA = SmartAccount.attach(accountAddress) as SmartAccount;
+
+  return deployedMSA;
 }
