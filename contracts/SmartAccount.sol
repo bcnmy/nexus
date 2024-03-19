@@ -340,6 +340,20 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         else return false;
     }
 
+    function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
+        Execution[] calldata executions = executionCalldata.decodeBatch();
+        if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
+        else if (execType == EXECTYPE_TRY) _tryExecute(executions);
+        else revert UnsupportedExecType(execType);
+    }
+
+    function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) private {
+        (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
+        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
+        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
+        else revert UnsupportedExecType(execType);
+    }
+
     // TODO
     // isValidSignature
     // by base contract ERC1271 or a method like below..
