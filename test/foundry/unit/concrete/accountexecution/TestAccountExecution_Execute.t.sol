@@ -28,7 +28,7 @@ contract TestAccountExecution_Execute is Test, SmartAccountTestLab {
         PackedUserOperation[] memory userOps = prepareExecutionUserOp(
             BOB,
             BOB_ACCOUNT,
-            ModeLib.encodeSimpleSingle(),
+            EXECTYPE_DEFAULT,
             address(counter),
             0,
             abi.encodeWithSelector(Counter.incrementNumber.selector)
@@ -49,7 +49,7 @@ contract TestAccountExecution_Execute is Test, SmartAccountTestLab {
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, batchMode, executions);
+        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 

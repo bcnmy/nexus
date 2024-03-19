@@ -36,7 +36,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
 
         // Preparing UserOperation for installing the module
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -72,7 +72,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         );
 
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -112,7 +112,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         );
 
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -157,7 +157,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         );
 
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -197,7 +197,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         );
 
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
