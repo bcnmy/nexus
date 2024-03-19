@@ -66,49 +66,29 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         return validationData;
     }
 
-    /**
-     * @inheritdoc IAccountExecution
-     * @dev this function is only callable by the entry point or the account itself
-     * @dev this function demonstrates how to implement
-     * CallType SINGLE and BATCH and ExecType DEFAULT and TRY
-     * @dev this function could implement hook support (modifier)
-     */
-    function execute(
-        ModeCode mode,
-        bytes calldata executionCalldata
-    )
-        external
-        payable
-        override(AccountExecution, IAccountExecution)
-        onlyEntryPointOrSelf
-    {
-        (CallType callType, ExecType execType,,) = mode.decode();
-
-        // check if calltype is batch or single
-        if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
-        } else if (callType == CALLTYPE_SINGLE) {
-            // destructure executionCallData according to single exec
-            (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) {
-                _execute(target, value, callData);
-            }
-            // TODO: implement event emission for tryExecute singleCall
-            else if (execType == EXECTYPE_TRY) {
-                _tryExecute(target, value, callData);
-            } else {
-                revert UnsupportedExecType(execType);
-            }
-        } else {
-            revert UnsupportedCallType(callType);
-        }
+ /**
+ * Executes a transaction or a batch of transactions with specified execution mode.
+ * This function handles both single and batch transactions, supporting default execution and try/catch logic.
+ */
+function execute(ModeCode mode, bytes calldata executionCalldata)
+    external
+    payable
+    override(AccountExecution, IAccountExecution)
+    onlyEntryPointOrSelf
+{
+    (CallType callType, ExecType execType,,) = mode.decode();
+    
+    if (callType == CALLTYPE_BATCH) {
+        _handleBatchExecution(executionCalldata, execType);
+    } else if (callType == CALLTYPE_SINGLE) {
+        _handleSingleExecution(executionCalldata, execType);
+    } else {
+        revert UnsupportedCallType(callType);
     }
+}
+
+
+
 
     /**
      * @inheritdoc IAccountExecution
