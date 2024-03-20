@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/interfaces/modules/IERC7579Modules.sol";
+import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
@@ -30,7 +30,7 @@ contract MockValidator is IValidator {
         bytes calldata data
     )
         external
-        view
+        pure
         returns (bytes4)
     {
         sender;
@@ -46,12 +46,13 @@ contract MockValidator is IValidator {
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external {
+        data;
         delete smartAccountOwners[msg.sender];
     }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return moduleTypeId == 1;
+        return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
     function isOwner(address account, address owner) external view returns (bool) {

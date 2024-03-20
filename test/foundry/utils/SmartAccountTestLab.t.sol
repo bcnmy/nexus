@@ -2,16 +2,15 @@
 pragma solidity >=0.8.24 <0.9.0;
 
 import "./Helpers.sol";
+import "./EventsAndErrors.sol";
 
-contract SmartAccountTestLab is Helpers {
+contract SmartAccountTestLab is Helpers, EventsAndErrors {
     SmartAccount public implementation;
     SmartAccount public smartAccount;
 
-    function init() public {
+    function init() internal {
         initializeTestingEnvironment();
     }
 
-    function testIgnore_() public pure {
-        // This is a dummy test to avoid "No tests found" error
-    }
+    receive() external payable { }
 }

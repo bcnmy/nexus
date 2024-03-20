@@ -84,7 +84,9 @@ ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.
  * @dev ModeLib is a helper library to encode/decode ModeCodes
  */
 library ModeLib {
-    function decode(ModeCode mode)
+    function decode(
+        ModeCode mode
+    )
         internal
         pure
         returns (CallType _calltype, ExecType _execType, ModeSelector _modeSelector, ModePayload _modePayload)
@@ -102,11 +104,7 @@ library ModeLib {
         ExecType execType,
         ModeSelector mode,
         ModePayload payload
-    )
-        internal
-        pure
-        returns (ModeCode)
-    {
+    ) internal pure returns (ModeCode) {
         return
             ModeCode.wrap(bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload)));
     }
@@ -117,6 +115,14 @@ library ModeLib {
 
     function encodeSimpleSingle() internal pure returns (ModeCode mode) {
         mode = encode(CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
+    function encodeTrySingle() internal pure returns (ModeCode mode) {
+        mode = encode(CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
+    function encodeTryBatch() internal pure returns (ModeCode mode) {
+        mode = encode(CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
     function getCallType(ModeCode mode) internal pure returns (CallType calltype) {

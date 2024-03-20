@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { IHook } from "../modules/IHook.sol";
 
 interface IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.SmartAccount
@@ -10,5 +11,8 @@ interface IStorage {
         SentinelListLib.SentinelList validators;
         // linked list of executors. List is initialized by initializeAccount()
         SentinelListLib.SentinelList executors;
+        // single fallback handler for all fallbacks
+        address fallbackHandler;
+        IHook hook;
     }
 }

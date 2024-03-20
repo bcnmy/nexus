@@ -9,6 +9,7 @@ import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
+import { MockExecutor } from "../mocks/MockExecutor.sol";
 import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
@@ -43,12 +44,13 @@ contract Helpers is CheatCodes {
     IEntryPoint public ENTRYPOINT;
     AccountFactory public FACTORY;
     MockValidator public VALIDATOR_MODULE;
+    MockExecutor public EXECUTOR_MODULE;
     SmartAccount public ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
     // Setup Functions
     // -----------------------------------------
-    function initializeTestingEnvironment() public virtual {
+    function initializeTestingEnvironment() internal virtual {
         /// Initializes the testing environment
         initializeWallets();
         deployContracts();
@@ -76,12 +78,13 @@ contract Helpers is CheatCodes {
         ACCOUNT_IMPLEMENTATION = new SmartAccount();
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
         VALIDATOR_MODULE = new MockValidator();
+        EXECUTOR_MODULE = new MockExecutor();
     }
 
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-    function deployAccount(Vm.Wallet memory wallet) public returns (SmartAccount) {
+    function deployAccount(Vm.Wallet memory wallet) internal returns (SmartAccount) {
         address payable accountAddress = calculateAccountAddress(wallet.addr);
         bytes memory initCode = prepareInitCode(wallet.addr);
 
@@ -94,7 +97,7 @@ contract Helpers is CheatCodes {
         return SmartAccount(accountAddress);
     }
 
-    function deployAccounts() public {
+    function deployAccounts() internal {
         BOB_ACCOUNT = deployAccount(BOB);
         ALICE_ACCOUNT = deployAccount(ALICE);
         CHARLIE_ACCOUNT = deployAccount(CHARLIE);
@@ -228,7 +231,7 @@ contract Helpers is CheatCodes {
     function prepareExecutionUserOp(
         Vm.Wallet memory signer,
         SmartAccount account,
-        ModeCode mode,
+        ExecType execType,
         address target,
         uint256 value,
         bytes memory functionCall
@@ -236,6 +239,8 @@ contract Helpers is CheatCodes {
         internal
         returns (PackedUserOperation[] memory userOps)
     {
+        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+
         bytes memory executionCalldata =
             abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(target, value, functionCall)));
 
@@ -253,15 +258,18 @@ contract Helpers is CheatCodes {
     function prepareBatchExecutionUserOp(
         Vm.Wallet memory signer,
         SmartAccount account,
-        ModeCode mode,
+        ExecType execType,
         Execution[] memory executions
     )
         internal
         returns (PackedUserOperation[] memory userOps)
     {
+        // Determine the mode based on execType
+        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+
         // Encode the call into the calldata for the userOp
-        bytes memory executionCalldata =
-            abi.encodeCall(AccountExecution.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
+        bytes memory executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+
         // Initializing the userOps array with the same size as the targets array
         userOps = new PackedUserOperation[](1);
 
@@ -276,7 +284,7 @@ contract Helpers is CheatCodes {
         return userOps;
     }
 
-    function testHelpers(uint256 a) public {
-        a;
+    function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
+        return keccak256(a) == keccak256(b);
     }
 }
