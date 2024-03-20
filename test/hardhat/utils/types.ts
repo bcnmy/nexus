@@ -1,19 +1,38 @@
 import { NumberLike } from "@nomicfoundation/hardhat-network-helpers/dist/src/types";
-import { AddressLike, BigNumberish, BytesLike, Signer } from "ethers";
+import { AddressLike, BigNumberish, BytesLike, HDNodeWallet, Signer } from "ethers";
 import {
   AccountFactory,
   Counter,
   EntryPoint,
+  MockToken,
   MockValidator,
+  R1Validator,
   SmartAccount,
 } from "../../../typechain-types";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
-  smartAccount: SmartAccount;
-  factory: AccountFactory;
-  module: MockValidator;
+  smartAccountImplementation: SmartAccount;
+  msaFactory: AccountFactory;
+  mockValidator: MockValidator;
+  ecdsaValidator: R1Validator;
   counter: Counter;
+  mockToken: MockToken;
+  accounts: Signer[];
+  addresses: string[];
+}
+
+export interface DeploymentFixtureWithSA {
+  entryPoint: EntryPoint;
+  smartAccountImplementation: SmartAccount;
+  deployedMSA: SmartAccount;
+  deployedMSAAddress: AddressLike;
+  accountOwner: HDNodeWallet;
+  msaFactory: AccountFactory;
+  mockValidator: MockValidator;
+  ecdsaValidator: R1Validator;
+  counter: Counter;
+  mockToken: MockToken;
   accounts: Signer[];
   addresses: string[];
 }
