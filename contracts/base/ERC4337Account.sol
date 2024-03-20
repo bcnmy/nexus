@@ -49,10 +49,18 @@ abstract contract ERC4337Account is IERC4337Account {
         uint256 missingAccountFunds
     ) external virtual returns (uint256);
 
+    function addDeposit() public payable virtual {
+        IEntryPoint(entryPoint()).depositTo{ value: msg.value }(address(this));
+    }
+
     // Review
     // We would need util method to getNonce based on validator as validator gets encoded in the nonce
     function nonce(uint192 key) public view virtual returns (uint256) {
         return IEntryPoint(entryPoint()).getNonce(address(this), key);
+    }
+
+    function getDeposit() public view virtual returns (uint256) {
+        return IEntryPoint(entryPoint()).balanceOf(address(this));
     }
 
     function entryPoint() public view virtual returns (address) {

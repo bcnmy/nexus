@@ -18,6 +18,9 @@ interface IModuleManager {
     error IncompatibleValidatorModule(address module);
     error IncompatibleExecutorModule(address module);
     error ModuleAddressCanNotBeZero();
+    error HookPostCheckFailed();
+    error HookAlreadyInstalled(address currentHook);
+    error FallbackHandlerAlreadyInstalled();
 
     /**
      * @notice Installs a Module of a certain type on the smart account.
