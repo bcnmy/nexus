@@ -26,7 +26,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Preparing UserOperation for installing the module
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, ModeLib.encodeSimpleSingle(), address(BOB_ACCOUNT), 0, callData);
+            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
