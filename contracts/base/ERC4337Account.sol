@@ -47,10 +47,7 @@ abstract contract ERC4337Account is IERC4337Account {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    )
-        external
-        virtual
-        returns (uint256);
+    ) external virtual returns (uint256);
 
     // Review
     // We would need util method to getNonce based on validator as validator gets encoded in the nonce

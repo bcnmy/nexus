@@ -6,29 +6,9 @@ import { AccountExecution } from "./base/AccountExecution.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
-import {
-    IValidator,
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    VALIDATION_FAILED
-} from "./interfaces/modules/IERC7579Modules.sol";
-import {
-    IModularSmartAccount,
-    IAccountExecution,
-    IModuleManager,
-    IAccountConfig,
-    IERC4337Account
-} from "./interfaces/IModularSmartAccount.sol";
-import {
-    ModeLib,
-    ModeCode,
-    ExecType,
-    CallType,
-    CALLTYPE_BATCH,
-    CALLTYPE_SINGLE,
-    EXECTYPE_DEFAULT,
-    EXECTYPE_TRY
-} from "./lib/ModeLib.sol";
+import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
+import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
+import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -46,13 +26,7 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    )
-        external
-        virtual
-        override(ERC4337Account, IERC4337Account)
-        payPrefund(missingAccountFunds)
-        returns (uint256)
-    {
+    ) external virtual override(ERC4337Account, IERC4337Account) payPrefund(missingAccountFunds) returns (uint256) {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -66,29 +40,24 @@ contract SmartAccount is AccountConfig, AccountExecution, ModuleManager, ERC4337
         return validationData;
     }
 
- /**
- * Executes a transaction or a batch of transactions with specified execution mode.
- * This function handles both single and batch transactions, supporting default execution and try/catch logic.
- */
-function execute(ModeCode mode, bytes calldata executionCalldata)
-    external
-    payable
-    override(AccountExecution, IAccountExecution)
-    onlyEntryPointOrSelf
-{
-    (CallType callType, ExecType execType,,) = mode.decode();
-    
-    if (callType == CALLTYPE_BATCH) {
-        _handleBatchExecution(executionCalldata, execType);
-    } else if (callType == CALLTYPE_SINGLE) {
-        _handleSingleExecution(executionCalldata, execType);
-    } else {
-        revert UnsupportedCallType(callType);
+    /**
+     * Executes a transaction or a batch of transactions with specified execution mode.
+     * This function handles both single and batch transactions, supporting default execution and try/catch logic.
+     */
+    function execute(
+        ModeCode mode,
+        bytes calldata executionCalldata
+    ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+        (CallType callType, ExecType execType, , ) = mode.decode();
+
+        if (callType == CALLTYPE_BATCH) {
+            _handleBatchExecution(executionCalldata, execType);
+        } else if (callType == CALLTYPE_SINGLE) {
+            _handleSingleExecution(executionCalldata, execType);
+        } else {
+            revert UnsupportedCallType(callType);
+        }
     }
-}
-
-
-
 
     /**
      * @inheritdoc IAccountExecution
@@ -109,7 +78,7 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (CallType callType, ExecType execType,,) = mode.decode();
+        (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_BATCH) {
@@ -146,15 +115,9 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    )
-        external
-        payable
-        virtual
-        override(AccountExecution, IAccountExecution)
-        onlyEntryPointOrSelf
-    {
+    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         bytes calldata callData = userOp.callData[4:];
-        (bool success,) = address(this).delegatecall(callData);
+        (bool success, ) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
@@ -165,12 +128,7 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
-    )
-        external
-        payable
-        override(IModuleManager, ModuleManager)
-        onlyEntryPointOrSelf
-    {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
@@ -195,12 +153,7 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
         uint256 moduleTypeId,
         address module,
         bytes calldata deInitData
-    )
-        external
-        payable
-        override(IModuleManager, ModuleManager)
-        onlyEntryPointOrSelf
-    {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
@@ -221,13 +174,9 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
     /**
      * @inheritdoc IAccountConfig
      */
-    function supportsModule(uint256 modulTypeId)
-        external
-        view
-        virtual
-        override(AccountConfig, IAccountConfig)
-        returns (bool)
-    {
+    function supportsModule(
+        uint256 modulTypeId
+    ) external view virtual override(AccountConfig, IAccountConfig) returns (bool) {
         if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (modulTypeId == MODULE_TYPE_EXECUTOR) return true;
         // else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
@@ -238,14 +187,10 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
     /**
      * @inheritdoc IAccountConfig
      */
-    function supportsExecutionMode(ModeCode mode)
-        external
-        view
-        virtual
-        override(AccountConfig, IAccountConfig)
-        returns (bool isSupported)
-    {
-        (CallType callType, ExecType execType,,) = mode.decode();
+    function supportsExecutionMode(
+        ModeCode mode
+    ) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
+        (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) {
             isSupported = true;
         } else if (callType == CALLTYPE_SINGLE) {
@@ -275,12 +220,7 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        override(IModuleManager, ModuleManager)
-        returns (bool)
-    {
+    ) external view override(IModuleManager, ModuleManager) returns (bool) {
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
@@ -307,11 +247,7 @@ function execute(ModeCode mode, bytes calldata executionCalldata)
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        private
-        view
-        returns (bool)
-    {
+    ) private view returns (bool) {
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
