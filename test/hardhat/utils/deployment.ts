@@ -43,14 +43,7 @@ export async function getDeployedEntrypoint(): Promise<EntryPoint> {
   const [deployer, ...accounts] = await ethers.getSigners();
 
   // Note: There should be a way to cache deployed addresses 
-
-  // const EntryPointDeployment = await deployments.get("EntryPoint");
-  // if(EntryPointDeployment) {
-  //   return EntryPoint__factory.connect(
-  //     EntryPointDeployment.address,
-  //     deployer
-  //   );
-  // }
+  // Or one can bring this from deployments.get by scripts added in src/deploy
 
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
@@ -259,11 +252,6 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const entryPoint = await getDeployedEntrypoint();
 
-  // Below both ways are fine
-  /*const smartAccountImplementation = await deployContract<SmartAccount>(
-    "SmartAccount",
-    deployer,
-  );*/
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
   const msaFactory = await getDeployedAccountFactory(await smartAccountImplementation.getAddress());

@@ -7,10 +7,7 @@ async function main() {
 
   await smartAccount.waitForDeployment();
 
-  console.log(`SmartAccount deployed to: ${smartAccount.target}`);
-
-  const ep7 = await smartAccount.entryPoint();
-  console.log('ep7', ep7);
+  console.log(`SmartAccount implementation deployed at: ${smartAccount.target}`);
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
 
@@ -18,7 +15,7 @@ async function main() {
 
   await accountFactory.waitForDeployment();
 
-  console.log(`AccountFactory deployed to: ${accountFactory.target}`);
+  console.log(`AccountFactory deployed at: ${accountFactory.target}`);
 
   const R1Validator = await ethers.getContractFactory("R1Validator");
 
@@ -26,7 +23,7 @@ async function main() {
 
   await r1Validator.waitForDeployment();
 
-  console.log(`R1Validator deployed to: ${r1Validator.target}`);
+  console.log(`R1Validator deployed at: ${r1Validator.target}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

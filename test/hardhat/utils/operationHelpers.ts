@@ -302,8 +302,6 @@ export async function generateUseropCallData(
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
       );
-      // executionCalldata = ethers.concat([ethers.zeroPadValue(toBeHex(targetAddress), 20), ethers.zeroPadValue(toBeHex(Number(value)), 32)]);
-      // executionCalldata = executionCalldata + functionCallData.slice(2);
       console.log('execution calldata', executionCalldata);
       break;
     case ExecutionMethod.ExecuteFromExecutor:
