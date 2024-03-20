@@ -12,11 +12,11 @@ abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
     ModeCode public batchMode;
     ModeCode public unsupportedMode;
 
-    
+
     Counter public counter;
     // Define more shared state variables here
 
-    function setUp() public virtual {
+    function setUpTestAccountExecution_Base() internal virtual {
         // Shared setup logic for all derived test contracts
         init(); // Initialize the testing environment if necessary
 
