@@ -193,6 +193,4 @@ contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
 
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, ""), message);
     }
-
-    receive() external payable { } // To allow receiving ether
 }
