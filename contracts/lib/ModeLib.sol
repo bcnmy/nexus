@@ -117,6 +117,14 @@ library ModeLib {
         mode = encode(CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
+    function encodeTrySingle() internal pure returns (ModeCode mode) {
+        mode = encode(CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
+    function encodeTryBatch() internal pure returns (ModeCode mode) {
+        mode = encode(CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
     function getCallType(ModeCode mode) internal pure returns (CallType calltype) {
         assembly {
             calltype := mode

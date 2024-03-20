@@ -50,11 +50,8 @@ contract SmartAccount is
     }
 
     /**
-     * @inheritdoc IAccountExecution
-     * @dev this function is only callable by the entry point or the account itself
-     * @dev this function demonstrates how to implement
-     * CallType SINGLE and BATCH and ExecType DEFAULT and TRY
-     * @dev this function could implement hook support (modifier)
+     * Executes a transaction or a batch of transactions with specified execution mode.
+     * This function handles both single and batch transactions, supporting default execution and try/catch logic.
      */
     function execute(
         ModeCode mode,
@@ -62,23 +59,10 @@ contract SmartAccount is
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         (CallType callType, ExecType execType, , ) = mode.decode();
 
-        // check if calltype is batch or single
         if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
+            _handleBatchExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_SINGLE) {
-            // destructure executionCallData according to single exec
-            (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT)
-                _execute(target, value, callData);
-                // TODO: implement event emission for tryExecute singleCall
-            else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
-            else revert UnsupportedExecType(execType);
+            _handleSingleExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -275,6 +259,20 @@ contract SmartAccount is
         // else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
         // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
+    }
+
+    function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
+        Execution[] calldata executions = executionCalldata.decodeBatch();
+        if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
+        else if (execType == EXECTYPE_TRY) _tryExecute(executions);
+        else revert UnsupportedExecType(execType);
+    }
+
+    function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) private {
+        (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
+        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
+        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
+        else revert UnsupportedExecType(execType);
     }
 
     // TODO
