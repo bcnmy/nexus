@@ -16,6 +16,7 @@ import {
 } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import { Hexable } from "@ethersproject/bytes";
+import { CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from "./erc7579Utils";
 
 export const DefaultsForUserOp: UserOperation = {
   sender: ethers.ZeroAddress,
@@ -99,23 +100,23 @@ export function buildPackedUserOp(userOp: UserOperation): PackedUserOperation {
  * @param {string} [deposit] - Optional deposit amount in ETH.
  * @returns {Promise<PackedUserOperation>} A Promise that resolves to a PackedUserOperation.
  */
-export async function buildSignedUserOp(
+export async function signAndPackUserOp(
   userOp: UserOperation,
-  signer: Signer,
-  setup: { entryPoint: any; module: any },
+  signer: Signer, // ECDSA signer
+  setup: { entryPoint: any; validator: any },
   deposit?: string,
 ): Promise<PackedUserOperation> {
-  if (!setup.entryPoint || !setup.module) {
+  if (!setup.entryPoint || !setup.validator) {
     throw new Error("Setup object is missing required properties.");
   }
   if (!signer) {
     throw new Error("Signer must be provided.");
   }
 
-  const moduleAddress = await setup.module.getAddress();
+  const validatorAddress = await setup.validator.getAddress();
   const nonce = await setup.entryPoint.getNonce(
     userOp.sender,
-    ethers.zeroPadBytes(moduleAddress, 24),
+    ethers.zeroPadBytes(validatorAddress, 24),
   );
 
   userOp.nonce = nonce;
@@ -150,18 +151,19 @@ export function packPaymasterData(
   ]);
 }
 
-export async function signUserOperation(
+export async function fillSignAndPack(
   accountAddress: AddressLike,
   initCode: BytesLike,
+  callData: BytesLike,
   entryPoint: EntryPoint,
-  moduleAddress: AddressLike,
-  owner: Signer,
+  validatorAddress: AddressLike, // any validator
+  owner: Signer, // ECDSA signer for R1/mock validator
 ): Promise<PackedUserOperation> {
   const nonce = await entryPoint.getNonce(
     accountAddress,
-    ethers.zeroPadBytes(moduleAddress.toString(), 24),
+    ethers.zeroPadBytes(validatorAddress.toString(), 24),
   );
-  const userOp = buildPackedUserOp({ sender: accountAddress, nonce, initCode });
+  const userOp = buildPackedUserOp({ sender: accountAddress, nonce, initCode, callData });
   const userOpHash = await entryPoint.getUserOpHash(userOp);
   userOp.signature = await owner.signMessage(ethers.getBytes(userOpHash));
   return userOp;
@@ -169,72 +171,66 @@ export async function signUserOperation(
 
 /**
  * Generates the full initialization code for deploying a smart account.
- * @param factoryAddress - The address of the AccountFactory contract.
- * @param moduleAddress - The address of the module to be installed in the smart account.
  * @param ownerAddress - The address of the owner of the new smart account.
- * @param moduleType - The type of module to install, defaulting to "1".
+ * @param factoryAddress - The address of the AccountFactory contract.
+ * @param validatorAddress - The address of the module to be installed in the smart account.
+ * @param saDeploymentIndex: number = 0,
  * @returns The full initialization code as a hex string.
  */
-export async function generateFullInitCode(
+// TODO: 
+// Note: This currently assumes validator to be mock validator or R1 validation. In future specific install data could be passed along
+// or it could be full bootstrap data
+// depending on the nature of the factory below encoding would change 
+export async function getInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
-  moduleAddress: AddressLike,
-  moduleType: ModuleType = ModuleType.Validation,
+  validatorAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
-  const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   // Encode the createAccount function call with the provided parameters
-  const initCode = AccountFactory.interface
+  const factoryDeploymentData = AccountFactory.interface
     .encodeFunctionData("createAccount", [
-      moduleAddress,
-      moduleInitData,
+      validatorAddress,
+      moduleInstallData,
       saDeploymentIndex,
     ])
     .slice(2);
 
-  return factoryAddress + initCode;
+  return factoryAddress + factoryDeploymentData;
 }
 
+
+// Note: could be a method getAccountAddressAndInitCode
 // REVIEW
 
 /**
  * Calculates the CREATE2 address for a smart account deployment.
  * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
  * @param {AddressLike} factoryAddress - The address of the AccountFactory contract.
- * @param {AddressLike} moduleAddress - The address of the module to be installed in the smart account.
- * @param {number | string} moduleType - The type of module to install.
+ * @param {AddressLike} validatorAddress - The address of the module to be installed in the smart account.
+ * @param {Object} setup - The setup object containing deployed contracts and addresses.
+ * @param {number} saDeploymentIndex - The deployment index for the smart account.
  * @returns {Promise<string>} The calculated CREATE2 address.
  */
+// Note: could add off-chain way later using Create2 utils
 export async function getAccountAddress(
-  signerAddress: AddressLike,
+  signerAddress: AddressLike, // ECDSA signer
   factoryAddress: AddressLike,
-  moduleAddress: AddressLike,
-  moduleType: ModuleType = ModuleType.Validation,
+  validatorAddress: AddressLike,
+  setup: { accountFactory: any},
   saDeploymentIndex: number = 0,
 ): Promise<string> {
-  // Ensure SmartAccount bytecode is fetched dynamically in case of contract upgrades
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
-  const smartAccountBytecode = SmartAccount.bytecode;
-
   // Module initialization data, encoded
   const moduleInitData = ethers.solidityPacked(["address"], [signerAddress]);
 
-  // Salt for CREATE2, based on module address, type, and initialization data
-  const salt = ethers.solidityPackedKeccak256(
-    ["address", "bytes", "uint256"],
-    [moduleAddress, moduleInitData, saDeploymentIndex],
-  );
+  setup.accountFactory = setup.accountFactory.attach(factoryAddress);
 
-  // Calculate CREATE2 address using ethers utility function
-  const create2Address = ethers.getCreate2Address(
-    factoryAddress.toString(),
-    salt,
-    ethers.keccak256(smartAccountBytecode),
-  );
+  const counterFactualAddress = await setup.accountFactory.getCounterFactualAddress(validatorAddress, moduleInitData, saDeploymentIndex);
 
-  return create2Address;
+  return counterFactualAddress;
 }
 
 /**
@@ -272,14 +268,18 @@ export function packGasValues(
  */
 
 // TODO: need to take an argument for CallType and ExecType as well. if it's single or batch / revert or try
-// Whole method needs to be refactored
+// WIP
+// Should be able to accept array of Transaction (to, value, data) instead of targetcontract and function name
+// If array length is one (given executionMethod = execute or executeFromExecutor) then make executionCallData for singletx
+// handle preparing calldata for executeUserOp differently as it requires different parameters
+// should be able to provide execution type (default or try) 
+// call type is understood from Transaction array above
+// prepare mode accordingly
+// think about name
 
-export async function generateExecutionCallData(
-  { executionMethod, targetContract, functionName, args = [], mode, value = 0 },
-  packedUserOp = "0x",
-  userOpHash = "0x",
+export async function generateUseropCallData(
+  { executionMethod, targetContract, functionName, args = [], value = 0 }
 ): Promise<string> {
-  // Fetch the signer from the contract object
   const AccountExecution = await ethers.getContractFactory("SmartAccount");
 
   const targetAddress = await targetContract.getAddress();
@@ -288,24 +288,28 @@ export async function generateExecutionCallData(
     functionName,
     args,
   );
-  const modeHash = ethers.keccak256(ethers.toUtf8Bytes(mode));
+  console.log('function call data', functionCallData);
+  const mode = ethers.concat([EXECTYPE_DEFAULT, CALLTYPE_SINGLE, UNUSED, MODE_DEFAULT, MODE_PAYLOAD]);
+  console.log('mode being used ', mode);
 
   // Encode the execution calldata
   let executionCalldata;
   switch (executionMethod) {
     case ExecutionMethod.Execute:
-    case ExecutionMethod.ExecuteFromExecutor:
       // in case of EncodeSingle : abi.encodePacked(target, value, callData);
       // in case of encodeBatch:  abi.encode(executions);
       executionCalldata = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
       );
+      console.log('execution calldata', executionCalldata);
       break;
-    case ExecutionMethod.ExecuteUserOp:
+    case ExecutionMethod.ExecuteFromExecutor:
+      // in case of EncodeSingle : abi.encodePacked(target, value, callData);
+      // in case of EncodeBatch:  abi.encode(executions);
       executionCalldata = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["bytes32", "address", "uint256", "bytes"],
-        [modeHash, targetAddress, value, functionCallData],
+        ["address", "uint256", "bytes"],
+        [targetAddress, value, functionCallData],
       );
       break;
     default:
@@ -313,27 +317,32 @@ export async function generateExecutionCallData(
   }
 
   // Determine the method name based on the execution method
+  // Can use switch case again
   let methodName;
   let executeCallData;
   if (executionMethod === ExecutionMethod.Execute) {
     methodName = "execute";
-
     executeCallData = AccountExecution.interface.encodeFunctionData(
       methodName,
-      [modeHash, executionCalldata],
+      [mode, executionCalldata],
     );
+    console.log('execute calldata', executeCallData);
   } else if (executionMethod === ExecutionMethod.ExecuteFromExecutor) {
     methodName = "executeFromExecutor";
     executeCallData = AccountExecution.interface.encodeFunctionData(
       methodName,
-      [modeHash, executionCalldata],
+      [mode, executionCalldata],
     );
-  } else if (executionMethod === ExecutionMethod.ExecuteUserOp) {
-    methodName = "executeUserOp";
-    executeCallData = AccountExecution.interface.encodeFunctionData(
-      methodName,
-      [packedUserOp, userOpHash],
-    );
-  }
   return executeCallData;
 }
+}
+
+// TODO
+// for executeUserOp
+export async function generateCallDataForExecuteUserop() {
+}
+
+// More functions to be added
+// 1. simulateValidation (using EntryPointSimulations)
+// 2. simulareHandleOps
+
