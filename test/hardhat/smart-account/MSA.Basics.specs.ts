@@ -96,6 +96,7 @@ describe("SmartAccount Basic Specs", function () {
       const proxyCode = await ethers.provider.getCode(
         expectedAccountAddress,
       );
+      console.log('proxy code ========= ', proxyCode);
       expect(proxyCode).to.not.equal(
         "0x",
         "Account should have bytecode",
