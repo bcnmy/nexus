@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import "../../shared/TestAccountExecution_Base.t.sol"; // Ensure this import path matches your project structure
 
 contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        setUpTestAccountExecution_Base();
     }
 
     function test_ExecuteSingle_Success() public {

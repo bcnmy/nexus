@@ -4,10 +4,9 @@ pragma solidity ^0.8.24;
 import "../../shared/TestAccountExecution_Base.t.sol"; // Ensure this import path matches your project structure
 
 contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        setUpTestAccountExecution_Base();
     }
-
     function test_TryExecuteBatch_Success() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 

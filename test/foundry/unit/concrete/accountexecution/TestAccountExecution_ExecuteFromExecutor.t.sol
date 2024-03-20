@@ -6,7 +6,7 @@ import "../../../utils/SmartAccountTestLab.t.sol";
 import { MockExecutor } from "../../../mocks/MockExecutor.sol";
 import { Counter } from "../../../mocks/Counter.sol";
 
-error InvalidModule(address module);
+
 
 contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
     MockExecutor public mockExecutor;
