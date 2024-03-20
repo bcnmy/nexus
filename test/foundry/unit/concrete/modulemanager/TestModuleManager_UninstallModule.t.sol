@@ -212,13 +212,11 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
             userOps[0].nonce, // nonce
             expectedRevertReason
         );
-        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Module should be installed"
         );
     }
-
-    receive() external payable { } // To allow receiving ether
 }
