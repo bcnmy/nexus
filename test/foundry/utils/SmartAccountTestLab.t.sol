@@ -12,7 +12,7 @@ contract SmartAccountTestLab is Helpers {
     }
 
     function testIgnore_() public pure {
-        // This is a dummy test to avoid "No tests found" error
+        // This is a dummy test to avoid coverage on this file
     }
 
     receive() external payable { }
