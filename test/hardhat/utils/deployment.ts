@@ -4,7 +4,6 @@ import {
   AccountFactory,
   Counter,
   EntryPoint,
-  EntryPoint__factory,
   MockExecutor,
   MockHandler,
   MockHook,
@@ -13,12 +12,7 @@ import {
   R1Validator,
   SmartAccount,
 } from "../../../typechain-types";
-import { DeploymentFixture, DeploymentFixtureWithSA, ModuleType } from "./types";
-import {
-  generateFullInitCode,
-  getAccountAddress,
-  signUserOperation,
-} from "./operationHelpers";
+import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
 
 /**
@@ -360,6 +354,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     entryPoint,
     smartAccountImplementation,
     deployedMSA,
+    deployedMSAAddress: accountAddress,
     accountOwner: owner,
     msaFactory,
     mockValidator,

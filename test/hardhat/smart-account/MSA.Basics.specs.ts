@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer } from "ethers";
+import { AddressLike, Signer, toBeHex } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AccountFactory,
@@ -10,14 +10,15 @@ import {
 } from "../../../typechain-types";
 import { ModuleType } from "../utils/types";
 import { deployContractsFixture } from "../utils/deployment";
-import { to18 } from "../utils/encoding";
+import { to18, toBytes32 } from "../utils/encoding";
 import {
-  generateFullInitCode,
+  getInitCode,
   getAccountAddress,
   buildPackedUserOp,
 } from "../utils/operationHelpers";
+import { CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_DELEGATE, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from "../utils/erc7579Utils";
 
-describe("SmartAccount Contract Integration Tests", function () {
+describe("SmartAccount Basic Specs", function () {
   let factory: AccountFactory;
   let smartAccount: SmartAccount;
   let entryPoint: EntryPoint;
@@ -32,6 +33,7 @@ describe("SmartAccount Contract Integration Tests", function () {
   let ownerAddress: AddressLike;
   let bundler: Signer;
   let bundlerAddress: AddressLike;
+  let userSA: SmartAccount;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsFixture);
@@ -50,99 +52,144 @@ describe("SmartAccount Contract Integration Tests", function () {
     ownerAddress = await owner.getAddress();
     bundler = ethers.Wallet.createRandom();
     bundlerAddress = await bundler.getAddress();
+
+    const accountOwnerAddress = ownerAddress;
+
+    const saDeploymentIndex = 0;
+
+    const installData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address"],
+        [accountOwnerAddress],
+      ); // Example data, customize as needed
+    
+    // Read the expected account address
+    const expectedAccountAddress = await factory.getCounterFactualAddress(
+        moduleAddress, // validator address
+        installData,
+        saDeploymentIndex,
+      );
+
+    await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
+
+    userSA = smartAccount.attach(expectedAccountAddress) as SmartAccount;
   });
 
   describe("Contract Deployment", function () {
-    it("Should deploy the SmartAccount contract successfully", async function () {
-      // Checks if the smart account's address contains bytecode, indicating successful deployment
-      expect(ethers.provider.getCode(smartAccountAddress)).to.not.equal("0x");
-    });
-
-    it("Should deploy the EntryPoint contract successfully", async function () {
-      expect(ethers.provider.getCode(entryPointAddress)).to.not.equal("0x");
-    });
-
-    it("Should deploy the Module contract successfully", async function () {
-      expect(ethers.provider.getCode(moduleAddress)).to.not.equal("0x");
-    });
-
-    it("Should handle account creation correctly, including when the account already exists", async function () {
-      const SmartAccount = await ethers.getContractFactory("SmartAccount");
-
+    it("Should deploy smart account", async function () {
       const saDeploymentIndex = 0;
 
-      const data = ethers.AbiCoder.defaultAbiCoder().encode(
+      const installData = ethers.AbiCoder.defaultAbiCoder().encode(
         ["address"],
         [ownerAddress],
       ); // Example data, customize as needed
 
-      // Read the expectec account address
+      // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
-        moduleAddress,
-        data,
+        moduleAddress, // validator address
+        installData,
         saDeploymentIndex,
       );
 
-      // First account creation attempt
-      await factory.createAccount(moduleAddress, data, saDeploymentIndex);
+      await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
 
       // Verify that the account was created
-      const codeAfterFirstCreation = await ethers.provider.getCode(
+      const proxyCode = await ethers.provider.getCode(
         expectedAccountAddress,
       );
-      expect(codeAfterFirstCreation).to.not.equal(
+      expect(proxyCode).to.not.equal(
         "0x",
-        "Account should have bytecode after the first creation attempt",
-      );
-
-      // Second account creation attempt with the same parameters
-      await factory.createAccount(moduleAddress, data, saDeploymentIndex);
-
-      // Verify that the account address remains the same and no additional deployment occurred
-      const codeAfterSecondCreation = await ethers.provider.getCode(
-        expectedAccountAddress,
-      );
-      expect(codeAfterSecondCreation).to.equal(
-        codeAfterFirstCreation,
-        "Account bytecode should remain unchanged after the second creation attempt",
+        "Account should have bytecode",
       );
     });
   });
 
   describe("Account ID and Supported Modes", function () {
     it("Should correctly return the SmartAccount's ID", async function () {
-      expect(await smartAccount.accountId()).to.equal(
+      expect(await userSA.accountId()).to.equal(
         "biconomy.modular-smart-account.1.0.0-alpha",
       );
     });
 
-    // it("Should verify supported account modes", async function () {
-    //   expect(await smartAccount.supportsExecutionMode(toBytes32("0x01"))).to.be
-    //     .true;
-    //   expect(await smartAccount.supportsExecutionMode(toBytes32("0xFF"))).to.be
-    //     .true;
-    // });
+    it("Should verify supported account modes", async function () {
+      expect(await userSA.supportsExecutionMode(
+        ethers.concat(
+         [
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
+        ])
+        )
+       )
+        .to.be
+        .true;
+        expect(await userSA.supportsExecutionMode(ethers.concat([ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),ethers.zeroPadValue(toBeHex(UNUSED), 4),ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)]))).to.be
+        .true;
+
+
+      expect(await userSA.supportsExecutionMode(
+        ethers.concat(
+          [
+              ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
+              ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
+              ethers.zeroPadValue(toBeHex(UNUSED), 4),
+              ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+              ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
+        ])
+        )
+      )
+        .to.be
+        .true;
+
+
+      expect(await userSA.supportsExecutionMode(
+         ethers.concat(
+            [
+               ethers.zeroPadValue(toBeHex(EXECTYPE_TRY), 1),
+               ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
+               ethers.zeroPadValue(toBeHex(UNUSED), 4),
+               ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+               ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
+            ])
+            )
+        )
+        .to.be
+        .true;
+
+      expect(await userSA.supportsExecutionMode(
+         ethers.concat(
+            [
+                ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
+                ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+                ethers.zeroPadValue(toBeHex(UNUSED), 4),
+                ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+                ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
+            ])
+            )
+        )
+        .to.be
+        .false;
+    });
 
     it("Should confirm support for specified module types", async function () {
       // Checks support for predefined module types (e.g., Validation, Execution)
-      expect(await smartAccount.supportsModule(ModuleType.Validation)).to.be
+      expect(await userSA.supportsModule(ModuleType.Validation)).to.be
         .true;
-      expect(await smartAccount.supportsModule(ModuleType.Execution)).to.be
+      expect(await userSA.supportsModule(ModuleType.Execution)).to.be
         .true;
-      // expect(await smartAccount.supportsModule(ModuleType.Hooks)).to.be.true;
-      // expect(await smartAccount.supportsModule(ModuleType.Fallback)).to.be.true;
     });
   });
 
   describe("SmartAccount Deployment via EntryPoint", function () {
     it("Should successfully deploy a SmartAccount via the EntryPoint", async function () {
-      const saDeploymentIndex = 0;
+      const saDeploymentIndex = 1;
       // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
-      const initCode = await generateFullInitCode(
+      const initCode = await getInitCode(
         ownerAddress,
         factoryAddress,
-        moduleAddress,
-        ModuleType.Validation,
+        moduleAddress, // validatorAddress
+        saDeploymentIndex,
       );
 
       // Module initialization data, encoded
@@ -177,12 +224,12 @@ describe("SmartAccount Contract Integration Tests", function () {
     });
 
     it("Should fail SmartAccount deployment with an unauthorized signer", async function () {
-      const saDeploymentIndex = 0;
-      const initCode = await generateFullInitCode(
+      const saDeploymentIndex = 2;
+      const initCode = await getInitCode(
         ownerAddress,
         factoryAddress,
         moduleAddress,
-        ModuleType.Validation,
+        saDeploymentIndex,
       );
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);

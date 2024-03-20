@@ -26,6 +26,7 @@ export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
   smartAccountImplementation: SmartAccount;
   deployedMSA: SmartAccount;
+  deployedMSAAddress: AddressLike;
   accountOwner: HDNodeWallet;
   msaFactory: AccountFactory;
   mockValidator: MockValidator;
