@@ -3,27 +3,12 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-import { MockValidator } from "../../../mocks/MockValidator.sol";
-import { MockExecutor } from "../../../mocks/MockExecutor.sol";
+import "../../shared/TestModuleManagement_Base.t.sol";
 
-event ModuleInstalled(uint256 moduleTypeId, address module);
 
-event ModuleUninstalled(uint256 moduleTypeId, address module);
-
-event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
-
-contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
-    MockValidator public mockValidator;
-    MockExecutor public mockExecutor;
-    address constant INVALID_MODULE_ADDRESS = address(0);
-    uint256 constant INVALID_MODULE_TYPE = 999;
-
+contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
     function setUp() public {
-        init();
-        // New copy of mock validator
-        // Different address than one already installed as part of smart account deployment
-        mockValidator = new MockValidator();
-        mockExecutor = new MockExecutor();
+        setUpModuleManagement_Base();
     }
 
     function test_InstallModule_Success() public {
@@ -37,10 +22,7 @@ contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
         );
 
         // Preparing UserOperation for installing the module
-        PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
-
-        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator));
 
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
@@ -52,18 +34,17 @@ contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
-        _installModule(
-            callData, MODULE_TYPE_VALIDATOR, address(mockValidator), "Validator module should be installed successfully"
-        );
+        
+        installModule(
+            callData, MODULE_TYPE_VALIDATOR, address(mockValidator));
     }
 
     function test_InstallModule_Success_Executor() public {
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""
         );
-        _installModule(
-            callData, MODULE_TYPE_EXECUTOR, address(mockExecutor), "Executor module should be installed successfully"
-        );
+        installModule(
+            callData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE));
     }
 
     function test_InstallModule_Revert_AlreadyInstalled() public {
@@ -174,23 +155,5 @@ contract TestModuleManager_InstallModule is Test, SmartAccountTestLab {
         emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-    }
-
-    function _installModule(
-        bytes memory callData,
-        uint256 moduleTypeId,
-        address moduleAddress,
-        string memory message
-    )
-        private
-    {
-        PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
-
-        vm.expectEmit(true, true, true, true);
-        emit ModuleInstalled(moduleTypeId, moduleAddress);
-        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, ""), message);
     }
 }
