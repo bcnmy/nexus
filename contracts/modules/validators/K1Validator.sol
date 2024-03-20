@@ -9,7 +9,7 @@ import { IValidator } from "contracts/interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
-contract R1Validator is IValidator {
+contract K1Validator is IValidator {
     using SignatureCheckerLib for address;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ contract R1Validator is IValidator {
     function getModuleTypes() external view override returns (EncodedModuleTypes) {}
 
     function name() external pure returns (string memory) {
-        return "R1Validator";
+        return "K1Validator";
     }
 
     function version() external pure returns (string memory) {

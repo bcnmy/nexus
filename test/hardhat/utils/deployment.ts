@@ -9,7 +9,7 @@ import {
   MockHook,
   MockToken,
   MockValidator,
-  R1Validator,
+  K1Validator,
   SmartAccount,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
@@ -200,22 +200,22 @@ export async function getDeployedMockHandler(): Promise<MockHandler> {
 }
 
 /**
- * Deploys the ECDSA R1Validator contract with a deterministic deployment.
- * @returns A promise that resolves to the deployed ECDSA R1Validator contract instance.
+ * Deploys the ECDSA K1Validator contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed ECDSA K1Validator contract instance.
  */
-export async function getDeployedR1Validator(): Promise<R1Validator> {
+export async function getDeployedK1Validator(): Promise<K1Validator> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const R1Validator = await ethers.getContractFactory("R1Validator");
-  const deterministicR1Validator = await deployments.deploy("R1Validator", {
+  const K1Validator = await ethers.getContractFactory("K1Validator");
+  const deterministicK1Validator = await deployments.deploy("K1Validator", {
     from: addresses[0],
     deterministicDeployment: true,
   });
 
-  return R1Validator.attach(deterministicR1Validator.address) as R1Validator;
+  return K1Validator.attach(deterministicK1Validator.address) as K1Validator;
 }
 
 /**
@@ -258,7 +258,7 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
 
-  const ecdsaValidator = await getDeployedR1Validator();
+  const ecdsaValidator = await getDeployedK1Validator();
 
   const mockToken = await getDeployedMockToken();
 
@@ -301,7 +301,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
 
-  const ecdsaValidator = await getDeployedR1Validator();
+  const ecdsaValidator = await getDeployedK1Validator();
 
   const mockToken = await getDeployedMockToken();
 
@@ -310,7 +310,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   // Get the addresses of the deployed contracts
   const factoryAddress = await msaFactory.getAddress();
   const mockValidatorAddress = await mockValidator.getAddress();
-  const r1ValidatorAddress = await ecdsaValidator.getAddress();
+  const K1ValidatorAddress = await ecdsaValidator.getAddress();
   const ownerAddress = await owner.getAddress();
 
   // Module initialization data, encoded
@@ -371,7 +371,7 @@ export async function getSmartAccountWithValidator(
 // but in future it could be array of validators and other kinds of modules as part of bootstrap config
 // Also, it could be more generic to support different kinds of validators
 // if onInstallData is provided, install given validator with given data (signer would become optional in this case)
-// otherwise assume R1Validator, extract owner address from signer and generate onInstallData
+// otherwise assume K1Validator, extract owner address from signer and generate onInstallData
 // Note: it requires contracts to be passed as well because we need same instaces, entire setup object could be passed.
 // Review/Todo: make a DTO and make some params optional and have conditional paths 
 // If I want to do something using same contracts, I have to write logic in tests before hook itself and use utils from operation helpers

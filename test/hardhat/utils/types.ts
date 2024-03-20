@@ -6,7 +6,7 @@ import {
   EntryPoint,
   MockToken,
   MockValidator,
-  R1Validator,
+  K1Validator,
   SmartAccount,
 } from "../../../typechain-types";
 
@@ -15,7 +15,7 @@ export interface DeploymentFixture {
   smartAccountImplementation: SmartAccount;
   msaFactory: AccountFactory;
   mockValidator: MockValidator;
-  ecdsaValidator: R1Validator;
+  ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
   accounts: Signer[];
@@ -30,7 +30,7 @@ export interface DeploymentFixtureWithSA {
   accountOwner: HDNodeWallet;
   msaFactory: AccountFactory;
   mockValidator: MockValidator;
-  ecdsaValidator: R1Validator;
+  ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
   accounts: Signer[];
