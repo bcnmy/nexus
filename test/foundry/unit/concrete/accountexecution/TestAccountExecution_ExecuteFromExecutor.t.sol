@@ -84,6 +84,4 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
         vm.expectRevert("Counter: Revert operation");
         mockExecutor.execBatch(BOB_ACCOUNT, executions);
     }
-
-    receive() external payable { } // Allows contract to receive ether
 }
