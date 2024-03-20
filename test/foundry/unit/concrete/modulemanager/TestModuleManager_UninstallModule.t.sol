@@ -3,25 +3,13 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-import { MockValidator } from "../../../mocks/MockValidator.sol";
+import "../../shared/TestModuleManagement_Base.t.sol";
 
-/**
- * An event emitted if the UserOperation "callData" reverted with non-zero length.
- * @param userOpHash   - The request unique identifier.
- * @param sender       - The sender of this request.
- * @param nonce        - The nonce used in the request.
- * @param revertReason - The return bytes from the (reverted) call to "callData".
- */
-event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
-    MockValidator public mockValidator;
+contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
 
     function setUp() public {
-        init();
-        // New copy of mock validator
-        // Different address than one already installed as part of smart account deployment
-        mockValidator = new MockValidator();
+        setUpModuleManagement_Base();
     }
 
     function test_InstallModule_Success() public {
@@ -48,7 +36,11 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
 
     function test_UninstallModule_Success() public {
         // Setup: Install the module first
-        test_InstallModule_Success(); // Use the test case directly for setup
+        bytes memory installCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+        installModule(installCallData, MODULE_TYPE_VALIDATOR, address(mockValidator));
+        
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Module should not be installed initially"
@@ -61,7 +53,6 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log("prev is %s ", prev);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
@@ -87,26 +78,25 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
     }
 
     function test_UninstallModule_NotInstalled() public {
-        MockValidator newValidatorModule = new MockValidator();
+
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Module should not be installed initially"
         );
 
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newValidatorModule), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
             "Module should not be installed"
         );
 
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
-        address remove = address(newValidatorModule);
+        address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log("prev for never installed is %s ", prev);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_VALIDATOR,
-            address(newValidatorModule),
+            address(mockValidator),
             // uninstallData needs to provide prev module address with data to uninstall
             abi.encode(prev, "")
         );
@@ -117,7 +107,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "ModuleNotInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(newValidatorModule)
+            "ModuleNotInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator)
         );
 
         // Expect the UserOperationRevertReason event
@@ -132,7 +122,7 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newValidatorModule), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
             "Module should not be installed"
         );
     }
@@ -187,10 +177,8 @@ contract TestModuleManager_UninstallModule is Test, SmartAccountTestLab {
         );
 
         (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
-        console2.log("array length is %s ", array.length);
         address remove = address(VALIDATOR_MODULE);
         address prev = SentinelListHelper.findPrevious(array, remove);
-        console2.log("prev for last validator module is %s ", prev);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev, "")
