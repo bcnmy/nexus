@@ -284,7 +284,7 @@ contract Helpers is CheatCodes {
         return userOps;
     }
 
-    function testHelpers(uint256 a) internal {
-        a;
+    function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
+        return keccak256(a) == keccak256(b);
     }
 }
