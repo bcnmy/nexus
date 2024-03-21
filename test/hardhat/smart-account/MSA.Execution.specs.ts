@@ -70,14 +70,11 @@ describe("SmartAccount Execution and Validation", () => {
   // Review: Debug
   describe("SmartAccount Transaction Execution", () => {
     it("Should execute a single transaction through the EntryPoint using execute", async () => {
-      const Counter = await ethers.getContractFactory("Counter");
-      const counters = await Counter.deploy();
-      counters.waitForDeployment();
       // Generate calldata for executing the 'incrementNumber' function on the counter contract.
       // TODO
       const callData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
-        targetContract: counters,
+        targetContract: counter,
         functionName: "incrementNumber",
       });
 
@@ -100,21 +97,13 @@ describe("SmartAccount Execution and Validation", () => {
       const signature = await owner.signMessage(ethers.getBytes(userOpHash));
 
       userOp.signature = signature;
+
       // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
       expect(await counter.getNumber()).to.equal(0);
 
-      entryPoint.on("UserOperationRevertReason", (userOpHash, sender, nonce, revertReason) => {
-        console.log(`UserOperationRevertReason: 
-        userOpHash: ${userOpHash}
-        sender: ${sender}
-        nonce: ${nonce}
-        revertReason: ${revertReason}`);
-      });
-
-
       // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
+      
       await entryPoint.handleOps([userOp], bundlerAddress);
-      // const receipt = await tx.wait();
 
       expect(await counter.getNumber()).to.equal(1);
     });
