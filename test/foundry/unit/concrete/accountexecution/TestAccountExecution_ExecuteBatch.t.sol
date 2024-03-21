@@ -17,7 +17,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -34,7 +34,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -65,7 +65,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(address(0), 0, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
@@ -89,7 +89,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(receiver, sendValue, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
