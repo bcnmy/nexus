@@ -20,8 +20,13 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
         // Install MockExecutor as executor module on BOB_ACCOUNT
         bytes memory callDataInstall =
             abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
-        PackedUserOperation[] memory userOpsInstall = prepareExecutionUserOp(
-            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callDataInstall
+        
+        
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
+
+        PackedUserOperation[] memory userOpsInstall = prepareUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
@@ -32,8 +37,12 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
         bytes memory execCallData = abi.encodeWithSelector(
             MockExecutor.executeViaAccount.selector, BOB_ACCOUNT, address(counter), 0, incrementCallData
         );
-        PackedUserOperation[] memory userOpsExec = prepareExecutionUserOp(
-            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(mockExecutor), 0, execCallData
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(mockExecutor), 0, execCallData);
+
+        PackedUserOperation[] memory userOpsExec = prepareUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution
         );
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
