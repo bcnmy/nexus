@@ -55,7 +55,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should remain unchanged after batch execution");
     }
 
-    function test_Empty_ExecuteBatch() public {
+    function test_ExecuteBatch_Empty() public {
         // Initial state assertion
         Execution[] memory executions = new Execution[](3);
 
@@ -68,5 +68,31 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
+
+    function test_ExecuteBatch_ValueTransfer() public {
+        address receiver = address(0x123);
+        uint256 sendValue = 1 ether;
+
+        // Fund BOB_ACCOUNT with 10 ETH to cover the value transfer
+        payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund BOB_ACCOUNT
+
+
+        assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
+
+                // Initial state assertion
+        Execution[] memory executions = new Execution[](3);
+
+        // Preparing a batch execution with two empty operations
+        executions[0] = Execution(receiver, sendValue, "");
+        executions[1] = Execution(receiver, sendValue, "");
+        executions[2] = Execution(receiver, sendValue, "");
+
+        // Execute batch operation
+        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        assertEq(receiver.balance, 3 ether, "Receiver should have received 3 ETH");
     }
 }
