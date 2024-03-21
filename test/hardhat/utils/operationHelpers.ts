@@ -289,7 +289,7 @@ export async function generateUseropCallData(
     args,
   );
   console.log('function call data', functionCallData);
-  const mode = ethers.concat([EXECTYPE_DEFAULT, CALLTYPE_SINGLE, UNUSED, MODE_DEFAULT, MODE_PAYLOAD]);
+  const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
   console.log('mode being used ', mode);
 
   // Encode the execution calldata
