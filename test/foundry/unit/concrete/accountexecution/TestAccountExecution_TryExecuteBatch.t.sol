@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../shared/TestAccountExecution_Base.t.sol"; // Ensure this import path matches your project structure
 
-contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
+contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
     function setUp() public {
         setUpTestAccountExecution_Base();
     }
@@ -17,7 +17,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -34,7 +34,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -52,7 +52,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         executions[2] = Execution(address(0), 0, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
@@ -76,7 +76,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         executions[2] = Execution(receiver, sendValue, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareBatchExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
