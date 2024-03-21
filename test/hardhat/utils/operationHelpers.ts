@@ -288,6 +288,7 @@ export async function generateUseropCallData(
     functionName,
     args,
   );
+
   console.log('function call data', functionCallData);
   const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
   console.log('mode being used ', mode);
@@ -298,7 +299,7 @@ export async function generateUseropCallData(
     case ExecutionMethod.Execute:
       // in case of EncodeSingle : abi.encodePacked(target, value, callData);
       // in case of encodeBatch:  abi.encode(executions);
-      executionCalldata = ethers.AbiCoder.defaultAbiCoder().encode(
+      executionCalldata = ethers.solidityPacked(
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
       );
@@ -307,7 +308,7 @@ export async function generateUseropCallData(
     case ExecutionMethod.ExecuteFromExecutor:
       // in case of EncodeSingle : abi.encodePacked(target, value, callData);
       // in case of EncodeBatch:  abi.encode(executions);
-      executionCalldata = ethers.AbiCoder.defaultAbiCoder().encode(
+      executionCalldata = ethers.solidityPacked(
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
       );
@@ -333,8 +334,8 @@ export async function generateUseropCallData(
       methodName,
       [mode, executionCalldata],
     );
-  return executeCallData;
 }
+return executeCallData;
 }
 
 // TODO
