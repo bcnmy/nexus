@@ -350,6 +350,7 @@ export async function listenForRevertReasons(entryPointAddress) {
       Nonce: ${nonce}
       Revert Reason: ${reason}`);
   });
+}
 
 // TODO
 // for executeUserOp
