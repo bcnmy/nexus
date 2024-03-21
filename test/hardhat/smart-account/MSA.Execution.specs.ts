@@ -70,37 +70,51 @@ describe("SmartAccount Execution and Validation", () => {
   // Review: Debug
   describe("SmartAccount Transaction Execution", () => {
     it("Should execute a single transaction through the EntryPoint using execute", async () => {
-      /*const mode  = ethers.AbiCoder.defaultAbiCoder().encode(
-            ["bytes1", "bytes1", "bytes4", "bytes4", "bytes22"],
-            [EXECTYPE_DEFAULT, CALLTYPE_SINGLE, UNUSED, MODE_DEFAULT, MODE_PAYLOAD],
-      );*/
-      const mode = ethers.concat([EXECTYPE_DEFAULT, CALLTYPE_SINGLE, UNUSED, MODE_DEFAULT, MODE_PAYLOAD]);
-      console.log('mode', mode);
+      const Counter = await ethers.getContractFactory("Counter");
+      const counters = await Counter.deploy();
+      counters.waitForDeployment();
       // Generate calldata for executing the 'incrementNumber' function on the counter contract.
       // TODO
       const callData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
+        targetContract: counters,
         functionName: "incrementNumber",
       });
 
-      // Sign the operation with the owner's signature to authorize the transaction.
-      const signedPackedUserOps = await signAndPackUserOp(
-        {
-          sender: smartAccountAddress,
-          callData,
-        },
-        owner,
-        {entryPoint: entryPoint, validator: module},
+      // Build the userOp with the generated callData.
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+      });
+      userOp.callData = callData;
+
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(moduleAddress, 24),
       );
 
+      userOp.nonce = nonce; 
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      const signature = await owner.signMessage(ethers.getBytes(userOpHash));
+
+      userOp.signature = signature;
       // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
       expect(await counter.getNumber()).to.equal(0);
 
+      entryPoint.on("UserOperationRevertReason", (userOpHash, sender, nonce, revertReason) => {
+        console.log(`UserOperationRevertReason: 
+        userOpHash: ${userOpHash}
+        sender: ${sender}
+        nonce: ${nonce}
+        revertReason: ${revertReason}`);
+      });
+
+
       // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
-      const tx = await entryPoint.handleOps([signedPackedUserOps], bundlerAddress);
-      const receipt = await tx.wait();
-      console.log('receipt', receipt.logs);
+      await entryPoint.handleOps([userOp], bundlerAddress);
+      // const receipt = await tx.wait();
 
       expect(await counter.getNumber()).to.equal(1);
     });
