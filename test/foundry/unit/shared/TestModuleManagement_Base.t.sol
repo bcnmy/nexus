@@ -31,15 +31,19 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     function installModule(
         bytes memory callData,
         uint256 moduleTypeId,
-        address moduleAddress
+        address moduleAddress,
+        ExecType execType
     ) internal {
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            address(BOB_ACCOUNT),
-            0,
-            callData
+            execType,
+            execution
         );
 
         vm.expectEmit(true, true, true, true);
@@ -48,15 +52,17 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
-    function uninstallModule(bytes memory callData) internal {
+    function uninstallModule(bytes memory callData, uint256 moduleTypeId, address moduleAddress, ExecType execType) internal {
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
         // Similar to installModule but for uninstallation
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            address(BOB_ACCOUNT),
-            0,
-            callData
+            execType,
+            execution
         );
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

@@ -11,14 +11,17 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution( address(counter),
+            0,
+            abi.encodeWithSelector(Counter.incrementNumber.selector));
+
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
             EXECTYPE_TRY,
-            address(counter),
-            0,
-            abi.encodeWithSelector(Counter.incrementNumber.selector)
+            execution
         );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -31,15 +34,18 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+
         // Assuming you have a method to prepare a UserOperation for a single execution that should fail
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
             EXECTYPE_TRY,
-            address(counter),
-            0,
-            abi.encodeWithSelector(Counter.revertOperation.selector) // Assuming `revertOperation` causes a revert
+            execution
         );
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
@@ -51,14 +57,16 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     }
 
     function test_TryExecuteSingle_Empty() public {
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(0), 0, "");
+
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
             EXECTYPE_TRY,
-            address(0),
-            0,
-            ""
+            execution
         );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -71,17 +79,17 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
         payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(receiver, sendValue, "");
 
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+        PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB,
             BOB_ACCOUNT,
             EXECTYPE_TRY,
-            receiver,
-            sendValue,
-            ""
+            execution
         );
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

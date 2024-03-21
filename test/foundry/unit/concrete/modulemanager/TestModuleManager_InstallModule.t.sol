@@ -24,9 +24,13 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             IModularSmartAccount.upgradeToAndCall.selector, address(newSA), ""
         );
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        
+
         // Preparing UserOperation for installing the module
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -45,7 +49,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         );
 
         // Preparing UserOperation for installing the module
-        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator));
+        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
@@ -53,13 +57,33 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         );
     }
 
+    function test_InstallModule_Try_Success() public {
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should not be installed initially"
+        );
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+
+        // Preparing UserOperation for installing the module
+        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_TRY);
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should be installed"
+        );
+    }
+
+
     function test_InstallModule_Success_Validator() public {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
         
         installModule(
-            callData, MODULE_TYPE_VALIDATOR, address(mockValidator));
+            callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
     }
 
     function test_InstallModule_Success_Executor() public {
@@ -67,7 +91,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""
         );
         installModule(
-            callData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE));
+            callData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), EXECTYPE_DEFAULT);
     }
 
     function test_InstallModule_Revert_AlreadyInstalled() public {
@@ -86,8 +110,11 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -117,8 +144,11 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             ""
         );
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidModuleTypeId(uint256)", 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -144,10 +174,14 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             ""
         );
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        
         // Expected revert reason encoded
         bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAddressCanNotBeZero()");
 
@@ -164,8 +198,11 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), ""
         );
 
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
         PackedUserOperation[] memory userOps =
-            prepareExecutionUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, address(BOB_ACCOUNT), 0, callData);
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
