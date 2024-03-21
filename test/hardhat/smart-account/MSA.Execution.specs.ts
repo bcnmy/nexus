@@ -91,7 +91,7 @@ describe("SmartAccount Execution and Validation", () => {
 
       const nonce = await entryPoint.getNonce(
         userOp.sender,
-        ethers.zeroPadBytes(moduleAddress, 24),
+        ethers.zeroPadBytes(moduleAddress.toString(), 24),
       );
 
       userOp.nonce = nonce; 
