@@ -338,6 +338,19 @@ export async function generateUseropCallData(
 return executeCallData;
 }
 
+// Utility function to listen for UserOperationRevertReason events
+export async function listenForRevertReasons(entryPointAddress) {
+  const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
+
+  entryPoint.on("UserOperationRevertReason", (userOpHash, sender, nonce, revertReason) => {
+    const reason = ethers.toUtf8String(revertReason);
+    console.log(`Revert Reason:
+      User Operation Hash: ${userOpHash}
+      Sender: ${sender}
+      Nonce: ${nonce}
+      Revert Reason: ${reason}`);
+  });
+
 // TODO
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {
