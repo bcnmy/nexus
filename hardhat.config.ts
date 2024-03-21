@@ -26,10 +26,16 @@ const config: HardhatUserConfig = {
       chainId: 80001,
       accounts: [process.env.PRIVATE_KEY],
     },
+    sepolia: {
+      url: process.env.SEPOLIA_URL || "",
+      chainId: 11155111,
+      accounts: [process.env.PRIVATE_KEY],
+    },
   },
   etherscan: {
     apiKey: {
       polygonMumbai: process.env.POLYGONSCAN_API_KEY || "",
+      sepolia: process.env.ETHERSCAN_API_KEY || "",
     }
   },
   docgen: {

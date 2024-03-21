@@ -19,11 +19,11 @@ async function main() {
 
   const K1Validator = await ethers.getContractFactory("K1Validator");
 
-  const K1Validator = await K1Validator.deploy();
+  const k1Validator = await K1Validator.deploy();
 
-  await K1Validator.waitForDeployment();
+  await k1Validator.waitForDeployment();
 
-  console.log(`K1Validator deployed at: ${K1Validator.target}`);
+  console.log(`K1Validator deployed at: ${k1Validator.target}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
