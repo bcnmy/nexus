@@ -228,56 +228,41 @@ contract Helpers is CheatCodes {
         signature = abi.encodePacked(r, s, v);
     }
 
-    function prepareExecutionUserOp(
-        Vm.Wallet memory signer,
-        SmartAccount account,
-        ExecType execType,
-        address target,
-        uint256 value,
-        bytes memory functionCall
+    function prepareUserOperation(
+    Vm.Wallet memory signer,
+    SmartAccount account,
+    ExecType execType,
+    Execution[] memory executions
     )
         internal
         returns (PackedUserOperation[] memory userOps)
     {
-        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
-        bytes memory executionCalldata =
-            abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(target, value, functionCall)));
+        // Determine mode and calldata based on callType and executions length
+        ModeCode mode;
+        bytes memory executionCalldata;
+        uint256 length = executions.length;
 
+        if (length == 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
+        } else if (length > 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+        } else {
+            revert("Executions array cannot be empty");
+        }        
+
+        // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
+
+        // Build the UserOperation
         userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
         userOps[0].callData = executionCalldata;
 
-        // Generating and signing the hash of the user operation
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(signer, userOpHash);
-
-        return userOps;
-    }
-
-    function prepareBatchExecutionUserOp(
-        Vm.Wallet memory signer,
-        SmartAccount account,
-        ExecType execType,
-        Execution[] memory executions
-    )
-        internal
-        returns (PackedUserOperation[] memory userOps)
-    {
-        // Determine the mode based on execType
-        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
-
-        // Encode the call into the calldata for the userOp
-        bytes memory executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
-
-        // Initializing the userOps array with the same size as the targets array
-        userOps = new PackedUserOperation[](1);
-
-        // Building the UserOperation for each execution
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
-        userOps[0].callData = executionCalldata;
-
-        // Generating and attaching the signature for each operation
+        // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
