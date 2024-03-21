@@ -39,22 +39,27 @@ export async function deployContract<T>(
  * Deploys the EntryPoint contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
-export async function getDeployedEntrypoint(): Promise<EntryPoint> {
-  const [deployer, ...accounts] = await ethers.getSigners();
+async function getDeployedEntrypoint() {
+    const [deployer] = await ethers.getSigners();
+  
+    // The Entrypoint address is fixed to this address
+    const fixedAddress = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+  
+    // Deploy the contract normally to get its bytecode
+    const Contract = await ethers.getContractFactory("EntryPoint");
+    const contract = await Contract.deploy();
+    await contract.waitForDeployment();
+  
+    // Retrieve the deployed contract bytecode
+    const deployedCode = await ethers.provider.getCode(await contract.getAddress());
+  
+    // Use hardhat_setCode to set the contract code at the specified address
+    await ethers.provider.send("hardhat_setCode", [
+      fixedAddress,
+      deployedCode,
+    ]);
 
-  // Note: There should be a way to cache deployed addresses 
-  // Or one can bring this from deployments.get by scripts added in src/deploy
-
-  const addresses = await Promise.all(
-    accounts.map((account) => account.getAddress()),
-  );
-  const Entrypoint = await ethers.getContractFactory("EntryPoint");
-  const deterministicEntryPoint = await deployments.deploy("EntryPoint", {
-    from: addresses[0],
-    deterministicDeployment: true,
-  });
-
-  return Entrypoint.attach(deterministicEntryPoint.address) as EntryPoint;
+    return Contract.attach(fixedAddress) as EntryPoint;
 }
 
 /**
