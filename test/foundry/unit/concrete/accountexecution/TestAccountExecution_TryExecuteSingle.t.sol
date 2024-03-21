@@ -64,5 +64,29 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    function test_TryExecuteSingle_ValueTransfer() public {
+        address receiver = address(0x123);
+        uint256 sendValue = 1 ether;
+
+        // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
+        payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+
+
+        assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
+
+        // Build UserOperation for single execution
+        PackedUserOperation[] memory userOps = prepareExecutionUserOp(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_TRY,
+            receiver,
+            sendValue,
+            ""
+        );
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        assertEq(receiver.balance, 1 ether, "Receiver should have received 1 ETH");
+    }
 
 }
