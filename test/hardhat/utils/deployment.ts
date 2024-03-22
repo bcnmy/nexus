@@ -15,6 +15,8 @@ import {
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
 
+export const ENTRY_POINT_V7 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+
 /**
  * Generic function to deploy a contract using ethers.js.
  *
@@ -41,10 +43,7 @@ export async function deployContract<T>(
  */
 async function getDeployedEntrypoint() {
     const [deployer] = await ethers.getSigners();
-  
-    // The Entrypoint address is fixed to this address
-    const fixedAddress = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
-  
+    
     // Deploy the contract normally to get its bytecode
     const Contract = await ethers.getContractFactory("EntryPoint");
     const contract = await Contract.deploy();
@@ -55,11 +54,11 @@ async function getDeployedEntrypoint() {
   
     // Use hardhat_setCode to set the contract code at the specified address
     await ethers.provider.send("hardhat_setCode", [
-      fixedAddress,
+      ENTRY_POINT_V7,
       deployedCode,
     ]);
 
-    return Contract.attach(fixedAddress) as EntryPoint;
+    return Contract.attach(ENTRY_POINT_V7) as EntryPoint;
 }
 
 /**
