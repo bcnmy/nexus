@@ -87,7 +87,7 @@ contract MockHandler is IERC165, IERC1155Receiver, IERC721Receiver, IFallback {
     function getModuleTypes() external view override returns (EncodedModuleTypes) {}
 
     // Review
-    function test(uint256 a) public {
+    function test(uint256 a) public pure {
         a;
     }
 }
