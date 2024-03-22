@@ -51,6 +51,7 @@ abstract contract ERC4337Account is IERC4337Account {
 
     function addDeposit() public payable virtual {
         IEntryPoint(entryPoint()).depositTo{ value: msg.value }(address(this));
+        emit DepositAdded(address(this), msg.sender, msg.value);
     }
 
     // Review
