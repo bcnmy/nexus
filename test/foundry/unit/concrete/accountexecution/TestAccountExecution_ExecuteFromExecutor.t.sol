@@ -54,7 +54,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
         for (uint256 i = 0; i < executions.length; i++) {
             executions[i] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         }
-        bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        mockExecutor.execBatch(BOB_ACCOUNT, executions);
         assertEq(counter.getNumber(), 3, "Counter should have incremented three times");
     }
 
@@ -72,8 +72,9 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
     function test_ExecSingleWithValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
-        payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
-        bytes[] memory results = mockExecutor.executeViaAccount(BOB_ACCOUNT, receiver, sendValue, "");
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding should succeed");
+        mockExecutor.executeViaAccount(BOB_ACCOUNT, receiver, sendValue, "");
         assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
     }
 
