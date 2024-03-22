@@ -53,7 +53,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should not be installed initially"
         );
 
-        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
@@ -65,7 +65,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        uninstallModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
+        uninstallModule(callData, EXECTYPE_DEFAULT);
 
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
@@ -93,7 +93,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should not be installed initially"
         );
 
-        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
@@ -105,7 +105,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        uninstallModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_TRY);
+        uninstallModule(callData, EXECTYPE_TRY);
 
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
@@ -129,7 +129,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should not be installed"
         );
 
-        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
@@ -182,7 +182,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should not be installed initially"
         );
 
-        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        // (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
 
         bytes memory callData = abi.encodeWithSelector(
@@ -222,7 +222,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should not be installed initially"
         );
 
-        (address[] memory array, address next) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(VALIDATOR_MODULE);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
