@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 interface IERC4337Account {
-
     event DepositAdded(address indexed account, address indexed depositor, uint256 amount);
 
     /**
