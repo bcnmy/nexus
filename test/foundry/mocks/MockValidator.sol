@@ -17,6 +17,7 @@ contract MockValidator is IValidator {
         bytes32 userOpHash
     )
         external
+        view
         returns (uint256 validation)
     {
         return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
@@ -65,7 +66,7 @@ contract MockValidator is IValidator {
     }
 
     // Review
-    function test(uint256 a) public {
+    function test(uint256 a) public pure {
         a;
     }
 }
