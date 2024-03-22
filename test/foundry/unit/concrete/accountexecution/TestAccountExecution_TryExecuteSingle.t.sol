@@ -45,11 +45,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
             EXECTYPE_TRY,
             execution
         );
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
-        bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
-
+        
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Asserting the counter did not increment
