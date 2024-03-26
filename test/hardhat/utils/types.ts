@@ -8,6 +8,7 @@ import {
   MockValidator,
   K1Validator,
   SmartAccount,
+  MockExecutor,
 } from "../../../typechain-types";
 
 export interface DeploymentFixture {
@@ -29,7 +30,9 @@ export interface DeploymentFixtureWithSA {
   deployedMSAAddress: AddressLike;
   accountOwner: HDNodeWallet;
   msaFactory: AccountFactory;
+  deployer: Signer;
   mockValidator: MockValidator;
+  mockExecutor: MockExecutor;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;

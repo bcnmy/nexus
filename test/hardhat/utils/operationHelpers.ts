@@ -339,10 +339,11 @@ return executeCallData;
 }
 
 // Utility function to listen for UserOperationRevertReason events
-export async function listenForRevertReasons(entryPointAddress) {
+export async function listenForRevertReasons(entryPointAddress: string) {
   const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
-
-  entryPoint.on("UserOperationRevertReason", (userOpHash, sender, nonce, revertReason) => {
+  console.log("Listening for UserOperationRevertReason events...");
+  
+  entryPoint.on(entryPoint.getEvent("UserOperationRevertReason"), (userOpHash, sender, nonce, revertReason) => {
     const reason = ethers.toUtf8String(revertReason);
     console.log(`Revert Reason:
       User Operation Hash: ${userOpHash}

@@ -305,6 +305,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
 
+  const mockExecutor = await getDeployedMockExecutor();
+
   const ecdsaValidator = await getDeployedK1Validator();
 
   const mockToken = await getDeployedMockToken();
@@ -348,8 +350,10 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     deployedMSA,
     deployedMSAAddress: accountAddress,
     accountOwner: owner,
+    deployer: deployer,
     msaFactory,
     mockValidator,
+    mockExecutor,
     ecdsaValidator,
     counter,
     mockToken,
