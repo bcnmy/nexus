@@ -218,6 +218,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
+
         function test_InstallModule_Revert_IncompatibleExecutorModule() public {
         MockValidator newMockValidator = new MockValidator();
         bytes memory callData = abi.encodeWithSelector(
@@ -249,4 +250,34 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    function test_InstallModule_Revert_IncompatibleValidatorModule() public {
+        MockExecutor newMockExecutor = new MockExecutor();
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_VALIDATOR, // Invalid module id
+            address(newMockExecutor), // valid new module address
+            ""
+        );
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps =
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+
+        bytes memory expectedRevertReason = abi.encodeWithSignature("IncompatibleValidatorModule(address)", address(newMockExecutor));
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
 }
