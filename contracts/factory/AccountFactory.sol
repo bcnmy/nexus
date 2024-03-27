@@ -34,6 +34,7 @@ contract AccountFactory is IAccountFactory, StakeManager {
 
         if (!alreadyDeployed) {
             IModularSmartAccount(account).initialize(validationModule, moduleInstallData);
+            emit AccountCreated(account, validationModule, moduleInstallData);
         }
         return payable(account);
     }
