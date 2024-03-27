@@ -144,6 +144,42 @@ describe("SmartAccount Execution and Validation", () => {
       expect(await counter.getNumber()).to.equal(1);
     });
 
+    it("Should execute a single empty transaction through the EntryPoint using execute", async () => {
+      const isOwner = await validatorModule.isOwner(smartAccountAddress, smartAccountOwnerAddress);
+      expect(isOwner).to.be.true;
+      // Generate calldata for executing the 'incrementNumber' function on the counter contract.
+      // TODO
+      const callData = "0x";
+
+      // Build the userOp with the generated callData.
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+      });
+      userOp.callData = callData;
+
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce; 
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+
+      userOp.signature = signature;
+
+      // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
+      expect(await counter.getNumber()).to.equal(0);
+      // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
+      
+      await entryPoint.handleOps([userOp], bundlerAddress);
+
+      expect(await counter.getNumber()).to.equal(0);
+    });
+
     it("Should execute a transaction via MockExecutor", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
 
@@ -166,19 +202,12 @@ describe("SmartAccount Execution and Validation", () => {
       expect(numberAfter - numberBefore).to.be.equal(2);
     });
 
-    it("Should do batch execution via MockExecutor", async () => {
+    it("Should do batch execution via MockExecutor with empty tx's", async () => {
       const execs = [];
       const results: ContractTransactionResponse = await executorModule.execBatch(smartAccountAddress, execs);
       
       expect(results.value).to.be.equal(0);
     });
-
-  //   // Test executing an empty batch via executor
-  //   function test_ExecuteEmptyBatchFromExecutor() public {
-  //     Execution[] memory executions = new Execution[](0);
-  //     bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
-  //     assertEq(results.length, 0, "Results array should be empty");
-  // }
 
     it("Should transfer value via MockExecutor", async () => {
       const randomAddress = ethers.Wallet.createRandom().address;
@@ -190,12 +219,12 @@ describe("SmartAccount Execution and Validation", () => {
       expect(balance).to.be.equal(1);
     });
 
-    it("Should execute a transaction through the executor module by using the entryPoint handleOps", async () => {
+    it("Should execute a single transaction via MockExecutor by using the entryPoint handleOps", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
       
       const data = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeViaAccount", args: [smartAccountAddress, counterAddress, 0n, incrementNumber]});
 
-      const incrementNumberUserOp = buildPackedUserOp({
+      const incrementNumberUserOp = buildPackedUserOp({ 
         sender: smartAccountAddress,
         callData: data,
       });
@@ -217,7 +246,69 @@ describe("SmartAccount Execution and Validation", () => {
       expect(numberAfter).to.be.greaterThan(numberBefore);
     });
 
+    it("Should execute a batch transaction via MockExecutor by using the entryPoint handleOps", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+      const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: incrementNumber}];
+
+      const data = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs]});
+
+      const incrementNumberBatchUserOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData: data,
+      });
+
+      const incrementNumberUserOpNonce = await entryPoint.getNonce(
+        smartAccountAddress,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+      incrementNumberBatchUserOp.nonce = incrementNumberUserOpNonce; 
+
+      const incrementNumberUserOpHash = await entryPoint.getUserOpHash(incrementNumberBatchUserOp);
+      const incrementNumberUserOpSignature = await smartAccountOwner.signMessage(ethers.getBytes(incrementNumberUserOpHash));
+      incrementNumberBatchUserOp.signature = incrementNumberUserOpSignature;
+
+      const numberBefore = await counter.getNumber();
+      await entryPoint.handleOps([incrementNumberBatchUserOp], bundlerAddress);
+      const numberAfter = await counter.getNumber();
+      
+      expect(numberAfter - numberBefore).to.equal(2);
+    });
+
     // Revert checks
+
+    it("Should revert the execution of a single transaction through the EntryPoint using execute", async () => {
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "revertOperation",
+      });
+
+      // Build the userOp with the generated callData.
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+      });
+      userOp.callData = callData;
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce; 
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+
+      userOp.signature = signature;
+      
+      const tx = await entryPoint.handleOps([userOp], bundlerAddress);
+      // The tx will not revert, but the user operation will be reverted.
+      await expect(tx).to.not.be.reverted;
+
+      // Counter should be 0 if user operation has been reverted.
+      expect(await counter.getNumber()).to.equal(0);
+    });
 
     it("Should revert with InvalidModule custom error, through direct call to executor. Module not installed.", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
@@ -248,5 +339,38 @@ describe("SmartAccount Execution and Validation", () => {
         {target: counterAddress, value: 0n, callData: incrementNumber}];
       await expect(executorModule.execBatch(smartAccountAddress, execs)).to.be.revertedWith("Counter: Revert operation");
     });
+
+    it("Should handle revert", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+      const revertOperation = counter.interface.encodeFunctionData("revertOperation");
+      const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: revertOperation}, {target: counterAddress, value: 0n, callData: incrementNumber}];
+
+      const callData = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs]});
+
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+      });
+      userOp.callData = callData;
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce; 
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+
+      userOp.signature = signature;
+      
+      await entryPoint.handleOps([userOp], bundlerAddress);
+
+      const numberAfter = await counter.getNumber();
+      console.log(numberAfter, "numberAfter");
+      
+    });
+   
   });
 });

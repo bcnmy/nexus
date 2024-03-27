@@ -84,3 +84,12 @@ export enum ModuleType {
   Fallback = 3,
   Hooks = 4,
 }
+
+export type InstallModuleParams = {
+  deployedMSA: SmartAccount,
+  entryPoint: EntryPoint,
+  mockExecutor: MockExecutor,
+  mockValidator: MockValidator,
+  accountOwner: Signer,
+  bundler: Signer
+}
