@@ -170,6 +170,68 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
     }
 
+     function test_UninstallExecutorModule_Success() public {
+        MockExecutor newMockExecutor = new MockExecutor();
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should not be installed"
+        );
+
+
+        bytes memory installData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""
+        );
+
+        installModule(installData, MODULE_TYPE_EXECUTOR, address(newMockExecutor), EXECTYPE_DEFAULT);
+
+       assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should be installed"
+        );
+        
+        (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+        address remove = address(newMockExecutor);
+        address prev = SentinelListHelper.findPrevious(array, remove);
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(newMockExecutor),
+            // uninstallData needs to provide prev module address with data to uninstall
+            abi.encode(prev, "")
+        );
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps =
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        // bytes memory expectedRevertReason = abi.encodeWithSignature(
+        //     "ModuleNotInstalled(uint256,address)", MODULE_TYPE_EXECUTOR, address(mockValidator)
+        // );
+
+        // // Expect the UserOperationRevertReason event
+        // vm.expectEmit(true, true, true, true);
+
+        // emit UserOperationRevertReason(
+        //     userOpHash, // userOpHash
+        //     address(BOB_ACCOUNT), // sender
+        //     userOps[0].nonce, // nonce
+        //     expectedRevertReason
+        // );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should not be installed"
+        );
+    }
+
     function test_UninstallModule_IncorrectPrevModuleData() public {
         // Setup: Install the module first
         test_InstallModule_Success(); // Use the test case directly for setup
