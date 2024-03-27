@@ -33,6 +33,7 @@ export interface DeploymentFixtureWithSA {
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
+  anotherExecutorModule: MockExecutor;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;

@@ -1,8 +1,7 @@
 import { ExecutionMethod } from './../utils/types';
-import { ethers } from "hardhat";
 import { expect } from "chai";
 
-import { Signer } from "ethers";
+import { ContractTransactionResponse, Signer } from "ethers";
 import {
   AccountFactory,
   Counter,
@@ -17,8 +16,8 @@ import { deployContractsAndSAFixture } from "../utils/deployment";
 import {
   generateUseropCallData,
   buildPackedUserOp,
-  listenForRevertReasons,
 } from "../utils/operationHelpers";
+import { ethers } from 'hardhat';
 
 describe("SmartAccount Execution and Validation", () => {
     let factory: AccountFactory;
@@ -26,9 +25,11 @@ describe("SmartAccount Execution and Validation", () => {
     let bundler: Signer;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
+    let anotherExecutorModule: MockExecutor;
     let counter: Counter;
     let smartAccount: SmartAccount;
     let smartAccountOwner: Signer;
+    let deployer: Signer;
 
     let factoryAddress: string;
     let entryPointAddress: string;
@@ -47,9 +48,11 @@ describe("SmartAccount Execution and Validation", () => {
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
+    anotherExecutorModule = setup.anotherExecutorModule;
     smartAccountOwner = setup.accountOwner;
     smartAccount = setup.deployedMSA;
     counter = setup.counter;
+    deployer = setup.deployer;
 
     factoryAddress = await factory.getAddress();
     entryPointAddress = await entryPoint.getAddress();
@@ -141,7 +144,7 @@ describe("SmartAccount Execution and Validation", () => {
       expect(await counter.getNumber()).to.equal(1);
     });
 
-    it("Should execute a transaction through the executor module directly", async () => {
+    it("Should execute a transaction via MockExecutor", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
 
       const numberBefore = await counter.getNumber();
@@ -152,7 +155,42 @@ describe("SmartAccount Execution and Validation", () => {
       expect(numberAfter).to.be.greaterThan(numberBefore);
     });
 
-    it("Should execute a transaction through the executor module by sending a user operation", async () => {
+    it("Should do batch execution via MockExecutor", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+
+      const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: incrementNumber}];
+      const numberBefore = await counter.getNumber();
+      await executorModule.execBatch(smartAccountAddress, execs);
+      const numberAfter = await counter.getNumber();
+
+      expect(numberAfter - numberBefore).to.be.equal(2);
+    });
+
+    it("Should do batch execution via MockExecutor", async () => {
+      const execs = [];
+      const results: ContractTransactionResponse = await executorModule.execBatch(smartAccountAddress, execs);
+      
+      expect(results.value).to.be.equal(0);
+    });
+
+  //   // Test executing an empty batch via executor
+  //   function test_ExecuteEmptyBatchFromExecutor() public {
+  //     Execution[] memory executions = new Execution[](0);
+  //     bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
+  //     assertEq(results.length, 0, "Results array should be empty");
+  // }
+
+    it("Should transfer value via MockExecutor", async () => {
+      const randomAddress = ethers.Wallet.createRandom().address;
+      await deployer.sendTransaction({to: smartAccountAddress, value: 1});
+      
+      await executorModule.executeViaAccount(smartAccountAddress, randomAddress, 1n, "0x");
+
+      const balance = await deployer.provider.getBalance(randomAddress);
+      expect(balance).to.be.equal(1);
+    });
+
+    it("Should execute a transaction through the executor module by using the entryPoint handleOps", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
       
       const data = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeViaAccount", args: [smartAccountAddress, counterAddress, 0n, incrementNumber]});
@@ -172,14 +210,43 @@ describe("SmartAccount Execution and Validation", () => {
       const incrementNumberUserOpSignature = await smartAccountOwner.signMessage(ethers.getBytes(incrementNumberUserOpHash));
       incrementNumberUserOp.signature = incrementNumberUserOpSignature;
 
-      await listenForRevertReasons(entryPointAddress);
-      console.log(incrementNumberUserOp, "user op");
-      
       const numberBefore = await counter.getNumber();
       await entryPoint.handleOps([incrementNumberUserOp], bundlerAddress);
       const numberAfter = await counter.getNumber();
       
       expect(numberAfter).to.be.greaterThan(numberBefore);
+    });
+
+    // Revert checks
+
+    it("Should revert with InvalidModule custom error, through direct call to executor. Module not installed.", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+
+      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
+    });
+
+    it("Should revert without a reason, through direct call to executor. Wrong smart account address given to executeViaAccount()", async () => {
+      const randomAddress = ethers.Wallet.createRandom().address;
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+
+      await expect(executorModule.executeViaAccount(randomAddress, counterAddress, 0n, incrementNumber)).to.be.reverted;
+    });
+
+    it("Should revert an execution from an unauthorized executor", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+
+      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
+    });
+
+    it("Should revert on batch execution via MockExecutor", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+      const revertOperation = counter.interface.encodeFunctionData("revertOperation");
+
+      const execs = [
+        {target: counterAddress, value: 0n, callData: incrementNumber}, 
+        {target: counterAddress, value: 0n, callData: revertOperation},
+        {target: counterAddress, value: 0n, callData: incrementNumber}];
+      await expect(executorModule.execBatch(smartAccountAddress, execs)).to.be.revertedWith("Counter: Revert operation");
     });
   });
 });
