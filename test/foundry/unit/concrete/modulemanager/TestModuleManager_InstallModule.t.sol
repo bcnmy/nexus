@@ -166,6 +166,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+
+
     function test_InstallModule_InvalidModuleAddress() public {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
