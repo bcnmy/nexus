@@ -11,14 +11,26 @@ contract EventsAndErrors {
 
 
     // Define all errors
-    error InvalidModule(address module);
     error FailedOp(uint256 opIndex, string reason);
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
     error ExecutionFailed();
-    error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
     error LinkedList_AlreadyInitialized();
     error LinkedList_InvalidPage();
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+
+    error CannotRemoveLastValidator();
+    error InvalidModule(address module);
+    error InvalidModuleTypeId(uint256 moduleTypeId);
+    error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
+    error UnauthorizedOperation(address operator);
+    error ModuleNotInstalled(uint256 moduleTypeId, address module);
+    error IncompatibleValidatorModule(address module);
+    error IncompatibleExecutorModule(address module);
+    error ModuleAddressCanNotBeZero();
+    error HookPostCheckFailed();
+    error HookAlreadyInstalled(address currentHook);
+    error FallbackHandlerAlreadyInstalled();
 }
