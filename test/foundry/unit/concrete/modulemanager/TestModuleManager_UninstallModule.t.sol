@@ -192,9 +192,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         
         (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
         address remove = address(newMockExecutor);
-        address prev = SentinelListHelper.findPrevious(array, remove);
-
-        bytes memory callData = abi.encodeWithSelector(
+        address prev = SentinelListHelper.findPrevious(array, remove);        bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_EXECUTOR,
             address(newMockExecutor),
@@ -209,20 +207,6 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
-        // bytes memory expectedRevertReason = abi.encodeWithSignature(
-        //     "ModuleNotInstalled(uint256,address)", MODULE_TYPE_EXECUTOR, address(mockValidator)
-        // );
-
-        // // Expect the UserOperationRevertReason event
-        // vm.expectEmit(true, true, true, true);
-
-        // emit UserOperationRevertReason(
-        //     userOpHash, // userOpHash
-        //     address(BOB_ACCOUNT), // sender
-        //     userOps[0].nonce, // nonce
-        //     expectedRevertReason
-        // );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
