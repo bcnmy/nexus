@@ -206,8 +206,6 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         PackedUserOperation[] memory userOps =
             prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertFalse(
@@ -300,6 +298,85 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Module should be installed"
+        );
+    }
+
+
+
+
+        function test_UninstallFallbackHandler_Success() public {
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            "FallbackHandler should be uninstalled initially"
+        );
+            installModule(
+                abi.encodeWithSelector(
+                    IModuleManager.installModule.selector,
+                    MODULE_TYPE_FALLBACK,
+                    address(mockHandler),
+                    ""
+                ),
+                MODULE_TYPE_FALLBACK,
+                address(mockHandler),
+                EXECTYPE_DEFAULT
+            );
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            "FallbackHandler should be installed successfully"
+        );
+        // Uninstall
+        bytes memory callDataUninstall = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(mockHandler),
+            ""
+        );
+
+        Execution[] memory executionUninstall = new Execution[](1);
+        executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
+
+        PackedUserOperation[] memory userOpsUninstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
+        ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            "FallbackHandler should be uninstalled successfully"
+        );
+    }
+
+    function test_UninstallFallbackHandler_NotInstalled() public {
+        // Uninstall
+        bytes memory callDataUninstall = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(mockHandler),
+            ""
+        );
+
+        Execution[] memory executionUninstall = new Execution[](1);
+        executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
+
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
+
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+            "ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler)
+        );
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            "FallbackHandler should be uninstalled successfully"
         );
     }
 }
