@@ -47,10 +47,14 @@ abstract contract ERC4337Account is IERC4337Account {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual returns (uint256);
+    )
+        external
+        virtual
+        returns (uint256);
 
     function addDeposit() public payable virtual {
         IEntryPoint(entryPoint()).depositTo{ value: msg.value }(address(this));
+        emit DepositAdded(address(this), msg.sender, msg.value);
     }
 
     // Review
