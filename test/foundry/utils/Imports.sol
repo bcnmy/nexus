@@ -30,6 +30,7 @@ import "../../../contracts/interfaces/modules/IModule.sol";
 import "../../../contracts/interfaces/base/IStorage.sol";
 import "../../../contracts/interfaces/factory/IAccountFactory.sol";
 import "../../../contracts/interfaces/IModularSmartAccount.sol";
+import "../../../contracts/interfaces/modules/IERC7579Modules.sol";
 
 // Contract implementations
 import "../../../contracts/base/AccountConfig.sol";
