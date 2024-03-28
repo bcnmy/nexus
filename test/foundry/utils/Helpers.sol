@@ -14,13 +14,13 @@ import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
-
 import { AccountExecution } from "../../../contracts/base/AccountExecution.sol";
 
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "./EventsAndErrors.sol";
 
-contract Helpers is CheatCodes {
+contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -93,14 +93,16 @@ contract Helpers is CheatCodes {
 
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
-
         return SmartAccount(accountAddress);
     }
 
     function deployAccounts() internal {
         BOB_ACCOUNT = deployAccount(BOB, 100 ether);
+        labelAddress(address(BOB_ACCOUNT), "BOB_ACCOUNT");
         ALICE_ACCOUNT = deployAccount(ALICE, 100 ether);
+        labelAddress(address(ALICE_ACCOUNT), "ALICE_ACCOUNT");
         CHARLIE_ACCOUNT = deployAccount(CHARLIE, 100 ether);
+        labelAddress(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
 
     function calculateAccountAddress(address owner) internal view returns (address payable account) {
