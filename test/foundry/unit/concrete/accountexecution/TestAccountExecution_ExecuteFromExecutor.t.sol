@@ -5,15 +5,16 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 import { MockExecutor } from "../../../mocks/MockExecutor.sol";
 import { Counter } from "../../../mocks/Counter.sol";
+import "../../shared/TestAccountExecution_Base.t.sol"; // Ensure this import path matches your project structure
 
 
 
-contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
+contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_Base {
     MockExecutor public mockExecutor;
-    Counter public counter;
 
     function setUp() public {
-        init();
+        setUpTestAccountExecution_Base();
+        
         mockExecutor = new MockExecutor();
         counter = new Counter();
 
@@ -94,4 +95,54 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, SmartAccountTestLab {
         vm.expectRevert("Counter: Revert operation");
         mockExecutor.execBatch(BOB_ACCOUNT, executions);
     }
+
+    function test_ERC20TransferFromExecutor() public {
+        uint256 amount = 100 * 10 ** 18;
+        bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, address(0x123), amount);
+
+        mockExecutor.executeViaAccount(BOB_ACCOUNT, address(token), 0, transferCallData);
+
+        uint256 balanceCharlie = token.balanceOf(address(0x123));
+        assertEq(balanceCharlie, amount, "Charlie should have received the tokens");
+    }
+
+    function test_ERC20TransferViaExecutor() public {
+    uint256 amount = 100 * 10 ** 18;
+    address recipient = address(0x123);
+    bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, recipient, amount);
+
+    mockExecutor.executeViaAccount(BOB_ACCOUNT, address(token), 0, transferCallData);
+
+    uint256 balanceRecipient = token.balanceOf(recipient);
+    assertEq(balanceRecipient, amount, "Recipient should have received the tokens");
+}
+
+function test_ERC20ApproveAndTransferFromViaBatch() public {
+    uint256 approvalAmount = 200 * 10 ** 18;
+    uint256 transferAmount = 150 * 10 ** 18;
+    address recipient = address(0x123);
+
+    Execution[] memory execs = new Execution[](2);
+    execs[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount));
+    execs[1] = Execution(address(token), 0, abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), recipient, transferAmount));
+
+    bytes[] memory returnData = mockExecutor.execBatch(BOB_ACCOUNT, execs);
+
+    uint256 balanceRecipient = token.balanceOf(recipient);
+    assertEq(balanceRecipient, transferAmount, "Recipient should have received the tokens via transferFrom");
+}
+
+function test_ZeroValueTransferInBatch() public {
+    uint256 amount = 0;
+    address recipient = address(0x123);
+
+    Execution[] memory execs = new Execution[](1);
+    execs[0] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, recipient, amount));
+
+    mockExecutor.execBatch(BOB_ACCOUNT, execs);
+
+    uint256 balanceRecipient = token.balanceOf(recipient);
+    assertEq(balanceRecipient, amount, "Recipient should have received 0 tokens");
+}
+
 }
