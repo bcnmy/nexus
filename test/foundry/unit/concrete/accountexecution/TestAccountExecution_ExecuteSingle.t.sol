@@ -13,9 +13,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution( address(counter),
-            0,
-            abi.encodeWithSelector(Counter.incrementNumber.selector));
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Assuming you have a method to prepare a UserOperation for a single execution
         PackedUserOperation[] memory userOps = prepareUserOperation(
@@ -36,29 +34,19 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-       Execution[] memory execution = new Execution[](1);
-       execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
 
-
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
 
-        emit UserOperationRevertReason(
-            userOpHash,
-            address(BOB_ACCOUNT),
-            userOps[0].nonce,
-            expectedRevertReason
-        );
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Asserting the counter did not increment
@@ -66,17 +54,11 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
     }
 
     function test_ExecuteSingle_Empty() public {
-
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -94,12 +76,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -109,14 +86,11 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
     function test_ExecuteSingle_TokenTransfer() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
         // Assuming the SmartAccount has been funded with tokens in the setUp()
-        
+
         // Encode the token transfer call
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount)
-        );
+        execution[0] =
+            Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
         PackedUserOperation[] memory userOps = prepareUserOperation(
@@ -135,22 +109,15 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
     function test_ExecuteSingle_ApproveAndTransferFrom() public {
         uint256 approvalAmount = 500 * 10 ** token.decimals();
         // Assume BOB_ACCOUNT is approving CHARLIE to spend tokens on its behalf
-        
+
         // Encode the approve call
         Execution[] memory approvalExecution = new Execution[](1);
-        approvalExecution[0] = Execution(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount)
-        );
+        approvalExecution[0] =
+            Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            approvalExecution
-        );
+        PackedUserOperation[] memory approveOps =
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 
@@ -161,6 +128,10 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // Verify the final balances
         assertEq(token.balanceOf(ALICE.addr), transferFromAmount, "TransferFrom did not execute correctly");
-        assertEq(token.allowance(address(BOB_ACCOUNT), CHARLIE.addr), approvalAmount - transferFromAmount, "Allowance not updated correctly");
+        assertEq(
+            token.allowance(address(BOB_ACCOUNT), CHARLIE.addr),
+            approvalAmount - transferFromAmount,
+            "Allowance not updated correctly"
+        );
     }
 }

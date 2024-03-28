@@ -16,8 +16,7 @@ describe("SmartAccount Module Management", () => {
   let moduleAddress: AddressLike;
 
   before(async function () {
-    ({ deployedMSA, mockValidator } =
-      await deployContractsAndSAFixture());
+    ({ deployedMSA, mockValidator } = await deployContractsAndSAFixture());
     owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
     moduleAddress = await mockValidator.getAddress();
@@ -38,7 +37,6 @@ describe("SmartAccount Module Management", () => {
       // Install module via userOp and confirm it's installed
     });
 
-    it("Should correctly uninstall a previously installed module", async () => {
-    });
+    it("Should correctly uninstall a previously installed module", async () => {});
   });
 });

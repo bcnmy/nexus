@@ -13,7 +13,6 @@ abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
     ModeCode public batchMode;
     ModeCode public unsupportedMode;
 
-
     Counter public counter;
     Token public token;
 
@@ -34,13 +33,10 @@ abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
 
         // Assuming msg.sender is the owner and receives the initial supply,
         // transfer tokens to BOB_ACCOUNT, ALICE_ACCOUNT, and CHARLIE_ACCOUNT
-        uint256 amountToEach = 10_000 * 10**token.decimals();
+        uint256 amountToEach = 10_000 * 10 ** token.decimals();
 
         token.transfer(address(BOB_ACCOUNT), amountToEach);
         token.transfer(address(ALICE_ACCOUNT), amountToEach);
         token.transfer(address(CHARLIE_ACCOUNT), amountToEach);
-
     }
-
 }
-

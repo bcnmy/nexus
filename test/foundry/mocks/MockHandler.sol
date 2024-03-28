@@ -3,14 +3,15 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-empty-blocks */
 
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IFallback, MODULE_TYPE_FALLBACK } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
-/** @title Default Handler - returns true for known token callbacks
+/**
+ * @title Default Handler - returns true for known token callbacks
  *   @dev May Handle EIP-1271 compliant isValidSignature requests.
  *  @notice inspired by Richard Meissner's <richard@gnosis.pm> implementation
  */
@@ -29,12 +30,9 @@ contract MockHandler is IERC165, IERC1155Receiver, IERC721Receiver, IFallback {
      * @param interfaceId The interface identifier, as specified in ERC-165.
      * @return True if the contract implements the given interface, false otherwise.
      */
-
     function supportsInterface(bytes4 interfaceId) external view virtual override returns (bool) {
-        return
-            interfaceId == type(IERC1155Receiver).interfaceId ||
-            interfaceId == type(IERC721Receiver).interfaceId ||
-            interfaceId == type(IERC165).interfaceId;
+        return interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
+            || interfaceId == type(IERC165).interfaceId;
     }
 
     /**
@@ -47,7 +45,12 @@ contract MockHandler is IERC165, IERC1155Receiver, IERC721Receiver, IFallback {
         uint256,
         uint256,
         bytes calldata
-    ) external pure override returns (bytes4) {
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return IERC1155Receiver.onERC1155Received.selector;
     }
 
@@ -61,7 +64,12 @@ contract MockHandler is IERC165, IERC1155Receiver, IERC721Receiver, IFallback {
         uint256[] calldata,
         uint256[] calldata,
         bytes calldata
-    ) external pure override returns (bytes4) {
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return IERC1155Receiver.onERC1155BatchReceived.selector;
     }
 
@@ -74,17 +82,17 @@ contract MockHandler is IERC165, IERC1155Receiver, IERC721Receiver, IFallback {
     }
 
     /// @inheritdoc IModule
-    function onInstall(bytes calldata data) external override {}
+    function onInstall(bytes calldata data) external override { }
 
     /// @inheritdoc IModule
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
         return moduleTypeId == MODULE_TYPE_FALLBACK;
     }
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
     // Review
     function test(uint256 a) public pure {

@@ -7,16 +7,16 @@ import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
 contract MockHook is IHook {
     /// @inheritdoc IModule
-    function onInstall(bytes calldata data) external override {}
+    function onInstall(bytes calldata data) external override { }
 
     /// @inheritdoc IModule
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     /// @inheritdoc IHook
-    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) {}
+    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) { }
 
     /// @inheritdoc IHook
-    function postCheck(bytes calldata hookData) external returns (bool success) {}
+    function postCheck(bytes calldata hookData) external returns (bool success) { }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
@@ -28,7 +28,7 @@ contract MockHook is IHook {
     }*/
 
     /// @inheritdoc IModule
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
     // Review
     function test(uint256 a) public pure {

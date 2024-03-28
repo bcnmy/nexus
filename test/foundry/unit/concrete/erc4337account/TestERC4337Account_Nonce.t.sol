@@ -7,6 +7,7 @@ import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
     Counter public counter;
+
     function setUp() public {
         init();
 
@@ -14,8 +15,10 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
     }
 
     function test_InitialNonce() public {
-        uint nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), convertAddressToUint192(address(VALIDATOR_MODULE)));
-        assertEq(BOB_ACCOUNT.nonce(convertAddressToUint192(address(VALIDATOR_MODULE))), nonce, "Initial nonce should be 0");
+        uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), convertAddressToUint192(address(VALIDATOR_MODULE)));
+        assertEq(
+            BOB_ACCOUNT.nonce(convertAddressToUint192(address(VALIDATOR_MODULE))), nonce, "Initial nonce should be 0"
+        );
     }
 
     function test_NonceIncrementAfterOperation() public {
@@ -25,18 +28,14 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
 
         uint256 initialNonce = BOB_ACCOUNT.nonce(convertAddressToUint192(address(VALIDATOR_MODULE)));
 
-      // Initial state assertion
+        // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-       Execution[] memory execution = new Execution[](1);
-       execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Assuming the method should fail
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -53,31 +52,21 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         // Similar to the previous test, but ensure the operation fails
 
         uint256 initialNonce = BOB_ACCOUNT.nonce(convertAddressToUint192(address(VALIDATOR_MODULE)));
-      assertEq(counter.getNumber(), 0, "Counter should start at 0");
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-       Execution[] memory execution = new Execution[](1);
-       execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
 
-
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
 
-        emit UserOperationRevertReason(
-            userOpHash,
-            address(BOB_ACCOUNT),
-            userOps[0].nonce,
-            expectedRevertReason
-        );
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Asserting the counter did not increment

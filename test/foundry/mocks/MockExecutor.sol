@@ -25,7 +25,13 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
-    function execBatch(IModularSmartAccount account, Execution[] calldata execs) external returns (bytes[] memory returnData) {
+    function execBatch(
+        IModularSmartAccount account,
+        Execution[] calldata execs
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 

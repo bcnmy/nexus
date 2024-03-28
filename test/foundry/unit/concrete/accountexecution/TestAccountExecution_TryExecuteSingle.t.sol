@@ -7,22 +7,16 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     function setUp() public {
         setUpTestAccountExecution_Base();
     }
+
     function test_TryExecuteSingle_Success() public {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution( address(counter),
-            0,
-            abi.encodeWithSelector(Counter.incrementNumber.selector));
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -37,15 +31,9 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
-
         // Assuming you have a method to prepare a UserOperation for a single execution that should fail
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            execution
-        );
-        
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
+
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Asserting the counter did not increment
@@ -53,17 +41,11 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     }
 
     function test_TryExecuteSingle_Empty() public {
-
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -81,29 +63,21 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(receiver.balance, 1 ether, "Receiver should have received 1 ETH");
     }
 
-        function test_TryExecuteSingle_TokenTransfer() public {
+    function test_TryExecuteSingle_TokenTransfer() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
         // Assuming the SmartAccount has been funded with tokens in the setUp()
-        
+
         // Encode the token transfer call
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount)
-        );
+        execution[0] =
+            Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
         PackedUserOperation[] memory userOps = prepareUserOperation(
@@ -122,22 +96,15 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     function test_TryExecuteSingle_ApproveAndTransferFrom() public {
         uint256 approvalAmount = 500 * 10 ** token.decimals();
         // Assume BOB_ACCOUNT is approving CHARLIE to spend tokens on its behalf
-        
+
         // Encode the approve call
         Execution[] memory approvalExecution = new Execution[](1);
-        approvalExecution[0] = Execution(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount)
-        );
+        approvalExecution[0] =
+            Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            approvalExecution
-        );
+        PackedUserOperation[] memory approveOps =
+            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 
@@ -148,7 +115,10 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Verify the final balances
         assertEq(token.balanceOf(ALICE.addr), transferFromAmount, "TransferFrom did not execute correctly");
-        assertEq(token.allowance(address(BOB_ACCOUNT), CHARLIE.addr), approvalAmount - transferFromAmount, "Allowance not updated correctly");
+        assertEq(
+            token.allowance(address(BOB_ACCOUNT), CHARLIE.addr),
+            approvalAmount - transferFromAmount,
+            "Allowance not updated correctly"
+        );
     }
-
 }

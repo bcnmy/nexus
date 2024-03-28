@@ -42,23 +42,22 @@ export async function deployContract<T>(
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
 async function getDeployedEntrypoint() {
-    const [deployer] = await ethers.getSigners();
-    
-    // Deploy the contract normally to get its bytecode
-    const Contract = await ethers.getContractFactory("EntryPoint");
-    const contract = await Contract.deploy();
-    await contract.waitForDeployment();
-  
-    // Retrieve the deployed contract bytecode
-    const deployedCode = await ethers.provider.getCode(await contract.getAddress());
-  
-    // Use hardhat_setCode to set the contract code at the specified address
-    await ethers.provider.send("hardhat_setCode", [
-      ENTRY_POINT_V7,
-      deployedCode,
-    ]);
+  const [deployer] = await ethers.getSigners();
 
-    return Contract.attach(ENTRY_POINT_V7) as EntryPoint;
+  // Deploy the contract normally to get its bytecode
+  const Contract = await ethers.getContractFactory("EntryPoint");
+  const contract = await Contract.deploy();
+  await contract.waitForDeployment();
+
+  // Retrieve the deployed contract bytecode
+  const deployedCode = await ethers.provider.getCode(
+    await contract.getAddress(),
+  );
+
+  // Use hardhat_setCode to set the contract code at the specified address
+  await ethers.provider.send("hardhat_setCode", [ENTRY_POINT_V7, deployedCode]);
+
+  return Contract.attach(ENTRY_POINT_V7) as EntryPoint;
 }
 
 /**
@@ -162,7 +161,9 @@ export async function getDeployedMockValidator(): Promise<MockValidator> {
     deterministicDeployment: true,
   });
 
-  return MockValidator.attach(deterministicMockValidator.address) as MockValidator;
+  return MockValidator.attach(
+    deterministicMockValidator.address,
+  ) as MockValidator;
 }
 
 /**
@@ -258,9 +259,14 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
-  const msaFactory = await getDeployedAccountFactory(await smartAccountImplementation.getAddress());
+  const msaFactory = await getDeployedAccountFactory(
+    await smartAccountImplementation.getAddress(),
+  );
 
-  const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
+  const mockValidator = await deployContract<MockValidator>(
+    "MockValidator",
+    deployer,
+  );
 
   const ecdsaValidator = await getDeployedK1Validator();
 
@@ -301,9 +307,14 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
-  const msaFactory = await getDeployedAccountFactory(await smartAccountImplementation.getAddress());
+  const msaFactory = await getDeployedAccountFactory(
+    await smartAccountImplementation.getAddress(),
+  );
 
-  const mockValidator = await deployContract<MockValidator>("MockValidator", deployer);
+  const mockValidator = await deployContract<MockValidator>(
+    "MockValidator",
+    deployer,
+  );
 
   const ecdsaValidator = await getDeployedK1Validator();
 
@@ -330,7 +341,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   await msaFactory.createAccount(
     mockValidatorAddress,
     moduleInstallData,
-    saDeploymentIndex);
+    saDeploymentIndex,
+  );
 
   // Deposit ETH to the smart account
   await entryPoint.depositTo(accountAddress, { value: to18(1) });
@@ -364,10 +376,10 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 export async function getSmartAccountWithValidator(
   validatorAddress: string,
   onInstallData: BytesLike,
-  index: number
-) : Promise<SmartAccount>{
+  index: number,
+): Promise<SmartAccount> {
   return null;
-};
+}
 
 // WIP
 // TODO make this more dynamic, think of renaming
@@ -377,7 +389,7 @@ export async function getSmartAccountWithValidator(
 // if onInstallData is provided, install given validator with given data (signer would become optional in this case)
 // otherwise assume K1Validator, extract owner address from signer and generate onInstallData
 // Note: it requires contracts to be passed as well because we need same instaces, entire setup object could be passed.
-// Review/Todo: make a DTO and make some params optional and have conditional paths 
+// Review/Todo: make a DTO and make some params optional and have conditional paths
 // If I want to do something using same contracts, I have to write logic in tests before hook itself and use utils from operation helpers
 export async function getDeployedSmartAccountWithValidator(
   entryPoint: EntryPoint,
@@ -388,7 +400,6 @@ export async function getDeployedSmartAccountWithValidator(
   onInstallData: BytesLike,
   deploymentIndex: number = 0,
 ): Promise<SmartAccount> {
-
   const ownerAddress = await signer.getAddress();
   // Module initialization data, encoded
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
@@ -406,7 +417,8 @@ export async function getDeployedSmartAccountWithValidator(
   await accountFactory.createAccount(
     validatorAddress,
     moduleInstallData,
-    deploymentIndex);
+    deploymentIndex,
+  );
 
   const SmartAccount = await ethers.getContractFactory("SmartAccount");
 

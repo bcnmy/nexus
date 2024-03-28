@@ -18,30 +18,34 @@ import {
   buildPackedUserOp,
   signAndPackUserOp,
 } from "../utils/operationHelpers";
-import { CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from "../utils/erc7579Utils";
+import {
+  CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
+  MODE_DEFAULT,
+  MODE_PAYLOAD,
+  UNUSED,
+} from "../utils/erc7579Utils";
 
 describe("SmartAccount Execution and Validation", () => {
-    let factory: AccountFactory;
-    let smartAccount: SmartAccount;
-    let entryPoint: EntryPoint;
-    let module: MockValidator;
-    let counter: Counter;
-    let accounts: Signer[];
-    let addresses: string[] | AddressLike[];
-    let factoryAddress: AddressLike;
-    let entryPointAddress: AddressLike;
-    let smartAccountAddress: AddressLike;
-    let moduleAddress: AddressLike;
-    let owner: Signer;
-    let ownerAddress: AddressLike;
-    let bundler: Signer;
-    let bundlerAddress: AddressLike;
-    let counterAddress: AddressLike;
-    let userSA: SmartAccount;
+  let factory: AccountFactory;
+  let smartAccount: SmartAccount;
+  let entryPoint: EntryPoint;
+  let module: MockValidator;
+  let counter: Counter;
+  let accounts: Signer[];
+  let addresses: string[] | AddressLike[];
+  let factoryAddress: AddressLike;
+  let entryPointAddress: AddressLike;
+  let smartAccountAddress: AddressLike;
+  let moduleAddress: AddressLike;
+  let owner: Signer;
+  let ownerAddress: AddressLike;
+  let bundler: Signer;
+  let bundlerAddress: AddressLike;
+  let counterAddress: AddressLike;
+  let userSA: SmartAccount;
 
   beforeEach(async () => {
-
-
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
     smartAccount = setup.smartAccountImplementation;
@@ -53,8 +57,6 @@ describe("SmartAccount Execution and Validation", () => {
     owner = setup.accountOwner;
     userSA = setup.deployedMSA;
     smartAccountAddress = setup.deployedMSAAddress;
-
-    
 
     entryPointAddress = await entryPoint.getAddress();
 
@@ -85,13 +87,12 @@ describe("SmartAccount Execution and Validation", () => {
       });
       userOp.callData = callData;
 
-
       const nonce = await entryPoint.getNonce(
         userOp.sender,
         ethers.zeroPadBytes(moduleAddress.toString(), 24),
       );
 
-      userOp.nonce = nonce; 
+      userOp.nonce = nonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
       const signature = await owner.signMessage(ethers.getBytes(userOpHash));
@@ -102,16 +103,14 @@ describe("SmartAccount Execution and Validation", () => {
       expect(await counter.getNumber()).to.equal(0);
 
       // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
-      
+
       await entryPoint.handleOps([userOp], bundlerAddress);
 
       expect(await counter.getNumber()).to.equal(1);
     });
 
-    it("Should handle transactions via the ExecuteFromExecutor method correctly", async () => {
-    });
+    it("Should handle transactions via the ExecuteFromExecutor method correctly", async () => {});
 
-    it("Should process executeUserOp method correctly", async () => {
-    });
+    it("Should process executeUserOp method correctly", async () => {});
   });
 });

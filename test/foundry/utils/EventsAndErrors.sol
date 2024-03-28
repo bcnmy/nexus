@@ -5,10 +5,10 @@ contract EventsAndErrors {
     // Define all events
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);
-    event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
+    event UserOperationRevertReason(
+        bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason
+    );
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
-
-
 
     // Define all errors
     error FailedOp(uint256 opIndex, string reason);

@@ -165,7 +165,14 @@ contract Helpers is CheatCodes, EventsAndErrors {
         nonce = ENTRYPOINT.getNonce(address(account), key);
     }
 
-    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
+    function signUserOp(
+        Vm.Wallet memory wallet,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }
@@ -178,8 +185,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         payable(to).transfer(amount);
     }
 
-
-    function assertBalance(address addr, uint256 expectedBalance, string memory message) view internal {
+    function assertBalance(address addr, uint256 expectedBalance, string memory message) internal view {
         require(addr.balance == expectedBalance, message);
     }
 
@@ -216,10 +222,10 @@ contract Helpers is CheatCodes, EventsAndErrors {
     }
 
     function prepareUserOperation(
-    Vm.Wallet memory signer,
-    SmartAccount account,
-    ExecType execType,
-    Execution[] memory executions
+        Vm.Wallet memory signer,
+        SmartAccount account,
+        ExecType execType,
+        Execution[] memory executions
     )
         internal
         view
@@ -235,13 +241,16 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
+            executionCalldata = abi.encodeCall(
+                AccountExecution.execute,
+                (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
+            );
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
             executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
         } else {
             revert("Executions array cannot be empty");
-        }        
+        }
 
         // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);

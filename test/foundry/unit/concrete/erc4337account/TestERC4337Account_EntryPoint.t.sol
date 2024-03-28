@@ -5,7 +5,6 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestERC4337Account_EntryPoint is Test, SmartAccountTestLab {
-
     function setUp() public {
         init();
     }
@@ -15,5 +14,4 @@ contract TestERC4337Account_EntryPoint is Test, SmartAccountTestLab {
         assertEq(ALICE_ACCOUNT.entryPoint(), address(ENTRYPOINT), "Should return the correct EntryPoint address");
         assertEq(CHARLIE_ACCOUNT.entryPoint(), address(ENTRYPOINT), "Should return the correct EntryPoint address");
     }
-
-}    
+}

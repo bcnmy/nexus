@@ -3,13 +3,15 @@ pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
-import {MockValidator} from "../../mocks/MockValidator.sol";
-import {MockExecutor} from "../../mocks/MockExecutor.sol";
-import {MockHandler} from "../../mocks/MockHandler.sol";
-import {MockHook} from "../../mocks/MockHook.sol";
+import { MockValidator } from "../../mocks/MockValidator.sol";
+import { MockExecutor } from "../../mocks/MockExecutor.sol";
+import { MockHandler } from "../../mocks/MockHandler.sol";
+import { MockHook } from "../../mocks/MockHook.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
+
 event ModuleUninstalled(uint256 moduleTypeId, address module);
+
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
@@ -31,7 +33,6 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         mockHandler = new MockHandler();
         mockHook = new MockHook();
 
-
         // Additional shared setup can go here
     }
 
@@ -41,18 +42,13 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         uint256 moduleTypeId,
         address moduleAddress,
         ExecType execType
-    ) internal {
-
-
+    )
+        internal
+    {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            execType,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, execType, execution);
 
         vm.expectEmit(true, true, true, true);
         emit ModuleInstalled(moduleTypeId, moduleAddress);
@@ -61,17 +57,11 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     }
 
     function uninstallModule(bytes memory callData, ExecType execType) internal {
-
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Similar to installModule but for uninstallation
-        PackedUserOperation[] memory userOps = prepareUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            execType,
-            execution
-        );
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, execType, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
