@@ -5,6 +5,8 @@ import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
 import {MockValidator} from "../../mocks/MockValidator.sol";
 import {MockExecutor} from "../../mocks/MockExecutor.sol";
+import {MockHandler} from "../../mocks/MockHandler.sol";
+import {MockHook} from "../../mocks/MockHook.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 event ModuleUninstalled(uint256 moduleTypeId, address module);
@@ -13,6 +15,8 @@ event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed send
 abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
+    MockHandler public mockHandler;
+    MockHook public mockHook;
 
     address constant INVALID_MODULE_ADDRESS = address(0);
     uint256 constant INVALID_MODULE_TYPE = 999;
@@ -24,6 +28,10 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         // Setup mock validator and executor, different from those possibly already used
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
+        mockHandler = new MockHandler();
+        mockHook = new MockHook();
+
+
         // Additional shared setup can go here
     }
 
