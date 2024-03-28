@@ -8,7 +8,7 @@ import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
-import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
+import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
 import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
@@ -148,8 +148,8 @@ contract SmartAccount is
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             _installExecutor(module, initData);
         }
-        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
-        // else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
+        else if (moduleTypeId == MODULE_TYPE_HOOK) _installHook(module, initData);
         else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
@@ -171,8 +171,8 @@ contract SmartAccount is
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR)
             _uninstallExecutor(module, deInitData);
-            // else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
-            // else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
+            else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
+            else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         else revert UnsupportedModuleType(moduleTypeId);
         emit ModuleUninstalled(moduleTypeId, module);
     }
@@ -185,8 +185,8 @@ contract SmartAccount is
     ) external view virtual override(AccountConfig, IAccountConfig) returns (bool) {
         if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (modulTypeId == MODULE_TYPE_EXECUTOR) return true;
-        // else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
-        // else if (modulTypeId == MODULE_TYPE_HOOK) return true;
+        else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
+        else if (modulTypeId == MODULE_TYPE_HOOK) return true;
         else return false;
     }
 
@@ -256,8 +256,8 @@ contract SmartAccount is
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        // else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
-        // else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }
 
