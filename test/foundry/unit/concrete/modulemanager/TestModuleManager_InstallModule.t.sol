@@ -280,4 +280,76 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
+
+    function test_InstallFallbackHandler_WithCustomData() public {
+    bytes memory customData = "Custom Initialization Data";
+    assertFalse(
+        BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+        "FallbackHandler should not be installed initially"
+    );
+
+    bytes memory callData = abi.encodeWithSelector(
+        IModuleManager.installModule.selector,
+        MODULE_TYPE_FALLBACK,
+        address(mockHandler),
+        ""
+    );
+
+    Execution[] memory execution = new Execution[](1);
+    execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+    PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+    ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+    assertTrue(
+        BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+        "FallbackHandler with custom data should be installed"
+    );
+}
+function test_ReinstallFallbackHandler_Failure() public {
+    // First install
+    bytes memory callDataFirstInstall = abi.encodeWithSelector(
+        IModuleManager.installModule.selector,
+        MODULE_TYPE_FALLBACK,
+        address(mockHandler),
+        ""
+    );
+
+    Execution[] memory executionFirstInstall = new Execution[](1);
+    executionFirstInstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataFirstInstall);
+
+    PackedUserOperation[] memory userOpsFirstInstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall);
+    ENTRYPOINT.handleOps(userOpsFirstInstall, payable(address(BOB.addr)));
+
+    // Attempt to reinstall
+    bytes memory callDataReinstall = abi.encodeWithSelector(
+        IModuleManager.installModule.selector,
+        MODULE_TYPE_FALLBACK,
+        address(mockHandler),
+        ""
+    );
+
+    Execution[] memory executionReinstall = new Execution[](1);
+    executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
+
+    PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
+
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+            "ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler)
+        );
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+    ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+}
+
+
 }
