@@ -33,4 +33,8 @@ contract EventsAndErrors {
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
     error FallbackHandlerAlreadyInstalled();
+
+
+    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+
 }
