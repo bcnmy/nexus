@@ -122,13 +122,12 @@ describe("SmartAccount Execution and Validation", () => {
       });
       userOp.callData = callData;
 
-
       const nonce = await entryPoint.getNonce(
         userOp.sender,
         ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
       );
 
-      userOp.nonce = nonce; 
+      userOp.nonce = nonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
       const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
@@ -138,7 +137,7 @@ describe("SmartAccount Execution and Validation", () => {
       // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
       expect(await counter.getNumber()).to.equal(0);
       // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
-      
+
       await entryPoint.handleOps([userOp], bundlerAddress);
 
       expect(await counter.getNumber()).to.equal(1);

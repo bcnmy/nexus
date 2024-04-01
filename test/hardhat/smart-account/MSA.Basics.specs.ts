@@ -16,7 +16,16 @@ import {
   getAccountAddress,
   buildPackedUserOp,
 } from "../utils/operationHelpers";
-import { CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_DELEGATE, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from "../utils/erc7579Utils";
+import {
+  CALLTYPE_BATCH,
+  CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
+  EXECTYPE_DELEGATE,
+  EXECTYPE_TRY,
+  MODE_DEFAULT,
+  MODE_PAYLOAD,
+  UNUSED,
+} from "../utils/erc7579Utils";
 
 describe("SmartAccount Basic Specs", function () {
   let factory: AccountFactory;
@@ -58,16 +67,16 @@ describe("SmartAccount Basic Specs", function () {
     const saDeploymentIndex = 0;
 
     const installData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address"],
-        [accountOwnerAddress],
-      ); // Example data, customize as needed
-    
+      ["address"],
+      [accountOwnerAddress],
+    ); // Example data, customize as needed
+
     // Read the expected account address
     const expectedAccountAddress = await factory.getCounterFactualAddress(
-        moduleAddress, // validator address
-        installData,
-        saDeploymentIndex,
-      );
+      moduleAddress, // validator address
+      installData,
+      saDeploymentIndex,
+    );
 
     await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
 
@@ -90,17 +99,16 @@ describe("SmartAccount Basic Specs", function () {
         saDeploymentIndex,
       );
 
-      await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
+      await factory.createAccount(
+        moduleAddress,
+        installData,
+        saDeploymentIndex,
+      );
 
       // Verify that the account was created
-      const proxyCode = await ethers.provider.getCode(
-        expectedAccountAddress,
-      );
-      console.log('proxy code ========= ', proxyCode);
-      expect(proxyCode).to.not.equal(
-        "0x",
-        "Account should have bytecode",
-      );
+      const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
+      console.log("proxy code ========= ", proxyCode);
+      expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
     });
   });
 
@@ -112,73 +120,70 @@ describe("SmartAccount Basic Specs", function () {
     });
 
     it("Should verify supported account modes", async function () {
-      expect(await userSA.supportsExecutionMode(
-        ethers.concat(
-         [
+      expect(
+        await userSA.supportsExecutionMode(
+          ethers.concat([
             ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
             ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
             ethers.zeroPadValue(toBeHex(UNUSED), 4),
             ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
-            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
-        ])
-        )
-       )
-        .to.be
-        .true;
-        expect(await userSA.supportsExecutionMode(ethers.concat([ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),ethers.zeroPadValue(toBeHex(UNUSED), 4),ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)]))).to.be
-        .true;
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.true;
+      expect(
+        await userSA.supportsExecutionMode(
+          ethers.concat([
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.true;
 
+      expect(
+        await userSA.supportsExecutionMode(
+          ethers.concat([
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.true;
 
-      expect(await userSA.supportsExecutionMode(
-        ethers.concat(
-          [
-              ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
-              ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
-              ethers.zeroPadValue(toBeHex(UNUSED), 4),
-              ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
-              ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
-        ])
-        )
-      )
-        .to.be
-        .true;
+      expect(
+        await userSA.supportsExecutionMode(
+          ethers.concat([
+            ethers.zeroPadValue(toBeHex(EXECTYPE_TRY), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.true;
 
-
-      expect(await userSA.supportsExecutionMode(
-         ethers.concat(
-            [
-               ethers.zeroPadValue(toBeHex(EXECTYPE_TRY), 1),
-               ethers.zeroPadValue(toBeHex(CALLTYPE_BATCH), 1),
-               ethers.zeroPadValue(toBeHex(UNUSED), 4),
-               ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
-               ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
-            ])
-            )
-        )
-        .to.be
-        .true;
-
-      expect(await userSA.supportsExecutionMode(
-         ethers.concat(
-            [
-                ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
-                ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
-                ethers.zeroPadValue(toBeHex(UNUSED), 4),
-                ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
-                ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22)
-            ])
-            )
-        )
-        .to.be
-        .false;
+      expect(
+        await userSA.supportsExecutionMode(
+          ethers.concat([
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.false;
     });
 
     it("Should confirm support for specified module types", async function () {
       // Checks support for predefined module types (e.g., Validation, Execution)
-      expect(await userSA.supportsModule(ModuleType.Validation)).to.be
-        .true;
-      expect(await userSA.supportsModule(ModuleType.Execution)).to.be
-        .true;
+      expect(await userSA.supportsModule(ModuleType.Validation)).to.be.true;
+      expect(await userSA.supportsModule(ModuleType.Execution)).to.be.true;
     });
   });
 

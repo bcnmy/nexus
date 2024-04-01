@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 interface IERC4337Account {
+    event DepositAdded(address indexed account, address indexed depositor, uint256 amount);
+
     /**
      * Validate user's signature and nonce
      * the entryPoint will make the call to the recipient only if this validation call returns successfully.
@@ -35,5 +37,7 @@ interface IERC4337Account {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external returns (uint256 validationData);
+    )
+        external
+        returns (uint256 validationData);
 }

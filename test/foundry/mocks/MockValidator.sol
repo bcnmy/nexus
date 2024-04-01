@@ -2,7 +2,12 @@
 pragma solidity ^0.8.24;
 
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { IValidator, VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR } from "contracts/interfaces/modules/IERC7579Modules.sol";
+import {
+    IValidator,
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED,
+    MODULE_TYPE_VALIDATOR
+} from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
@@ -17,6 +22,7 @@ contract MockValidator is IValidator {
         bytes32 userOpHash
     )
         external
+        view
         returns (uint256 validation)
     {
         return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
@@ -65,7 +71,7 @@ contract MockValidator is IValidator {
     }
 
     // Review
-    function test(uint256 a) public {
+    function test(uint256 a) public pure {
         a;
     }
 }

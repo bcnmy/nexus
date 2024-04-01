@@ -16,7 +16,13 @@ import {
 } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import { Hexable } from "@ethersproject/bytes";
-import { CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from "./erc7579Utils";
+import {
+  CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
+  MODE_DEFAULT,
+  MODE_PAYLOAD,
+  UNUSED,
+} from "./erc7579Utils";
 
 export const DefaultsForUserOp: UserOperation = {
   sender: ethers.ZeroAddress,
@@ -163,7 +169,12 @@ export async function fillSignAndPack(
     accountAddress,
     ethers.zeroPadBytes(validatorAddress.toString(), 24),
   );
-  const userOp = buildPackedUserOp({ sender: accountAddress, nonce, initCode, callData });
+  const userOp = buildPackedUserOp({
+    sender: accountAddress,
+    nonce,
+    initCode,
+    callData,
+  });
   const userOpHash = await entryPoint.getUserOpHash(userOp);
   userOp.signature = await owner.signMessage(ethers.getBytes(userOpHash));
   return userOp;
@@ -177,10 +188,10 @@ export async function fillSignAndPack(
  * @param saDeploymentIndex: number = 0,
  * @returns The full initialization code as a hex string.
  */
-// TODO: 
+// TODO:
 // Note: This currently assumes validator to be mock validator or R1 validation. In future specific install data could be passed along
 // or it could be full bootstrap data
-// depending on the nature of the factory below encoding would change 
+// depending on the nature of the factory below encoding would change
 export async function getInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
@@ -202,7 +213,6 @@ export async function getInitCode(
   return factoryAddress + factoryDeploymentData;
 }
 
-
 // Note: could be a method getAccountAddressAndInitCode
 // REVIEW
 
@@ -220,7 +230,7 @@ export async function getAccountAddress(
   signerAddress: AddressLike, // ECDSA signer
   factoryAddress: AddressLike,
   validatorAddress: AddressLike,
-  setup: { accountFactory: any},
+  setup: { accountFactory: any },
   saDeploymentIndex: number = 0,
 ): Promise<string> {
   // Module initialization data, encoded
@@ -228,7 +238,12 @@ export async function getAccountAddress(
 
   setup.accountFactory = setup.accountFactory.attach(factoryAddress);
 
-  const counterFactualAddress = await setup.accountFactory.getCounterFactualAddress(validatorAddress, moduleInitData, saDeploymentIndex);
+  const counterFactualAddress =
+    await setup.accountFactory.getCounterFactualAddress(
+      validatorAddress,
+      moduleInitData,
+      saDeploymentIndex,
+    );
 
   return counterFactualAddress;
 }
@@ -272,14 +287,18 @@ export function packGasValues(
 // Should be able to accept array of Transaction (to, value, data) instead of targetcontract and function name
 // If array length is one (given executionMethod = execute or executeFromExecutor) then make executionCallData for singletx
 // handle preparing calldata for executeUserOp differently as it requires different parameters
-// should be able to provide execution type (default or try) 
+// should be able to provide execution type (default or try)
 // call type is understood from Transaction array above
 // prepare mode accordingly
 // think about name
 
-export async function generateUseropCallData(
-  { executionMethod, targetContract, functionName, args = [], value = 0 }
-): Promise<string> {
+export async function generateUseropCallData({
+  executionMethod,
+  targetContract,
+  functionName,
+  args = [],
+  value = 0,
+}): Promise<string> {
   const AccountExecution = await ethers.getContractFactory("SmartAccount");
 
   const targetAddress = await targetContract.getAddress();
@@ -330,8 +349,8 @@ export async function generateUseropCallData(
       methodName,
       [mode, executionCalldata],
     );
-}
-return executeCallData;
+  }
+  return executeCallData;
 }
 
 // Utility function to listen for UserOperationRevertReason events
@@ -346,15 +365,14 @@ export async function listenForRevertReasons(entryPointAddress: string) {
       Sender: ${sender}
       Nonce: ${nonce}
       Revert Reason: ${reason}`);
-  });
+    },
+  );
 }
 
 // TODO
 // for executeUserOp
-export async function generateCallDataForExecuteUserop() {
-}
+export async function generateCallDataForExecuteUserop() {}
 
 // More functions to be added
 // 1. simulateValidation (using EntryPointSimulations)
 // 2. simulareHandleOps
-

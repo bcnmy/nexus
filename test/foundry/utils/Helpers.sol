@@ -14,13 +14,13 @@ import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
-
 import { AccountExecution } from "../../../contracts/base/AccountExecution.sol";
 
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "./EventsAndErrors.sol";
 
-contract Helpers is CheatCodes {
+contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -84,29 +84,29 @@ contract Helpers is CheatCodes {
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-    function deployAccount(Vm.Wallet memory wallet) internal returns (SmartAccount) {
+    function deployAccount(Vm.Wallet memory wallet, uint256 deposit) internal returns (SmartAccount) {
         address payable accountAddress = calculateAccountAddress(wallet.addr);
         bytes memory initCode = prepareInitCode(wallet.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = prepareUserOpWithInit(wallet, initCode, "");
 
-        ENTRYPOINT.depositTo{ value: 100 ether }(address(accountAddress));
+        ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
-
         return SmartAccount(accountAddress);
     }
 
     function deployAccounts() internal {
-        BOB_ACCOUNT = deployAccount(BOB);
-        ALICE_ACCOUNT = deployAccount(ALICE);
-        CHARLIE_ACCOUNT = deployAccount(CHARLIE);
+        BOB_ACCOUNT = deployAccount(BOB, 100 ether);
+        labelAddress(address(BOB_ACCOUNT), "BOB_ACCOUNT");
+        ALICE_ACCOUNT = deployAccount(ALICE, 100 ether);
+        labelAddress(address(ALICE_ACCOUNT), "ALICE_ACCOUNT");
+        CHARLIE_ACCOUNT = deployAccount(CHARLIE, 100 ether);
+        labelAddress(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
 
     function calculateAccountAddress(address owner) internal view returns (address payable account) {
         bytes memory initData = abi.encodePacked(owner);
-
-        uint256 moduleTypeId = uint256(0);
 
         uint256 saDeploymentIndex = 0;
 
@@ -117,7 +117,6 @@ contract Helpers is CheatCodes {
 
     function prepareInitCode(address ownerAddress) internal view returns (bytes memory initCode) {
         address module = address(VALIDATOR_MODULE);
-        uint256 moduleTypeId = uint256(0);
         uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
@@ -133,6 +132,7 @@ contract Helpers is CheatCodes {
         bytes memory callData
     )
         internal
+        view
         returns (PackedUserOperation memory userOp)
     {
         address payable account = calculateAccountAddress(wallet.addr);
@@ -150,6 +150,7 @@ contract Helpers is CheatCodes {
         bytes memory callData
     )
         internal
+        view
         returns (PackedUserOperation memory userOp)
     {
         userOp = prepareUserOp(wallet, callData);
@@ -159,12 +160,19 @@ contract Helpers is CheatCodes {
         userOp.signature = signature;
     }
 
-    function getNonce(address account, address validator) internal returns (uint256 nonce) {
+    function getNonce(address account, address validator) internal view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = ENTRYPOINT.getNonce(address(account), key);
     }
 
-    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal returns (bytes memory) {
+    function signUserOp(
+        Vm.Wallet memory wallet,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }
@@ -177,22 +185,7 @@ contract Helpers is CheatCodes {
         payable(to).transfer(amount);
     }
 
-    function setupContractAs(
-        address sender,
-        uint256 value,
-        bytes memory constructorArgs,
-        bytes memory bytecode
-    )
-        internal
-        returns (address)
-    {
-        startPrank(sender);
-        address deployedAddress; // Deploy the contract
-        stopPrank();
-        return deployedAddress;
-    }
-
-    function assertBalance(address addr, uint256 expectedBalance, string memory message) internal {
+    function assertBalance(address addr, uint256 expectedBalance, string memory message) internal view {
         require(addr.balance == expectedBalance, message);
     }
 
@@ -222,62 +215,51 @@ contract Helpers is CheatCodes {
     }
 
     // Utility method to encode and sign a message, then pack r, s, v into bytes
-    function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal returns (bytes memory signature) {
+    function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
         bytes32 userOpHash = ECDSA.toEthSignedMessageHash(messageHash);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
         signature = abi.encodePacked(r, s, v);
     }
 
-    function prepareExecutionUserOp(
-        Vm.Wallet memory signer,
-        SmartAccount account,
-        ExecType execType,
-        address target,
-        uint256 value,
-        bytes memory functionCall
-    )
-        internal
-        returns (PackedUserOperation[] memory userOps)
-    {
-        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-
-        bytes memory executionCalldata =
-            abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeSingle(target, value, functionCall)));
-
-        userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
-        userOps[0].callData = executionCalldata;
-
-        // Generating and signing the hash of the user operation
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(signer, userOpHash);
-
-        return userOps;
-    }
-
-    function prepareBatchExecutionUserOp(
+    function prepareUserOperation(
         Vm.Wallet memory signer,
         SmartAccount account,
         ExecType execType,
         Execution[] memory executions
     )
         internal
+        view
         returns (PackedUserOperation[] memory userOps)
     {
-        // Determine the mode based on execType
-        ModeCode mode = (execType == ExecType.wrap(0x00)) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
-        // Encode the call into the calldata for the userOp
-        bytes memory executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+        // Determine mode and calldata based on callType and executions length
+        ModeCode mode;
+        bytes memory executionCalldata;
+        uint256 length = executions.length;
 
-        // Initializing the userOps array with the same size as the targets array
+        if (length == 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+            executionCalldata = abi.encodeCall(
+                AccountExecution.execute,
+                (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
+            );
+        } else if (length > 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+        } else {
+            revert("Executions array cannot be empty");
+        }
+
+        // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
 
-        // Building the UserOperation for each execution
+        // Build the UserOperation
         userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
         userOps[0].callData = executionCalldata;
 
-        // Generating and attaching the signature for each operation
+        // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
