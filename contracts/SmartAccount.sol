@@ -81,7 +81,7 @@ contract SmartAccount is
         address newImplementation,
         bytes calldata data
     )
-        external
+        public
         payable
         virtual
         override(IModularSmartAccount, UUPSUpgradeable)
