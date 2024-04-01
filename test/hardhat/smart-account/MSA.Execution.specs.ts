@@ -1,7 +1,7 @@
 import { ExecutionMethod } from './../utils/types';
 import { expect } from "chai";
 
-import { ContractTransactionResponse, Signer } from "ethers";
+import { AbiCoder, ContractTransactionResponse, Signer, parseEther } from "ethers";
 import {
   AccountFactory,
   Counter,
@@ -9,6 +9,7 @@ import {
   MockExecutor,
   MockValidator,
   SmartAccount,
+  VerifyingPaymaster,
 } from "../../../typechain-types";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ModuleType } from "../utils/types";
@@ -19,6 +20,10 @@ import {
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
 
+const MOCK_VALID_UNTIL = '0x00000000deadbeef'
+const MOCK_VALID_AFTER = '0x0000000000001234'
+const MOCK_SIG = '0x1234'
+
 describe("SmartAccount Execution and Validation", () => {
     let factory: AccountFactory;
     let entryPoint: EntryPoint;
@@ -27,6 +32,7 @@ describe("SmartAccount Execution and Validation", () => {
     let executorModule: MockExecutor;
     let anotherExecutorModule: MockExecutor;
     let counter: Counter;
+    let sampleVerifyingPaymaster: VerifyingPaymaster;
     let smartAccount: SmartAccount;
     let smartAccountOwner: Signer;
     let deployer: Signer;
@@ -37,6 +43,7 @@ describe("SmartAccount Execution and Validation", () => {
     let validatorModuleAddress: string;
     let executorModuleAddress: string;
     let counterAddress: string;
+    let sampleVerifyingPaymasterAddress: string;
     let smartAccountAddress: string;
     let smartAccountOwnerAddress: string;
 
@@ -52,6 +59,7 @@ describe("SmartAccount Execution and Validation", () => {
     smartAccountOwner = setup.accountOwner;
     smartAccount = setup.deployedMSA;
     counter = setup.counter;
+    sampleVerifyingPaymaster = setup.sampleVerifyingPaymaster;
     deployer = setup.deployer;
 
     factoryAddress = await factory.getAddress();
@@ -60,6 +68,7 @@ describe("SmartAccount Execution and Validation", () => {
     validatorModuleAddress = await validatorModule.getAddress();
     executorModuleAddress = await executorModule.getAddress();
     counterAddress = await counter.getAddress();
+    sampleVerifyingPaymasterAddress = await sampleVerifyingPaymaster.getAddress();
     smartAccountAddress = await smartAccount.getAddress();
     smartAccountOwnerAddress = await smartAccountOwner.getAddress();
 
@@ -100,6 +109,8 @@ describe("SmartAccount Execution and Validation", () => {
 
     expect(isInstalled).to.be.true;
 
+    await sampleVerifyingPaymaster.deposit({value: parseEther(`1`)});
+
   });
 
   // Review: Debug
@@ -139,6 +150,67 @@ describe("SmartAccount Execution and Validation", () => {
       // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
 
       await entryPoint.handleOps([userOp], bundlerAddress);
+
+      expect(await counter.getNumber()).to.equal(1);
+    });
+
+    it("With Paymaster: Should execute a single transaction through the EntryPoint using execute", async () => {
+      const isOwner = await validatorModule.isOwner(smartAccountAddress, smartAccountOwnerAddress);
+      expect(isOwner).to.be.true;
+      // Generate calldata for executing the 'incrementNumber' function on the counter contract.
+      // TODO
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      // Note: should be able to pass validator module address in userop pack/build utils
+      const nonce = await entryPoint.getNonce(
+          smartAccountAddress,
+          ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      // Build the userOp with the generated callData.
+      const userOp1 = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+        nonce,
+        paymaster: sampleVerifyingPaymasterAddress,
+        paymasterData: ethers.concat(
+          [AbiCoder.defaultAbiCoder().encode(['uint48', 'uint48'], [MOCK_VALID_UNTIL, MOCK_VALID_AFTER]), '0x' + '00'.repeat(65)]),
+        paymasterPostOpGasLimit: 40_000,
+      });
+
+      const hash = await sampleVerifyingPaymaster.getHash(userOp1, MOCK_VALID_UNTIL, MOCK_VALID_AFTER)
+
+      // account owner is verifying signer as well
+      const sig = await smartAccountOwner.signMessage(ethers.getBytes(hash));
+
+  
+      const userOp2 = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+        nonce,
+        paymaster: sampleVerifyingPaymasterAddress,
+        paymasterData: ethers.concat(
+          [AbiCoder.defaultAbiCoder().encode(['uint48', 'uint48'], [MOCK_VALID_UNTIL, MOCK_VALID_AFTER]), sig]),
+        paymasterPostOpGasLimit: 40_000,
+      });
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp2);
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+      userOp2.signature = signature;
+
+      // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
+      expect(await counter.getNumber()).to.equal(0);
+      // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
+
+      const paymasterDepositBefore = await entryPoint.getDepositInfo(sampleVerifyingPaymasterAddress);
+
+      await entryPoint.handleOps([userOp2], bundlerAddress);
+
+      const paymasterDepositAfter = await entryPoint.getDepositInfo(sampleVerifyingPaymasterAddress);
 
       expect(await counter.getNumber()).to.equal(1);
     });

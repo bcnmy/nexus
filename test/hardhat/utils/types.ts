@@ -15,6 +15,7 @@ import {
   K1Validator,
   SmartAccount,
   MockExecutor,
+  VerifyingPaymaster,
 } from "../../../typechain-types";
 
 export interface DeploymentFixture {
@@ -41,6 +42,7 @@ export interface DeploymentFixtureWithSA {
   mockExecutor: MockExecutor;
   anotherExecutorModule: MockExecutor;
   ecdsaValidator: K1Validator;
+  sampleVerifyingPaymaster: VerifyingPaymaster;
   counter: Counter;
   mockToken: MockToken;
   accounts: Signer[];

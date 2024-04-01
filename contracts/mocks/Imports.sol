@@ -16,3 +16,5 @@ import { MockExecutor } from "test/foundry/mocks/MockExecutor.sol";
 import { MockHook } from "test/foundry/mocks/MockHook.sol";
 // solhint-disable-next-line no-unused-import
 import { MockHandler } from "test/foundry/mocks/MockHandler.sol";
+// solhint-disable-next-line no-unused-import
+import "account-abstraction/contracts/samples/VerifyingPaymaster.sol";

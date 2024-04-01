@@ -11,6 +11,7 @@ import {
   MockValidator,
   K1Validator,
   SmartAccount,
+  VerifyingPaymaster,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -251,6 +252,26 @@ export async function getDeployedMSAImplementation(): Promise<SmartAccount> {
 }
 
 /**
+ * Deploys the Infinitism Verifying Paymaster contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed Verifing paymaster instance.
+ */
+export async function getDeployedSampleVerifyingPaymaster(entryPoint: string, verifyingSigner: string): Promise<VerifyingPaymaster> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const VerifyingPaymaster = await ethers.getContractFactory("VerifyingPaymaster");
+  const deterministicVerifyingPaymaster = await deployments.deploy("VerifyingPaymaster", {
+    from: addresses[0],
+    deterministicDeployment: true,
+    args: [entryPoint, verifyingSigner]
+  });
+
+  return VerifyingPaymaster.attach(deterministicVerifyingPaymaster.address) as VerifyingPaymaster;
+}
+
+/**
  * Deploys the smart contract infrastructure required for testing.
  * This includes the all the required contracts for tests to run.
  *
@@ -334,6 +355,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const counter = await deployContract<Counter>("Counter", deployer);
 
+  const sampleVerifyingPaymaster = await getDeployedSampleVerifyingPaymaster(await entryPoint.getAddress(), owner.address);
+
   // Get the addresses of the deployed contracts
   const factoryAddress = await msaFactory.getAddress();
   const mockValidatorAddress = await mockValidator.getAddress();
@@ -378,6 +401,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     mockExecutor,
     anotherExecutorModule,
     ecdsaValidator,
+    sampleVerifyingPaymaster,
     counter,
     mockToken,
     accounts,
