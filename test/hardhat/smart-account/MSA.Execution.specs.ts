@@ -102,7 +102,6 @@ describe("SmartAccount Execution and Validation", () => {
 
   });
 
-  // Review: Debug
   describe("SmartAccount Transaction Execution", () => {
     it("Should execute a single transaction through the EntryPoint using execute", async () => {
       const isOwner = await validatorModule.isOwner(smartAccountAddress, smartAccountOwnerAddress);
@@ -146,8 +145,6 @@ describe("SmartAccount Execution and Validation", () => {
     it("Should execute a single empty transaction through the EntryPoint using execute", async () => {
       const isOwner = await validatorModule.isOwner(smartAccountAddress, smartAccountOwnerAddress);
       expect(isOwner).to.be.true;
-      // Generate calldata for executing the 'incrementNumber' function on the counter contract.
-      // TODO
       const callData = "0x";
 
       // Build the userOp with the generated callData.
@@ -170,13 +167,7 @@ describe("SmartAccount Execution and Validation", () => {
 
       userOp.signature = signature;
 
-      // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
-      expect(await counter.getNumber()).to.equal(0);
-      // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
-      
-      await entryPoint.handleOps([userOp], bundlerAddress);
-
-      expect(await counter.getNumber()).to.equal(0);
+      await expect(entryPoint.handleOps([userOp], bundlerAddress)).to.not.be.reverted;
     });
 
     it("Should execute a transaction via MockExecutor", async () => {
