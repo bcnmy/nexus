@@ -41,40 +41,61 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         _;
     }
 
-    fallback() external payable override(Receiver) receiverFallback {
-        address handler = _getAccountStorage().fallbackHandler;
-        if (handler == address(0)) revert();
-        /* solhint-disable no-inline-assembly */
-        /// @solidity memory-safe-assembly
-        assembly {
-            // When compiled with the optimizer, the compiler relies on a certain assumptions on how
-            // the
-            // memory is used, therefore we need to guarantee memory safety (keeping the free memory
-            // point 0x40 slot intact,
-            // not going beyond the scratch space, etc)
-            // Solidity docs: https://docs.soliditylang.org/en/latest/assembly.html#memory-safety
-            function allocate(length) -> pos {
-                pos := mload(0x40)
-                mstore(0x40, add(pos, length))
+fallback() external payable override(Receiver) receiverFallback {
+        FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
+        address handler = $fallbackHandler.handler;
+        CallType calltype = $fallbackHandler.calltype;
+        if (handler == address(0)) revert NoFallbackHandler(msg.sig);
+
+        if (calltype == CALLTYPE_STATIC) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
+
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success :=
+                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                return(returnDataPtr, returndatasize())
             }
-
-            let calldataPtr := allocate(calldatasize())
-            calldatacopy(calldataPtr, 0, calldatasize())
-
-            // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-            // Then the address without padding is stored right after the calldata
-            let senderPtr := allocate(20)
-            mstore(senderPtr, shl(96, caller()))
-
-            // Add 20 bytes for the address appended add the end
-            let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-            let returnDataPtr := allocate(returndatasize())
-            returndatacopy(returnDataPtr, 0, returndatasize())
-            if iszero(success) { revert(returnDataPtr, returndatasize()) }
-            return(returnDataPtr, returndatasize())
         }
-        /* solhint-enable no-inline-assembly */
+        if (calltype == CALLTYPE_SINGLE) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
+
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                return(returnDataPtr, returndatasize())
+            }
+        }
     }
 
     /**
