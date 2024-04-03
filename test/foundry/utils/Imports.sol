@@ -42,6 +42,10 @@ import "../../../contracts/factory/AccountFactory.sol";
 // Mock contracts for testing
 import "../mocks/MockValidator.sol";
 import "../mocks/Counter.sol";
+import "../mocks/MockExecutor.sol";
+import "../mocks/MockHandler.sol";
+import "../mocks/MockHook.sol";
+import "../mocks/NFT.sol";
 
 // Sentinel list helper
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
