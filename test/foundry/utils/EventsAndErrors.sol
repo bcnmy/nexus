@@ -9,6 +9,11 @@ contract EventsAndErrors {
         bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason
     );
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
+    event FallbackHandlerTriggered();
+
+    event PreCheckCalled();
+    event PostCheckCalled();
+
 
     // Define all errors
     error FailedOp(uint256 opIndex, string reason);
