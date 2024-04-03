@@ -10,6 +10,8 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockExecutor } from "../mocks/MockExecutor.sol";
+import { MockHook } from "../mocks/MockHook.sol";
+import { MockHandler } from "../mocks/MockHandler.sol";
 import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
@@ -45,6 +47,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
     AccountFactory public FACTORY;
     MockValidator public VALIDATOR_MODULE;
     MockExecutor public EXECUTOR_MODULE;
+    MockHook public HOOK_MODULE;
+    MockHandler public HANDLER_MODULE;
     SmartAccount public ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
@@ -79,6 +83,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
+        HOOK_MODULE = new MockHook();
+        HANDLER_MODULE = new MockHandler();
     }
 
     // -----------------------------------------
