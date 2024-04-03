@@ -174,8 +174,8 @@ fallback() external payable override(Receiver) receiverFallback {
         virtual
         returns (bool);
 
-    function getActiveFallbackHandler() external view virtual returns (address) {
-        return _getAccountStorage().fallbackHandler;
+    function getFallbackHandlerBySelector(bytes4 selector) external view returns (FallbackHandler memory) {
+        return _getAccountStorage().fallbacks[selector];
     }
 
     function _initModuleManager() internal virtual {
