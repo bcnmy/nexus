@@ -308,15 +308,7 @@ export async function generateUseropCallData({
     args,
   );
 
-  console.log("function call data", functionCallData);
-  const mode = ethers.concat([
-    CALLTYPE_SINGLE,
-    EXECTYPE_DEFAULT,
-    MODE_DEFAULT,
-    UNUSED,
-    MODE_PAYLOAD,
-  ]);
-  console.log("mode being used ", mode);
+  const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
 
   // Encode the execution calldata
   let executionCalldata;
@@ -328,7 +320,6 @@ export async function generateUseropCallData({
         ["address", "uint256", "bytes"],
         [targetAddress, value, functionCallData],
       );
-      console.log("execution calldata", executionCalldata);
       break;
     case ExecutionMethod.ExecuteFromExecutor:
       // in case of EncodeSingle : abi.encodePacked(target, value, callData);
@@ -352,7 +343,6 @@ export async function generateUseropCallData({
       methodName,
       [mode, executionCalldata],
     );
-    console.log("execute calldata", executeCallData);
   } else if (executionMethod === ExecutionMethod.ExecuteFromExecutor) {
     methodName = "executeFromExecutor";
     executeCallData = AccountExecution.interface.encodeFunctionData(
@@ -364,17 +354,13 @@ export async function generateUseropCallData({
 }
 
 // Utility function to listen for UserOperationRevertReason events
-export async function listenForRevertReasons(entryPointAddress) {
-  const entryPoint = await ethers.getContractAt(
-    "EntryPoint",
-    entryPointAddress,
-  );
-
-  entryPoint.on(
-    "UserOperationRevertReason",
-    (userOpHash, sender, nonce, revertReason) => {
-      const reason = ethers.toUtf8String(revertReason);
-      console.log(`Revert Reason:
+export async function listenForRevertReasons(entryPointAddress: string) {
+  const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
+  console.log("Listening for UserOperationRevertReason events...");
+  
+  entryPoint.on(entryPoint.getEvent("UserOperationRevertReason"), (userOpHash, sender, nonce, revertReason) => {
+    const reason = ethers.toUtf8String(revertReason);
+    console.log(`Revert Reason:
       User Operation Hash: ${userOpHash}
       Sender: ${sender}
       Nonce: ${nonce}
