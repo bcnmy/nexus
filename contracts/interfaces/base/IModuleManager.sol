@@ -21,6 +21,8 @@ interface IModuleManager {
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
     error FallbackHandlerAlreadyInstalled();
+    
+    error NoFallbackHandler(bytes4 selector);
 
     /**
      * @notice Installs a Module of a certain type on the smart account.
