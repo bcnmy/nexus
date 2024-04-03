@@ -14,6 +14,7 @@ import {
   MockValidator,
   K1Validator,
   SmartAccount,
+  MockExecutor,
 } from "../../../typechain-types";
 
 export interface DeploymentFixture {
@@ -35,7 +36,10 @@ export interface DeploymentFixtureWithSA {
   deployedMSAAddress: AddressLike;
   accountOwner: HDNodeWallet;
   msaFactory: AccountFactory;
+  deployer: Signer;
   mockValidator: MockValidator;
+  mockExecutor: MockExecutor;
+  anotherExecutorModule: MockExecutor;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
@@ -85,4 +89,13 @@ export enum ModuleType {
   Execution = 2,
   Fallback = 3,
   Hooks = 4,
+}
+
+export type InstallModuleParams = {
+  deployedMSA: SmartAccount,
+  entryPoint: EntryPoint,
+  mockExecutor: MockExecutor,
+  mockValidator: MockValidator,
+  accountOwner: Signer,
+  bundler: Signer
 }
