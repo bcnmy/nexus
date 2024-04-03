@@ -265,12 +265,19 @@ fallback() external payable override(Receiver) receiverFallback {
         IFallback(currentFallback).onUninstall(initData);
     }
 
-    function _isFallbackHandlerInstalled() internal view virtual returns (bool) {
-        return _getAccountStorage().fallbackHandler != address(0);
+    function _getFallbackHandlerAddress(bytes4 sig) internal view virtual returns (address) {
+        FallbackHandler storage handlers = _getAccountStorage().fallbacks[sig];
+        return handlers.handler;
     }
 
-    function _isFallbackHandlerInstalled(address handler) internal view virtual returns (bool) {
-        return _getAccountStorage().fallbackHandler == handler;
+    function _isFallbackHandlerInstalled(bytes4 sig) internal view virtual returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[sig];
+        return handler.handler != address(0);
+    }
+
+    function _isFallbackHandlerInstalled(bytes4 sig, address expectedHandler) internal view returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[sig];
+        return handler.handler == expectedHandler;
     }
 
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
