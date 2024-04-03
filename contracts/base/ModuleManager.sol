@@ -11,12 +11,7 @@ import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import {
-    CallType,
-    CALLTYPE_SINGLE,
-    CALLTYPE_DELEGATECALL,
-    CALLTYPE_STATIC
-} from "../lib/ModeLib.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
@@ -47,7 +42,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         _;
     }
 
-fallback() external payable override(Receiver) receiverFallback {
+    fallback() external payable override(Receiver) receiverFallback {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
@@ -69,12 +64,13 @@ fallback() external payable override(Receiver) receiverFallback {
                 mstore(senderPtr, shl(96, caller()))
 
                 // Add 20 bytes for the address appended add the end
-                let success :=
-                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
+                let success := staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
 
                 let returnDataPtr := allocate(returndatasize())
                 returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                if iszero(success) {
+                    revert(returnDataPtr, returndatasize())
+                }
                 return(returnDataPtr, returndatasize())
             }
         }
@@ -98,7 +94,9 @@ fallback() external payable override(Receiver) receiverFallback {
 
                 let returnDataPtr := allocate(returndatasize())
                 returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                if iszero(success) {
+                    revert(returnDataPtr, returndatasize())
+                }
                 return(returnDataPtr, returndatasize())
             }
         }
@@ -118,14 +116,7 @@ fallback() external payable override(Receiver) receiverFallback {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
-    )
-        external
-        payable
-        virtual;
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
      * THIS IS NOT PART OF THE STANDARD
@@ -134,12 +125,7 @@ fallback() external payable override(Receiver) receiverFallback {
     function getValidatorsPaginated(
         address cursor,
         uint256 size
-    )
-        external
-        view
-        virtual
-        returns (address[] memory array, address next)
-    {
+    ) external view virtual returns (address[] memory array, address next) {
         (array, next) = _getValidatorsPaginated(cursor, size);
     }
 
@@ -150,12 +136,7 @@ fallback() external payable override(Receiver) receiverFallback {
     function getExecutorsPaginated(
         address cursor,
         uint256 size
-    )
-        external
-        view
-        virtual
-        returns (address[] memory array, address next)
-    {
+    ) external view virtual returns (address[] memory array, address next) {
         (array, next) = _getExecutorsPaginated(cursor, size);
     }
 
@@ -174,11 +155,7 @@ fallback() external payable override(Receiver) receiverFallback {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        virtual
-        returns (bool);
+    ) external view virtual returns (bool);
 
     function getFallbackHandlerBySelector(bytes4 selector) external view returns (FallbackHandler memory) {
         return _getAccountStorage().fallbacks[selector];
@@ -204,7 +181,7 @@ fallback() external payable override(Receiver) receiverFallback {
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
         // check if its the last validator. this might brick the account
-        (address[] memory array,) = _getValidatorsPaginated(address(0x1), 10);
+        (address[] memory array, ) = _getValidatorsPaginated(address(0x1), 10);
         if (array.length == 1) {
             revert CannotRemoveLastValidator();
         }
@@ -263,15 +240,14 @@ fallback() external payable override(Receiver) receiverFallback {
         CallType calltype = CallType.wrap(bytes1(params[4]));
         bytes memory initData = params[5:];
         if (_isFallbackHandlerInstalled(selector)) revert FallbackHandlerAlreadyInstalled();
-        
+
         if ((_getAccountStorage().fallbacks[selector]).handler != address(0)) {
             revert("Function selector already used");
         }
-        _getAccountStorage().fallbacks[selector] = FallbackHandler({handler: handler, calltype: calltype});
+        _getAccountStorage().fallbacks[selector] = FallbackHandler({ handler: handler, calltype: calltype });
 
         if (calltype == CALLTYPE_DELEGATECALL) {
-            (bool success,) =
-                handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
+            (bool success, ) = handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
             if (!success) {
                 revert("Fallback handler failed to install");
             }
@@ -281,9 +257,8 @@ fallback() external payable override(Receiver) receiverFallback {
     }
 
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata deInitData) internal virtual {
-
         bytes4 selector = bytes4(deInitData[0:4]);
-        bytes memory _deInitData = deInitData[4:];
+        bytes memory deInitData = deInitData[4:];
 
         if (!_isFallbackHandlerInstalled(selector)) {
             revert("Function selector not used");
@@ -300,7 +275,7 @@ fallback() external payable override(Receiver) receiverFallback {
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
 
         if (callType == CALLTYPE_DELEGATECALL) {
-            (bool success,) = fallbackHandler.delegatecall(
+            (bool success, ) = fallbackHandler.delegatecall(
                 abi.encodeWithSelector(IModule.onUninstall.selector, _deInitData)
             );
             if (!success) {
@@ -353,11 +328,7 @@ fallback() external payable override(Receiver) receiverFallback {
     function _getValidatorsPaginated(
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address next)
-    {
+    ) private view returns (address[] memory array, address next) {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         return validators.getEntriesPaginated(cursor, size);
     }
@@ -365,11 +336,7 @@ fallback() external payable override(Receiver) receiverFallback {
     function _getExecutorsPaginated(
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address next)
-    {
+    ) private view returns (address[] memory array, address next) {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.getEntriesPaginated(cursor, size);
     }
