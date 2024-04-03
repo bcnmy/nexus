@@ -269,9 +269,9 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_InstallFallbackHandler_WithCustomData() public {
-        bytes memory customData = "Custom Initialization Data";
+        bytes memory customData = abi.encode(bytes4(0xaabbccdd));
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should not be installed initially"
         );
 
@@ -286,15 +286,16 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler with custom data should be installed"
         );
     }
 
     function test_ReinstallFallbackHandler_Failure() public {
+           bytes memory customData = abi.encode(bytes4(0xaabbccdd));
         // First install
         bytes memory callDataFirstInstall = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), ""
+            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
         );
 
         Execution[] memory executionFirstInstall = new Execution[](1);
@@ -306,7 +307,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Attempt to reinstall
         bytes memory callDataReinstall = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), ""
+            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
         );
 
         Execution[] memory executionReinstall = new Execution[](1);
