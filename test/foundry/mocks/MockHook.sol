@@ -6,6 +6,10 @@ import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
 contract MockHook is IHook {
+
+    event PreCheckCalled();
+    event PostCheckCalled();
+
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override { }
 
@@ -13,10 +17,14 @@ contract MockHook is IHook {
     function onUninstall(bytes calldata data) external override { }
 
     /// @inheritdoc IHook
-    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) { }
+    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) {
+        emit PreCheckCalled();
+     }
 
     /// @inheritdoc IHook
-    function postCheck(bytes calldata hookData) external returns (bool success) { }
+    function postCheck(bytes calldata hookData) external returns (bool success) {
+        emit PostCheckCalled();
+     }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
