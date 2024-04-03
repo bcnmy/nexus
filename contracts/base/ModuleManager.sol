@@ -11,6 +11,12 @@ import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import {
+    CallType,
+    CALLTYPE_SINGLE,
+    CALLTYPE_DELEGATECALL,
+    CALLTYPE_STATIC
+} from "../lib/ModeLib.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
@@ -252,17 +258,57 @@ fallback() external payable override(Receiver) receiverFallback {
         _getAccountStorage().hook = IHook(hook);
     }
 
-    function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        if (_isFallbackHandlerInstalled()) revert FallbackHandlerAlreadyInstalled();
-        _getAccountStorage().fallbackHandler = handler;
-        IFallback(handler).onInstall(initData);
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+        bytes4 selector = bytes4(params[0:4]);
+        CallType calltype = CallType.wrap(bytes1(params[4]));
+        bytes memory initData = params[5:];
+        if (_isFallbackHandlerInstalled(selector)) revert FallbackHandlerAlreadyInstalled();
+        
+        if ((_getAccountStorage().fallbacks[selector]).handler != address(0)) {
+            revert("Function selector already used");
+        }
+        _getAccountStorage().fallbacks[selector] = FallbackHandler({handler: handler, calltype: calltype});
+
+        if (calltype == CALLTYPE_DELEGATECALL) {
+            (bool success,) =
+                handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
+            if (!success) {
+                revert("Fallback handler failed to install");
+            }
+        } else {
+            IFallback(handler).onInstall(initData);
+        }
     }
 
-    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata initData) internal virtual {
-        address currentFallback = _getAccountStorage().fallbackHandler;
-        if (currentFallback != fallbackHandler) revert InvalidModule(fallbackHandler);
-        _getAccountStorage().fallbackHandler = address(0);
-        IFallback(currentFallback).onUninstall(initData);
+    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata deInitData) internal virtual {
+
+        bytes4 selector = bytes4(deInitData[0:4]);
+        bytes memory _deInitData = deInitData[4:];
+
+        if (!_isFallbackHandlerInstalled(selector)) {
+            revert("Function selector not used");
+        }
+
+        FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
+
+        if (activeFallback.handler != fallbackHandler) {
+            revert("Function selector not used by this handler");
+        }
+
+        CallType callType = activeFallback.calltype;
+
+        _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
+
+        if (callType == CALLTYPE_DELEGATECALL) {
+            (bool success,) = fallbackHandler.delegatecall(
+                abi.encodeWithSelector(IModule.onUninstall.selector, _deInitData)
+            );
+            if (!success) {
+                revert("Fallback handler failed to uninstall");
+            }
+        } else {
+            IFallback(fallbackHandler).onUninstall(_deInitData);
+        }
     }
 
     function _getFallbackHandlerAddress(bytes4 sig) internal view virtual returns (address) {
