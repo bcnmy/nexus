@@ -94,7 +94,7 @@
     "deploy:hardhat": "yarn hardhat run --network localhost scripts/typescript/deploy.ts",
     "deploy:forge": "forge script scripts/solidity/Deploy.s.sol --broadcast --rpc-url http://localhost:8545",
     "lint:sol": "yarn solhint 'contracts/**/*.sol' && forge fmt --check",
-    "lint:sol-fix": "yarn prettier --write 'contracts/**/*.sol' && yarn solhint 'contracts/**/*.sol' --fix --noPrompt && forge fmt",
+    "lint:sol-fix": "yarn prettier --write 'contracts/**/*.sol' && yarn solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:ts": "yarn prettier --check 'test/**/*.ts' 'scripts/**/*.ts'",
     "lint:ts-fix": "yarn prettier --write 'test/**/*.ts' 'scripts/**/*.ts'",
     "lint": "yarn run lint:sol && yarn run lint:ts",
