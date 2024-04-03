@@ -254,8 +254,10 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_UninstallLastValidator_Reverted() public {
+                   bytes memory customData = abi.encode(bytes4(0xaabbccdd));
+
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData),
             "Module should not be installed initially"
         );
 
@@ -264,7 +266,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev, "")
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev,customData)
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -288,31 +290,33 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData  ),
             "Module should be installed"
         );
     }
 
     function test_UninstallFallbackHandler_Success() public {
+                   bytes memory customData = abi.encode(bytes4(0xaabbccdd));
+
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should be uninstalled initially"
         );
         installModule(
             abi.encodeWithSelector(
-                IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), ""
+                IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
             ),
             MODULE_TYPE_FALLBACK,
             address(mockHandler),
             EXECTYPE_DEFAULT
         );
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should be installed successfully"
         );
         // Uninstall
         bytes memory callDataUninstall = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), ""
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData 
         );
 
         Execution[] memory executionUninstall = new Execution[](1);
@@ -323,15 +327,17 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should be uninstalled successfully"
         );
     }
 
     function test_UninstallFallbackHandler_NotInstalled() public {
         // Uninstall
+        bytes memory customData = abi.encode(bytes4(0xaabbccdd));
+
         bytes memory callDataUninstall = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), ""
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
         );
 
         Execution[] memory executionUninstall = new Execution[](1);
@@ -356,7 +362,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should be uninstalled successfully"
         );
     }
