@@ -256,9 +256,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         }
     }
 
-    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata deInitData) internal virtual {
-        bytes4 selector = bytes4(deInitData[0:4]);
-        bytes memory deInitData = deInitData[4:];
+    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
+        bytes4 selector = bytes4(data[0:4]);
+        bytes memory deInitData = data[4:];
 
         if (!_isFallbackHandlerInstalled(selector)) {
             revert("Function selector not used");
@@ -276,13 +276,13 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
         if (callType == CALLTYPE_DELEGATECALL) {
             (bool success, ) = fallbackHandler.delegatecall(
-                abi.encodeWithSelector(IModule.onUninstall.selector, _deInitData)
+                abi.encodeWithSelector(IModule.onUninstall.selector, deInitData)
             );
             if (!success) {
                 revert("Fallback handler failed to uninstall");
             }
         } else {
-            IFallback(fallbackHandler).onUninstall(_deInitData);
+            IFallback(fallbackHandler).onUninstall(deInitData);
         }
     }
 
