@@ -269,7 +269,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_InstallFallbackHandler_WithCustomData() public {
-        bytes memory customData = abi.encode(bytes4(0xaabbccdd));
+        bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             "FallbackHandler should not be installed initially"
@@ -292,7 +292,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_ReinstallFallbackHandler_Failure() public {
-           bytes memory customData = abi.encode(bytes4(0xaabbccdd));
+           bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
         // First install
         bytes memory callDataFirstInstall = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
