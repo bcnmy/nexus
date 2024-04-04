@@ -19,4 +19,8 @@ contract NFT is ERC721 {
     function safeMint(address to, uint256 tokenId) public {
         _safeMint(to, tokenId);
     }
+
+        function test() public pure {
+        // This function is used to ignore file in coverage report
+    }
 }
