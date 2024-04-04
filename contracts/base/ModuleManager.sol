@@ -8,7 +8,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
