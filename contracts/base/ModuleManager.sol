@@ -272,7 +272,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
                 abi.encodeWithSelector(IModule.onUninstall.selector, deInitData)
             );
             if (!success) {
-                revert("Fallback handler failed to uninstall");
+                revert FallbackHandlerUninstallFailed();
             }
         } else {
             IFallback(fallbackHandler).onUninstall(deInitData);
