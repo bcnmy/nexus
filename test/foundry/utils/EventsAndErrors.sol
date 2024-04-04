@@ -9,7 +9,8 @@ contract EventsAndErrors {
         bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason
     );
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
-    event FallbackHandlerTriggered();
+    event GenericFallbackCalled(address sender, uint256 value, bytes data);
+
 
     event PreCheckCalled();
     event PostCheckCalled();
