@@ -11,10 +11,14 @@ contract MockHook is IHook {
     event PostCheckCalled();
 
     /// @inheritdoc IModule
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external override { 
+        emit PreCheckCalled();
+    }
 
     /// @inheritdoc IModule
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external override { 
+        emit PostCheckCalled();
+     }
 
     /// @inheritdoc IHook
     function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) {
