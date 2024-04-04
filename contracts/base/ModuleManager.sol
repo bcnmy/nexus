@@ -19,6 +19,8 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } fro
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
+    event TokenCallbackTriggered();
+
     modifier withHook() virtual {
         address hook = _getHook();
         if (hook == address(0)) {
@@ -39,6 +41,28 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     modifier onlyValidatorModule(address validator) virtual {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         if (!validators.contains(validator)) revert InvalidModule(validator);
+        _;
+    }
+
+    modifier receiverFallback() virtual override {
+        bytes32 topicHash = TokenCallbackTriggered.selector;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := shr(224, calldataload(0))
+            let freeMemoryPointer := mload(0x40)
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
+                log1( 
+                freeMemoryPointer, // `p` = starting offset in memory
+                0, // `s` = number of bytes in memory from `p` to include in the event data
+                topicHash // topic for filtering the event itself
+                )
+                mstore(0x20, s) // Store `msg.sig`.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+        }
         _;
     }
 

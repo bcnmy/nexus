@@ -40,7 +40,7 @@ contract TestFallbackHandler_ERC721 is SmartAccountTestLab {
         assertNotEq(ownerOfTokenBefore, address(ALICE_ACCOUNT), "Fallback handler did not correctly receive the NFT");
 
         vm.expectEmit(true, true, true, true);
-        emit FallbackHandlerTriggered();
+        emit TokenCallbackTriggered();
 
         // Transfer NFT to the SmartAccount (which should invoke the fallback handler)
         nft.safeTransferFrom(address(this), address(ALICE_ACCOUNT), tokenId, "");

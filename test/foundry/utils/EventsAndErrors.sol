@@ -10,6 +10,7 @@ contract EventsAndErrors {
     );
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
     event FallbackHandlerTriggered();
+    event TokenCallbackTriggered();
 
     event PreCheckCalled();
     event PostCheckCalled();
