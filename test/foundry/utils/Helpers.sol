@@ -187,18 +187,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // Utility Functions
     // -----------------------------------------
 
-    function sendEther(address to, uint256 amount) internal {
-        payable(to).transfer(amount);
-    }
-
-    function assertBalance(address addr, uint256 expectedBalance, string memory message) internal view {
-        require(addr.balance == expectedBalance, message);
-    }
-
-    function simulateTimePassing(uint256 nbDays) internal {
-        warpTo(block.timestamp + nbDays * 1 days);
-    }
-
     // Helper to modify the address of a deployed contract in a test environment
     function changeContractAddress(address originalAddress, address newAddress) internal {
         setContractCode(originalAddress, address(originalAddress).code);
@@ -274,5 +262,9 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
         return keccak256(a) == keccak256(b);
+    }
+
+    function test() public pure {
+        // This function is used to ignore file in coverage report
     }
 }
