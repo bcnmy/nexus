@@ -15,11 +15,11 @@ import "../utils/EventsAndErrors.sol";
  *   @dev May Handle EIP-1271 compliant isValidSignature requests.
  *  @notice inspired by Richard Meissner's <richard@gnosis.pm> implementation
  */
-contract MockHandler is IERC165, IERC721Receiver, IFallback {
+contract MockHandler is IERC165, IFallback {
     string public constant NAME = "Default Handler";
     string public constant VERSION = "1.0.0";
 
-    event FallbackHandlerTriggered();
+    event GenericFallbackCalled(address sender, uint256 value, bytes data); // Event for generic fallback
     error NonExistingMethodCalled(bytes4 selector);
 
     fallback() external {
@@ -36,13 +36,10 @@ contract MockHandler is IERC165, IERC721Receiver, IFallback {
             || interfaceId == type(IERC165).interfaceId;
     }
 
-    /**
-     * @dev Handles the receipt of an ERC721 token.
-     * @return The interface selector for the called function.
-     */
-    function onERC721Received(address, address, uint256, bytes calldata) external override returns (bytes4) {
-        emit FallbackHandlerTriggered();
-        return IERC721Receiver.onERC721Received.selector;
+    // Example function to manually trigger the fallback mechanism
+    function onGenericFallback(address sender, uint256 value, bytes calldata data) external returns (bytes4) {
+        emit GenericFallbackCalled(sender, value, data);
+        return this.onGenericFallback.selector;
     }
 
     /// @inheritdoc IModule
