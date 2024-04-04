@@ -222,6 +222,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
+        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert IncompatibleHookModule(hook);
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
