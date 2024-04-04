@@ -257,10 +257,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes4 selector = bytes4(data[0:4]);
         bytes memory deInitData = data[4:];
 
-        if (!_isFallbackHandlerInstalled(selector)) {
-            revert("Function selector not used");
-        }
-
         FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
 
         if (activeFallback.handler != fallbackHandler) {
