@@ -259,9 +259,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
         FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
 
-        if (activeFallback.handler != fallbackHandler) {
-            revert("Function selector not used by this handler");
-        }
 
         CallType callType = activeFallback.calltype;
 
