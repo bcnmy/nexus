@@ -135,6 +135,10 @@ library ModeLib {
             calltype := mode
         }
     }
+
+        function test() public pure {
+        // This function is used to ignore file in coverage report
+    }
 }
 
 using { _eqModeSelector as == } for ModeSelector global;
@@ -152,3 +156,5 @@ function _eqExecType(ExecType a, ExecType b) pure returns (bool) {
 function _eqModeSelector(ModeSelector a, ModeSelector b) pure returns (bool) {
     return ModeSelector.unwrap(a) == ModeSelector.unwrap(b);
 }
+
+

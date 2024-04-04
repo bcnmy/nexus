@@ -14,4 +14,8 @@ contract MockToken is ERC20 {
     function decimals() public view virtual override returns (uint8) {
         return 6;
     }
+
+    function test() public pure {
+        // This function is used to ignore file in coverage report
+    }
 }

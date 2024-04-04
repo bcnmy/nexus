@@ -25,4 +25,7 @@ library ModuleTypeLib {
         }
         return EncodedModuleTypes.wrap(result);
     }
+    function test() public pure {
+        // This function is used to ignore file in coverage report
+    }
 }
