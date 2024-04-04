@@ -20,7 +20,7 @@ interface IModuleManager {
     error IncompatibleHookModule(address module);
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
-    error HookAlreadyInstalled(address currentHook); // @todo new name
+    error HookAlreadyInstalled(address currentHook);
     error FallbackHandlerAlreadyInstalled();
     error FallbackHandlerUninstallFailed();
 
