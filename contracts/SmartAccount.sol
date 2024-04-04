@@ -194,6 +194,7 @@ contract SmartAccount is
         payable
         override(IModuleManager, ModuleManager)
         onlyEntryPointOrSelf
+        withHook
     {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
