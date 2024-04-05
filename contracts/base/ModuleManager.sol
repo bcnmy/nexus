@@ -157,8 +157,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes calldata additionalContext
     ) external view virtual returns (bool);
 
-    function getFallbackHandlerBySelector(bytes4 selector) external view returns (FallbackHandler memory) {
-        return _getAccountStorage().fallbacks[selector];
+    function getFallbackHandlerBySelector(bytes4 selector) external view returns (CallType, address) {
+        FallbackHandler memory handler = _getAccountStorage().fallbacks[selector];
+        return (handler.calltype, handler.handler);
     }
 
     function _initModuleManager() internal virtual {
