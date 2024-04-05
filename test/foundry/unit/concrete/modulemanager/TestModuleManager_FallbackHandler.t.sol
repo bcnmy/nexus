@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/Imports.sol";
-import "../../unit/shared/TestModuleManagement_Base.t.sol";
+import "../../../utils/Imports.sol";
+import "../../../unit/shared/TestModuleManagement_Base.t.sol";
 
-contract TestGenericFallbackHandler is TestModuleManagement_Base {
+contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     
 
     function setUp() public {
@@ -133,7 +133,7 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
 
         // Expected UserOperationRevertReason event due to function selector not used by this handler
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Function selector not used by this handler");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(HANDLER_MODULE));
         
         vm.expectEmit(true, true, true, true);
         emit UserOperationRevertReason(userOpHash, address(ALICE_ACCOUNT), userOps[0].nonce, expectedRevertReason);
@@ -177,10 +177,17 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(ALICE_ACCOUNT), 0, uninstallCallData);
         PackedUserOperation[] memory userOpsUninstall = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
-
+        
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(ALICE.addr)));
 
         // Verify the fallback handler was uninstalled
-        assertFalse(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData), "Fallback handler was not uninstalled");
+        assertTrue(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData), "Fallback handler was not uninstalled");
+    }
+
+
+        function test_GetFallbackHandlerBySelector() public {
+        // Verify the hook module is installed
+        (, address handlerAddress) = BOB_ACCOUNT.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
+        assertEq(handlerAddress, address(mockHook), "getActiveHook did not return the correct hook address");
     }
 }
