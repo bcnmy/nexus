@@ -13,7 +13,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Custom data for installing the MockHandler
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 
-        // Install MockHandler as the fallback handler for ALICE_ACCOUNT
+        // Install MockHandler as the fallback handler for BOB_ACCOUNT
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, 
             MODULE_TYPE_FALLBACK, 
@@ -21,12 +21,12 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
             customData
         );
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed
-        assertEq(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), true, "Fallback handler not installed");
+        assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), true, "Fallback handler not installed");
     }
 
     // Test triggering the onGenericFallback function
@@ -50,29 +50,29 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Prepare the operation that triggers the fallback handler
         bytes memory dataToTriggerFallback = abi.encodeWithSelector(MockHandler(address(0)).onGenericFallback.selector, address(this), 123, "Example data");
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution(address(ALICE_ACCOUNT), 0, dataToTriggerFallback);
+        executions[0] = Execution(address(BOB_ACCOUNT), 0, dataToTriggerFallback);
 
         // Prepare UserOperation
-        PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         // Expect the GenericFallbackCalled event from the MockHandler contract
         vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
         emit GenericFallbackCalled(address(this), 123, "Example data");
 
         // Call handleOps, which should trigger the fallback handler and emit the event
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
      function test_InstallFallbackHandler(bytes4 selector) internal {
         bytes memory customData = abi.encode(selector);
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData);
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed for the given selector
-        assertTrue(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
     }
 
     
@@ -84,17 +84,17 @@ function test_InstallFallbackHandler_FunctionSelectorAlreadyUsed() public {
         IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(otherHandler), customData
     );
     Execution[] memory execution = new Execution[](1);
-    execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-    PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
+    execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+    PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
     // Expected UserOperationRevertReason event due to function selector already used
     bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
     bytes memory expectedRevertReason = abi.encodeWithSignature("FallbackHandlerAlreadyInstalled()");
     
     vm.expectEmit(true, true, true, true);
-    emit UserOperationRevertReason(userOpHash, address(ALICE_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+    emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
     
-    ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+    ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 }
 
 
@@ -106,17 +106,17 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(otherHandler), customData
     );
     Execution[] memory execution = new Execution[](1);
-    execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-    PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
+    execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+    PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
     // Expected UserOperationRevertReason event due to function selector not used
     bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
     bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(otherHandler));
     
     vm.expectEmit(true, true, true, true);
-    emit UserOperationRevertReason(userOpHash, address(ALICE_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+    emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
     
-    ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+    ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 }
 
 
@@ -128,17 +128,17 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
             IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData
         );
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         // Expected UserOperationRevertReason event due to function selector not used by this handler
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(HANDLER_MODULE));
         
         vm.expectEmit(true, true, true, true);
-        emit UserOperationRevertReason(userOpHash, address(ALICE_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
         
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
 
@@ -147,13 +147,13 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         bytes memory customData = abi.encode(GENERIC_FALLBACK_SELECTOR);
         bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData);
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(ALICE_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
-        ENTRYPOINT.handleOps(userOps, payable(address(ALICE.addr)));
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was uninstalled
-        assertFalse(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler was not uninstalled");
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler was not uninstalled");
     }
 
 
@@ -161,7 +161,7 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         MaliciousMockHandler maliciousHandleModule = new MaliciousMockHandler();
         bytes memory customData = abi.encode(bytes4(UNUSED_SELECTOR));
 
-        // Install MockHandler as the fallback handler for ALICE_ACCOUNT
+        // Install MockHandler as the fallback handler for BOB_ACCOUNT
         bytes memory installCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, 
             MODULE_TYPE_FALLBACK, 
@@ -169,19 +169,19 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
             customData
         );
         Execution[] memory executionInstall = new Execution[](1);
-        executionInstall[0] = Execution(address(ALICE_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory userOpsInstall = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, executionInstall);
-        ENTRYPOINT.handleOps(userOpsInstall, payable(address(ALICE.addr)));
+        executionInstall[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
+        PackedUserOperation[] memory userOpsInstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionInstall);
+        ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         bytes memory uninstallCallData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData);
         Execution[] memory executionUninstall = new Execution[](1);
-        executionUninstall[0] = Execution(address(ALICE_ACCOUNT), 0, uninstallCallData);
-        PackedUserOperation[] memory userOpsUninstall = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
+        executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, uninstallCallData);
+        PackedUserOperation[] memory userOpsUninstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
         
-        ENTRYPOINT.handleOps(userOpsUninstall, payable(address(ALICE.addr)));
+        ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
         // Verify the fallback handler was uninstalled
-        assertTrue(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData), "Fallback handler was not uninstalled");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData), "Fallback handler was not uninstalled");
     }
 
 
