@@ -53,7 +53,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR, // Todo: Test what if you pass MODULE_TYPE_EXECUTOR here
+            MODULE_TYPE_VALIDATOR,
             address(mockValidator),
             // uninstallData needs to provide prev module address with data to uninstall
             abi.encode(prev, "")
@@ -67,6 +67,43 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""),
+            "Module should be installed"
+        );
+    }
+
+    function test_UninstallModule_Executor_Success() public {
+        MockExecutor newMockExecutor = new MockExecutor();
+
+        bytes memory installCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""
+        );
+        installModule(installCallData, MODULE_TYPE_EXECUTOR, address(newMockExecutor), EXECTYPE_DEFAULT);
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should not be installed initially"
+        );
+
+        (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+        address remove = address(mockExecutor);
+        address prev = SentinelListHelper.findPrevious(array, remove);
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(mockExecutor),
+            // uninstallData needs to provide prev module address with data to uninstall
+            abi.encode(prev, "")
+        );
+
+        uninstallModule(callData, EXECTYPE_DEFAULT);
+
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""),
+            "Module should not be installed anymore"
+        );
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
             "Module should be installed"
         );
     }
