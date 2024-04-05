@@ -283,6 +283,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
+        // Module should still be installed
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
             "Module should not be installed"
