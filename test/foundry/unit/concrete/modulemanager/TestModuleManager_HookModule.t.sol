@@ -9,15 +9,12 @@ import "../../shared/TestModuleManagement_Base.t.sol";
  * @title TestHookModule
  * @dev Tests for installing and uninstalling the hook module in a smart account.
  */
-contract TestHookModule is TestModuleManagement_Base {
+contract TestModuleManager_HookModule is TestModuleManagement_Base {
 
     function setUp() public {
         setUpModuleManagement_Base();
     }
 
-    /**
-     * @notice Tests the successful installation of the hook module.
-     */
     function test_InstallHookModule_Success() public {
         // Ensure the hook module is not installed initially
         assertFalse(
@@ -89,26 +86,6 @@ contract TestHookModule is TestModuleManagement_Base {
 
     }
 
-    // function test_UninstallHookModule_NotInstalledFailure() public {
-    //     // Ensure the hook module is not installed
-    //     assertFalse(
-    //         BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""),
-    //         "Hook module should not be installed initially"
-    //     );
-
-    //     // Attempt to uninstall the hook module
-    //     bytes memory callData = abi.encodeWithSelector(
-    //         IModuleManager.uninstallModule.selector,
-    //         MODULE_TYPE_HOOK,
-    //         address(HOOK_MODULE),
-    //         ""
-    //     );
-
-    //     // Expect revert due to module not being installed
-    //     vm.expectRevert("ModuleNotInstalled");
-    //     uninstallHook(callData, address(HOOK_MODULE), EXECTYPE_DEFAULT);
-    // }
-
     function test_UninstallHookModule_Success() public {
         // Ensure the module is installed first
         test_InstallHookModule_Success();
@@ -128,8 +105,6 @@ contract TestHookModule is TestModuleManagement_Base {
             "Hook module should be uninstalled"
         );
     }
-
-
 
 
 function test_HookTriggeredOnModuleInstallation() public {
@@ -183,8 +158,12 @@ function test_HookTriggeredOnModuleInstallation() public {
         );
     }
 
-
-
+    function test_InstallHookModule_Success_GetActiveHook() public {
+        test_InstallHookModule_Success();
+        // Verify the hook module is installed
+        address activeHook = BOB_ACCOUNT.getActiveHook();
+        assertEq(activeHook, address(HOOK_MODULE), "getActiveHook did not return the correct hook address");
+    }
 
     function uninstallHook(bytes memory callData, address module, ExecType execType) internal {
         Execution[] memory execution = new Execution[](1);
@@ -199,6 +178,8 @@ function test_HookTriggeredOnModuleInstallation() public {
         // Handling the operation which includes calling the uninstallModule function on the smart account
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
+
+    
 
 
 }
