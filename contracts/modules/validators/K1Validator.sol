@@ -4,11 +4,7 @@ pragma solidity ^0.8.24;
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import {
-    MODULE_TYPE_VALIDATOR,
-    VALIDATION_SUCCESS,
-    VALIDATION_FAILED
-} from "contracts/interfaces/modules/IERC7579Modules.sol";
+import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { IValidator } from "contracts/interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
@@ -49,14 +45,10 @@ contract K1Validator is IValidator {
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    )
-        external
-        view
-        override
-        returns (uint256)
-    {
+    ) external view override returns (uint256) {
         bool validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(
-            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
+            ECDSA.toEthSignedMessageHash(userOpHash),
+            userOp.signature
         );
         if (!validSig) return VALIDATION_FAILED;
         return VALIDATION_SUCCESS;
@@ -66,21 +58,17 @@ contract K1Validator is IValidator {
         address,
         bytes32 hash,
         bytes calldata data
-    )
-        external
-        view
-        override
-        returns (bytes4)
-    {
+    ) external view override returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        return
+            SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
+    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
 
     function name() external pure returns (string memory) {
         return "K1Validator";

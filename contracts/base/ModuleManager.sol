@@ -71,7 +71,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
             let returnDataPtr := allocate(returndatasize())
             returndatacopy(returnDataPtr, 0, returndatasize())
-            if iszero(success) { revert(returnDataPtr, returndatasize()) }
+            if iszero(success) {
+                revert(returnDataPtr, returndatasize())
+            }
             return(returnDataPtr, returndatasize())
         }
         /* solhint-enable no-inline-assembly */
@@ -91,14 +93,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
      * @param module The module address.
      * @param deInitData De-initialization data for the module.
      */
-    function uninstallModule(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData
-    )
-        external
-        payable
-        virtual;
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
 
     /**
      * THIS IS NOT PART OF THE STANDARD
@@ -107,12 +102,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function getValidatorsPaginated(
         address cursor,
         uint256 size
-    )
-        external
-        view
-        virtual
-        returns (address[] memory array, address next)
-    {
+    ) external view virtual returns (address[] memory array, address next) {
         (array, next) = _getValidatorsPaginated(cursor, size);
     }
 
@@ -123,12 +113,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function getExecutorsPaginated(
         address cursor,
         uint256 size
-    )
-        external
-        view
-        virtual
-        returns (address[] memory array, address next)
-    {
+    ) external view virtual returns (address[] memory array, address next) {
         (array, next) = _getExecutorsPaginated(cursor, size);
     }
 
@@ -147,11 +132,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        virtual
-        returns (bool);
+    ) external view virtual returns (bool);
 
     function getActiveFallbackHandler() external view virtual returns (address) {
         return _getAccountStorage().fallbackHandler;
@@ -177,7 +158,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
         // check if its the last validator. this might brick the account
-        (address[] memory array,) = _getValidatorsPaginated(address(0x1), 1);
+        (address[] memory array, ) = _getValidatorsPaginated(address(0x1), 1);
         if (array.length == 1) {
             revert CannotRemoveLastValidator();
         }
@@ -279,11 +260,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function _getValidatorsPaginated(
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address next)
-    {
+    ) private view returns (address[] memory array, address next) {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         return validators.getEntriesPaginated(cursor, size);
     }
@@ -291,11 +268,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function _getExecutorsPaginated(
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address next)
-    {
+    ) private view returns (address[] memory array, address next) {
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         return executors.getEntriesPaginated(cursor, size);
     }

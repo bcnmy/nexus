@@ -23,15 +23,14 @@ contract AccountFactory is IAccountFactory, StakeManager {
         address validationModule,
         bytes calldata moduleInstallData,
         uint256 index
-    )
-        external
-        payable
-        returns (address payable)
-    {
+    ) external payable returns (address payable) {
         bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
 
-        (bool alreadyDeployed, address account) =
-            LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
+        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(
+            msg.value,
+            ACCOUNT_IMPLEMENTATION,
+            salt
+        );
 
         if (!alreadyDeployed) {
             IModularSmartAccount(account).initialize(validationModule, moduleInstallData);
@@ -51,13 +50,10 @@ contract AccountFactory is IAccountFactory, StakeManager {
         address validationModule,
         bytes calldata moduleInstallData,
         uint256 index
-    )
-        external
-        view
-        returns (address payable expectedAddress)
-    {
+    ) external view returns (address payable expectedAddress) {
         bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
-        expectedAddress =
-            payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
+        expectedAddress = payable(
+            LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this))
+        );
     }
 }
