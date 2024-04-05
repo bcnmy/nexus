@@ -53,8 +53,5 @@ interface IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 }

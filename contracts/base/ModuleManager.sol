@@ -182,7 +182,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
         // check if its the last validator. this might brick the account
-        (address[] memory array,) = _getValidatorsPaginated(address(0x1), 2);
+        (address[] memory array, ) = _getValidatorsPaginated(address(0x1), 2);
         if (array.length == 1) {
             revert CannotRemoveLastValidator();
         }
@@ -259,7 +259,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes memory deInitData = data[4:];
 
         FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
-
 
         CallType callType = activeFallback.calltype;
 
