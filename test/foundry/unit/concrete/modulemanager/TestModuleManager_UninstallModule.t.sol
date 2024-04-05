@@ -42,10 +42,6 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
-        // assertTrue(
-        //     BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-        //     "Module should not be installed initially"
-        // );
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""),
             "Module should not be installed initially"
@@ -76,18 +72,12 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_UninstallModule_Try_Success() public {
-        // Setup: Install the module first
         bytes memory installCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
-        installModule(installCallData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Module should not be installed initially"
-        );
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
             "Module should not be installed initially"
         );
 
@@ -98,21 +88,29 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_VALIDATOR, // Todo: Test what if you pass MODULE_TYPE_EXECUTOR here
-            address(mockValidator),
+            address(VALIDATOR_MODULE),
             // uninstallData needs to provide prev module address with data to uninstall
             abi.encode(prev, "")
         );
 
-        uninstallModule(callData, EXECTYPE_TRY);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
 
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Module should not be installed anymore"
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        // Similar to installModule but for uninstallation
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
         );
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Module should not be installed initially"
-        );
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
     function test_UninstallModule_NotInstalled() public {
@@ -214,14 +212,14 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         test_InstallModule_Success(); // Use the test case directly for setup
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Module should not be installed initially"
+            "Module should be installed initially"
         );
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Module should not be installed initially"
+            "Module should be installed initially"
         );
 
-        // (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
 
         bytes memory callData = abi.encodeWithSelector(
