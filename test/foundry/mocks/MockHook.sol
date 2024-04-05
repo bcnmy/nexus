@@ -35,10 +35,6 @@ contract MockHook is IHook {
         return moduleTypeId == MODULE_TYPE_HOOK;
     }
 
-    /*function isInitialized(address smartAccount) external view returns (bool) {
-        return false;
-    }*/
-
     /// @inheritdoc IModule
     function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
