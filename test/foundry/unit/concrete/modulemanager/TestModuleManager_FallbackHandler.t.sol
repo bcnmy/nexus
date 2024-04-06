@@ -187,6 +187,5 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
 
         function test_GetFallbackHandlerBySelector() public {
         (, address handlerAddress) = BOB_ACCOUNT.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
-        assertEq(handlerAddress, address(HANDLER_MODULE), "getActiveHook did not return the correct hook address");
-    }
+        assertEq(handlerAddress, address(HANDLER_MODULE), "getActiveHookHandlerBySelector returned incorrect handler address");
 }
