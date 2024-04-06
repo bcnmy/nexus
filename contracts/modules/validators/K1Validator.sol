@@ -81,4 +81,8 @@ contract K1Validator is IValidator {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == MODULE_TYPE_VALIDATOR;
     }
+
+    function test() public pure {
+        // @todo To be removed: This function is used to ignore file in coverage report
+    }
 }

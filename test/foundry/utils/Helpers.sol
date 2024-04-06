@@ -10,6 +10,8 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockExecutor } from "../mocks/MockExecutor.sol";
+import { MockHook } from "../mocks/MockHook.sol";
+import { MockHandler } from "../mocks/MockHandler.sol";
 import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
@@ -45,6 +47,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
     AccountFactory public FACTORY;
     MockValidator public VALIDATOR_MODULE;
     MockExecutor public EXECUTOR_MODULE;
+    MockHook public HOOK_MODULE;
+    MockHandler public HANDLER_MODULE;
     SmartAccount public ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
@@ -79,6 +83,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
+        HOOK_MODULE = new MockHook();
+        HANDLER_MODULE = new MockHandler();
     }
 
     // -----------------------------------------
@@ -181,18 +187,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // Utility Functions
     // -----------------------------------------
 
-    function sendEther(address to, uint256 amount) internal {
-        payable(to).transfer(amount);
-    }
-
-    function assertBalance(address addr, uint256 expectedBalance, string memory message) internal view {
-        require(addr.balance == expectedBalance, message);
-    }
-
-    function simulateTimePassing(uint256 nbDays) internal {
-        warpTo(block.timestamp + nbDays * 1 days);
-    }
-
     // Helper to modify the address of a deployed contract in a test environment
     function changeContractAddress(address originalAddress, address newAddress) internal {
         setContractCode(originalAddress, address(originalAddress).code);
@@ -268,5 +262,9 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
         return keccak256(a) == keccak256(b);
+    }
+
+    function test() public pure {
+        // This function is used to ignore file in coverage report
     }
 }

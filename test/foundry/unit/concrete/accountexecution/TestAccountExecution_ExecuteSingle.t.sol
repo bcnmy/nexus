@@ -53,6 +53,23 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should not have been incremented after revert");
     }
 
+    function test_ExecuteSingle_ZeroAddress() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(0), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+        // Assuming the method should fail
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after revert");
+    }
+
     function test_ExecuteSingle_Empty() public {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");

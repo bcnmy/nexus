@@ -8,9 +8,10 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "../interfaces/modules/IERC7579Modules.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
@@ -42,41 +43,63 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     }
 
     fallback() external payable override(Receiver) receiverFallback {
-        address handler = _getAccountStorage().fallbackHandler;
-        if (handler == address(0)) revert();
-        /* solhint-disable no-inline-assembly */
-        /// @solidity memory-safe-assembly
-        assembly {
-            // When compiled with the optimizer, the compiler relies on a certain assumptions on how
-            // the
-            // memory is used, therefore we need to guarantee memory safety (keeping the free memory
-            // point 0x40 slot intact,
-            // not going beyond the scratch space, etc)
-            // Solidity docs: https://docs.soliditylang.org/en/latest/assembly.html#memory-safety
-            function allocate(length) -> pos {
-                pos := mload(0x40)
-                mstore(0x40, add(pos, length))
+        FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
+        address handler = $fallbackHandler.handler;
+        CallType calltype = $fallbackHandler.calltype;
+        if (handler == address(0)) revert NoFallbackHandler(msg.sig);
+
+        if (calltype == CALLTYPE_STATIC) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
+
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success := staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) {
+                    revert(returnDataPtr, returndatasize())
+                }
+                return(returnDataPtr, returndatasize())
             }
-
-            let calldataPtr := allocate(calldatasize())
-            calldatacopy(calldataPtr, 0, calldatasize())
-
-            // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-            // Then the address without padding is stored right after the calldata
-            let senderPtr := allocate(20)
-            mstore(senderPtr, shl(96, caller()))
-
-            // Add 20 bytes for the address appended add the end
-            let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-            let returnDataPtr := allocate(returndatasize())
-            returndatacopy(returnDataPtr, 0, returndatasize())
-            if iszero(success) {
-                revert(returnDataPtr, returndatasize())
-            }
-            return(returnDataPtr, returndatasize())
         }
-        /* solhint-enable no-inline-assembly */
+        if (calltype == CALLTYPE_SINGLE) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
+
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) {
+                    revert(returnDataPtr, returndatasize())
+                }
+                return(returnDataPtr, returndatasize())
+            }
+        }
     }
 
     /**
@@ -134,8 +157,9 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes calldata additionalContext
     ) external view virtual returns (bool);
 
-    function getActiveFallbackHandler() external view virtual returns (address) {
-        return _getAccountStorage().fallbackHandler;
+    function getFallbackHandlerBySelector(bytes4 selector) external view returns (CallType, address) {
+        FallbackHandler memory handler = _getAccountStorage().fallbacks[selector];
+        return (handler.calltype, handler.handler);
     }
 
     function _initModuleManager() internal virtual {
@@ -158,7 +182,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
 
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
         // check if its the last validator. this might brick the account
-        (address[] memory array, ) = _getValidatorsPaginated(address(0x1), 1);
+        (address[] memory array, ) = _getValidatorsPaginated(address(0x1), 2);
         if (array.length == 1) {
             revert CannotRemoveLastValidator();
         }
@@ -199,6 +223,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
+        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert IncompatibleHookModule(hook);
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -212,25 +237,58 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         _getAccountStorage().hook = IHook(hook);
     }
 
-    function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        if (_isFallbackHandlerInstalled()) revert FallbackHandlerAlreadyInstalled();
-        _getAccountStorage().fallbackHandler = handler;
-        IFallback(handler).onInstall(initData);
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+        bytes4 selector = bytes4(params[0:4]);
+        CallType calltype = CallType.wrap(bytes1(params[4]));
+        bytes memory initData = params[5:];
+        if (_isFallbackHandlerInstalled(selector)) revert FallbackHandlerAlreadyInstalledForSelector(selector);
+        _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
+
+        if (calltype == CALLTYPE_DELEGATECALL) {
+            (bool success, ) = handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
+            if (!success) {
+                revert("Fallback handler failed to install");
+            }
+        } else {
+            IFallback(handler).onInstall(initData);
+        }
     }
 
-    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata initData) internal virtual {
-        address currentFallback = _getAccountStorage().fallbackHandler;
-        if (currentFallback != fallbackHandler) revert InvalidModule(fallbackHandler);
-        _getAccountStorage().fallbackHandler = address(0);
-        IFallback(currentFallback).onUninstall(initData);
+    function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
+        bytes4 selector = bytes4(data[0:4]);
+        bytes memory deInitData = data[4:];
+
+        FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
+
+        CallType callType = activeFallback.calltype;
+
+        _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
+
+        if (callType == CALLTYPE_DELEGATECALL) {
+            (bool success, ) = fallbackHandler.delegatecall(
+                abi.encodeWithSelector(IModule.onUninstall.selector, deInitData)
+            );
+            if (!success) {
+                revert FallbackHandlerUninstallFailed();
+            }
+        } else {
+            IFallback(fallbackHandler).onUninstall(deInitData);
+        }
     }
 
-    function _isFallbackHandlerInstalled() internal view virtual returns (bool) {
-        return _getAccountStorage().fallbackHandler != address(0);
+    function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) {
+        FallbackHandler storage handlers = _getAccountStorage().fallbacks[selector];
+        return handlers.handler;
     }
 
-    function _isFallbackHandlerInstalled(address handler) internal view virtual returns (bool) {
-        return _getAccountStorage().fallbackHandler == handler;
+    function _isFallbackHandlerInstalled(bytes4 selector) internal view virtual returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[selector];
+        return handler.handler != address(0);
+    }
+
+    function _isFallbackHandlerInstalled(bytes4 selector, address expectedHandler) internal view returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[selector];
+        return handler.handler == expectedHandler;
     }
 
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {

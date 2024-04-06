@@ -11,43 +11,31 @@ import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import "../utils/EventsAndErrors.sol";
 
 /**
- * @title Default Handler - returns true for known token callbacks
- *   @dev May Handle EIP-1271 compliant isValidSignature requests.
- *  @notice inspired by Richard Meissner's <richard@gnosis.pm> implementation
+ * @title Bad Mock Handler - Impossible to Uninstall
  */
-contract MockHandler is IERC165, IFallback {
-    string public constant NAME = "Default Handler";
+contract BadMockHandler {
+    string public constant NAME = "Bad Handler";
     string public constant VERSION = "1.0.0";
 
     event GenericFallbackCalled(address sender, uint256 value, bytes data); // Event for generic fallback
     error NonExistingMethodCalled(bytes4 selector);
-
-    fallback() external {
-        revert NonExistingMethodCalled(msg.sig);
-    }
-
-
     // Example function to manually trigger the fallback mechanism
     function onGenericFallback(address sender, uint256 value, bytes calldata data) external returns (bytes4) {
         emit GenericFallbackCalled(sender, value, data);
         return this.onGenericFallback.selector;
     }
 
-    /// @inheritdoc IModule
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external { }
 
-    /// @inheritdoc IModule
-    function onUninstall(bytes calldata data) external override { }
 
-    /// @inheritdoc IModule
-    function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
+    function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_FALLBACK;
     }
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
+    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     // Review
-    function test() public pure {
-        // @todo To be removed
+    function test(uint256 a) public pure {
+        // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

@@ -9,6 +9,12 @@ contract EventsAndErrors {
         bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason
     );
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
+    event GenericFallbackCalled(address sender, uint256 value, bytes data);
+
+
+    event PreCheckCalled();
+    event PostCheckCalled();
+
 
     // Define all errors
     error FailedOp(uint256 opIndex, string reason);
@@ -32,5 +38,9 @@ contract EventsAndErrors {
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
-    error FallbackHandlerAlreadyInstalled();
+    error FallbackHandlerAlreadyInstalledForSelector(bytes4 selector);
+
+
+    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+
 }
