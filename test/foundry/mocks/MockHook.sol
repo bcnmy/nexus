@@ -39,7 +39,7 @@ contract MockHook is IHook {
     function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
     // Review
-    function test(uint256 a) public pure {
-        a;
+    function test() public pure {
+        // @todo To be removed 
     }
 }
