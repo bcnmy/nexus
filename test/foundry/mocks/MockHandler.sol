@@ -26,15 +26,6 @@ contract MockHandler is IERC165, IFallback {
         revert NonExistingMethodCalled(msg.sig);
     }
 
-    /**
-     * @dev Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier, as specified in ERC-165.
-     * @return True if the contract implements the given interface, false otherwise.
-     */
-    function supportsInterface(bytes4 interfaceId) external view virtual override returns (bool) {
-        return interfaceId == type(IERC721Receiver).interfaceId
-            || interfaceId == type(IERC165).interfaceId;
-    }
 
     // Example function to manually trigger the fallback mechanism
     function onGenericFallback(address sender, uint256 value, bytes calldata data) external returns (bytes4) {
@@ -56,7 +47,7 @@ contract MockHandler is IERC165, IFallback {
     function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
     // Review
-    function test(uint256 a) public pure {
-        a;
+    function test() public pure {
+        // @todo To be removed
     }
 }
