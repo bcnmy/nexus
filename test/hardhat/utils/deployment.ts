@@ -303,9 +303,9 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
  */
 export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWithSA> {
   const saDeploymentIndex = 0;
-  // Review: Should not be random
-  const owner = ethers.Wallet.createRandom();
   const [deployer, ...accounts] = await ethers.getSigners();
+  const owner = accounts[1]
+  const alice = accounts[2]
 
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
@@ -339,13 +339,21 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   const mockValidatorAddress = await mockValidator.getAddress();
   const K1ValidatorAddress = await ecdsaValidator.getAddress();
   const ownerAddress = await owner.getAddress();
+  const aliceAddress = await alice.getAddress();
 
   // Module initialization data, encoded
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
+  const aliceModuleInstallData = ethers.solidityPacked(["address"], [aliceAddress]);
 
   const accountAddress = await msaFactory.getCounterFactualAddress(
     mockValidatorAddress,
     moduleInstallData,
+    saDeploymentIndex,
+  );
+
+  const aliceAccountAddress = await msaFactory.getCounterFactualAddress(
+    mockValidatorAddress,
+    aliceModuleInstallData,
     saDeploymentIndex,
   );
 
@@ -356,8 +364,15 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     saDeploymentIndex,
   );
 
+  await msaFactory.createAccount(
+    mockValidatorAddress,
+    aliceModuleInstallData,
+    saDeploymentIndex,
+  );
+
   // Deposit ETH to the smart account
   await entryPoint.depositTo(accountAddress, { value: to18(1) });
+  await entryPoint.depositTo(aliceAccountAddress, { value: to18(1) });
 
   await mockToken.mint(accountAddress, to18(100));
 
@@ -365,13 +380,16 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   // Attach the SmartAccount contract to the deployed address
   const deployedMSA = SmartAccount.attach(accountAddress) as SmartAccount;
+  const aliceDeployedMSA = SmartAccount.attach(aliceAccountAddress) as SmartAccount;
 
   return {
     entryPoint,
     smartAccountImplementation,
     deployedMSA,
+    aliceDeployedMSA,
     deployedMSAAddress: accountAddress,
     accountOwner: owner,
+    aliceAccountOwner: alice,
     deployer: deployer,
     msaFactory,
     mockValidator,

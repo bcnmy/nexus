@@ -33,8 +33,10 @@ export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
   smartAccountImplementation: SmartAccount;
   deployedMSA: SmartAccount;
+  aliceDeployedMSA: SmartAccount
   deployedMSAAddress: AddressLike;
   accountOwner: HDNodeWallet;
+  aliceAccountOwner: HDNodeWallet;
   msaFactory: AccountFactory;
   deployer: Signer;
   mockValidator: MockValidator;

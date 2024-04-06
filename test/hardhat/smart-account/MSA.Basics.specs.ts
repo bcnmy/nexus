@@ -10,10 +10,9 @@ import {
 } from "../../../typechain-types";
 import { ModuleType } from "../utils/types";
 import { deployContractsFixture } from "../utils/deployment";
-import { to18, toBytes32 } from "../utils/encoding";
+import { to18 } from "../utils/encoding";
 import {
   getInitCode,
-  getAccountAddress,
   buildPackedUserOp,
 } from "../utils/operationHelpers";
 import {
@@ -178,6 +177,17 @@ describe("SmartAccount Basic Specs", function () {
           ]),
         ),
       ).to.be.false;
+    });
+
+    it("Should verify unsupported execution modes", async function () {
+      // Checks support for predefined module types (e.g., Validation, Execution)
+      expect(await userSA.supportsExecutionMode(ethers.concat([
+        ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
+        ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+        ethers.zeroPadValue(toBeHex(UNUSED), 4),
+        ethers.zeroPadValue(toBeHex("0x00"), 4),
+        ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+      ]))).to.be.false;
     });
 
     it("Should confirm support for specified module types", async function () {

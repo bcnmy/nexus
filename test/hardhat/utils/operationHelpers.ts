@@ -1,8 +1,7 @@
 import { ethers } from "hardhat";
-import { encodeData, toGwei } from "./encoding";
+import { toGwei } from "./encoding";
 import {
   ExecutionMethod,
-  ModuleType,
   PackedUserOperation,
   UserOperation,
 } from "./types";
@@ -15,7 +14,6 @@ import {
   toBeHex,
 } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
-import { Hexable } from "@ethersproject/bytes";
 import {
   CALLTYPE_SINGLE,
   EXECTYPE_DEFAULT,
@@ -353,7 +351,7 @@ export async function generateUseropCallData({
   return executeCallData;
 }
 
-// Utility function to listen for UserOperationRevertReason events
+// Utility function to listen for UserOperationRevertReason events 
 export async function listenForRevertReasons(entryPointAddress: string) {
   const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
   console.log("Listening for UserOperationRevertReason events...");
