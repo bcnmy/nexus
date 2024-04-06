@@ -83,6 +83,6 @@ contract K1Validator is IValidator {
     }
 
     function test() public pure {
-        // This function is used to ignore file in coverage report
+        // @todo To be removed: This function is used to ignore file in coverage report
     }
 }
