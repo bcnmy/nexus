@@ -132,11 +132,11 @@ function test_HookTriggeredOnModuleInstallation() public {
 }
 
     function test_InstallHookModule_ExpectHookPostCheckFailed() public {
-        MaliciousMockHook maliciousHook = new MaliciousMockHook();
+        BadMockHook badHook = new BadMockHook();
 
         // Ensure the hook module is not installed initially
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(maliciousHook), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(badHook), ""),
             "Hook module should not be installed initially"
         );
 
@@ -144,16 +144,16 @@ function test_HookTriggeredOnModuleInstallation() public {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_HOOK,
-            address(maliciousHook),
+            address(badHook),
             ""
         );
 
         // Install the hook module
-        installModule(callData, MODULE_TYPE_HOOK, address(maliciousHook), EXECTYPE_DEFAULT);
+        installModule(callData, MODULE_TYPE_HOOK, address(badHook), EXECTYPE_DEFAULT);
 
         // Assert that the hook module is now installed
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(maliciousHook), ""),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(badHook), ""),
             "Hook module should be installed"
         );
     }
