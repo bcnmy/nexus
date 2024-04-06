@@ -158,14 +158,14 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
 
 
     function test_UninstallFallbackHandler_Failed() public {
-        MaliciousMockHandler maliciousHandleModule = new MaliciousMockHandler();
+        BadMockHandler badHandleModule = new BadMockHandler();
         bytes memory customData = abi.encode(bytes4(UNUSED_SELECTOR));
 
         // Install MockHandler as the fallback handler for BOB_ACCOUNT
         bytes memory installCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, 
             MODULE_TYPE_FALLBACK, 
-            address(maliciousHandleModule), 
+            address(badHandleModule), 
             customData
         );
         Execution[] memory executionInstall = new Execution[](1);
@@ -173,7 +173,7 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         PackedUserOperation[] memory userOpsInstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionInstall);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
-        bytes memory uninstallCallData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData);
+        bytes memory uninstallCallData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(badHandleModule), customData);
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, uninstallCallData);
         PackedUserOperation[] memory userOpsUninstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
@@ -181,7 +181,7 @@ function test_UninstallFallbackHandler_FunctionSelectorNotUsed() public {
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
         // Verify the fallback handler was uninstalled
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(maliciousHandleModule), customData), "Fallback handler was not uninstalled");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(badHandleModule), customData), "Fallback handler was uninstalled");
     }
 
 
