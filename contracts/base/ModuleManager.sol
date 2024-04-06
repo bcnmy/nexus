@@ -276,18 +276,18 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         }
     }
 
-    function _getFallbackHandlerAddress(bytes4 sig) internal view virtual returns (address) {
-        FallbackHandler storage handlers = _getAccountStorage().fallbacks[sig];
+    function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) {
+        FallbackHandler storage handlers = _getAccountStorage().fallbacks[selector];
         return handlers.handler;
     }
 
-    function _isFallbackHandlerInstalled(bytes4 sig) internal view virtual returns (bool) {
-        FallbackHandler storage handler = _getAccountStorage().fallbacks[sig];
+    function _isFallbackHandlerInstalled(bytes4 selector) internal view virtual returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[selector];
         return handler.handler != address(0);
     }
 
-    function _isFallbackHandlerInstalled(bytes4 sig, address expectedHandler) internal view returns (bool) {
-        FallbackHandler storage handler = _getAccountStorage().fallbacks[sig];
+    function _isFallbackHandlerInstalled(bytes4 selector, address expectedHandler) internal view returns (bool) {
+        FallbackHandler storage handler = _getAccountStorage().fallbacks[selector];
         return handler.handler == expectedHandler;
     }
 
