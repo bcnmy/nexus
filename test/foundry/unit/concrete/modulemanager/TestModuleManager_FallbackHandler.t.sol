@@ -89,7 +89,7 @@ function test_InstallFallbackHandler_FunctionSelectorAlreadyUsed() public {
 
     // Expected UserOperationRevertReason event due to function selector already used
     bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-    bytes memory expectedRevertReason = abi.encodeWithSignature("FallbackHandlerAlreadyInstalled()");
+    bytes memory expectedRevertReason = abi.encodeWithSignature("FallbackHandlerAlreadyInstalledForSelector(bytes4)", GENERIC_FALLBACK_SELECTOR);
     
     vm.expectEmit(true, true, true, true);
     emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
