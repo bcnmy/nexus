@@ -45,8 +45,8 @@ import "../mocks/Counter.sol";
 import "../mocks/MockExecutor.sol";
 import "../mocks/MockHandler.sol";
 import "../mocks/MockHook.sol";
-import "../mocks/MaliciousMockHandler.sol";
-import "../mocks/MaliciousMockHook.sol";
+import "../mocks/BadMockHandler.sol";
+import "../mocks/BadMockHook.sol";
 import "../mocks/NFT.sol";
 
 // Sentinel list helper
