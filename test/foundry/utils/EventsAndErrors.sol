@@ -38,7 +38,7 @@ contract EventsAndErrors {
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
-    error FallbackHandlerAlreadyInstalledForSelector(bytes4 selector);
+    error FallbackAlreadyInstalledForSelector(bytes4 selector);
 
 
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);

@@ -241,7 +241,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes4 selector = bytes4(params[0:4]);
         CallType calltype = CallType.wrap(bytes1(params[4]));
         bytes memory initData = params[5:];
-        if (_isFallbackHandlerInstalled(selector)) revert FallbackHandlerAlreadyInstalledForSelector(selector);
+        if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
 
         if (calltype == CALLTYPE_DELEGATECALL) {

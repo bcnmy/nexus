@@ -10,12 +10,7 @@ import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import "../utils/EventsAndErrors.sol";
 
-/**
- * @title Default Handler - returns true for known token callbacks
- *   @dev May Handle EIP-1271 compliant isValidSignature requests.
- *  @notice inspired by Richard Meissner's <richard@gnosis.pm> implementation
- */
-contract MockHandler is IERC165, IFallback {
+contract MockHandler is IFallback {
     string public constant NAME = "Default Handler";
     string public constant VERSION = "1.0.0";
 

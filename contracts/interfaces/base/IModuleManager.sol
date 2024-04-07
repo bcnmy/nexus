@@ -21,7 +21,7 @@ interface IModuleManager {
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
-    error FallbackHandlerAlreadyInstalledForSelector(bytes4 selector);
+    error FallbackAlreadyInstalledForSelector(bytes4 selector);
     error FallbackHandlerUninstallFailed();
 
     error NoFallbackHandler(bytes4 selector);
