@@ -10,7 +10,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     SmartAccount private account;
 
     function setUp() public {
-        init();
+        super.init();
         account = BOB_ACCOUNT;
     }
 
@@ -29,8 +29,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
 
     function test_AddDeposit_EventEmitted() public {
         uint256 depositAmount = 1 ether;
-        (bool res,) = address(account).call{ value: depositAmount }(""); // Pre-funding the account contract
-        assertTrue(res, "Pre-funding account should succeed");
+        _prefundSmartAccountAndAssertSuccess(address(account), depositAmount);
 
         vm.expectEmit(true, true, true, true);
         emit DepositAdded(address(account), address(this), depositAmount); // Assuming there's a DepositAdded event
@@ -43,9 +42,8 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_DepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
         uint256 depositAmount = 1 ether;
+        _prefundSmartAccountAndAssertSuccess(address(account), depositAmount + 1 ether);
         uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
 
         Execution[] memory execution = new Execution[](1);
@@ -67,9 +65,8 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_BatchDepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
         uint256 depositAmount = 1 ether;
+        _prefundSmartAccountAndAssertSuccess(address(account), depositAmount * 10);
         uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
 
         Execution[] memory executions = new Execution[](5);
@@ -95,9 +92,8 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_Try_DepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
         uint256 depositAmount = 1 ether;
+        _prefundSmartAccountAndAssertSuccess(address(account), depositAmount + 1 ether);
         uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
 
         Execution[] memory execution = new Execution[](1);
@@ -119,10 +115,8 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_Try_BatchDepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
-
         uint256 depositAmount = 1 ether;
+        _prefundSmartAccountAndAssertSuccess(address(account), depositAmount * 10);
         uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
 
         Execution[] memory executions = new Execution[](5);
