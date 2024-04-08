@@ -1,4 +1,4 @@
-import { installModule } from './../utils/erc7579Utils';
+import { CALLTYPE_SINGLE, installModule } from './../utils/erc7579Utils';
 import { ExecutionMethod } from '../utils/types';
 import { expect } from "chai";
 
@@ -21,6 +21,7 @@ import {
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
 import { CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
+import { encodeData } from '../utils/encoding';
 
 describe("SmartAccount Batch Execution", () => {
     let factory: AccountFactory;
@@ -81,7 +82,7 @@ describe("SmartAccount Batch Execution", () => {
                 
     expect(isOwner).to.be.true;
 
-    await installModule({ deployedMSA: smartAccount, entryPoint, mockExecutor: executorModule, mockValidator: validatorModule, accountOwner: smartAccountOwner, bundler })
+    await installModule({ deployedMSA: smartAccount, entryPoint, moduleToInstall: executorModule, moduleType: ModuleType.Execution, validatorModule: validatorModule, accountOwner: smartAccountOwner, bundler })
     
     const isInstalled = await smartAccount.isModuleInstalled(
       ModuleType.Execution,
@@ -105,28 +106,32 @@ describe("SmartAccount Batch Execution", () => {
     });
 
     // it("Should execute approve and transfer in one user operation through handleOps", async () => {
-    //   // Spender could be paymaster
-    //   const spender = smartAccountAddress;
-    //   const amountToSpend = ethers.parseEther("1");
-    //   const recipient = smartAccountOwnerAddress;
-
-    //   const approveCalldata = mockToken.interface.encodeFunctionData("approve", [spender, amountToSpend]);
-    //   const transferCalldata = mockToken.interface.encodeFunctionData("transferFrom", [spender, recipient, amountToSpend]);
-
-    //   const mode = ethers.concat([CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
 
     //   const AccountExecution = await ethers.getContractFactory("SmartAccount");
-    //   const executeCallData = AccountExecution.interface.encodeFunctionData(
+    //   const amountToSpend = ethers.parseEther("1");
+
+    //   const approveCalldata = mockToken.interface.encodeFunctionData("approve", [await alice.getAddress(), amountToSpend]);
+    //   const encodedCalldata = encodeData(["bytes"], [approveCalldata]);
+    //   const mode = ethers.concat([CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
+    //   const executionCalldata = AccountExecution.interface.encodeFunctionData(
     //     "execute",
-    //     [mode, [approveCalldata, transferCalldata]],
+    //     [mode, encodedCalldata],
     //   );
 
     //   const userOp = buildPackedUserOp({
     //     sender: smartAccountAddress,
-    //     callData: executeCallData,
+    //     callData: executionCalldata,
     //   });
+    //   const userOpNonce = await entryPoint.getNonce(smartAccountAddress, ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
+    //   userOp.nonce = userOpNonce;
+    //   const userOpHash = await entryPoint.getUserOpHash(userOp);
+    //   const userOpSignature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+    //   userOp.signature = userOpSignature;
 
+    //   const allowanceBefore = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
     //   await entryPoint.handleOps([userOp], bundlerAddress);
+    //   const allowanceAfter = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
+    //   expect(allowanceAfter - allowanceBefore).to.be.equal(amountToSpend);
     // });
 
     it("Should approve and transfer ERC20 token via direct call to executorModule", async () => {
@@ -176,7 +181,6 @@ describe("SmartAccount Batch Execution", () => {
 
       const balanceAfter = await mockToken.balanceOf(await alice.getAddress());
       const allowance = await mockToken.allowance(smartAccountAddress, spender); 
-      console.log("Allowance: ", allowance.toString());
 
       expect(balanceAfter - balanceBefore).to.be.equal(amountToSpend);
     });
@@ -210,9 +214,8 @@ describe("SmartAccount Batch Execution", () => {
 
       // User op 2 - Transfer tokens
   
-      // Firt install the executor module on Alice's smart account
-
-      installModule({ deployedMSA: aliceSmartAccount, entryPoint, mockExecutor: executorModule, mockValidator: validatorModule, accountOwner: smartAccountAliceOwner, bundler })
+      // First install the executor module on Alice's smart account
+      await installModule({ deployedMSA: aliceSmartAccount, entryPoint, moduleToInstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountAliceOwner, bundler })
 
       const data2 = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeViaAccount", args: [aliceSmartAccountAddress, await mockToken.getAddress(), 0, transferCalldata]});
       const userOp2 = buildPackedUserOp({
@@ -234,6 +237,8 @@ describe("SmartAccount Batch Execution", () => {
       const balanceBefore = await mockToken.balanceOf(recipient);
 
       await entryPoint.handleOps([userOp1, userOp2], bundlerAddress);
+
+      const allowanceAfter = await mockToken.allowance(spender, recipient);
 
       const balanceAfter = await mockToken.balanceOf(recipient);
       expect(balanceAfter - balanceBefore).to.be.equal(amountToSpend);

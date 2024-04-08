@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer } from "ethers";
-import { EntryPoint, MockExecutor, MockValidator, SmartAccount } from "../../../typechain-types";
+import { AddressLike, Signer, hexlify } from "ethers";
+import { EntryPoint, MockExecutor, MockHandler, MockHook, MockValidator, SmartAccount } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import {
   deployContractsAndSAFixture,
@@ -21,9 +21,11 @@ describe("SmartAccount Module Management", () => {
   let accountOwner: Signer;
   let entryPoint: EntryPoint;
   let bundler: Signer;
+  let mockHook: MockHook;
+  let mockFallbackHandler: MockHandler;
 
   before(async function () {
-    ({ deployedMSA, mockValidator, mockExecutor, accountOwner, entryPoint } =
+    ({ deployedMSA, mockValidator, mockExecutor, accountOwner, entryPoint, mockHook, mockFallbackHandler } =
       await deployContractsAndSAFixture());
     owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
@@ -36,7 +38,7 @@ describe("SmartAccount Module Management", () => {
   });
 
   describe("Installation and Uninstallation", () => {
-    it("Should correctly install a module on the smart account", async () => {
+    it("Should correctly install a execution module on the smart account", async () => {
       // Current test this should be expected to be true as it's default enabled module
       expect(
         await deployedMSA.isModuleInstalled(
@@ -53,7 +55,7 @@ describe("SmartAccount Module Management", () => {
       )
       expect(isInstalledBefore).to.be.false;
 
-      await installModule({ deployedMSA, entryPoint, mockExecutor, mockValidator, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, validatorModule: mockValidator, moduleType: ModuleType.Execution, accountOwner, bundler })
   
       const isInstalledAfter = await deployedMSA.isModuleInstalled(
         ModuleType.Execution,
@@ -64,7 +66,7 @@ describe("SmartAccount Module Management", () => {
       expect(isInstalledAfter).to.be.true;
     });
 
-    it("Should correctly uninstall a previously installed module via MockExecutor", async () => {
+    it("Should correctly uninstall a previously installed execution module by using the execution module itself", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
       const functionCalldata = deployedMSA.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await mockExecutor.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
 
@@ -79,8 +81,8 @@ describe("SmartAccount Module Management", () => {
       expect(isInstalled).to.be.false;
     });
 
-    it("Should correctly uninstall a previously installed module via entryPoint", async () => {
-      await installModule({ deployedMSA, entryPoint, mockExecutor, mockValidator, accountOwner, bundler })
+    it("Should correctly uninstall a previously installed execution module via entryPoint", async () => {
+      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, moduleType: ModuleType.Execution, validatorModule: mockValidator, accountOwner, bundler })
 
       const isInstalledBefore = await deployedMSA.isModuleInstalled(
         ModuleType.Execution,
@@ -125,6 +127,66 @@ describe("SmartAccount Module Management", () => {
       )
 
       expect(isInstalledAfter).to.be.false;
+    });
+
+    it("Should correctly install a hook module on the smart account", async () => {
+      const isInstalledBefore = await deployedMSA.isModuleInstalled(
+        ModuleType.Hooks,
+        await mockHook.getAddress(),
+        ethers.hexlify("0x"),
+      )
+      expect(isInstalledBefore).to.be.false;
+
+      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockHook, validatorModule: mockValidator, moduleType: ModuleType.Hooks, accountOwner, bundler })
+  
+      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+        ModuleType.Hooks,
+        await mockHook.getAddress(),
+        ethers.hexlify("0x"),
+      )
+  
+      expect(isInstalledAfter).to.be.true;
+    });
+
+    it("Should correctly install a fallback handler module on the smart account", async () => {
+      const isInstalledBefore = await deployedMSA.isModuleInstalled(
+        ModuleType.Fallback,
+        await mockFallbackHandler.getAddress(),
+        ethers.hexlify("0x"),
+      )
+      expect(isInstalledBefore).to.be.false;
+
+      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockFallbackHandler, validatorModule: mockValidator, moduleType: ModuleType.Fallback, accountOwner, bundler })
+  
+      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+        ModuleType.Fallback,
+        await mockFallbackHandler.getAddress(),
+        ethers.hexlify("0x"),
+      )
+  
+      expect(isInstalledAfter).to.be.true;
+    });
+  });
+
+  describe("Test read functions", () => {
+    // it("Should correctly get installed validators", async () => {
+    //   const validators = await deployedMSA.getValidatorsPaginated("0x1", 100);
+    //   console.log("validators: ", validators);
+    // });
+
+    // it("Should correctly get installed executors", async () => {
+    //   const executors = await deployedMSA.getExecutorsPaginated("0x1", 100);
+    //   console.log("executors: ", executors);
+    // });
+
+    it("Should correctly get active hook", async () => {
+      const activeHook = await deployedMSA.getActiveHook();
+      console.log("activeHook: ", activeHook);
+    });
+
+    it("Should correctly get active fallback handler", async () => {
+      const activeFallbackHandler = await deployedMSA.getActiveFallbackHandler();
+      console.log("activeFallbackHandler: ", activeFallbackHandler);
     });
   });
 });

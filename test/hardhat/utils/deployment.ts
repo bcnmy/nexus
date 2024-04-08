@@ -324,6 +324,10 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     deployer,
   );
 
+  const mockHook = await getDeployedMockHook();
+
+  const mockFallbackHandler = await getDeployedMockHandler();
+
   const mockExecutor = await getDeployedMockExecutor();
 
   const anotherExecutorModule = await getDeployedMockExecutor(1);
@@ -394,6 +398,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     msaFactory,
     mockValidator,
     mockExecutor,
+    mockHook,
+    mockFallbackHandler,
     anotherExecutorModule,
     ecdsaValidator,
     counter,

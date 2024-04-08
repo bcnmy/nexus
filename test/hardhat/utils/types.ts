@@ -15,7 +15,12 @@ import {
   K1Validator,
   SmartAccount,
   MockExecutor,
+  IValidator,
+  IExecutor,
+  MockHook,
+  MockHandler,
 } from "../../../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
@@ -35,12 +40,14 @@ export interface DeploymentFixtureWithSA {
   deployedMSA: SmartAccount;
   aliceDeployedMSA: SmartAccount
   deployedMSAAddress: AddressLike;
-  accountOwner: HDNodeWallet;
-  aliceAccountOwner: HDNodeWallet;
+  accountOwner: HardhatEthersSigner;
+  aliceAccountOwner: HardhatEthersSigner;
   msaFactory: AccountFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
+  mockHook: MockHook;
+  mockFallbackHandler: MockHandler;
   anotherExecutorModule: MockExecutor;
   ecdsaValidator: K1Validator;
   counter: Counter;
@@ -96,8 +103,9 @@ export enum ModuleType {
 export type InstallModuleParams = {
   deployedMSA: SmartAccount,
   entryPoint: EntryPoint,
-  mockExecutor: MockExecutor,
-  mockValidator: MockValidator,
+  moduleToInstall: any,
+  moduleType: ModuleType,
+  validatorModule: MockValidator | K1Validator,
   accountOwner: Signer,
   bundler: Signer
 }
