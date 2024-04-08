@@ -64,8 +64,8 @@ contract SmartAccount is
         ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
-
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
@@ -73,6 +73,7 @@ contract SmartAccount is
         } else {
             revert UnsupportedCallType(callType);
         }
+         _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
