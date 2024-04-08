@@ -110,7 +110,9 @@ library ModeLib {
         ModePayload payload
     ) internal pure returns (ExecutionMode) {
         return
-            ExecutionMode.wrap(bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload)));
+            ExecutionMode.wrap(
+                bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload))
+            );
     }
 
     function encodeSimpleBatch() internal pure returns (ExecutionMode mode) {

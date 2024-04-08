@@ -66,10 +66,10 @@ contract SmartAccount is
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         (CallType callType, ExecType execType, , ) = mode.decode();
 
-        if (callType == CALLTYPE_BATCH) {
-            _handleBatchExecution(executionCalldata, execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
+        } else if (callType == CALLTYPE_BATCH) {
+            _handleBatchExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -98,14 +98,7 @@ contract SmartAccount is
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
-        if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             returnData = new bytes[](1);
@@ -121,6 +114,13 @@ contract SmartAccount is
             } else {
                 revert UnsupportedExecType(execType);
             }
+        } else if (callType == CALLTYPE_BATCH) {
+            // destructure executionCallData according to batched exec
+            Execution[] calldata executions = executionCalldata.decodeBatch();
+            // check if execType is revert or try
+            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
+            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
+            else revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
         }
