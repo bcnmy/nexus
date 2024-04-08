@@ -5,6 +5,13 @@ import { IAccountConfig } from "../interfaces/base/IAccountConfig.sol";
 import { ModeCode } from "../lib/ModeLib.sol";
 
 // Review: may not need interface at all if child account uses full holistic interface
+
+/**
+ * @title AccountConfig
+ * @dev This contract defines configutation for ERC7579 minimal modular smart account.
+ * @author adam.boudjemaa@biconomy.ios
+ * shoutout to zeroknots.eth | rhinestone.wtf
+ */
 abstract contract AccountConfig is IAccountConfig {
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 

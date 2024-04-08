@@ -16,6 +16,14 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } fro
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
 // Review: Kept a different linked list for validators, executors
+
+/**
+ * @title ModuleManager
+ * @dev This contract manages Validator, Executor, Hook and Fallback modules for the MSA
+ * @dev it uses SentinelList to manage the linked list of modules
+ * shoutout to zeroknots (rhinestone.wtf) for this code
+ * NOTE: the linked list is just an example. accounts may implement this differently
+ */
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
