@@ -10,7 +10,7 @@ import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoin
 import { Execution } from "./interfaces/modules/IExecutor.sol";
 import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
-import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -22,7 +22,7 @@ contract SmartAccount is
     ERC4337Account,
     IModularSmartAccount
 {
-    using ModeLib for ModeCode;
+    using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
     constructor() {
@@ -61,7 +61,7 @@ contract SmartAccount is
      * This function handles both single and batch transactions, supporting default execution and try/catch logic.
      */
     function execute(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         (CallType callType, ExecType execType, , ) = mode.decode();
@@ -83,7 +83,7 @@ contract SmartAccount is
      * @dev this function could implement hook support (modifier)
      */
     function executeFromExecutor(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     )
         external
@@ -247,7 +247,7 @@ contract SmartAccount is
      * @inheritdoc IAccountConfig
      */
     function supportsExecutionMode(
-        ModeCode mode
+        ExecutionMode mode
     ) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) {

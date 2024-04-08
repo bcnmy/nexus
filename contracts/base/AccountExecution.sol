@@ -14,14 +14,14 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
  * https://github.com/Vectorized/solady/blob/main/src/accounts/ERC4337.sol
  */
 abstract contract AccountExecution is IAccountExecution {
-    using ModeLib for ModeCode;
+    using ModeLib for ExecutionMode;
 
     /// @inheritdoc IAccountExecution
-    function execute(ModeCode mode, bytes calldata executionCalldata) external payable virtual;
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable virtual;
 
     /// @inheritdoc IAccountExecution
     function executeFromExecutor(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable virtual returns (bytes[] memory returnData);
 
