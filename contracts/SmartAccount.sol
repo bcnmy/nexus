@@ -90,11 +90,11 @@ contract SmartAccount is
         payable
         override(AccountExecution, IAccountExecution)
         onlyExecutorModule
-        withHook
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
     {
+        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
@@ -124,6 +124,7 @@ contract SmartAccount is
         } else {
             revert UnsupportedCallType(callType);
         }
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -145,7 +146,8 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
-    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf withHook {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
@@ -162,6 +164,7 @@ contract SmartAccount is
             revert InvalidModuleTypeId(moduleTypeId);
         }
         emit ModuleInstalled(moduleTypeId, module);
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
