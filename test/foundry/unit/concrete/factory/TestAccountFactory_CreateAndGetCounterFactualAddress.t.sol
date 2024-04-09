@@ -49,7 +49,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         bytes memory initCode = prepareInitCode(user.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInit(user, initCode, "");
+        userOps[0] = prepareUserOpWithInitAndCalldata(user, initCode, "");
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
@@ -60,7 +60,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         bytes memory initCode = prepareInitCode(user.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInit(user, initCode, "");
+        userOps[0] = prepareUserOpWithInitAndCalldata(user, initCode, "");
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
