@@ -26,7 +26,6 @@ contract SmartAccount is
     using ExecLib for bytes;
 
     constructor() {
-        if(_isAlreadyInitialized()) revert AccountAlreadyInitialized();
         _initModuleManager();
         // review
         // disble initializers
@@ -38,7 +37,14 @@ contract SmartAccount is
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override(ERC4337Account, IERC4337Account) payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256) {
+    )
+        external
+        virtual
+        override(ERC4337Account, IERC4337Account)
+        payPrefund(missingAccountFunds)
+        onlyEntryPoint
+        returns (uint256)
+    {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -76,7 +82,7 @@ contract SmartAccount is
         } else {
             revert UnsupportedCallType(callType);
         }
-         _postCheck(hook, hookData, true, new bytes(0));
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**

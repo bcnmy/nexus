@@ -9,7 +9,7 @@ import { ExecutionMode } from "../lib/ModeLib.sol";
 /**
  * @title AccountConfig
  * @dev This contract defines configutation for ERC7579 minimal modular smart account.
- * @author adam.boudjemaa@biconomy.ios
+ * @author adam.boudjemaa@biconomy.io
  * shoutout to zeroknots.eth | rhinestone.wtf
  */
 abstract contract AccountConfig is IAccountConfig {
