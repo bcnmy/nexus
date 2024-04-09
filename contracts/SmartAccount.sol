@@ -10,7 +10,7 @@ import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoin
 import { Execution } from "./interfaces/modules/IExecutor.sol";
 import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
-import { ModeLib, ModeCode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -22,11 +22,13 @@ contract SmartAccount is
     ERC4337Account,
     IModularSmartAccount
 {
-    using ModeLib for ModeCode;
+    using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
     constructor() {
-        // solhint-disable-previous-line no-empty-blocks
+        _initModuleManager();
+        // review
+        // disble initializers
     }
 
     /// @inheritdoc ERC4337Account
@@ -35,7 +37,14 @@ contract SmartAccount is
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override(ERC4337Account, IERC4337Account) payPrefund(missingAccountFunds) returns (uint256) {
+    )
+        external
+        virtual
+        override(ERC4337Account, IERC4337Account)
+        payPrefund(missingAccountFunds)
+        onlyEntryPoint
+        returns (uint256)
+    {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -61,18 +70,19 @@ contract SmartAccount is
      * This function handles both single and batch transactions, supporting default execution and try/catch logic.
      */
     function execute(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
-
-        if (callType == CALLTYPE_BATCH) {
-            _handleBatchExecution(executionCalldata, execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
+        } else if (callType == CALLTYPE_BATCH) {
+            _handleBatchExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -83,29 +93,22 @@ contract SmartAccount is
      * @dev this function could implement hook support (modifier)
      */
     function executeFromExecutor(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     )
         external
         payable
         override(AccountExecution, IAccountExecution)
         onlyExecutorModule
-        withHook
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
     {
+        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
-        if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             returnData = new bytes[](1);
@@ -121,9 +124,17 @@ contract SmartAccount is
             } else {
                 revert UnsupportedExecType(execType);
             }
+        } else if (callType == CALLTYPE_BATCH) {
+            // destructure executionCallData according to batched exec
+            Execution[] calldata executions = executionCalldata.decodeBatch();
+            // check if execType is revert or try
+            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
+            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
+            else revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
         }
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -145,7 +156,8 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
-    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf withHook {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
@@ -162,6 +174,7 @@ contract SmartAccount is
             revert InvalidModuleTypeId(moduleTypeId);
         }
         emit ModuleInstalled(moduleTypeId, module);
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -244,7 +257,7 @@ contract SmartAccount is
      * @inheritdoc IAccountConfig
      */
     function supportsExecutionMode(
-        ModeCode mode
+        ExecutionMode mode
     ) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) {
