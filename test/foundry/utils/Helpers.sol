@@ -99,6 +99,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
+        assertTrue(VALIDATOR_MODULE.isOwner(accountAddress, wallet.addr));
         return SmartAccount(accountAddress);
     }
 
