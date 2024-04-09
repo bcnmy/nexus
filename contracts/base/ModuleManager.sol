@@ -243,37 +243,14 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes memory initData = params[5:];
         if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
-
-        if (calltype == CALLTYPE_DELEGATECALL) {
-            (bool success, ) = handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
-            if (!success) {
-                revert("Fallback handler failed to install");
-            }
-        } else {
-            IFallback(handler).onInstall(initData);
-        }
+        IFallback(handler).onInstall(initData);
     }
 
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         bytes4 selector = bytes4(data[0:4]);
         bytes memory deInitData = data[4:];
-
-        FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
-
-        CallType callType = activeFallback.calltype;
-
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
-
-        if (callType == CALLTYPE_DELEGATECALL) {
-            (bool success, ) = fallbackHandler.delegatecall(
-                abi.encodeWithSelector(IModule.onUninstall.selector, deInitData)
-            );
-            if (!success) {
-                revert FallbackHandlerUninstallFailed();
-            }
-        } else {
-            IFallback(fallbackHandler).onUninstall(deInitData);
-        }
+        IFallback(fallbackHandler).onUninstall(deInitData);
     }
 
     function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) {
