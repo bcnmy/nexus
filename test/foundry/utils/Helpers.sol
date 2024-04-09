@@ -189,7 +189,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     // Helper to modify the address of a deployed contract in a test environment
     function changeContractAddress(address originalAddress, address newAddress) internal {
-        setContractCode(originalAddress, address(originalAddress).code);
+        setContractCode(originalAddress, originalAddress.code);
         setContractCode(newAddress, originalAddress.code);
     }
 
