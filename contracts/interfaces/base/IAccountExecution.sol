@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ModeCode } from "../../lib/ModeLib.sol";
+import { ExecutionMode } from "../../lib/ModeLib.sol";
 
 /**
  * @title Execution Interface for Biconomy Smart Accounts
@@ -21,7 +21,7 @@ interface IAccountExecution {
      * @param mode The encoded execution mode of the transaction.
      * @param executionCalldata The encoded execution call data.
      */
-    function execute(ModeCode mode, bytes calldata executionCalldata) external payable;
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable;
 
     /**
      * @notice ERC7579 Execution from Executor flow.
@@ -32,7 +32,7 @@ interface IAccountExecution {
      * @return returnData The return data from the executed call.
      */
     function executeFromExecutor(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable returns (bytes[] memory returnData);
 
