@@ -9,9 +9,9 @@ import "../../mocks/Token.sol";
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
-    ModeCode public singleMode;
-    ModeCode public batchMode;
-    ModeCode public unsupportedMode;
+    ExecutionMode public singleMode;
+    ExecutionMode public batchMode;
+    ExecutionMode public unsupportedMode;
 
     Counter public counter;
     Token public token;

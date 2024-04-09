@@ -2,6 +2,8 @@
 pragma solidity ^0.8.24;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { CallType } from "../../lib/ModeLib.sol";
+
 import { IHook } from "../modules/IHook.sol";
 
 interface IStorage {
@@ -11,8 +13,13 @@ interface IStorage {
         SentinelListLib.SentinelList validators;
         // linked list of executors. List is initialized by initializeAccount()
         SentinelListLib.SentinelList executors;
-        // single fallback handler for all fallbacks
-        address fallbackHandler;
+        // mapping of selector to fallback handler
+        mapping(bytes4 selector => FallbackHandler fallbackHandler) fallbacks;
         IHook hook;
+    }
+
+    struct FallbackHandler {
+        address handler;
+        CallType calltype;
     }
 }

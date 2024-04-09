@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ModeCode } from "../../lib/ModeLib.sol";
+import { ExecutionMode } from "../../lib/ModeLib.sol";
 
 /**
  * @title ERC-7579 Account Configuration Interface
@@ -19,7 +19,7 @@ interface IAccountConfig {
      * @param encodedMode The encoded mode.
      * @return True if the account supports the mode, false otherwise.
      */
-    function supportsExecutionMode(ModeCode encodedMode) external view returns (bool);
+    function supportsExecutionMode(ExecutionMode encodedMode) external view returns (bool);
 
     /**
      * @notice Checks if the account supports a certain module typeId.

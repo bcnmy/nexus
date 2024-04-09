@@ -24,8 +24,10 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         userOps[0].signature = signMessage(BOB, userOpHash);
 
         // Attempt to validate the user operation, expecting success
+        startPrank(address(ENTRYPOINT));
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         assertTrue(res == 0, "Valid operation should pass validation");
+        stopPrank();
     }
 
     function test_ValidateUserOp_InvalidSignature() public {
@@ -35,8 +37,10 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(ALICE, userOpHash); // Incorrect signer simulated
 
+        startPrank(address(ENTRYPOINT));
         // Attempt to validate the user operation, expecting failure due to invalid signature
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         assertTrue(res == 1, "Operation with invalid signature should fail validation");
+        stopPrank();
     }
 }

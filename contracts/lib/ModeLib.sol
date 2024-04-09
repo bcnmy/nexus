@@ -3,10 +3,11 @@ pragma solidity ^0.8.24;
 
 /**
  * @title ModeLib
+ * @author zeroknots.eth | rhinestone.wtf
  * To allow smart accounts to be very simple, but allow for more complex execution, A custom mode
  * encoding is used.
  *    Function Signature of execute function:
- *           function execute(ModeCode mode, bytes calldata executionCalldata) external payable;
+ *           function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable;
  * This allows for a single bytes32 to be used to encode the execution mode, calltype, execType and
  * context.
  * NOTE: Simple Account implementations only have to scope for the most significant byte. Account  that
@@ -51,7 +52,7 @@ pragma solidity ^0.8.24;
  */
 
 // Custom type for improved developer experience
-type ModeCode is bytes32;
+type ExecutionMode is bytes32;
 
 type CallType is bytes1;
 
@@ -65,6 +66,9 @@ type ModePayload is bytes22;
 CallType constant CALLTYPE_SINGLE = CallType.wrap(0x00);
 // Batched CallType
 CallType constant CALLTYPE_BATCH = CallType.wrap(0x01);
+
+CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
+
 // @dev Implementing delegatecall is OPTIONAL!
 // implement delegatecall with extreme care.
 CallType constant CALLTYPE_DELEGATECALL = CallType.wrap(0xFF);
@@ -84,7 +88,9 @@ ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.
  * @dev ModeLib is a helper library to encode/decode ModeCodes
  */
 library ModeLib {
-    function decode(ModeCode mode)
+    function decode(
+        ExecutionMode mode
+    )
         internal
         pure
         returns (CallType _calltype, ExecType _execType, ModeSelector _modeSelector, ModePayload _modePayload)
@@ -102,35 +108,37 @@ library ModeLib {
         ExecType execType,
         ModeSelector mode,
         ModePayload payload
-    )
-        internal
-        pure
-        returns (ModeCode)
-    {
+    ) internal pure returns (ExecutionMode) {
         return
-            ModeCode.wrap(bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload)));
+            ExecutionMode.wrap(
+                bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload))
+            );
     }
 
-    function encodeSimpleBatch() internal pure returns (ModeCode mode) {
+    function encodeSimpleBatch() internal pure returns (ExecutionMode mode) {
         mode = encode(CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function encodeSimpleSingle() internal pure returns (ModeCode mode) {
+    function encodeSimpleSingle() internal pure returns (ExecutionMode mode) {
         mode = encode(CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function encodeTrySingle() internal pure returns (ModeCode mode) {
+    function encodeTrySingle() internal pure returns (ExecutionMode mode) {
         mode = encode(CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function encodeTryBatch() internal pure returns (ModeCode mode) {
+    function encodeTryBatch() internal pure returns (ExecutionMode mode) {
         mode = encode(CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function getCallType(ModeCode mode) internal pure returns (CallType calltype) {
+    function getCallType(ExecutionMode mode) internal pure returns (CallType calltype) {
         assembly {
             calltype := mode
         }
+    }
+
+    function test() public pure {
+        // @todo To be removed: This function is used to ignore file in coverage report
     }
 }
 

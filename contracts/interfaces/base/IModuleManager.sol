@@ -17,10 +17,14 @@ interface IModuleManager {
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
     error IncompatibleValidatorModule(address module);
     error IncompatibleExecutorModule(address module);
+    error IncompatibleHookModule(address module);
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
-    error FallbackHandlerAlreadyInstalled();
+    error FallbackAlreadyInstalledForSelector(bytes4 selector);
+    error FallbackHandlerUninstallFailed();
+
+    error NoFallbackHandler(bytes4 selector);
 
     /**
      * @notice Installs a Module of a certain type on the smart account.
@@ -49,8 +53,5 @@ interface IModuleManager {
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        returns (bool);
+    ) external view returns (bool);
 }

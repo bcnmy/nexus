@@ -8,31 +8,9 @@ import { ERC4337Account } from "./base/ERC4337Account.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
-import {
-    IValidator,
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK,
-    MODULE_TYPE_HOOK,
-    VALIDATION_FAILED
-} from "./interfaces/modules/IERC7579Modules.sol";
-import {
-    IModularSmartAccount,
-    IAccountExecution,
-    IModuleManager,
-    IAccountConfig,
-    IERC4337Account
-} from "./interfaces/IModularSmartAccount.sol";
-import {
-    ModeLib,
-    ModeCode,
-    ExecType,
-    CallType,
-    CALLTYPE_BATCH,
-    CALLTYPE_SINGLE,
-    EXECTYPE_DEFAULT,
-    EXECTYPE_TRY
-} from "./lib/ModeLib.sol";
+import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
+import { IModularSmartAccount, IAccountExecution, IModuleManager, IAccountConfig, IERC4337Account } from "./interfaces/IModularSmartAccount.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
@@ -44,11 +22,13 @@ contract SmartAccount is
     ERC4337Account,
     IModularSmartAccount
 {
-    using ModeLib for ModeCode;
+    using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
     constructor() {
-        // solhint-disable-previous-line no-empty-blocks
+        _initModuleManager();
+        // review
+        // disble initializers
     }
 
     /// @inheritdoc ERC4337Account
@@ -62,6 +42,7 @@ contract SmartAccount is
         virtual
         override(ERC4337Account, IERC4337Account)
         payPrefund(missingAccountFunds)
+        onlyEntryPoint
         returns (uint256)
     {
         address validator;
@@ -80,12 +61,7 @@ contract SmartAccount is
     function upgradeToAndCall(
         address newImplementation,
         bytes calldata data
-    )
-        public
-        payable
-        virtual
-        override(IModularSmartAccount, UUPSUpgradeable)
-    {
+    ) public payable virtual override(IModularSmartAccount, UUPSUpgradeable) {
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
@@ -94,23 +70,19 @@ contract SmartAccount is
      * This function handles both single and batch transactions, supporting default execution and try/catch logic.
      */
     function execute(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        override(AccountExecution, IAccountExecution)
-        onlyEntryPointOrSelf
-    {
-        (CallType callType, ExecType execType,,) = mode.decode();
-
-        if (callType == CALLTYPE_BATCH) {
-            _handleBatchExecution(executionCalldata, execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+    ) external payable override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
+        (CallType callType, ExecType execType, , ) = mode.decode();
+        if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
+        } else if (callType == CALLTYPE_BATCH) {
+            _handleBatchExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -121,29 +93,22 @@ contract SmartAccount is
      * @dev this function could implement hook support (modifier)
      */
     function executeFromExecutor(
-        ModeCode mode,
+        ExecutionMode mode,
         bytes calldata executionCalldata
     )
         external
         payable
         override(AccountExecution, IAccountExecution)
         onlyExecutorModule
-        withHook
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (CallType callType, ExecType execType,,) = mode.decode();
+        (address hook, bytes memory hookData) = _preCheck();
+        (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
-        if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
-            else revert UnsupportedExecType(execType);
-        } else if (callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             // destructure executionCallData according to single exec
             (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
             returnData = new bytes[](1);
@@ -159,9 +124,17 @@ contract SmartAccount is
             } else {
                 revert UnsupportedExecType(execType);
             }
+        } else if (callType == CALLTYPE_BATCH) {
+            // destructure executionCallData according to batched exec
+            Execution[] calldata executions = executionCalldata.decodeBatch();
+            // check if execType is revert or try
+            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
+            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
+            else revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
         }
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -170,15 +143,9 @@ contract SmartAccount is
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    )
-        external
-        payable
-        virtual
-        override(AccountExecution, IAccountExecution)
-        onlyEntryPointOrSelf
-    {
+    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
         bytes calldata callData = userOp.callData[4:];
-        (bool success,) = address(this).delegatecall(callData);
+        (bool success, ) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
     }
 
@@ -189,12 +156,8 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata initData
-    )
-        external
-        payable
-        override(IModuleManager, ModuleManager)
-        onlyEntryPointOrSelf
-    {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
+        (address hook, bytes memory hookData) = _preCheck();
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
@@ -211,6 +174,7 @@ contract SmartAccount is
             revert InvalidModuleTypeId(moduleTypeId);
         }
         emit ModuleInstalled(moduleTypeId, module);
+        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /**
@@ -220,12 +184,7 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata deInitData
-    )
-        external
-        payable
-        override(IModuleManager, ModuleManager)
-        onlyEntryPointOrSelf
-    {
+    ) external payable override(IModuleManager, ModuleManager) onlyEntryPointOrSelf {
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
@@ -253,12 +212,7 @@ contract SmartAccount is
     function withdrawDepositTo(
         address payable withdrawAddress,
         uint256 amount
-    )
-        external
-        payable
-        virtual
-        onlyEntryPointOrSelf
-    {
+    ) external payable virtual onlyEntryPointOrSelf {
         IEntryPoint(entryPoint()).withdrawTo(withdrawAddress, amount);
     }
 
@@ -289,13 +243,9 @@ contract SmartAccount is
     /**
      * @inheritdoc IAccountConfig
      */
-    function supportsModule(uint256 modulTypeId)
-        external
-        view
-        virtual
-        override(AccountConfig, IAccountConfig)
-        returns (bool)
-    {
+    function supportsModule(
+        uint256 modulTypeId
+    ) external view virtual override(AccountConfig, IAccountConfig) returns (bool) {
         if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (modulTypeId == MODULE_TYPE_EXECUTOR) return true;
         else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
@@ -306,14 +256,10 @@ contract SmartAccount is
     /**
      * @inheritdoc IAccountConfig
      */
-    function supportsExecutionMode(ModeCode mode)
-        external
-        view
-        virtual
-        override(AccountConfig, IAccountConfig)
-        returns (bool isSupported)
-    {
-        (CallType callType, ExecType execType,,) = mode.decode();
+    function supportsExecutionMode(
+        ExecutionMode mode
+    ) external view virtual override(AccountConfig, IAccountConfig) returns (bool isSupported) {
+        (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_BATCH) {
             isSupported = true;
         } else if (callType == CALLTYPE_SINGLE) {
@@ -343,12 +289,7 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        external
-        view
-        override(IModuleManager, ModuleManager)
-        returns (bool)
-    {
+    ) external view override(IModuleManager, ModuleManager) returns (bool) {
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
@@ -356,7 +297,7 @@ contract SmartAccount is
     // Add natspec
 
     /// @dev To ensure that the account itself can upgrade the implementation.
-    function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+    function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
 
     function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
         Execution[] calldata executions = executionCalldata.decodeBatch();
@@ -383,15 +324,12 @@ contract SmartAccount is
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    )
-        private
-        view
-        returns (bool)
-    {
+    ) private view returns (bool) {
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK)
+            return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
         else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }

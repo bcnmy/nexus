@@ -17,6 +17,8 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
     error UnsupportedExecType(ExecType execType);
     // Error thrown when account initialization fails
     error AccountInitializationFailed();
+    // Error thrown when account is already initialised
+    error AccountAlreadyInitialized();
 
     // Review natspec
     /**
