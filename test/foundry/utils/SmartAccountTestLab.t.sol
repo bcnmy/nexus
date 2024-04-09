@@ -22,7 +22,7 @@ contract SmartAccountTestLab is Helpers {
         execution[0] = Execution(to, value, data);
     }
 
-    function prepareSeveralIdenticalExecutions(
+    function _prepareSeveralIdenticalExecutions(
         Execution memory execution, 
         uint256 executionsNumber
     ) 
