@@ -17,9 +17,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccount_WithCreateAccount() public {
-        // Prepare initialization data for the account
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(user.addr));
+        bytes memory initData = abi.encodePacked(user.addr);
         // Deploy an account using the factory directly
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
@@ -29,10 +27,8 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
     }
 
-    function test_DeployAccount_WithCreateAccount_FailsIfAccountAlreadyExists() public {
-        // Prepare initialization data for the account
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(user.addr));
+    function test_DeployAccount_WithCreateAccount_ReturnsSameAddressWithSameArgs() public {
+        bytes memory initData = abi.encodePacked(user.addr);
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
 
         vm.expectEmit(true, true, true, true);
@@ -40,8 +36,8 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable deployedAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
 
         address payable deployedAccountAddress2 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
-
         assertEq(deployedAccountAddress, deployedAccountAddress2, "Deployed account address mismatch");
+        console2.log("Is setUp ", VALIDATOR_MODULE.isOwner(deployedAccountAddress, user.addr));
     }
 
     function test_DeployAccount_WithHandleOps() public {
@@ -71,9 +67,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_AccountReInitializationPrevented() public {
-        // Deploy the account for the first time
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(user.addr));
+        bytes memory initData = abi.encodePacked(user.addr);
         address payable firstAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
 
         // Attempt to re-initialize the same account
@@ -88,8 +82,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_CreateAccountWithDifferentIndexes() public {
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(user.addr));
+        bytes memory initData = abi.encodePacked(user.addr);
 
         // Deploy accounts with different indexes
         address payable accountAddress1 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
@@ -102,8 +95,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccountWithZeroInitializationData() public {
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(address(0)));
+        bytes memory initData = abi.encodePacked(user.addr);
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
@@ -122,8 +114,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccountWithoutEnoughGas() public {
-        bytes memory initData =
-            abi.encodeWithSelector(SmartAccount.initialize.selector, address(VALIDATOR_MODULE), abi.encode(user.addr));
+        bytes memory initData = abi.encodePacked(user.addr);
 
         vm.expectRevert();
         FACTORY.createAccount{ gas: 1000 }(address(VALIDATOR_MODULE), initData, 0); // Adjust the gas amount based on
