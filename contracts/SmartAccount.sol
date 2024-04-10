@@ -143,7 +143,7 @@ contract SmartAccount is
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
-    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPointOrSelf {
+    ) external payable virtual override(AccountExecution, IAccountExecution) onlyEntryPoint {
         bytes calldata callData = userOp.callData[4:];
         (bool success, ) = address(this).delegatecall(callData);
         if (!success) revert ExecutionFailed();
