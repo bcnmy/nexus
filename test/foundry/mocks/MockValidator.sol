@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
+import { IModule } from "../../../contracts/interfaces/modules/IModule.sol";
 import {
     IValidator,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED,
     MODULE_TYPE_VALIDATOR
-} from "contracts/interfaces/modules/IERC7579Modules.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
+} from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
+import { EncodedModuleTypes } from "../../../contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";

@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import { Execution } from "../interfaces/modules/IExecutor.sol";
 
 /**
+ * @title ExecutionLib
+ * @author zeroknots.eth | rhinestone.wtf
  * Helper Library for decoding Execution calldata
  * malloc for memory allocation is bad for gas. use this assembly instead
  */
@@ -30,11 +32,9 @@ library ExecLib {
         callData = abi.encode(executions);
     }
 
-    function decodeSingle(bytes calldata executionCalldata)
-        internal
-        pure
-        returns (address target, uint256 value, bytes calldata callData)
-    {
+    function decodeSingle(
+        bytes calldata executionCalldata
+    ) internal pure returns (address target, uint256 value, bytes calldata callData) {
         target = address(bytes20(executionCalldata[0:20]));
         value = uint256(bytes32(executionCalldata[20:52]));
         callData = executionCalldata[52:];
@@ -44,11 +44,7 @@ library ExecLib {
         address target,
         uint256 value,
         bytes memory callData
-    )
-        internal
-        pure
-        returns (bytes memory userOpCalldata)
-    {
+    ) internal pure returns (bytes memory userOpCalldata) {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }
 }

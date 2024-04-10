@@ -4,6 +4,11 @@ pragma solidity ^0.8.24;
 import { IERC4337Account, PackedUserOperation } from "../interfaces/IERC4337Account.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
+/**
+ * @title ERC4337Account
+ * @dev Base contract housing methods specific to ERC4337
+ * @author zeroknots.eth | rhinestone.wtf, chirag@biconomy.io
+ */
 abstract contract ERC4337Account is IERC4337Account {
     error AccountAccessUnauthorized();
     /////////////////////////////////////////////////////
@@ -47,10 +52,7 @@ abstract contract ERC4337Account is IERC4337Account {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    )
-        external
-        virtual
-        returns (uint256);
+    ) external virtual returns (uint256);
 
     function addDeposit() public payable virtual {
         IEntryPoint(entryPoint()).depositTo{ value: msg.value }(address(this));
