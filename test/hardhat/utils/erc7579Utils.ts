@@ -12,6 +12,8 @@ export const MODE_DEFAULT = "0x00000000"; // 4 bytes
 export const UNUSED = "0x00000000"; // 4 bytes
 export const MODE_PAYLOAD = "0x00000000000000000000000000000000000000000000"; // 22 bytes
 
+export const GENERIC_FALLBACK_SELECTOR = "0xcb5baf0f";
+
 export const installModule = async (args: InstallModuleParams) => {
     const { deployedMSA, entryPoint, moduleToInstall, validatorModule, accountOwner, bundler, moduleType } = args;
     const installModuleData = await generateUseropCallData({

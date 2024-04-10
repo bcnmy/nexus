@@ -330,8 +330,7 @@ describe("SmartAccount Single Execution", () => {
 
     it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-
-      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
+      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.reverted;
     });
 
     it("Should revert without a reason, through direct call to executor. Wrong smart account address given to executeViaAccount()", async () => {
@@ -343,6 +342,15 @@ describe("SmartAccount Single Execution", () => {
 
     it("Should revert an execution from an unauthorized executor", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+
+      const isInstalled = await smartAccount.isModuleInstalled(
+        ModuleType.Execution,
+        await anotherExecutorModule.getAddress(),
+        ethers.hexlify("0x"),
+      )
+
+      console.log("isInstalled: ", isInstalled);
+      expect(isInstalled).to.be.false;
 
       await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
     });

@@ -330,7 +330,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const mockExecutor = await getDeployedMockExecutor();
 
-  const anotherExecutorModule = await getDeployedMockExecutor(1);
+  const anotherExecutorModule = await getDeployedMockExecutor(5);
 
   const ecdsaValidator = await getDeployedK1Validator();
 

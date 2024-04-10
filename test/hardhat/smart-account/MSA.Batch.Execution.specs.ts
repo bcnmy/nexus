@@ -124,14 +124,14 @@ describe("SmartAccount Batch Execution", () => {
       );
 
       const executions = encodeData(["bytes[]"], [[approveExecData, transferExecData]]);
-      const executionCalldata = AccountExecution.interface.encodeFunctionData(
+      const userOpCalldata = AccountExecution.interface.encodeFunctionData(
         "execute",
         [mode, encodeData(["bytes"], [executions])],
       );
 
       const userOp = buildPackedUserOp({
         sender: smartAccountAddress,
-        callData: executionCalldata,
+        callData: userOpCalldata,
       });
       const userOpNonce = await entryPoint.getNonce(smartAccountAddress, ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
       userOp.nonce = userOpNonce;
@@ -140,10 +140,12 @@ describe("SmartAccount Batch Execution", () => {
       userOp.signature = userOpSignature;
 
       const allowanceBefore = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
+      const balanceBefore = await mockToken.balanceOf(await alice.getAddress());
       await entryPoint.handleOps([userOp], bundlerAddress);
       const allowanceAfter = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
-      console.log(allowanceAfter, "allowanceAfter");
-      expect(allowanceAfter - allowanceBefore).to.be.equal(amountToSpend);
+      const balanceAfter = await mockToken.balanceOf(await alice.getAddress());
+
+      expect(balanceAfter - balanceBefore).to.be.equal(amountToSpend);
     });
 
     it("Should approve and transfer ERC20 token via direct call to executorModule", async () => {

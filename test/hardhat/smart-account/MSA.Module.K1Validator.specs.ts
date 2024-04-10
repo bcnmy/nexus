@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer } from "ethers";
+import { AddressLike, Signer, hashMessage } from "ethers";
 import { Counter, EntryPoint, K1Validator, MockExecutor, MockValidator, SmartAccount } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import {
@@ -117,37 +117,14 @@ describe("K1Validator module tests", () => {
       expect(isValid).to.equal(0n);
     });
 
-    it("should check user op using isValidSignatureWithSender", async () => {
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "incrementNumber",
-      });
-
-      const validatorModuleAddress = await k1Validator.getAddress();
-
-      // Build the userOp with the generated callData.
-      const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
-        callData,
-      });
-      userOp.callData = callData;
-
-      const nonce = await entryPoint.getNonce(
-        userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-      );
-
-      userOp.nonce = nonce;
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
-
-      userOp.signature = signature;
-
-      const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), ethers.hashMessage(callData), callData);
+    it("Should check signature using isValidSignatureWithSender", async () => {
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+      const data = ethers.solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
+      const callData = encodeData(["bytes"], [data])
+      const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), hashMessage(callData), callData);
       
-      // 0 - valid, 1 - invalid
+      // 0x1626ba7e - valid 
+      // 0xffffffff - invalid
       expect(isValid.toString()).to.equal("0x1626ba7e");
     });
   });

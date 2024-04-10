@@ -8,7 +8,7 @@ import {
 } from "../utils/deployment";
 import { buildPackedUserOp, generateUseropCallData } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
-import { installModule } from "../utils/erc7579Utils";
+import { GENERIC_FALLBACK_SELECTOR, installModule } from "../utils/erc7579Utils";
 
 describe("SmartAccount Module Management", () => {
   
@@ -152,7 +152,7 @@ describe("SmartAccount Module Management", () => {
       const isInstalledBefore = await deployedMSA.isModuleInstalled(
         ModuleType.Fallback,
         await mockFallbackHandler.getAddress(),
-        ethers.hexlify("0x"),
+        encodeData(["bytes"], [GENERIC_FALLBACK_SELECTOR]),
       )
       expect(isInstalledBefore).to.be.false;
 
@@ -181,12 +181,13 @@ describe("SmartAccount Module Management", () => {
 
     it("Should correctly get active hook", async () => {
       const activeHook = await deployedMSA.getActiveHook();
-      console.log("activeHook: ", activeHook);
+      expect(activeHook).to.be.equal("0xb9683a4d7507eBEa50bb9021CB90Ca51524E253F");
     });
 
     it("Should correctly get active fallback handler", async () => {
-      const activeFallbackHandler = await deployedMSA.getActiveFallbackHandler();
-      console.log("activeFallbackHandler: ", activeFallbackHandler);
+      const activeFallbackHandler = await deployedMSA.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
+      // no fallback handler installed
+      expect(activeFallbackHandler[1]).to.be.equal("0x0000000000000000000000000000000000000000");
     });
   });
 });

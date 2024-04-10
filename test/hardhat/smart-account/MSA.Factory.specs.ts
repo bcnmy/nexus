@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, toBeHex } from "ethers";
+import { AddressLike, Signer, ZeroAddress, toBeHex } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AccountFactory,
@@ -27,7 +27,7 @@ import {
 } from "../utils/erc7579Utils";
 import { encodeFunctionData } from "viem";
 
-describe("SmartAccount Basic Specs", function () {
+describe("SmartAccount Factory Tests", function () {
   let factory: AccountFactory;
   let smartAccount: SmartAccount;
   let entryPoint: EntryPoint;
@@ -139,21 +139,19 @@ describe("SmartAccount Basic Specs", function () {
     it("Should deploy account with zero initialization data", async function () {
       const saDeploymentIndex = 25;
 
-      const installData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address"],
-        ["0x"],
-      ); // Example data, customize as needed
+      const initializeData = smartAccount.interface.encodeFunctionData("initialize", [validatorModuleAddress, "0x"]);
+      const initData = ethers.solidityPacked(["address", "uint256", "bytes"], [smartAccountAddress, 0, initializeData])
 
       // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
         validatorModuleAddress, // validator address
-        installData,
+        initData,
         saDeploymentIndex,
       );
 
       await factory.createAccount(
         validatorModuleAddress,
-        installData,
+        initData,
         saDeploymentIndex,
       );
 
@@ -163,18 +161,16 @@ describe("SmartAccount Basic Specs", function () {
     });
 
     it("Should deploy account with invalid validation module", async function () {
-      const saDeploymentIndex = 0;
+      const saDeploymentIndex = 3;
 
-      const installData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address"],
-        [ownerAddress],
-      ); // Example data, customize as needed
+      const initializeData = smartAccount.interface.encodeFunctionData("initialize", [ZeroAddress, ownerAddress.toString()]);
+      const initData = ethers.solidityPacked(["address", "uint256", "bytes"], [smartAccountAddress, 0, initializeData])
 
-      await factory.createAccount(
-        "0x",
-        installData,
+      await expect(factory.createAccount(
+        ZeroAddress,
+        initData,
         saDeploymentIndex,
-      );
+      )).to.be.reverted;
     });
 
     it("Should deploy smart account via handleOps", async function () {
@@ -215,15 +211,10 @@ describe("SmartAccount Basic Specs", function () {
       });
 
       it("Should prevent account reinitialization", async function () {
-        const saDeploymentIndex = 0;
-  
         const initData = smartAccount.interface.encodeFunctionData("initialize", [validatorModuleAddress, await owner.getAddress()]);
   
-        // const initCode = factory.interface.encodeFunctionData("createAccount", [validatorModuleAddress, initData, saDeploymentIndex]);
-  
-        const response = await smartAccount.initialize(validatorModuleAddress, initData);
-        const receipt = await response.wait();
-        console.log(receipt.logs);
+        const response = smartAccount.initialize(validatorModuleAddress, initData);
+        await expect(response).to.be.revertedWithCustomError(smartAccount, "LinkedList_AlreadyInitialized()");
       });
   });
 });
