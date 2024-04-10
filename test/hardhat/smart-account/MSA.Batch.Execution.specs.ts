@@ -1,5 +1,5 @@
-import { CALLTYPE_SINGLE, EXECTYPE_TRY, installModule } from './../utils/erc7579Utils';
-import { ExecutionMethod } from '../utils/types';
+import { EXECTYPE_TRY, installModule } from './../utils/erc7579Utils';
+import { ExecutionMethod, Executions } from '../utils/types';
 import { expect } from "chai";
 
 import { ContractTransactionResponse, Signer } from "ethers";
@@ -22,7 +22,6 @@ import {
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
 import { CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
-import { encodeData } from '../utils/encoding';
 
 describe("SmartAccount Batch Execution", () => {
     let factory: AccountFactory;
@@ -39,6 +38,7 @@ describe("SmartAccount Batch Execution", () => {
     let deployer: Signer;
     let mockToken: MockToken;
     let alice: Signer;
+    let bob: Signer;
 
     let factoryAddress: string;
     let entryPointAddress: string;
@@ -67,6 +67,7 @@ describe("SmartAccount Batch Execution", () => {
     deployer = setup.deployer;
     mockToken = setup.mockToken;
     alice = setup.accounts[3];
+    bob = setup.accounts[4];
 
     factoryAddress = await factory.getAddress();
     entryPointAddress = await entryPoint.getAddress();
@@ -109,29 +110,24 @@ describe("SmartAccount Batch Execution", () => {
     it("Should execute approve and transfer in one user operation through handleOps", async () => {
       const AccountExecution = await ethers.getContractFactory("SmartAccount");
       const amountToSpend = ethers.parseEther("1");
+      const approveCalldata1 = mockToken.interface.encodeFunctionData("approve", [await alice.getAddress(), amountToSpend]);
+      const approveCalldata2 = mockToken.interface.encodeFunctionData("approve", [await bob.getAddress(), amountToSpend]);
 
-      const approveCalldata = mockToken.interface.encodeFunctionData("approve", [await alice.getAddress(), amountToSpend]);
-      const transferCalldata = mockToken.interface.encodeFunctionData("transferFrom", [smartAccountAddress, await alice.getAddress(), amountToSpend]);
+      const execs = [{target: await mockToken.getAddress(), value: 0n, callData: approveCalldata1}, {target: await mockToken.getAddress(), value: 0n, callData: approveCalldata2}];
+      
+      const executionCalldataPrep = ethers.AbiCoder.defaultAbiCoder().encode([
+        Executions,
+      ], [execs]);
+
       const mode = ethers.concat([CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
-    
-      const approveExecData = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [await mockToken.getAddress(), 0, approveCalldata],
-      );
-      const transferExecData = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [await mockToken.getAddress(), 0, transferCalldata],
-      );
-
-      const executions = encodeData(["bytes[]"], [[approveExecData, transferExecData]]);
-      const userOpCalldata = AccountExecution.interface.encodeFunctionData(
+      const userOpCallData = AccountExecution.interface.encodeFunctionData(
         "execute",
-        [mode, encodeData(["bytes"], [executions])],
+        [mode, executionCalldataPrep],
       );
 
       const userOp = buildPackedUserOp({
         sender: smartAccountAddress,
-        callData: userOpCalldata,
+        callData: userOpCallData,
       });
       const userOpNonce = await entryPoint.getNonce(smartAccountAddress, ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
       userOp.nonce = userOpNonce;
@@ -139,13 +135,17 @@ describe("SmartAccount Batch Execution", () => {
       const userOpSignature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
       userOp.signature = userOpSignature;
 
-      const allowanceBefore = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
-      const balanceBefore = await mockToken.balanceOf(await alice.getAddress());
-      await entryPoint.handleOps([userOp], bundlerAddress);
-      const allowanceAfter = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
-      const balanceAfter = await mockToken.balanceOf(await alice.getAddress());
+      const allowanceBeforeForAlice = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
 
-      expect(balanceAfter - balanceBefore).to.be.equal(amountToSpend);
+      const allowanceBeforeForBob = await mockToken.allowance(smartAccountAddress, await bob.getAddress());
+
+      await entryPoint.handleOps([userOp], bundlerAddress);
+
+      const allowanceAfterForAlice = await mockToken.allowance(smartAccountAddress, await alice.getAddress());
+      const allowanceAfterForBob = await mockToken.allowance(smartAccountAddress, await bob.getAddress());
+
+      expect(allowanceAfterForAlice - allowanceBeforeForAlice).to.be.equal(amountToSpend);
+      expect(allowanceAfterForBob - allowanceBeforeForBob).to.be.equal(amountToSpend);
     });
 
     it("Should approve and transfer ERC20 token via direct call to executorModule", async () => {
@@ -306,29 +306,35 @@ describe("SmartAccount Batch Execution", () => {
   });
 
   describe("SmartAccount Transaction Batch Execution using Try Execute", () => {
-    it("Should increment counter even if one user operation fails", async () => {
+    it("Should increment counter even if a transaction from the batch fails", async () => {
+      const AccountExecution = await ethers.getContractFactory("SmartAccount");
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
       const revertOperation = counter.interface.encodeFunctionData("revertOperation");
       const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0, callData: revertOperation}, {target: counterAddress, value: 0n, callData: incrementNumber}];
 
+      const executionCalldataPrep = ethers.AbiCoder.defaultAbiCoder().encode([
+        Executions,
+      ], [execs]);
+
       const mode = ethers.concat([CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
-      const callData = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs], mode});
+
+      const userOpCallData = AccountExecution.interface.encodeFunctionData(
+        "execute",
+        [mode, executionCalldataPrep],
+      );
 
       let userOp = buildPackedUserOp({
         sender: smartAccountAddress,
-        callData,
+        callData: userOpCallData,
       });
       userOp = await prepareUserOperation(userOp, entryPoint, validatorModuleAddress, smartAccountOwner, 0);
 
       const numberBefore = await counter.getNumber();
-      const response = await entryPoint.handleOps([userOp], bundlerAddress);
-      const receipt = await response.wait();
-      console.log(receipt.logs, "receipt");
+      await entryPoint.handleOps([userOp], bundlerAddress);
       
       const numberAfter = await counter.getNumber();
-      console.log(numberAfter, "number after");
       
-      // expect(numberAfter - numberBefore).to.be.equal(2);
+      expect(numberAfter - numberBefore).to.be.equal(2);
   });
   });
 });

@@ -4,6 +4,7 @@ import {
   BigNumberish,
   BytesLike,
   HDNodeWallet,
+  ParamType,
   Signer,
 } from "ethers";
 import {
@@ -109,3 +110,15 @@ export type InstallModuleParams = {
   accountOwner: Signer,
   bundler: Signer
 }
+
+export const Executions = ParamType.from({
+  type: "tuple(address,uint256,bytes)[]",
+  baseType: "tuple",
+  name: "executions",
+  arrayLength: null,   
+  components: [
+    { name: "target", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "callData", type: "bytes" }
+  ],
+})
