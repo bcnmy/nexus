@@ -296,6 +296,7 @@ export async function generateUseropCallData({
   functionName,
   args = [],
   value = 0,
+  mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]),
 }): Promise<string> {
   const AccountExecution = await ethers.getContractFactory("SmartAccount");
 
@@ -305,8 +306,6 @@ export async function generateUseropCallData({
     functionName,
     args,
   );
-
-  const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
 
   // Encode the execution calldata
   let executionCalldata;
@@ -370,6 +369,19 @@ export async function listenForRevertReasons(entryPointAddress: string) {
 // TODO
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
+
+export async function prepareUserOperation(userOp: PackedUserOperation, entryPoint: EntryPoint, validatorModuleAddress: string, smartAccountOwner: Signer, nonceIncrement: number): Promise<PackedUserOperation> {
+  const nonce = await entryPoint.getNonce(
+    userOp.sender,
+    ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+  );
+  userOp.nonce = nonce + BigInt(nonceIncrement);
+  const userOpHash = await entryPoint.getUserOpHash(userOp);
+  const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+  userOp.signature = signature;
+
+  return userOp;
+}
 
 // More functions to be added
 // 1. simulateValidation (using EntryPointSimulations)

@@ -19,6 +19,7 @@ import {
   buildPackedUserOp,
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
+import { CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
 
 describe("SmartAccount Single Execution", () => {
     let factory: AccountFactory;
@@ -327,7 +328,7 @@ describe("SmartAccount Single Execution", () => {
       expect(await counter.getNumber()).to.equal(0);
     });
 
-    it("Should revert with InvalidModule custom error, through direct call to executor. Module not installed.", async () => {
+    it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
 
       await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
@@ -345,39 +346,37 @@ describe("SmartAccount Single Execution", () => {
 
       await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
     });
+  });
 
-    it("Should handle revert silently", async () => {
-      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      const revertOperation = counter.interface.encodeFunctionData("revertOperation");
-      const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: revertOperation}, {target: counterAddress, value: 0n, callData: incrementNumber}];
+  describe("SmartAccount Try Execute", () => {
 
-      const callData = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs]});
+    it("Should execute single user op using EXECTYPE_TRY", async () => {
+        const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, UNUSED, MODE_PAYLOAD])
+        const callData = await generateUseropCallData({
+          executionMethod: ExecutionMethod.Execute,
+          targetContract: counter,
+          functionName: "incrementNumber",
+          mode
+        });
 
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      userOp.callData = callData;
+        const userOp = buildPackedUserOp({
+          sender: smartAccountAddress,
+          callData,
+        });
+        const nonce = await entryPoint.getNonce(
+          userOp.sender,
+          ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        );
+        userOp.nonce = nonce; 
+        const userOpHash = await entryPoint.getUserOpHash(userOp);
+        const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+        userOp.signature = signature;
 
-      const nonce = await entryPoint.getNonce(
-        userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-      );
-
-      userOp.nonce = nonce; 
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
-
-      userOp.signature = signature;
-
-      const numberBefore = await counter.getNumber();
-      
-      await entryPoint.handleOps([userOp], bundlerAddress);
-
-      const numberAfter = await counter.getNumber();
-
-      expect(numberAfter).to.be.equal(numberBefore);
+        const numberBefore = await counter.getNumber();
+        await entryPoint.handleOps([userOp], bundlerAddress);
+        const numberAfter = await counter.getNumber();
+        
+        expect(numberAfter - numberBefore).to.be.equal(1);
     });
   });
 });
