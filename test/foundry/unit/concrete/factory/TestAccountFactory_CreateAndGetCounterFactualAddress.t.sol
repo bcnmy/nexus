@@ -84,7 +84,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         vm.expectRevert(LinkedList_AlreadyInitialized.selector); // Assuming your contract reverts with this error on
             // re-initialization attempts
 
-        IModularSmartAccount(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
+        IBicoMSA(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
     }
 
     function test_CreateAccountWithDifferentIndexes() public {

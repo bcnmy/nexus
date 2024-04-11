@@ -68,7 +68,9 @@ contract K1Validator is IValidator {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view override returns (EncodedModuleTypes) {
+        // solhint-disable-previous-line no-empty-blocks
+    }
 
     function name() external pure returns (string memory) {
         return "K1Validator";
@@ -83,6 +85,7 @@ contract K1Validator is IValidator {
     }
 
     function test() public pure {
+        // solhint-disable-previous-line no-empty-blocks
         // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

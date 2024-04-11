@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IAccountExecution } from "../interfaces/base/IAccountExecution.sol";
 import { Execution } from "../interfaces/modules/IExecutor.sol";
 import "../lib/ModeLib.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 /**
- * @title AccountExecution
+ * @title ExecutionManager
  * @dev This contract executes calls in the context of this contract.
  * @author zeroknots.eth | rhinestone.wtf
  * shoutout to solady (vectorized, ross) for this code
  * https://github.com/Vectorized/solady/blob/main/src/accounts/ERC4337.sol
  */
-abstract contract AccountExecution is IAccountExecution {
-    using ModeLib for ExecutionMode;
-
-    /// @inheritdoc IAccountExecution
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable virtual;
-
-    /// @inheritdoc IAccountExecution
-    function executeFromExecutor(
-        ExecutionMode mode,
-        bytes calldata executionCalldata
-    ) external payable virtual returns (bytes[] memory returnData);
-
-    /// @inheritdoc IAccountExecution
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable virtual;
+contract ExecutionManager {
+    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     // /////////////////////////////////////////////////////
     // //  Execution Helpers

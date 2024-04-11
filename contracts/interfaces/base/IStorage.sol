@@ -9,9 +9,9 @@ import { IHook } from "../modules/IHook.sol";
 interface IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.SmartAccount
     struct AccountStorage {
-        // linked list of validators. List is initialized by initializeAccount()
+        // linked list of validators. List is initialized by initialize()
         SentinelListLib.SentinelList validators;
-        // linked list of executors. List is initialized by initializeAccount()
+        // linked list of executors. List is initialized by initialize()
         SentinelListLib.SentinelList executors;
         // mapping of selector to fallback handler
         mapping(bytes4 selector => FallbackHandler fallbackHandler) fallbacks;

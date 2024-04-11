@@ -20,7 +20,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         assertEq(currentImpl, address(ACCOUNT_IMPLEMENTATION));
 
         bytes memory callData =
-            abi.encodeWithSelector(IModularSmartAccount.upgradeToAndCall.selector, address(newSA), "");
+            abi.encodeWithSelector(SmartAccount.upgradeToAndCall.selector, address(newSA), "");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
