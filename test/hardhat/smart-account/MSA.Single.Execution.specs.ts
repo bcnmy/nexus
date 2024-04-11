@@ -19,7 +19,8 @@ import {
   buildPackedUserOp,
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
-import { CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
+import { CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
+import { encodeData } from '../utils/encoding';
 
 describe("SmartAccount Single Execution", () => {
     let factory: AccountFactory;
@@ -329,8 +330,14 @@ describe("SmartAccount Single Execution", () => {
     });
 
     it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
+      let prevAddress = "0x0000000000000000000000000000000000000001";
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.reverted;
+      const isInstalled = await smartAccount.isModuleInstalled(ModuleType.Execution, await anotherExecutorModule.getAddress(), ethers.hexlify("0x"));
+      if(isInstalled){
+        const functionCalldata = smartAccount.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await anotherExecutorModule.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
+        await executorModule.executeViaAccount(smartAccountAddress, smartAccountAddress, 0n, functionCalldata);
+      }
+      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.rejected;
     });
 
     it("Should revert without a reason, through direct call to executor. Wrong smart account address given to executeViaAccount()", async () => {

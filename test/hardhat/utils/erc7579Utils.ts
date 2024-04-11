@@ -15,12 +15,12 @@ export const MODE_PAYLOAD = "0x00000000000000000000000000000000000000000000"; //
 export const GENERIC_FALLBACK_SELECTOR = "0xcb5baf0f";
 
 export const installModule = async (args: InstallModuleParams) => {
-    const { deployedMSA, entryPoint, moduleToInstall, validatorModule, accountOwner, bundler, moduleType } = args;
+    const { deployedMSA, entryPoint, moduleToInstall, validatorModule, accountOwner, bundler, moduleType, initData } = args;
     const installModuleData = await generateUseropCallData({
      executionMethod: ExecutionMethod.Execute,
      targetContract: deployedMSA,
      functionName: "installModule",
-     args: [moduleType, await moduleToInstall.getAddress(), ethers.hexlify(await accountOwner.getAddress())],
+     args: [moduleType, await moduleToInstall.getAddress(), initData ? initData : ethers.hexlify(await accountOwner.getAddress())],
    });
  
    const userOp = buildPackedUserOp({

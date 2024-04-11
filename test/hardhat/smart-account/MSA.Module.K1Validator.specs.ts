@@ -65,6 +65,12 @@ describe("K1Validator module tests", () => {
       expect(isValidator).to.equal(true);
     });
 
+    it("should check if module is initialized", async () => {
+      const isInitialized = await k1Validator.isInitialized(await deployedMSA.getAddress());
+      expect(isInitialized).to.equal(true);
+    });
+
+
     it("should get module types", async () => {
       const moduleTypes = await k1Validator.getModuleTypes();
       console.log("moduleTypes: ", moduleTypes);

@@ -109,6 +109,7 @@ export type InstallModuleParams = {
   validatorModule: MockValidator | K1Validator,
   accountOwner: Signer,
   bundler: Signer
+  initData?: BytesLike
 }
 
 export const Executions = ParamType.from({
