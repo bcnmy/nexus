@@ -49,7 +49,6 @@ export interface DeploymentFixtureWithSA {
   mockExecutor: MockExecutor;
   mockHook: MockHook;
   mockFallbackHandler: MockHandler;
-  anotherExecutorModule: MockExecutor;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
@@ -110,6 +109,17 @@ export type InstallModuleParams = {
   accountOwner: Signer,
   bundler: Signer
   initData?: BytesLike
+}
+
+export type UninstallModuleParams = {
+  deployedMSA: SmartAccount,
+  entryPoint: EntryPoint,
+  moduleToUninstall: any,
+  moduleType: ModuleType,
+  validatorModule: MockValidator | K1Validator,
+  accountOwner: Signer,
+  bundler: Signer
+  deInitData?: BytesLike
 }
 
 export const Executions = ParamType.from({

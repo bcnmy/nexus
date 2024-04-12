@@ -29,7 +29,6 @@ describe("SmartAccount Batch Execution", () => {
     let bundler: Signer;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
-    let anotherExecutorModule: MockExecutor;
     let counter: Counter;
     let smartAccount: SmartAccount;
     let aliceSmartAccount: SmartAccount
@@ -58,7 +57,6 @@ describe("SmartAccount Batch Execution", () => {
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
-    anotherExecutorModule = setup.anotherExecutorModule;
     smartAccountOwner = setup.accountOwner;
     smartAccount = setup.deployedMSA;
     smartAccountAliceOwner = setup.aliceAccountOwner;

@@ -19,7 +19,7 @@ import {
   buildPackedUserOp,
 } from "../utils/operationHelpers";
 import { ethers } from 'hardhat';
-import { CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED } from '../utils/erc7579Utils';
+import { CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, MODE_PAYLOAD, UNUSED, uninstallModule } from '../utils/erc7579Utils';
 import { encodeData } from '../utils/encoding';
 
 describe("SmartAccount Single Execution", () => {
@@ -28,7 +28,6 @@ describe("SmartAccount Single Execution", () => {
     let bundler: Signer;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
-    let anotherExecutorModule: MockExecutor;
     let counter: Counter;
     let alice: Signer;
     let smartAccount: SmartAccount;
@@ -54,7 +53,6 @@ describe("SmartAccount Single Execution", () => {
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
-    anotherExecutorModule = setup.anotherExecutorModule;
     smartAccountOwner = setup.accountOwner;
     alice = setup.aliceAccountOwner;
     smartAccount = setup.deployedMSA;
@@ -332,12 +330,13 @@ describe("SmartAccount Single Execution", () => {
     it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      const isInstalled = await smartAccount.isModuleInstalled(ModuleType.Execution, await anotherExecutorModule.getAddress(), ethers.hexlify("0x"));
+      await uninstallModule({ deployedMSA: smartAccount, entryPoint, moduleToUninstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler})
+      const isInstalled = await smartAccount.isModuleInstalled(ModuleType.Execution, await executorModule.getAddress(), ethers.hexlify("0x"));
       if(isInstalled){
-        const functionCalldata = smartAccount.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await anotherExecutorModule.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
+        const functionCalldata = smartAccount.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await executorModule.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
         await executorModule.executeViaAccount(smartAccountAddress, smartAccountAddress, 0n, functionCalldata);
       }
-      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.rejected;
+      await expect(executorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.rejected;
     });
 
     it("Should revert without a reason, through direct call to executor. Wrong smart account address given to executeViaAccount()", async () => {
@@ -349,17 +348,18 @@ describe("SmartAccount Single Execution", () => {
 
     it("Should revert an execution from an unauthorized executor", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-
+      const prevAddress = "0x0000000000000000000000000000000000000001";
+      await uninstallModule({ deployedMSA: smartAccount, entryPoint, moduleToUninstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler, deInitData: encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])})
       const isInstalled = await smartAccount.isModuleInstalled(
         ModuleType.Execution,
-        await anotherExecutorModule.getAddress(),
-        ethers.hexlify("0x"),
+        await executorModule.getAddress(),
+        ethers.hexlify(ethers.toUtf8Bytes("")),
       )
 
       console.log("isInstalled: ", isInstalled);
       expect(isInstalled).to.be.false;
 
-      await expect(anotherExecutorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
+      await expect(executorModule.executeViaAccount(smartAccountAddress, counterAddress, 0n, incrementNumber)).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
     });
   });
 

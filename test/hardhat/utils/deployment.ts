@@ -131,25 +131,16 @@ export async function getDeployedMockToken(): Promise<MockToken> {
  * Deploys the MockExecutor contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed MockExecutor contract instance.
  */
-export async function getDeployedMockExecutor(index?: number): Promise<MockExecutor> {
+export async function getDeployedMockExecutor(): Promise<MockExecutor> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
-
   const MockExecutor = await ethers.getContractFactory("MockExecutor");
-  let deterministicMockExecutor: DeployResult;
-  if(index){
-    deterministicMockExecutor = await deployments.deploy("MockExecutor", {
-      from: addresses[index],
-    });
-  } else {
-    deterministicMockExecutor = await deployments.deploy("MockExecutor", {
-      from: addresses[0],
-      deterministicDeployment: true,
-    });
-  }
-
+  const deterministicMockExecutor = await deployments.deploy("MockExecutor", {
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
   return MockExecutor.attach(deterministicMockExecutor.address) as MockExecutor;
 }
 
@@ -330,8 +321,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const mockExecutor = await getDeployedMockExecutor();
 
-  const anotherExecutorModule = await getDeployedMockExecutor(5);
-
   const ecdsaValidator = await getDeployedK1Validator();
 
   const mockToken = await getDeployedMockToken();
@@ -400,7 +389,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     mockExecutor,
     mockHook,
     mockFallbackHandler,
-    anotherExecutorModule,
     ecdsaValidator,
     counter,
     mockToken,

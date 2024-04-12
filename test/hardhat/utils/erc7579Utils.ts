@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { buildPackedUserOp, generateUseropCallData } from "./operationHelpers";
-import { ExecutionMethod, InstallModuleParams, ModuleType } from "./types";
+import { ExecutionMethod, InstallModuleParams, ModuleType, UninstallModuleParams } from "./types";
 
 // define mode and exec type enums
 export const CALLTYPE_SINGLE = "0x00"; // 1 byte
@@ -39,4 +39,31 @@ export const installModule = async (args: InstallModuleParams) => {
    userOp.signature = signature;
  
    await entryPoint.handleOps([userOp], await bundler.getAddress());
- }
+}
+
+export const uninstallModule = async (args: UninstallModuleParams) => {
+  const { deployedMSA, entryPoint, moduleToUninstall, validatorModule, accountOwner, bundler, moduleType, deInitData } = args;
+  const uninstallModuleData = await generateUseropCallData({
+   executionMethod: ExecutionMethod.Execute,
+   targetContract: deployedMSA,
+   functionName: "uninstallModule",
+   args: [moduleType, await moduleToUninstall.getAddress(), deInitData ? deInitData : ethers.hexlify(await accountOwner.getAddress())],
+ });
+
+ const userOp = buildPackedUserOp({
+   sender: await deployedMSA.getAddress(),
+   callData: uninstallModuleData,
+ });
+
+ const nonce = await entryPoint.getNonce(
+   userOp.sender,
+   ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
+ );
+ userOp.nonce = nonce; 
+
+ const userOpHash = await entryPoint.getUserOpHash(userOp);
+ const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
+ userOp.signature = signature;
+
+ await entryPoint.handleOps([userOp], await bundler.getAddress());
+}
