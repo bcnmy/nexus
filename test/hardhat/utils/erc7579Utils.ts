@@ -38,7 +38,7 @@ export const installModule = async (args: InstallModuleParams) => {
    const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
    userOp.signature = signature;
  
-   await entryPoint.handleOps([userOp], await bundler.getAddress());
+   return await entryPoint.handleOps([userOp], await bundler.getAddress());
 }
 
 export const uninstallModule = async (args: UninstallModuleParams) => {
@@ -67,3 +67,4 @@ export const uninstallModule = async (args: UninstallModuleParams) => {
 
  await entryPoint.handleOps([userOp], await bundler.getAddress());
 }
+

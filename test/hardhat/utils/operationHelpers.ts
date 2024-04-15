@@ -366,6 +366,16 @@ export async function listenForRevertReasons(entryPointAddress: string) {
   );
 }
 
+export function findEventInLogs(logs: any[], eventName: string): string | Error {
+  for (let index = 0; index < logs.length; index++) {
+    const fragmentName = logs[index].fragment.name;    
+    if (fragmentName === eventName) {
+      return fragmentName;
+    }
+  }
+  throw new Error("No event found with the given name");
+}
+
 // TODO
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}

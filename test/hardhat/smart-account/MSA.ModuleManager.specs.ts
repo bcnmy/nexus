@@ -6,7 +6,7 @@ import { ExecutionMethod, ModuleType } from "../utils/types";
 import {
   deployContractsAndSAFixture,
 } from "../utils/deployment";
-import { buildPackedUserOp, generateUseropCallData } from "../utils/operationHelpers";
+import { buildPackedUserOp, findEventInLogs, generateUseropCallData } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import { GENERIC_FALLBACK_SELECTOR, installModule } from "../utils/erc7579Utils";
 
@@ -56,6 +56,15 @@ describe("SmartAccount Module Management Tests", () => {
       expect(executors[0].length).to.be.equal(1);
       expect(executors[0][0]).to.be.equal(await mockExecutor.getAddress());
     });
+
+    it("Should throw if module type id is not valid", async () => {
+      const invalidModuleType = 100;
+      const response = await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, validatorModule: mockValidator, moduleType: invalidModuleType, accountOwner, bundler })
+      const receipt = await response.wait();
+      const event = findEventInLogs(receipt.logs, "UserOperationRevertReason");
+      
+      expect(event).to.equal("UserOperationRevertReason");
+    });
   
     it("Should correctly get active hook", async () => {
       const activeHook = await deployedMSA.getActiveHook();
@@ -66,6 +75,24 @@ describe("SmartAccount Module Management Tests", () => {
       const activeFallbackHandler = await deployedMSA.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
       // no fallback handler installed
       expect(activeFallbackHandler[1]).to.be.equal("0x0000000000000000000000000000000000000000");
+    });
+  });
+
+  describe("Validator Module Tests", () => {
+    it("Should not be able to install wrong validator type", async () => {
+      const functionCalldata = deployedMSA.interface.encodeFunctionData("installModule", [ModuleType.Hooks, await mockValidator.getAddress(), ethers.hexlify(await accountOwner.getAddress())]);
+      await expect(
+        mockExecutor.executeViaAccount(await deployedMSA.getAddress(), await deployedMSA.getAddress(), 0n, functionCalldata)
+      ).to.be.revertedWithCustomError(deployedMSA, "IncompatibleHookModule");
+    });
+
+    it("Should not be able to uninstall last validator   module", async () => {
+      let prevAddress = "0x0000000000000000000000000000000000000001";
+      const functionCalldata = deployedMSA.interface.encodeFunctionData("uninstallModule", [ModuleType.Validation, await mockValidator.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
+
+      await expect(
+        mockExecutor.executeViaAccount(await deployedMSA.getAddress(), await deployedMSA.getAddress(), 0n, functionCalldata)
+      ).to.be.revertedWithCustomError(deployedMSA, "CannotRemoveLastValidator()");
     });
   });
 

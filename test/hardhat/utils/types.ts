@@ -104,7 +104,7 @@ export type InstallModuleParams = {
   deployedMSA: SmartAccount,
   entryPoint: EntryPoint,
   moduleToInstall: any,
-  moduleType: ModuleType,
+  moduleType: ModuleType | number,
   validatorModule: MockValidator | K1Validator,
   accountOwner: Signer,
   bundler: Signer

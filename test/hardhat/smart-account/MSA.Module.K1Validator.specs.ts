@@ -128,7 +128,6 @@ describe("K1Validator module tests", () => {
       const data = ethers.solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
       const callData = encodeData(["bytes"], [data])
       const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), hashMessage(callData), callData);
-      
       // 0x1626ba7e - valid 
       // 0xffffffff - invalid
       expect(isValid.toString()).to.equal("0x1626ba7e");
