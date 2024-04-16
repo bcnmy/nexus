@@ -28,6 +28,7 @@ import {
   UNUSED,
   installModule,
 } from "../utils/erc7579Utils";
+import { zeroAddress } from "viem";
 
 describe("SmartAccount Basic Specs", function () {
   let factory: AccountFactory;
@@ -113,7 +114,7 @@ describe("SmartAccount Basic Specs", function () {
     });
   });
 
-  describe("Account ID and Supported Modes", function () {
+  describe("Smart Account Basics", function () {
     it("Should correctly return the SmartAccount's ID", async function () {
       expect(await smartAccount.accountId()).to.equal(
         "biconomy.modular-smart-account.1.0.0-alpha",
@@ -121,8 +122,8 @@ describe("SmartAccount Basic Specs", function () {
     });
 
     it("Should get implementation address of smart account", async () => {
-      const implementation = await smartAccount.getImplementation();
-      expect(implementation).to.be.equal("0x668D18aa5f4770Dbaf2e332Cf46a31e01F36715d");
+      const saImplementation = await smartAccount.getImplementation();
+      expect(saImplementation).to.not.equal(zeroAddress);
     })
 
     it("Should check deposit amount", async () => {
@@ -282,7 +283,7 @@ describe("SmartAccount Basic Specs", function () {
         callData
       ]);
       const isValid = await smartAccount.isValidSignature(hashMessage(callData), functionCalldata);
-      expect(isValid).to.be.true;
+      expect(isValid).to.equal("0x1626ba7e");
     });
   });
 

@@ -111,6 +111,14 @@ describe("SmartAccount Module Management Tests", () => {
       expect(isInstalledAfter).to.be.true;
     });
 
+    it("Should not be able to uninstall a module which is not installed", async () => {
+      let prevAddress = "0x0000000000000000000000000000000000000001";
+      const randomAddress = await ethers.Wallet.createRandom().getAddress();
+      const functionCalldata = deployedMSA.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, randomAddress, encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
+
+      await expect(mockExecutor.executeViaAccount(await deployedMSA.getAddress(), await deployedMSA.getAddress(), 0n, functionCalldata)).to.be.reverted;
+    });
+
     it("Should correctly uninstall a previously installed execution module by using the execution module itself", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
       const functionCalldata = deployedMSA.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await mockExecutor.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);

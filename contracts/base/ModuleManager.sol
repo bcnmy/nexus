@@ -269,7 +269,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         IFallback(fallbackHandler).onUninstall(deInitData);
     }
 
-    function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) {
+    function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) { // UNUSED
         FallbackHandler storage handlers = _getAccountStorage().fallbacks[selector];
         return handlers.handler;
     }
@@ -298,7 +298,7 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         return _getHook() == hook;
     }
 
-    function _isAlreadyInitialized() internal view virtual returns (bool) {
+    function _isAlreadyInitialized() internal view virtual returns (bool) { // UNUSED
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized();
