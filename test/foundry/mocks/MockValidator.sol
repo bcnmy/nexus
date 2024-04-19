@@ -69,6 +69,10 @@ contract MockValidator is IValidator {
         return false;
     }
 
+    function getOwner(address account) external view returns (address) {
+        return smartAccountOwners[account];
+    }
+
     // Review
     function test(uint256 a) public pure {
         a;

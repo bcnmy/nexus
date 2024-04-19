@@ -10,39 +10,31 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
     function test_ExecuteBatch_Success() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
+        uint256 executionsNumber = 2;
 
-        // Preparing a batch execution with two operations: increment and decrement
-        Execution[] memory executions = new Execution[](2);
-        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
-        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
 
-        // Execute batch operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
-
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
-        // Assert the counter value remains unchanged after increment and decrement
-        assertEq(counter.getNumber(), 2, "Counter value should increment twice after batch execution");
+        assertEq(counter.getNumber(), executionsNumber, "Counter value should increment twice after batch execution");
     }
 
-    function test_ExecuteBatch_Revert() public {
+    function test_ExecuteBatch_RevertsWithDefaultExecTypeIfOneOfActionsInBatchReverts() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        // Preparing a batch execution with two operations: increment and decrement
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Execute batch operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
-
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -51,42 +43,24 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
     function test_ExecuteBatch_Empty() public {
         // Initial state assertion
-        Execution[] memory executions = new Execution[](3);
-
-        // Preparing a batch execution with two empty operations
-        executions[0] = Execution(address(0), 0, "");
-        executions[1] = Execution(address(0), 0, "");
-        executions[2] = Execution(address(0), 0, "");
-
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(address(counter), 0, ""), 3);
         // Execute batch operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
-
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        assertEq(counter.getNumber(), 0);
     }
 
     function test_ExecuteBatch_ValueTransfer() public {
         address receiver = address(0x123);
-        uint256 sendValue = 1 ether;
-
-        // Fund BOB_ACCOUNT with 10 ETH to cover the value transfer
-        payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund BOB_ACCOUNT
-
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
+        uint256 valueToSend = 1 ether;
+        uint256 numberOfExecutions = 3;
 
-        // Initial state assertion
-        Execution[] memory executions = new Execution[](3);
-
-        // Preparing a batch execution with two empty operations
-        executions[0] = Execution(receiver, sendValue, "");
-        executions[1] = Execution(receiver, sendValue, "");
-        executions[2] = Execution(receiver, sendValue, "");
-
-        // Execute batch operation
+        payable(address(BOB_ACCOUNT)).call{ value: valueToSend*numberOfExecutions }(""); // Fund BOB_ACCOUNT
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
-
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-
-        assertEq(receiver.balance, 3 ether, "Receiver should have received 3 ETH");
+        assertEq(receiver.balance, valueToSend*numberOfExecutions, "Receiver should have received proper amount of ETH");
     }
 
     function test_ExecuteBatch_TokenTransfers() public {

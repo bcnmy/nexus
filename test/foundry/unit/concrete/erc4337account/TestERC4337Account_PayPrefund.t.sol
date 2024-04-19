@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-// import {UserOperation} from "path/to/UserOperation.sol"; // Update this path
 
 contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     SmartAccount public account;

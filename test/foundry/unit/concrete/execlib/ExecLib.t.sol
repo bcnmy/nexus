@@ -9,9 +9,6 @@ contract ExecLibTest is Test {
 
     function test_encode_decode(address target, uint256 value, bytes memory callData) public {
         bytes memory encoded = ExecLib.encodeSingle(target, value, callData);
-        console2.logBytes(encoded);
-        console2.log("calldata");
-        console2.logBytes(callData);
         (address _target, uint256 _value, bytes memory _callData) = this.decode(encoded);
 
         assertTrue(_target == target);

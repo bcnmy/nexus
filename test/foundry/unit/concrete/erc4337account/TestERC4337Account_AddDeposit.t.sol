@@ -8,142 +8,101 @@ event DepositAdded(address indexed account, address indexed depositor, uint256 a
 
 contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     SmartAccount private account;
+    uint256 defaultMaxPercentDelta;
+    uint256 defaultDepositAmount;
 
     function setUp() public {
-        init();
+        super.init();
         account = BOB_ACCOUNT;
+        defaultMaxPercentDelta = 100_000_000_000;
+        defaultDepositAmount = 1 ether;
     }
 
     function test_AddDeposit_Success() public {
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
-        uint256 depositAmount = 1 ether;
-
-        account.addDeposit{ value: depositAmount }();
-
+        uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
+        account.addDeposit{ value: defaultDepositAmount }();
         assertEq(
-            balanceBefore + depositAmount,
+            depositBefore + defaultDepositAmount,
             ENTRYPOINT.balanceOf(address(account)),
             "Deposit should be added to EntryPoint"
         );
     }
 
     function test_AddDeposit_EventEmitted() public {
-        uint256 depositAmount = 1 ether;
-        (bool res,) = address(account).call{ value: depositAmount }(""); // Pre-funding the account contract
-        assertTrue(res, "Pre-funding account should succeed");
+        _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount);
 
         // vm.expectEmit(true, true, true, true);
         // Todo: emit the event used by EntryPoint
 
-        account.addDeposit{ value: depositAmount }();
+        account.addDeposit{ value: defaultDepositAmount }();
     }
 
     function test_AddDeposit_Revert_NoValue() public {
+        // Should we add zero value check to the addDeposit method?
         account.addDeposit();
     }
 
     function test_AddDeposit_DepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
-        uint256 depositAmount = 1 ether;
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
+        _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
+        uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-
-        // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_DEFAULT, execution);
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        uint256 gasUsed = gasStart - gasleft();
+        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
+        uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         // Using almostEq to compare balances with a tolerance for gas costs
-        uint256 maxPercentDelta = 100_000_000_000;
         almostEq(
-            balanceBefore + depositAmount - (gasUsed * tx.gasprice),
+            depositBefore + defaultDepositAmount - (gasUsed * tx.gasprice),
             ENTRYPOINT.balanceOf(address(account)),
-            maxPercentDelta
+            defaultMaxPercentDelta
         );
     }
 
     function test_AddDeposit_BatchDepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
-        uint256 depositAmount = 1 ether;
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
+        uint256 executionsNumber = 5;
+        _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount * 10);
+        uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory executions = new Execution[](5);
-        executions[0] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[1] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[2] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[3] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[4] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-
-        // Build UserOperation for single execution
+        Execution memory execution = Execution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        uint256 gasUsed = gasStart - gasleft();
-
-        // Using almostEq to compare balances with a tolerance for gas costs
-        uint256 maxPercentDelta = 100_000_000_000;
+        uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
         almostEq(
-            balanceBefore + (depositAmount * 5) - (gasUsed * tx.gasprice),
+            depositBefore + (defaultDepositAmount * executionsNumber) - (gasUsed * tx.gasprice),
             ENTRYPOINT.balanceOf(address(account)),
-            maxPercentDelta
+            defaultMaxPercentDelta
         );
     }
 
     function test_AddDeposit_Try_DepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
-        uint256 depositAmount = 1 ether;
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
+        _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
+        uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_TRY, executions);
+        uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
-        // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_TRY, execution);
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        uint256 gasUsed = gasStart - gasleft();
-
-        // Using almostEq to compare balances with a tolerance for gas costs
-        uint256 maxPercentDelta = 100_000_000_000;
         almostEq(
-            balanceBefore + depositAmount - (gasUsed * tx.gasprice),
+            depositBefore + defaultDepositAmount - (gasUsed * tx.gasprice),
             ENTRYPOINT.balanceOf(address(account)),
-            maxPercentDelta
+            defaultMaxPercentDelta
         );
     }
 
     function test_AddDeposit_Try_BatchDepositViaHandleOps() public {
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund account with 2 ETH
-        assertTrue(res, "Pre-funding account should succeed");
+        _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount * 10);
+        uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
+        uint256 executionsNumber = 5;
 
-        uint256 depositAmount = 1 ether;
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(address(account));
-
-        Execution[] memory executions = new Execution[](5);
-        executions[0] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[1] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[2] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[3] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-        executions[4] = Execution(address(account), depositAmount, abi.encodeWithSignature("addDeposit()"));
-
-        // Build UserOperation for single execution
+        Execution memory execution = Execution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_TRY, executions);
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        uint256 gasUsed = gasStart - gasleft();
+        uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
-        // Using almostEq to compare balances with a tolerance for gas costs
-        uint256 maxPercentDelta = 100_000_000_000;
         almostEq(
-            balanceBefore + (depositAmount * 5) - (gasUsed * tx.gasprice),
+            depositBefore + (defaultDepositAmount * executionsNumber) - (gasUsed * tx.gasprice),
             ENTRYPOINT.balanceOf(address(account)),
-            maxPercentDelta
+            defaultMaxPercentDelta
         );
     }
 }
