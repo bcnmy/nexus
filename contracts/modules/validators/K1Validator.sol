@@ -9,12 +9,12 @@ import { IValidator } from "contracts/interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
-    /*
-    * @title K1Validator
-    * @dev A simple validator that checks if the user operation signature is valid
-    * THIS VALIDATOR IS NOT FOR PRODUCTION, BUT FOR TESTING PURPOSES ONLY
-    * For production use, check Biconomy Modules repo at https://github.com/bcnmy/...
-    */
+/*
+ * @title K1Validator
+ * @dev A simple validator that checks if the user operation signature is valid
+ * THIS VALIDATOR IS NOT FOR PRODUCTION, BUT FOR TESTING PURPOSES ONLY
+ * For production use, check Biconomy Modules repo at https://github.com/bcnmy/...
+ */
 
 contract K1Validator is IValidator {
     error NoOwnerProvided();
@@ -60,10 +60,7 @@ contract K1Validator is IValidator {
             userOp.signature
         );
         if (!validSig) {
-            validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(
-                userOpHash,
-                userOp.signature
-            );
+            validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(userOpHash, userOp.signature);
         }
         if (!validSig) return VALIDATION_FAILED;
         return VALIDATION_SUCCESS;
