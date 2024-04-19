@@ -21,14 +21,20 @@ contract MockHook is IHook {
      }
 
     /// @inheritdoc IHook
-    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) {
+    function preCheck(address msgSender, uint256 msgValue, bytes calldata msgData) external returns (bytes memory hookData) {
         emit PreCheckCalled();
      }
 
     /// @inheritdoc IHook
-    function postCheck(bytes calldata hookData) external returns (bool success) {
+    function postCheck(
+        bytes calldata hookData,
+        bool executionSuccess,
+        bytes calldata executionReturnValue
+    )
+        external
+    { 
         emit PostCheckCalled();
-     }
+    }
 
     /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {

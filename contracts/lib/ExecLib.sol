@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import { Execution } from "../interfaces/modules/IExecutor.sol";
 
 /**
+ * @title ExecutionLib
+ * @author zeroknots.eth | rhinestone.wtf
  * Helper Library for decoding Execution calldata
  * malloc for memory allocation is bad for gas. use this assembly instead
  */

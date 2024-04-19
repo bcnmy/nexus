@@ -190,7 +190,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     // Helper to modify the address of a deployed contract in a test environment
     function changeContractAddress(address originalAddress, address newAddress) internal {
-        setContractCode(originalAddress, address(originalAddress).code);
+        setContractCode(originalAddress, originalAddress.code);
         setContractCode(newAddress, originalAddress.code);
     }
 
@@ -230,7 +230,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
         // Determine mode and calldata based on callType and executions length
-        ModeCode mode;
+        ExecutionMode mode;
         bytes memory executionCalldata;
         uint256 length = executions.length;
 

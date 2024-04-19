@@ -12,8 +12,8 @@ contract SmartAccountTestLab is Helpers {
         initializeTestingEnvironment();
     }
 
-    function _prefundSmartAccountAndAssertSuccess(address smartAccount, uint256 prefundAmount) internal {
-        (bool res,) = smartAccount.call{ value: prefundAmount }(""); // Pre-funding the account contract
+    function _prefundSmartAccountAndAssertSuccess(address sa, uint256 prefundAmount) internal {
+        (bool res,) = sa.call{ value: prefundAmount }(""); // Pre-funding the account contract
         assertTrue(res, "Pre-funding account should succeed");
     }
 

@@ -12,7 +12,7 @@ contract ModeLibTest is Test {
         ExecType execType = EXECTYPE_DEFAULT;
         ModeSelector modeSelector = MODE_DEFAULT;
         ModePayload payload = ModePayload.wrap(bytes22(hex"01"));
-        ModeCode enc = ModeLib.encode(callType, execType, modeSelector, payload);
+        ExecutionMode enc = ModeLib.encode(callType, execType, modeSelector, payload);
 
         (CallType _calltype, ExecType _execType, ModeSelector _mode, ModePayload _payload) = ModeLib.decode(enc);
         assertTrue(_calltype == callType);
@@ -26,7 +26,7 @@ contract ModeLibTest is Test {
         ExecType execType = EXECTYPE_DEFAULT;
         ModeSelector modeSelector = MODE_DEFAULT;
         ModePayload payload = ModePayload.wrap(bytes22(hex"01"));
-        ModeCode enc = ModeLib.encode(callType, execType, modeSelector, payload);
+        ExecutionMode enc = ModeLib.encode(callType, execType, modeSelector, payload);
 
         (CallType _calltype, ExecType _execType, ModeSelector _mode, ModePayload _payload) = ModeLib.decode(enc);
         assertTrue(_calltype == callType);

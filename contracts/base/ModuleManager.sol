@@ -16,17 +16,33 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } fro
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
 // Review: Kept a different linked list for validators, executors
+
+/**
+ * @title ModuleManager
+ * @dev This contract manages Validator, Executor, Hook and Fallback modules for the MSA
+ * @dev it uses SentinelList to manage the linked list of modules
+ * shoutout to zeroknots (rhinestone.wtf) for this code
+ * NOTE: the linked list is just an example. accounts may implement this differently
+ */
 abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
-    modifier withHook() virtual {
-        address hook = _getHook();
-        if (hook == address(0)) {
-            _;
-        } else {
-            bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.data);
-            _;
-            if (!IHook(hook).postCheck(hookData)) revert HookPostCheckFailed();
+    function _preCheck() internal returns (address hook, bytes memory hookData) {
+        hook = _getHook();
+        if (hook != address(0)) {
+            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            return (hook, hookData);
+        }
+    }
+
+    function _postCheck(
+        address hook,
+        bytes memory hookData,
+        bool executionSuccess,
+        bytes memory executionReturnValue
+    ) internal {
+        if (hook != address(0)) {
+            IHook(hook).postCheck(hookData, executionSuccess, executionReturnValue);
         }
     }
 
@@ -243,37 +259,14 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
         bytes memory initData = params[5:];
         if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
-
-        if (calltype == CALLTYPE_DELEGATECALL) {
-            (bool success, ) = handler.delegatecall(abi.encodeWithSelector(IModule.onInstall.selector, initData));
-            if (!success) {
-                revert("Fallback handler failed to install");
-            }
-        } else {
-            IFallback(handler).onInstall(initData);
-        }
+        IFallback(handler).onInstall(initData);
     }
 
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         bytes4 selector = bytes4(data[0:4]);
         bytes memory deInitData = data[4:];
-
-        FallbackHandler memory activeFallback = _getAccountStorage().fallbacks[selector];
-
-        CallType callType = activeFallback.calltype;
-
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
-
-        if (callType == CALLTYPE_DELEGATECALL) {
-            (bool success, ) = fallbackHandler.delegatecall(
-                abi.encodeWithSelector(IModule.onUninstall.selector, deInitData)
-            );
-            if (!success) {
-                revert FallbackHandlerUninstallFailed();
-            }
-        } else {
-            IFallback(fallbackHandler).onUninstall(deInitData);
-        }
+        IFallback(fallbackHandler).onUninstall(deInitData);
     }
 
     function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) {

@@ -18,7 +18,7 @@ contract BadMockHook {
         emit PostCheckCalled();
      }
 
-    function preCheck(address msgSender, bytes calldata msgData) external returns (bytes memory hookData) {
+    function preCheck(address msgSender, uint256 msgValue, bytes calldata msgData) external returns (bytes memory hookData) {
         emit PreCheckCalled();
      }
 
