@@ -45,18 +45,18 @@ contract MockValidator is IValidator {
         return 0xffffffff;
     }
 
-    /// @inheritdoc IModule
+
     function onInstall(bytes calldata data) external {
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
-    /// @inheritdoc IModule
+
     function onUninstall(bytes calldata data) external {
         data;
         delete smartAccountOwners[msg.sender];
     }
 
-    /// @inheritdoc IModule
+
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
@@ -65,9 +65,12 @@ contract MockValidator is IValidator {
         return smartAccountOwners[account] == owner;
     }
 
-    /// @inheritdoc IModule
-    function getModuleTypes() external view returns (EncodedModuleTypes) {
-        // solhint-disable-previous-line no-empty-blocks
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
+    }
+
+    function getOwner(address account) external view returns (address) {
+        return smartAccountOwners[account];
     }
 
     // Review

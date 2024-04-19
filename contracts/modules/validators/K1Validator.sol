@@ -9,7 +9,16 @@ import { IValidator } from "contracts/interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
+/*
+ * @title K1Validator
+ * @dev A simple validator that checks if the user operation signature is valid
+ * THIS VALIDATOR IS NOT FOR PRODUCTION, BUT FOR TESTING PURPOSES ONLY
+ * For production use, check Biconomy Modules repo at https://github.com/bcnmy/...
+ */
+
 contract K1Validator is IValidator {
+    error NoOwnerProvided();
+
     using SignatureCheckerLib for address;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -24,7 +33,7 @@ contract K1Validator is IValidator {
 
     // TODO // Review comments
     function onInstall(bytes calldata data) external override {
-        if (data.length == 0) return;
+        if (data.length == 0) revert NoOwnerProvided();
         address owner = address(bytes20(data)); // encodePacked
         // OR // abi.decode(data, (address));
         smartAccountOwners[msg.sender] = owner;
@@ -50,6 +59,9 @@ contract K1Validator is IValidator {
             ECDSA.toEthSignedMessageHash(userOpHash),
             userOp.signature
         );
+        if (!validSig) {
+            validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(userOpHash, userOp.signature);
+        }
         if (!validSig) return VALIDATION_FAILED;
         return VALIDATION_SUCCESS;
     }
@@ -60,6 +72,9 @@ contract K1Validator is IValidator {
         bytes calldata data
     ) external view override returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
+        // SHOULD PREPARE REPLAY RESISTANT HASH BY APPENDING MSG.SENDER
+        // SEE: https://github.com/bcnmy/scw-contracts/blob/3362262dab34fa0f57e2fbe0e57a4bdbd5318165/contracts/smart-account/modules/EcdsaOwnershipRegistryModule.sol#L122-L132
+        // OR USE EIP-712
         return
             SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
@@ -68,7 +83,9 @@ contract K1Validator is IValidator {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view override returns (EncodedModuleTypes) {
+        // solhint-disable-previous-line no-empty-blocks
+    }
 
     function name() external pure returns (string memory) {
         return "K1Validator";
@@ -83,6 +100,7 @@ contract K1Validator is IValidator {
     }
 
     function test() public pure {
+        // solhint-disable-previous-line no-empty-blocks
         // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

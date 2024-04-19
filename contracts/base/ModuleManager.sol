@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { Storage } from "./Storage.sol";
+import { BaseAccount } from "./BaseAccount.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
@@ -11,7 +11,7 @@ import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 
 // Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
 // Review: This contract could also act as fallback manager rather than having a separate contract
@@ -24,7 +24,23 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, CALLTYPE_STATIC } fro
  * shoutout to zeroknots (rhinestone.wtf) for this code
  * NOTE: the linked list is just an example. accounts may implement this differently
  */
-abstract contract ModuleManager is Storage, Receiver, IModuleManager {
+abstract contract ModuleManager is BaseAccount, Storage, Receiver {
+    error CannotRemoveLastValidator();
+    error InvalidModule(address module);
+    error InvalidModuleTypeId(uint256 moduleTypeId);
+    error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
+    error UnauthorizedOperation(address operator);
+    error ModuleNotInstalled(uint256 moduleTypeId, address module);
+    error IncompatibleValidatorModule(address module);
+    error IncompatibleExecutorModule(address module);
+    error IncompatibleHookModule(address module);
+    error ModuleAddressCanNotBeZero();
+    error HookPostCheckFailed();
+    error HookAlreadyInstalled(address currentHook);
+    error FallbackAlreadyInstalledForSelector(bytes4 selector);
+    error FallbackHandlerUninstallFailed();
+    error NoFallbackHandler(bytes4 selector);
+
     using SentinelListLib for SentinelListLib.SentinelList;
 
     function _preCheck() internal returns (address hook, bytes memory hookData) {
@@ -119,22 +135,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     }
 
     /**
-     * @notice Installs a Module of a certain type on the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param initData Initialization data for the module.
-     */
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable virtual;
-
-    /**
-     * @notice Uninstalls a Module of a certain type from the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param deInitData De-initialization data for the module.
-     */
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable virtual;
-
-    /**
      * THIS IS NOT PART OF THE STANDARD
      * Helper Function to access linked list
      */
@@ -159,19 +159,6 @@ abstract contract ModuleManager is Storage, Receiver, IModuleManager {
     function getActiveHook() external view returns (address hook) {
         return _getHook();
     }
-
-    /**
-     * @notice Checks if a module is installed on the smart account.
-     * @param moduleTypeId The module type ID.
-     * @param module The module address.
-     * @param additionalContext Additional context for checking installation.
-     * @return True if the module is installed, false otherwise.
-     */
-    function isModuleInstalled(
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata additionalContext
-    ) external view virtual returns (bool);
 
     function getFallbackHandlerBySelector(bytes4 selector) external view returns (CallType, address) {
         FallbackHandler memory handler = _getAccountStorage().fallbacks[selector];

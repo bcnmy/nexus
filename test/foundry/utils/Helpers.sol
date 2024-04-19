@@ -16,7 +16,6 @@ import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
-import { AccountExecution } from "../../../contracts/base/AccountExecution.sol";
 
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -95,10 +94,11 @@ contract Helpers is CheatCodes, EventsAndErrors {
         bytes memory initCode = prepareInitCode(wallet.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInit(wallet, initCode, "");
+        userOps[0] = prepareUserOpWithInitAndCalldata(wallet, initCode, "");
 
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
+        assertTrue(VALIDATOR_MODULE.isOwner(accountAddress, wallet.addr));
         return SmartAccount(accountAddress);
     }
 
@@ -133,7 +133,23 @@ contract Helpers is CheatCodes, EventsAndErrors {
         );
     }
 
-    function prepareUserOp(
+    function prepareUserOpWithInitAndCalldata(
+        Vm.Wallet memory wallet,
+        bytes memory initCode,
+        bytes memory callData
+    )
+        internal
+        view
+        returns (PackedUserOperation memory userOp)
+    {
+        userOp = prepareUserOpWithCalldata(wallet, callData);
+        userOp.initCode = initCode;
+
+        bytes memory signature = signUserOp(wallet, userOp);
+        userOp.signature = signature;
+    }
+
+    function prepareUserOpWithCalldata(
         Vm.Wallet memory wallet,
         bytes memory callData
     )
@@ -145,22 +161,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
         uint256 nonce = getNonce(account, address(VALIDATOR_MODULE));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
-
-        bytes memory signature = signUserOp(wallet, userOp);
-        userOp.signature = signature;
-    }
-
-    function prepareUserOpWithInit(
-        Vm.Wallet memory wallet,
-        bytes memory initCode,
-        bytes memory callData
-    )
-        internal
-        view
-        returns (PackedUserOperation memory userOp)
-    {
-        userOp = prepareUserOp(wallet, callData);
-        userOp.initCode = initCode;
 
         bytes memory signature = signUserOp(wallet, userOp);
         userOp.signature = signature;
@@ -189,7 +189,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     // Helper to modify the address of a deployed contract in a test environment
     function changeContractAddress(address originalAddress, address newAddress) internal {
-        setContractCode(originalAddress, address(originalAddress).code);
+        setContractCode(originalAddress, originalAddress.code);
         setContractCode(newAddress, originalAddress.code);
     }
 
@@ -236,12 +236,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
             executionCalldata = abi.encodeCall(
-                AccountExecution.execute,
+                SmartAccount.execute,
                 (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
             );
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
-            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+            executionCalldata = abi.encodeCall(SmartAccount.execute, (mode, ExecLib.encodeBatch(executions)));
         } else {
             revert("Executions array cannot be empty");
         }

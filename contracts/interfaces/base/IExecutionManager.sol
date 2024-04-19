@@ -1,19 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecutionMode } from "../../lib/ModeLib.sol";
 
 /**
- * @title Execution Interface for Biconomy Smart Accounts
+ * @title IExecutionManager
+ * @dev Execution Interface for Biconomy Smart Accounts
  * @dev Interface for executing transactions on behalf of the smart account,
- * including ERC7579 executions and ERC-4337 user operations as per ERC-4337-v-0.7
  */
-interface IAccountExecution {
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
-
-    error ExecutionFailed();
-
+interface IExecutionManager {
     /**
      * @notice ERC7579 Main Execution flow.
      * Executes a transaction on behalf of the account.
@@ -35,12 +30,4 @@ interface IAccountExecution {
         ExecutionMode mode,
         bytes calldata executionCalldata
     ) external payable returns (bytes[] memory returnData);
-
-    /**
-     * @notice Executes a user operation as per ERC-4337.
-     * @dev This function is intended to be called by the ERC-4337 EntryPoint contract.
-     * @param userOp The packed user operation data.
-     * @param userOpHash The hash of the packed user operation.
-     */
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable;
 }
