@@ -65,6 +65,10 @@ contract MockValidator is IValidator {
         return smartAccountOwners[account] == owner;
     }
 
+    function getOwner(address account) external view returns (address) {
+        return smartAccountOwners[account];
+    }
+
     /// @inheritdoc IModule
     function getModuleTypes() external view returns (EncodedModuleTypes) {
         // solhint-disable-previous-line no-empty-blocks

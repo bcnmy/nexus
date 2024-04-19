@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-// import {UserOperation} from "path/to/UserOperation.sol"; // Update this path
 
 contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     ERC4337Account public account;
@@ -12,8 +11,6 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
 
     function setUp() public {
         init();
-        userAddress = address(BOB.addr);
-        validator = new MockValidator();
     }
 
     function test_ValidateUserOp_ValidOperation() public {

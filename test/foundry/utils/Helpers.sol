@@ -95,10 +95,11 @@ contract Helpers is CheatCodes, EventsAndErrors {
         bytes memory initCode = prepareInitCode(wallet.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInit(wallet, initCode, "");
+        userOps[0] = prepareUserOpWithInitAndCalldata(wallet, initCode, "");
 
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
+        assertTrue(VALIDATOR_MODULE.isOwner(accountAddress, wallet.addr));
         return SmartAccount(accountAddress);
     }
 
@@ -133,7 +134,23 @@ contract Helpers is CheatCodes, EventsAndErrors {
         );
     }
 
-    function prepareUserOp(
+    function prepareUserOpWithInitAndCalldata(
+        Vm.Wallet memory wallet,
+        bytes memory initCode,
+        bytes memory callData
+    )
+        internal
+        view
+        returns (PackedUserOperation memory userOp)
+    {
+        userOp = prepareUserOpWithCalldata(wallet, callData);
+        userOp.initCode = initCode;
+
+        bytes memory signature = signUserOp(wallet, userOp);
+        userOp.signature = signature;
+    }
+
+    function prepareUserOpWithCalldata(
         Vm.Wallet memory wallet,
         bytes memory callData
     )
@@ -145,22 +162,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
         uint256 nonce = getNonce(account, address(VALIDATOR_MODULE));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
-
-        bytes memory signature = signUserOp(wallet, userOp);
-        userOp.signature = signature;
-    }
-
-    function prepareUserOpWithInit(
-        Vm.Wallet memory wallet,
-        bytes memory initCode,
-        bytes memory callData
-    )
-        internal
-        view
-        returns (PackedUserOperation memory userOp)
-    {
-        userOp = prepareUserOp(wallet, callData);
-        userOp.initCode = initCode;
 
         bytes memory signature = signUserOp(wallet, userOp);
         userOp.signature = signature;
