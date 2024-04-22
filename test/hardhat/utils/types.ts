@@ -100,26 +100,15 @@ export enum ModuleType {
   Hooks = 4,
 }
 
-export type InstallModuleParams = {
+export type ModuleParams = {
   deployedMSA: SmartAccount,
   entryPoint: EntryPoint,
-  moduleToInstall: any,
+  module: any,
   moduleType: ModuleType | number,
   validatorModule: MockValidator | K1Validator,
   accountOwner: Signer,
   bundler: Signer
-  initData?: BytesLike
-}
-
-export type UninstallModuleParams = {
-  deployedMSA: SmartAccount,
-  entryPoint: EntryPoint,
-  moduleToUninstall: any,
-  moduleType: ModuleType,
-  validatorModule: MockValidator | K1Validator,
-  accountOwner: Signer,
-  bundler: Signer
-  deInitData?: BytesLike
+  data?: BytesLike
 }
 
 export const Executions = ParamType.from({

@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, concat, hashMessage, toBeHex, zeroPadBytes } from "ethers";
+import { AddressLike, Signer, ZeroAddress, concat, hashMessage, toBeHex, zeroPadBytes } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AccountFactory,
@@ -20,6 +20,7 @@ import {
 import {
   CALLTYPE_BATCH,
   CALLTYPE_SINGLE,
+  ERC1271_MAGICVALUE,
   EXECTYPE_DEFAULT,
   EXECTYPE_DELEGATE,
   EXECTYPE_TRY,
@@ -28,7 +29,6 @@ import {
   UNUSED,
   installModule,
 } from "../utils/erc7579Utils";
-import { zeroAddress } from "viem";
 
 describe("SmartAccount Basic Specs", function () {
   let factory: AccountFactory;
@@ -123,7 +123,7 @@ describe("SmartAccount Basic Specs", function () {
 
     it("Should get implementation address of smart account", async () => {
       const saImplementation = await smartAccount.getImplementation();
-      expect(saImplementation).to.not.equal(zeroAddress);
+      expect(saImplementation).to.not.equal(ZeroAddress);
     })
 
     it("Should check deposit amount", async () => {
@@ -283,7 +283,7 @@ describe("SmartAccount Basic Specs", function () {
         callData
       ]);
       const isValid = await smartAccount.isValidSignature(hashMessage(callData), functionCalldata);
-      expect(isValid).to.equal("0x1626ba7e");
+      expect(isValid).to.equal(ERC1271_MAGICVALUE);
     });
   });
 

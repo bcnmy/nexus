@@ -8,24 +8,12 @@ import {
   MockValidator,
   SmartAccount,
 } from "../../../typechain-types";
-import { ModuleType } from "../utils/types";
 import { deployContractsFixture } from "../utils/deployment";
-import { to18 } from "../utils/encoding";
+import { encodeData, to18 } from "../utils/encoding";
 import {
-  getInitCode,
   buildPackedUserOp,
 } from "../utils/operationHelpers";
-import {
-  CALLTYPE_BATCH,
-  CALLTYPE_SINGLE,
-  EXECTYPE_DEFAULT,
-  EXECTYPE_DELEGATE,
-  EXECTYPE_TRY,
-  MODE_DEFAULT,
-  MODE_PAYLOAD,
-  UNUSED,
-} from "../utils/erc7579Utils";
-import { encodeFunctionData } from "viem";
+
 
 describe("SmartAccount Factory Tests", function () {
   let factory: AccountFactory;
@@ -42,7 +30,7 @@ describe("SmartAccount Factory Tests", function () {
   let ownerAddress: AddressLike;
   let bundler: Signer;
   let bundlerAddress: AddressLike;
-  let userSA: SmartAccount;
+  let ownerSA: SmartAccount;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsFixture);
@@ -80,14 +68,14 @@ describe("SmartAccount Factory Tests", function () {
 
     await factory.createAccount(validatorModuleAddress, installData, saDeploymentIndex);
 
-    userSA = smartAccount.attach(expectedAccountAddress) as SmartAccount;
+    ownerSA = smartAccount.attach(expectedAccountAddress) as SmartAccount;
   });
  
   describe("Contract Deployment - Should not revert", function () {
     it("Should deploy smart account with createAccount", async function () {
       const saDeploymentIndex = 0;
 
-      const installData = ethers.AbiCoder.defaultAbiCoder().encode(
+      const installData = encodeData(
         ["address"],
         [ownerAddress],
       ); // Example data, customize as needed
@@ -118,12 +106,20 @@ describe("SmartAccount Factory Tests", function () {
         [ownerAddress],
       ); // Example data, customize as needed
 
+      const unexpectedAccountAddress = await factory.getCounterFactualAddress(
+        validatorModuleAddress,
+        installData,
+        1
+      )
+
       // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
         validatorModuleAddress, // validator address
         installData,
         saDeploymentIndex,
       );
+
+      expect(unexpectedAccountAddress).to.not.equal(expectedAccountAddress);
 
       await factory.createAccount(
         validatorModuleAddress,

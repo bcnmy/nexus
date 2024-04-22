@@ -7,7 +7,7 @@ import {
   deployContractsAndSAFixture,
 } from "../utils/deployment";
 import { encodeData } from "../utils/encoding";
-import { installModule } from "../utils/erc7579Utils";
+import { ERC1271_MAGICVALUE, installModule } from "../utils/erc7579Utils";
 import { buildPackedUserOp, generateUseropCallData } from "../utils/operationHelpers";
 
 describe("K1Validator module tests", () => {
@@ -36,7 +36,7 @@ describe("K1Validator module tests", () => {
     bundler = ethers.Wallet.createRandom();
 
     // Install K1Validator module
-    await installModule({ deployedMSA, entryPoint, moduleToInstall: k1Validator, validatorModule: mockValidator, moduleType: ModuleType.Validation, accountOwner, bundler })
+    await installModule({ deployedMSA, entryPoint, module: k1Validator, validatorModule: mockValidator, moduleType: ModuleType.Validation, accountOwner, bundler })
   });
 
   describe("K1Validtor tests", () => {
@@ -128,9 +128,7 @@ describe("K1Validator module tests", () => {
       const data = ethers.solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
       const callData = encodeData(["bytes"], [data])
       const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), hashMessage(callData), callData);
-      // 0x1626ba7e - valid 
-      // 0xffffffff - invalid
-      expect(isValid.toString()).to.equal("0x1626ba7e");
+      expect(isValid.toString()).to.equal(ERC1271_MAGICVALUE);
     });
   });
 });

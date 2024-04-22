@@ -110,7 +110,7 @@ describe("SmartAccount Single Execution", () => {
   });
 
   describe("SmartAccount Transaction Execution", () => {
-    it("Should execute a transaction thorugh handleOps", async () => {
+    it("Should execute a transaction through handleOps", async () => {
       const isOwner = await validatorModule.isOwner(smartAccountAddress, smartAccountOwnerAddress);
       expect(isOwner).to.be.true;
       const callData = await generateUseropCallData({
@@ -330,7 +330,7 @@ describe("SmartAccount Single Execution", () => {
     it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      await uninstallModule({ deployedMSA: smartAccount, entryPoint, moduleToUninstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler})
+      await uninstallModule({ deployedMSA: smartAccount, entryPoint, module: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler})
       const isInstalled = await smartAccount.isModuleInstalled(ModuleType.Execution, await executorModule.getAddress(), ethers.hexlify("0x"));
       if(isInstalled){
         const functionCalldata = smartAccount.interface.encodeFunctionData("uninstallModule", [ModuleType.Execution, await executorModule.getAddress(), encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
@@ -349,7 +349,7 @@ describe("SmartAccount Single Execution", () => {
     it("Should revert an execution from an unauthorized executor", async () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
       const prevAddress = "0x0000000000000000000000000000000000000001";
-      await uninstallModule({ deployedMSA: smartAccount, entryPoint, moduleToUninstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler, deInitData: encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])})
+      await uninstallModule({ deployedMSA: smartAccount, entryPoint, module: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountOwner, bundler, data: encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])})
       const isInstalled = await smartAccount.isModuleInstalled(
         ModuleType.Execution,
         await executorModule.getAddress(),
