@@ -184,10 +184,11 @@ describe("SmartAccount Factory Tests", function () {
           saDeploymentIndex,
         );
 
-        const initCode = factory.interface.encodeFunctionData("createAccount", [validatorModuleAddress, installData, saDeploymentIndex]);
+        // factory address + factory data
+        const initCode = ethers.concat([await factory.getAddress(), factory.interface.encodeFunctionData("createAccount", [validatorModuleAddress, installData, saDeploymentIndex])]);
   
         const userOp = buildPackedUserOp({
-            sender: ownerAddress,
+            sender: expectedAccountAddress,
             initCode: initCode,
             callData: "0x",
         })
