@@ -5,13 +5,13 @@ import { Execution } from "../interfaces/modules/IExecutor.sol";
 import "../lib/ModeLib.sol";
 
 /**
- * @title ExecutionManager
+ * @title ExecutionHelper
  * @dev This contract executes calls in the context of this contract.
  * @author zeroknots.eth | rhinestone.wtf
  * shoutout to solady (vectorized, ross) for this code
  * https://github.com/Vectorized/solady/blob/main/src/accounts/ERC4337.sol
  */
-contract ExecutionManager {
+contract ExecutionHelper {
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     // /////////////////////////////////////////////////////

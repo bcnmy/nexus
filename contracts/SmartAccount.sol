@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ExecutionManager } from "./base/ExecutionManager.sol";
+import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
@@ -13,7 +13,7 @@ import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 // Review.. ERC1271
-contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager, UUPSUpgradeable {
+contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
