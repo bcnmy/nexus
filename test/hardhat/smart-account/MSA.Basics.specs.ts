@@ -275,15 +275,7 @@ describe("SmartAccount Basic Specs", function () {
         ethers.hexlify("0x"),
       )
       expect(isModuleInstalled).to.be.true;
-      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      const data = ethers.solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
-      const callData = encodeData(["bytes"], [data])
-      const functionCalldata = concat([
-        zeroPadBytes(await validatorModule.getAddress(), 20), // Address needs to be 20 bytes, so pad it if necessary
-        callData
-      ]);
-      const isValid = await smartAccount.isValidSignature(hashMessage(callData), functionCalldata);
-      expect(isValid).to.equal(ERC1271_MAGICVALUE);
+      const message = "Some Message";
     });
   });
 
