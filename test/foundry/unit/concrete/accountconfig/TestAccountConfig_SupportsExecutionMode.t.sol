@@ -5,7 +5,7 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
-    SmartAccount accountConfig;
+    SmartAccount public accountConfig;
 
     function setUp() public {
         init();

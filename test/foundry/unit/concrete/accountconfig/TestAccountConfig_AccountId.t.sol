@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 
 contract TestAccountConfig_AccountId is Test {
-    SmartAccount accountConfig;
+    SmartAccount public accountConfig;
 
     function setUp() public {
         accountConfig = new SmartAccount();
