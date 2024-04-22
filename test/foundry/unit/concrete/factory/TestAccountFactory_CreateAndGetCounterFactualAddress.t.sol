@@ -69,7 +69,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable firstAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
         vm.prank(user.addr); // Even owner can not reinit
         vm.expectRevert(LinkedList_AlreadyInitialized.selector);
-        IModularSmartAccount(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
+        IBicoMSA(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
     }
 
     function test_CreateAccountWithDifferentIndexes() public {

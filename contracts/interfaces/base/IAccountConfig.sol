@@ -9,10 +9,12 @@ import { ExecutionMode } from "../../lib/ModeLib.sol";
  */
 interface IAccountConfig {
     /**
-     * @notice Returns the account id of the smart account.
-     * @return accountImplementationId The account id of the smart account.
+     * @dev Returns the account id of the smart account
+     * @return accountImplementationId the account id of the smart account
+     * the accountId should be structured like so:
+     *        "vendorname.accountname.semver"
      */
-    function accountId() external view returns (string memory);
+    function accountId() external view returns (string memory accountImplementationId);
 
     /**
      * @notice Checks if the account supports a certain execution mode.

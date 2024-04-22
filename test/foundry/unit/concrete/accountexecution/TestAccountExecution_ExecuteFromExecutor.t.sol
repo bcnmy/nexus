@@ -49,7 +49,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         for (uint256 i = 0; i < executions.length; i++) {
             executions[i] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         }
-        mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
         assertEq(counter.getNumber(), 3, "Counter should have incremented three times");
     }
 
@@ -60,7 +60,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(counter), 0, callData);
         vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, address(unauthorizedExecutor)));
-        unauthorizedExecutor.execBatch(BOB_ACCOUNT, executions);
+        unauthorizedExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
     }
 
     // Test value transfer via executor
@@ -76,7 +76,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
     // Test executing an empty batch via executor
     function test_ExecuteEmptyBatchFromExecutor() public {
         Execution[] memory executions = new Execution[](0);
-        bytes[] memory results = mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        bytes[] memory results = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
         assertEq(results.length, 0, "Results array should be empty");
     }
 
@@ -87,7 +87,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         vm.expectRevert("Counter: Revert operation");
-        mockExecutor.execBatch(BOB_ACCOUNT, executions);
+        mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
     }
 
     function test_ERC20TransferFromExecutor() public {
@@ -126,7 +126,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
             abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), recipient, transferAmount)
         );
 
-        bytes[] memory returnData = mockExecutor.execBatch(BOB_ACCOUNT, execs);
+        bytes[] memory returnData = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, execs);
 
         uint256 balanceRecipient = token.balanceOf(recipient);
         assertEq(balanceRecipient, transferAmount, "Recipient should have received the tokens via transferFrom");
@@ -139,7 +139,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         Execution[] memory execs = new Execution[](1);
         execs[0] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, recipient, amount));
 
-        mockExecutor.execBatch(BOB_ACCOUNT, execs);
+        mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, execs);
 
         uint256 balanceRecipient = token.balanceOf(recipient);
         assertEq(balanceRecipient, amount, "Recipient should have received 0 tokens");

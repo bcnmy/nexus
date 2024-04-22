@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { EncodedModuleTypes } from "../../lib/ModuleTypeLib.sol";
-
 /**
  * @title ERC-7579 Module Interface
  * @dev Basic interface for all types of modules.
@@ -38,9 +36,7 @@ interface IModule {
     function isModuleType(uint256 moduleTypeId) external view returns (bool);
 
     /**
-     * @dev Returns bit-encoded integer of the different typeIds of the module
-     *
-     * MUST return all the bit-encoded typeIds of the module
+     * @dev Returns if the module was already initialized for a provided smartaccount
      */
-    function getModuleTypes() external view returns (EncodedModuleTypes);
+    function isInitialized(address smartAccount) external view returns (bool);
 }

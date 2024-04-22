@@ -4,6 +4,7 @@ import {
   BigNumberish,
   BytesLike,
   HDNodeWallet,
+  ParamType,
   Signer,
 } from "ethers";
 import {
@@ -15,7 +16,12 @@ import {
   K1Validator,
   SmartAccount,
   MockExecutor,
+  IValidator,
+  IExecutor,
+  MockHook,
+  MockHandler,
 } from "../../../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
@@ -33,13 +39,16 @@ export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
   smartAccountImplementation: SmartAccount;
   deployedMSA: SmartAccount;
+  aliceDeployedMSA: SmartAccount
   deployedMSAAddress: AddressLike;
-  accountOwner: HDNodeWallet;
+  accountOwner: HardhatEthersSigner;
+  aliceAccountOwner: HardhatEthersSigner;
   msaFactory: AccountFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
-  anotherExecutorModule: MockExecutor;
+  mockHook: MockHook;
+  mockFallbackHandler: MockHandler;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
@@ -91,11 +100,25 @@ export enum ModuleType {
   Hooks = 4,
 }
 
-export type InstallModuleParams = {
+export type ModuleParams = {
   deployedMSA: SmartAccount,
   entryPoint: EntryPoint,
-  mockExecutor: MockExecutor,
-  mockValidator: MockValidator,
+  module: any,
+  moduleType: ModuleType | number,
+  validatorModule: MockValidator | K1Validator,
   accountOwner: Signer,
   bundler: Signer
+  data?: BytesLike
 }
+
+export const Executions = ParamType.from({
+  type: "tuple(address,uint256,bytes)[]",
+  baseType: "tuple",
+  name: "executions",
+  arrayLength: null,   
+  components: [
+    { name: "target", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "callData", type: "bytes" }
+  ],
+})

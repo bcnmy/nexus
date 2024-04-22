@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+// ERC-4337-v-0.7
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
+// ERC-4337-v-0.7
 interface IERC4337Account {
-    event DepositAdded(address indexed account, address indexed depositor, uint256 amount);
-
     /**
      * Validate user's signature and nonce
      * the entryPoint will make the call to the recipient only if this validation call returns successfully.
@@ -13,6 +13,7 @@ interface IERC4337Account {
      * This allows making a "simulation call" without a valid signature
      * Other failures (e.g. nonce mismatch, or invalid signature format) should still revert to signal failure.
      *
+     * @dev ERC-4337-v-0.7 validation stage
      * @dev Must validate caller is the entryPoint.
      *      Must validate the signature and nonce
      * @param userOp              - The user operation that is about to be executed.
@@ -38,4 +39,18 @@ interface IERC4337Account {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external returns (uint256 validationData);
+
+    /**
+     * Account may implement this execute method.
+     * passing this methodSig at the beginning of callData will cause the entryPoint to pass the
+     * full UserOp (and hash)
+     * to the account.
+     * The account should skip the methodSig, and use the callData (and optionally, other UserOp
+     * fields)
+     *
+     * @dev ERC-4337-v-0.7 optional execution path
+     * @param userOp              - The operation that was just validated.
+     * @param userOpHash          - Hash of the user's request data.
+     */
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable;
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { IExecutor, Execution } from "contracts/interfaces/modules/IExecutor.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import { IModularSmartAccount } from "contracts/interfaces/IModularSmartAccount.sol";
+import { IBicoMSA } from "contracts/interfaces/IBicoMSA.sol";
 import { ModeLib } from "contracts/lib/ModeLib.sol";
 import { ExecLib } from "contracts/lib/ExecLib.sol";
 
@@ -14,7 +14,7 @@ contract MockExecutor is IExecutor {
     function onUninstall(bytes calldata data) external override { }
 
     function executeViaAccount(
-        IModularSmartAccount account,
+        IBicoMSA account,
         address target,
         uint256 value,
         bytes calldata callData
@@ -25,8 +25,8 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
-    function execBatch(
-        IModularSmartAccount account,
+    function executeBatchViaAccount(
+        IBicoMSA account,
         Execution[] calldata execs
     )
         external
@@ -43,5 +43,9 @@ contract MockExecutor is IExecutor {
 
     function test_() public pure {
         // This function is used to ignore file in coverage report
+    }
+
+    function isInitialized(address smartAccount) external pure override returns (bool) {
+        return false;
     }
 }

@@ -16,7 +16,6 @@ import { SmartAccount } from "../../../contracts/SmartAccount.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
-import { AccountExecution } from "../../../contracts/base/AccountExecution.sol";
 
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -237,12 +236,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
             executionCalldata = abi.encodeCall(
-                AccountExecution.execute,
+                SmartAccount.execute,
                 (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
             );
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
-            executionCalldata = abi.encodeCall(AccountExecution.execute, (mode, ExecLib.encodeBatch(executions)));
+            executionCalldata = abi.encodeCall(SmartAccount.execute, (mode, ExecLib.encodeBatch(executions)));
         } else {
             revert("Executions array cannot be empty");
         }

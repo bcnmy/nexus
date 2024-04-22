@@ -138,6 +138,7 @@ library ModeLib {
     }
 
     function test() public pure {
+        // solhint-disable-previous-line no-empty-blocks
         // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

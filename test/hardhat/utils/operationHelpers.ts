@@ -1,8 +1,7 @@
 import { ethers } from "hardhat";
-import { encodeData, toGwei } from "./encoding";
+import { toGwei } from "./encoding";
 import {
   ExecutionMethod,
-  ModuleType,
   PackedUserOperation,
   UserOperation,
 } from "./types";
@@ -15,7 +14,6 @@ import {
   toBeHex,
 } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
-import { Hexable } from "@ethersproject/bytes";
 import {
   CALLTYPE_SINGLE,
   EXECTYPE_DEFAULT,
@@ -298,6 +296,7 @@ export async function generateUseropCallData({
   functionName,
   args = [],
   value = 0,
+  mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]),
 }): Promise<string> {
   const AccountExecution = await ethers.getContractFactory("SmartAccount");
 
@@ -307,8 +306,6 @@ export async function generateUseropCallData({
     functionName,
     args,
   );
-
-  const mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
 
   // Encode the execution calldata
   let executionCalldata;
@@ -353,7 +350,7 @@ export async function generateUseropCallData({
   return executeCallData;
 }
 
-// Utility function to listen for UserOperationRevertReason events
+// Utility function to listen for UserOperationRevertReason events 
 export async function listenForRevertReasons(entryPointAddress: string) {
   const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
   console.log("Listening for UserOperationRevertReason events...");
@@ -369,9 +366,32 @@ export async function listenForRevertReasons(entryPointAddress: string) {
   );
 }
 
+export function findEventInLogs(logs: any[], eventName: string): string | Error {
+  for (let index = 0; index < logs.length; index++) {
+    const fragmentName = logs[index].fragment.name;    
+    if (fragmentName === eventName) {
+      return fragmentName;
+    }
+  }
+  throw new Error("No event found with the given name");
+}
+
 // TODO
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
+
+export async function prepareUserOperation(userOp: PackedUserOperation, entryPoint: EntryPoint, validatorModuleAddress: string, smartAccountOwner: Signer, nonceIncrement: number): Promise<PackedUserOperation> {
+  const nonce = await entryPoint.getNonce(
+    userOp.sender,
+    ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+  );
+  userOp.nonce = nonce + BigInt(nonceIncrement);
+  const userOpHash = await entryPoint.getUserOpHash(userOp);
+  const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+  userOp.signature = signature;
+
+  return userOp;
+}
 
 // More functions to be added
 // 1. simulateValidation (using EntryPointSimulations)

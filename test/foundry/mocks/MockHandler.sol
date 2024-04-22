@@ -28,18 +28,17 @@ contract MockHandler is IFallback {
         return this.onGenericFallback.selector;
     }
 
-    /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override { }
 
-    /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external override { }
 
-    /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
         return moduleTypeId == MODULE_TYPE_FALLBACK;
     }
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
+    function isInitialized(address smartAccount) external pure override returns (bool) {
+        return false;
+    }
 
     // Review
     function test() public pure {

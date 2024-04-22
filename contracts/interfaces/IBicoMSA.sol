@@ -2,13 +2,12 @@
 pragma solidity ^0.8.24;
 
 import { IERC4337Account } from "./IERC4337Account.sol";
-import { IAccountConfig } from "./base/IAccountConfig.sol";
-import { IAccountExecution } from "./base/IAccountExecution.sol";
-import { IModuleManager } from "./base/IModuleManager.sol";
-
+import { IERC7579Account } from "./IERC7579Account.sol";
 import { CallType, ExecType } from "../lib/ModeLib.sol";
+// IERC1271... (part of IERC7579Account) // hence child may just import custom ERC1271.sol
 
-interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecution, IModuleManager {
+// BiconomyMSA
+interface IBicoMSA is IERC4337Account, IERC7579Account {
     // Error thrown when an unsupported ModuleType is requested
     error UnsupportedModuleType(uint256 moduleTypeId);
     // Error thrown when an execution with an unsupported CallType was made
@@ -19,6 +18,8 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
     error AccountInitializationFailed();
     // Error thrown when account is already initialised
     error AccountAlreadyInitialized();
+    // Error thrown on failed execution
+    error ExecutionFailed();
 
     // Review natspec
     /**
@@ -26,18 +27,4 @@ interface IModularSmartAccount is IERC4337Account, IAccountConfig, IAccountExecu
      * @param initData. encoded data that can be used during the initialization phase
      */
     function initialize(address firstValidator, bytes calldata initData) external payable;
-
-    // Review
-    // Add natspec
-    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-
-    /**
-     * @dev ERC-1271 isValidSignature
-     *         This function is intended to be used to validate a smart account signature
-     * and may forward the call to a validator module
-     *
-     * @param hash The hash of the data that is signed
-     * @param data The data that is signed
-     */
-    function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4);
 }

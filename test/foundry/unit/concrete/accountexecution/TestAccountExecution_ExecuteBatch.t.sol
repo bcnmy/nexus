@@ -146,14 +146,14 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         // Execution for approval
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(
-            address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount)
+            address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount) // BOB_ACCOUNT is approved to transfer
         );
 
         executions[1] = Execution(
             address(token),
             0,
             abi.encodeWithSelector(
-                token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount
+                token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount // Transfer from BOB_ACCOUNT to ALICE ?! Does this make sense?
             )
         );
 

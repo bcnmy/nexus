@@ -10,12 +10,10 @@ contract MockHook is IHook {
     event PreCheckCalled();
     event PostCheckCalled();
 
-    /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override { 
         emit PreCheckCalled();
     }
 
-    /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external override { 
         emit PostCheckCalled();
      }
@@ -36,13 +34,13 @@ contract MockHook is IHook {
         emit PostCheckCalled();
     }
 
-    /// @inheritdoc IModule
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_HOOK;
     }
 
-    /// @inheritdoc IModule
-    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
+    }
 
     // Review
     function test() public pure {
