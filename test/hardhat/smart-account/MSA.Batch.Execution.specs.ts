@@ -82,7 +82,7 @@ describe("SmartAccount Batch Execution", () => {
                 
     expect(isOwner).to.be.true;
 
-    await installModule({ deployedMSA: smartAccount, entryPoint, moduleToInstall: executorModule, moduleType: ModuleType.Execution, validatorModule: validatorModule, accountOwner: smartAccountOwner, bundler })
+    await installModule({ deployedMSA: smartAccount, entryPoint, module: executorModule, moduleType: ModuleType.Execution, validatorModule: validatorModule, accountOwner: smartAccountOwner, bundler })
     
     const isInstalled = await smartAccount.isModuleInstalled(
       ModuleType.Execution,
@@ -227,7 +227,7 @@ describe("SmartAccount Batch Execution", () => {
       // User op 2 - Transfer tokens
   
       // First install the executor module on Alice's smart account
-      await installModule({ deployedMSA: aliceSmartAccount, entryPoint, moduleToInstall: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountAliceOwner, bundler })
+      await installModule({ deployedMSA: aliceSmartAccount, entryPoint, module: executorModule, validatorModule: validatorModule, moduleType: ModuleType.Execution, accountOwner: smartAccountAliceOwner, bundler })
 
       const data2 = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeViaAccount", args: [aliceSmartAccountAddress, await mockToken.getAddress(), 0, transferCalldata]});
       const userOp2 = buildPackedUserOp({

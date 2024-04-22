@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { buildPackedUserOp, generateUseropCallData } from "./operationHelpers";
-import { ExecutionMethod, InstallModuleParams, ModuleType, UninstallModuleParams } from "./types";
+import { ExecutionMethod, ModuleParams, ModuleType } from "./types";
 
 // define mode and exec type enums
 export const CALLTYPE_SINGLE = "0x00"; // 1 byte
@@ -11,16 +11,18 @@ export const EXECTYPE_DELEGATE = "0xFF"; // 1 byte
 export const MODE_DEFAULT = "0x00000000"; // 4 bytes
 export const UNUSED = "0x00000000"; // 4 bytes
 export const MODE_PAYLOAD = "0x00000000000000000000000000000000000000000000"; // 22 bytes
+export const ERC1271_MAGICVALUE = "0x1626ba7e" 
+export const ERC1271_INVALID = "0xffffffff"
 
 export const GENERIC_FALLBACK_SELECTOR = "0xcb5baf0f";
 
-export const installModule = async (args: InstallModuleParams) => {
-    const { deployedMSA, entryPoint, moduleToInstall, validatorModule, accountOwner, bundler, moduleType, initData } = args;
+export const installModule = async (args: ModuleParams) => {
+    const { deployedMSA, entryPoint, module, validatorModule, accountOwner, bundler, moduleType, data } = args;
     const installModuleData = await generateUseropCallData({
      executionMethod: ExecutionMethod.Execute,
      targetContract: deployedMSA,
      functionName: "installModule",
-     args: [moduleType, await moduleToInstall.getAddress(), initData ? initData : ethers.hexlify(await accountOwner.getAddress())],
+     args: [moduleType, await module.getAddress(), data ? data : ethers.hexlify(await accountOwner.getAddress())],
    });
  
    const userOp = buildPackedUserOp({
@@ -41,13 +43,13 @@ export const installModule = async (args: InstallModuleParams) => {
    return await entryPoint.handleOps([userOp], await bundler.getAddress());
 }
 
-export const uninstallModule = async (args: UninstallModuleParams) => {
-  const { deployedMSA, entryPoint, moduleToUninstall, validatorModule, accountOwner, bundler, moduleType, deInitData } = args;
+export const uninstallModule = async (args: ModuleParams) => {
+  const { deployedMSA, entryPoint, module, validatorModule, accountOwner, bundler, moduleType, data } = args;
   const uninstallModuleData = await generateUseropCallData({
    executionMethod: ExecutionMethod.Execute,
    targetContract: deployedMSA,
    functionName: "uninstallModule",
-   args: [moduleType, await moduleToUninstall.getAddress(), deInitData ? deInitData : ethers.hexlify(await accountOwner.getAddress())],
+   args: [moduleType, await module.getAddress(), data ? data : ethers.hexlify(await accountOwner.getAddress())],
  });
 
  const userOp = buildPackedUserOp({

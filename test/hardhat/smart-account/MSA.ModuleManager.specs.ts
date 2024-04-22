@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer } from "ethers";
+import { AddressLike, Signer, ZeroAddress } from "ethers";
 import { EntryPoint, MockExecutor, MockHandler, MockHook, MockValidator, SmartAccount } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import {
@@ -51,7 +51,7 @@ describe("SmartAccount Module Management Tests", () => {
     it("Should correctly get installed executors", async () => {
       let executors = await deployedMSA.getExecutorsPaginated("0x0000000000000000000000000000000000000001", 100);
       expect(executors[0].length).to.be.equal(0);
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, validatorModule: mockValidator, moduleType: ModuleType.Execution, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockExecutor, validatorModule: mockValidator, moduleType: ModuleType.Execution, accountOwner, bundler })
       executors = await deployedMSA.getExecutorsPaginated("0x0000000000000000000000000000000000000001", 100);
       expect(executors[0].length).to.be.equal(1);
       expect(executors[0][0]).to.be.equal(await mockExecutor.getAddress());
@@ -59,7 +59,7 @@ describe("SmartAccount Module Management Tests", () => {
 
     it("Should throw if module type id is not valid", async () => {
       const invalidModuleType = 100;
-      const response = await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, validatorModule: mockValidator, moduleType: invalidModuleType, accountOwner, bundler })
+      const response = await installModule({ deployedMSA, entryPoint, module: mockExecutor, validatorModule: mockValidator, moduleType: invalidModuleType, accountOwner, bundler })
       const receipt = await response.wait();
       const event = findEventInLogs(receipt.logs, "UserOperationRevertReason");
       
@@ -68,13 +68,13 @@ describe("SmartAccount Module Management Tests", () => {
   
     it("Should correctly get active hook", async () => {
       const activeHook = await deployedMSA.getActiveHook();
-      expect(activeHook).to.be.equal("0x0000000000000000000000000000000000000000");
+      expect(activeHook).to.be.equal(ZeroAddress);
     });
   
     it("Should correctly get active fallback handler", async () => {
       const activeFallbackHandler = await deployedMSA.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
       // no fallback handler installed
-      expect(activeFallbackHandler[1]).to.be.equal("0x0000000000000000000000000000000000000000");
+      expect(activeFallbackHandler[1]).to.be.equal(ZeroAddress);
     });
   });
 
@@ -100,7 +100,7 @@ describe("SmartAccount Module Management Tests", () => {
     it("Should correctly install a execution module on the smart account", async () => {
       // Current test this should be expected to be true as it's default enabled module
 
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, validatorModule: mockValidator, moduleType: ModuleType.Execution, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockExecutor, validatorModule: mockValidator, moduleType: ModuleType.Execution, accountOwner, bundler })
   
       const isInstalledAfter = await deployedMSA.isModuleInstalled(
         ModuleType.Execution,
@@ -135,7 +135,7 @@ describe("SmartAccount Module Management Tests", () => {
     });
 
     it("Should correctly uninstall a previously installed execution module via entryPoint", async () => {
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, moduleType: ModuleType.Execution, validatorModule: mockValidator, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockExecutor, moduleType: ModuleType.Execution, validatorModule: mockValidator, accountOwner, bundler })
 
       const isInstalledBefore = await deployedMSA.isModuleInstalled(
         ModuleType.Execution,
@@ -193,7 +193,7 @@ describe("SmartAccount Module Management Tests", () => {
         ),
       ).to.be.false;
 
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockHook, validatorModule: mockValidator, moduleType: ModuleType.Hooks, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockHook, validatorModule: mockValidator, moduleType: ModuleType.Hooks, accountOwner, bundler })
   
       const isInstalledAfter = await deployedMSA.isModuleInstalled(
         ModuleType.Hooks,
@@ -213,7 +213,7 @@ describe("SmartAccount Module Management Tests", () => {
       const functionCalldata = deployedMSA.interface.encodeFunctionData("uninstallModule", [ModuleType.Hooks, hookModuleAddress, encodeData(["address", "bytes"], [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))])]);
 
       // Need to install the executor module back on the smart account
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockExecutor, moduleType: ModuleType.Execution, validatorModule: mockValidator, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockExecutor, moduleType: ModuleType.Execution, validatorModule: mockValidator, accountOwner, bundler })
 
       await mockExecutor.executeViaAccount(await deployedMSA.getAddress(), await deployedMSA.getAddress(), 0n, functionCalldata)
   
@@ -227,7 +227,7 @@ describe("SmartAccount Module Management Tests", () => {
     });
 
     it("Should correctly uninstall a previously installed hook module via entryPoint", async () => {
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockHook, moduleType: ModuleType.Hooks, validatorModule: mockValidator, accountOwner, bundler })
+      await installModule({ deployedMSA, entryPoint, module: mockHook, moduleType: ModuleType.Hooks, validatorModule: mockValidator, accountOwner, bundler })
 
       const isInstalledBefore = await deployedMSA.isModuleInstalled(
         ModuleType.Hooks,
@@ -283,7 +283,7 @@ describe("SmartAccount Module Management Tests", () => {
         ), "Module should not be installed before"
       ).to.be.false;
 
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockFallbackHandler, validatorModule: mockValidator, moduleType: ModuleType.Fallback, accountOwner, bundler, initData: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]) })
+      await installModule({ deployedMSA, entryPoint, module: mockFallbackHandler, validatorModule: mockValidator, moduleType: ModuleType.Fallback, accountOwner, bundler, data: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]) })
   
       const isInstalledAfter = await deployedMSA.isModuleInstalled(
         ModuleType.Fallback,
@@ -309,7 +309,7 @@ describe("SmartAccount Module Management Tests", () => {
     });
 
     it("Should correctly uninstall a previously installed fallback handler module via entryPoint", async () => {
-      await installModule({ deployedMSA, entryPoint, moduleToInstall: mockFallbackHandler, moduleType: ModuleType.Fallback, validatorModule: mockValidator, accountOwner, bundler, initData: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR])})
+      await installModule({ deployedMSA, entryPoint, module: mockFallbackHandler, moduleType: ModuleType.Fallback, validatorModule: mockValidator, accountOwner, bundler, data: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR])})
 
       const isInstalledBefore = await deployedMSA.isModuleInstalled(
         ModuleType.Fallback,
