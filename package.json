@@ -9,7 +9,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
     "dotenv": "^16.4.5",
-    "hardhat": "^2.20.1"
+    "hardhat": "^2.20.1",
+    "viem": "^2.9.23"
   },
   "devDependencies": {
     "@bonadocs/docgen": "^1.0.1-alpha.1",
