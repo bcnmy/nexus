@@ -7,6 +7,7 @@ import { IModule } from "./IModule.sol";
 interface IValidator is IModule {
     error InvalidTargetAddress(address target);
 
+    // REview: subject to removal
     /**
      * @dev Validates a transaction on behalf of the account.
      *         This function is intended to be called by the MSA during the ERC-4337 validaton phase
@@ -26,8 +27,5 @@ interface IValidator is IModule {
         address sender,
         bytes32 hash,
         bytes calldata data
-    )
-        external
-        view
-        returns (bytes4);
+    ) external view returns (bytes4);
 }

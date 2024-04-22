@@ -25,13 +25,17 @@ contract CheatCodes is Test {
         vm.deal(addr, balance);
     }
 
-    function signMessage(address signer, bytes32 hash) internal returns (uint8 v, bytes32 r, bytes32 s) {
+    function signMessage(address signer, bytes32 hash) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
         uint256 privateKey = uint256(keccak256(abi.encodePacked(signer)));
         (v, r, s) = vm.sign(privateKey, hash);
     }
 
-    function assume(bool condition) internal {
+    function assume(bool condition) internal pure {
         vm.assume(condition);
+    }
+
+    function prank(address addr) internal {
+        vm.prank(addr);
     }
 
     function startPrank(address addr) internal {
@@ -62,7 +66,7 @@ contract CheatCodes is Test {
     }
 
     // Load storage slot directly from a contract
-    function loadStorageAtSlot(address contractAddress, bytes32 slot) internal returns (bytes32) {
+    function loadStorageAtSlot(address contractAddress, bytes32 slot) internal view returns (bytes32) {
         return vm.load(contractAddress, slot);
     }
 
@@ -71,7 +75,22 @@ contract CheatCodes is Test {
         vm.etch(contractAddress, code);
     }
 
-    function test(uint256 a) public {
+    function test(uint256 a) public pure {
         a;
+    }
+
+    function almostEq(uint256 a, uint256 b, uint256 maxPercentDelta) internal {
+        if (b == 0) return assertEq(a, b); // If the left is 0, right must be too.
+
+        uint256 percentDelta = stdMath.percentDelta(a, b);
+
+        if (percentDelta > maxPercentDelta) {
+            emit log("Error: a ~= b not satisfied [uint]");
+            emit log_named_uint("        Left", a);
+            emit log_named_uint("       Right", b);
+            emit log_named_decimal_uint(" Max % Delta", maxPercentDelta * 100, 18);
+            emit log_named_decimal_uint("     % Delta", percentDelta * 100, 18);
+            fail();
+        }
     }
 }

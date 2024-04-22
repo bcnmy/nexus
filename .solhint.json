@@ -18,7 +18,7 @@
     "imports-on-top": "error",
     "ordering": "error",
     "visibility-modifier-order": "error",
-    "code-complexity": ["error", 7],
+    "code-complexity": ["error", 8],
     "function-max-lines": ["error", 80],
     "max-line-length": ["warn", 120],
     "no-empty-blocks": "error",

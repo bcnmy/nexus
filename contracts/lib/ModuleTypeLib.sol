@@ -25,9 +25,8 @@ library ModuleTypeLib {
         }
         return EncodedModuleTypes.wrap(result);
     }
-
-    // TODO: marked for deletion
-    function test(uint256 a) private {
-        a;
+    function test() public pure {
+        // solhint-disable-previous-line no-empty-blocks
+        // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

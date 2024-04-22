@@ -1,19 +1,57 @@
 import { NumberLike } from "@nomicfoundation/hardhat-network-helpers/dist/src/types";
-import { AddressLike, BigNumberish, BytesLike, Signer } from "ethers";
+import {
+  AddressLike,
+  BigNumberish,
+  BytesLike,
+  HDNodeWallet,
+  ParamType,
+  Signer,
+} from "ethers";
 import {
   AccountFactory,
   Counter,
   EntryPoint,
+  MockToken,
   MockValidator,
+  K1Validator,
   SmartAccount,
+  MockExecutor,
+  IValidator,
+  IExecutor,
+  MockHook,
+  MockHandler,
 } from "../../../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
-  smartAccount: SmartAccount;
-  factory: AccountFactory;
-  module: MockValidator;
+  smartAccountImplementation: SmartAccount;
+  msaFactory: AccountFactory;
+  mockValidator: MockValidator;
+  ecdsaValidator: K1Validator;
   counter: Counter;
+  mockToken: MockToken;
+  accounts: Signer[];
+  addresses: string[];
+}
+
+export interface DeploymentFixtureWithSA {
+  entryPoint: EntryPoint;
+  smartAccountImplementation: SmartAccount;
+  deployedMSA: SmartAccount;
+  aliceDeployedMSA: SmartAccount
+  deployedMSAAddress: AddressLike;
+  accountOwner: HardhatEthersSigner;
+  aliceAccountOwner: HardhatEthersSigner;
+  msaFactory: AccountFactory;
+  deployer: Signer;
+  mockValidator: MockValidator;
+  mockExecutor: MockExecutor;
+  mockHook: MockHook;
+  mockFallbackHandler: MockHandler;
+  ecdsaValidator: K1Validator;
+  counter: Counter;
+  mockToken: MockToken;
   accounts: Signer[];
   addresses: string[];
 }
@@ -61,3 +99,26 @@ export enum ModuleType {
   Fallback = 3,
   Hooks = 4,
 }
+
+export type ModuleParams = {
+  deployedMSA: SmartAccount,
+  entryPoint: EntryPoint,
+  module: any,
+  moduleType: ModuleType | number,
+  validatorModule: MockValidator | K1Validator,
+  accountOwner: Signer,
+  bundler: Signer
+  data?: BytesLike
+}
+
+export const Executions = ParamType.from({
+  type: "tuple(address,uint256,bytes)[]",
+  baseType: "tuple",
+  name: "executions",
+  arrayLength: null,   
+  components: [
+    { name: "target", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "callData", type: "bytes" }
+  ],
+})
