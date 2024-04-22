@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import { ExecutionManager } from "./base/ExecutionManager.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
+import { BaseAccount } from "./base/BaseAccount.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { Execution } from "./interfaces/modules/IExecutor.sol";
 import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
@@ -12,14 +13,13 @@ import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 // Review.. ERC1271
-
-contract SmartAccount is IBicoMSA, ExecutionManager, ModuleManager, UUPSUpgradeable {
+contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
     constructor() {
         _initModuleManager();
-        // review
+        // Review
         // disble initializers
     }
 

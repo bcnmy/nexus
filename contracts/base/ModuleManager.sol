@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import { Storage } from "./Storage.sol";
-import { BaseAccount } from "./BaseAccount.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
@@ -24,7 +23,7 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
  * shoutout to zeroknots (rhinestone.wtf) for this code
  * NOTE: the linked list is just an example. accounts may implement this differently
  */
-abstract contract ModuleManager is BaseAccount, Storage, Receiver {
+abstract contract ModuleManager is Storage, Receiver {
     error CannotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
