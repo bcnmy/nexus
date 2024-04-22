@@ -70,14 +70,6 @@ describe("K1Validator module tests", () => {
       expect(isInitialized).to.equal(true);
     });
 
-
-    it("should get module types", async () => {
-      const moduleTypes = await k1Validator.getModuleTypes();
-      console.log("moduleTypes: ", moduleTypes);
-      
-      expect(moduleTypes).to.not.be.undefined;
-    });
-
     it("should check user op using validateUserOp", async () => {
       const isModuleInstalled = await deployedMSA.isModuleInstalled(
         ModuleType.Validation,

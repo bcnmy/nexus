@@ -39,7 +39,7 @@ abstract contract BaseAccount {
 
     /// @dev Returns the canonical ERC4337 EntryPoint contract.
     /// Override this function to return a different EntryPoint.
-    function entryPoint() public view virtual returns (address) {
+    function entryPoint() public pure virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     }
 
