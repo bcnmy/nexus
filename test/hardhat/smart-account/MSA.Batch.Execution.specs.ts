@@ -99,7 +99,7 @@ describe("SmartAccount Batch Execution", () => {
 
       const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: incrementNumber}];
       const numberBefore = await counter.getNumber();
-      await executorModule.execBatch(smartAccountAddress, execs);
+      await executorModule.executeBatchViaAccount(smartAccountAddress, execs);
       const numberAfter = await counter.getNumber();
 
       expect(numberAfter - numberBefore).to.be.equal(2);
@@ -156,7 +156,7 @@ describe("SmartAccount Batch Execution", () => {
 
       const execs = [{target: await mockToken.getAddress(), value: 0n, callData: approveCalldata}, {target: await mockToken.getAddress(), value: 0n, callData: transferCalldata}];
       const balanceBefore = await mockToken.balanceOf(await alice.getAddress());
-      await executorModule.execBatch(smartAccountAddress, execs); // Here we specify who will be the sender of the transactions
+      await executorModule.executeBatchViaAccount(smartAccountAddress, execs); // Here we specify who will be the sender of the transactions
 
       const allowance = await mockToken.allowance(smartAccountAddress, spender);
       expect(allowance).to.be.equal(0, "Allowance should be 0 after transfer.");
@@ -173,7 +173,7 @@ describe("SmartAccount Batch Execution", () => {
       const transferCalldata = mockToken.interface.encodeFunctionData("transferFrom", [spender, await alice.getAddress(), amountToSpend]);
       const execs = [{target: await mockToken.getAddress(), value: 0n, callData: approveCalldata}, {target: await mockToken.getAddress(), value: 0n, callData: transferCalldata}];
 
-      const userOpCalldata = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs]});
+      const userOpCalldata = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeBatchViaAccount", args: [smartAccountAddress, execs]});
       const userOp = buildPackedUserOp({
         sender: smartAccountAddress,
         callData: userOpCalldata,
@@ -258,7 +258,7 @@ describe("SmartAccount Batch Execution", () => {
 
     it("Should excecute a batch of empty transactions via MockExecutor directly", async () => {
       const execs = [];
-      const results: ContractTransactionResponse = await executorModule.execBatch(smartAccountAddress, execs);
+      const results: ContractTransactionResponse = await executorModule.executeBatchViaAccount(smartAccountAddress, execs);
       
       expect(results.value).to.be.equal(0);
     });
@@ -267,7 +267,7 @@ describe("SmartAccount Batch Execution", () => {
       const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
       const execs = [{target: counterAddress, value: 0n, callData: incrementNumber}, {target: counterAddress, value: 0n, callData: incrementNumber}];
 
-      const data = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "execBatch", args: [smartAccountAddress, execs]});
+      const data = await generateUseropCallData({executionMethod: ExecutionMethod.Execute, targetContract: executorModule, functionName: "executeBatchViaAccount", args: [smartAccountAddress, execs]});
 
       const incrementNumberBatchUserOp = buildPackedUserOp({
         sender: smartAccountAddress,
@@ -299,7 +299,7 @@ describe("SmartAccount Batch Execution", () => {
         {target: counterAddress, value: 0n, callData: incrementNumber}, 
         {target: counterAddress, value: 0n, callData: revertOperation},
         {target: counterAddress, value: 0n, callData: incrementNumber}];
-      await expect(executorModule.execBatch(smartAccountAddress, execs)).to.be.revertedWith("Counter: Revert operation");
+      await expect(executorModule.executeBatchViaAccount(smartAccountAddress, execs)).to.be.revertedWith("Counter: Revert operation");
     });
   });
 

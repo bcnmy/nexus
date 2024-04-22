@@ -25,7 +25,7 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
-    function execBatch(
+    function executeBatchViaAccount(
         IBicoMSA account,
         Execution[] calldata execs
     )
