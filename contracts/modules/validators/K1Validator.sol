@@ -83,10 +83,6 @@ contract K1Validator is IValidator {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
-    function getModuleTypes() external view override returns (EncodedModuleTypes) {
-        // solhint-disable-previous-line no-empty-blocks
-    }
-
     function name() external pure returns (string memory) {
         return "K1Validator";
     }
