@@ -38,6 +38,7 @@ abstract contract ModuleManager is BaseAccount, Storage, Receiver {
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
+    error FallbackNotInstalledForSelector(bytes4 selector);
     error FallbackHandlerUninstallFailed();
     error NoFallbackHandler(bytes4 selector);
 
@@ -252,13 +253,9 @@ abstract contract ModuleManager is BaseAccount, Storage, Receiver {
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         bytes4 selector = bytes4(data[0:4]);
         bytes memory deInitData = data[4:];
+        if (!_isFallbackHandlerInstalled(selector)) revert FallbackNotInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
         IFallback(fallbackHandler).onUninstall(deInitData);
-    }
-
-    function _getFallbackHandlerAddress(bytes4 selector) internal view virtual returns (address) { // UNUSED
-        FallbackHandler storage handlers = _getAccountStorage().fallbacks[selector];
-        return handlers.handler;
     }
 
     function _isFallbackHandlerInstalled(bytes4 selector) internal view virtual returns (bool) {
@@ -283,12 +280,6 @@ abstract contract ModuleManager is BaseAccount, Storage, Receiver {
 
     function _isHookInstalled(address hook) internal view returns (bool) {
         return _getHook() == hook;
-    }
-
-    function _isAlreadyInitialized() internal view virtual returns (bool) { // UNUSED
-        // account module storage
-        AccountStorage storage ams = _getAccountStorage();
-        return ams.validators.alreadyInitialized();
     }
 
     function _getHook() internal view returns (address hook) {
