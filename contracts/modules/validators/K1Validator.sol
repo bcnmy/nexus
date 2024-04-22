@@ -5,7 +5,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/interfaces/modules/IERC7579Modules.sol";
-import { IValidator } from "contracts/interfaces/modules/IValidator.sol";
+import { IValidator } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 

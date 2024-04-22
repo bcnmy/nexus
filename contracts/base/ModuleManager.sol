@@ -2,11 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { Storage } from "./Storage.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
-import { IValidator } from "../interfaces/modules/IValidator.sol";
-import { IExecutor } from "../interfaces/modules/IExecutor.sol";
-import { IHook } from "../interfaces/modules/IHook.sol";
-import { IFallback } from "../interfaces/modules/IFallback.sol";
+import { IModule, IValidator, IExecutor, IFallback, IHook } from "../interfaces/modules/IERC7579Modules.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../interfaces/modules/IERC7579Modules.sol";
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";

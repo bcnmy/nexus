@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { CallType } from "../../lib/ModeLib.sol";
 
-import { IHook } from "../modules/IHook.sol";
+import { IHook } from "../modules/IERC7579Modules.sol";
 
 interface IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.SmartAccount

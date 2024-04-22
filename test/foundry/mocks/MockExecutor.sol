@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { IExecutor, Execution } from "contracts/interfaces/modules/IExecutor.sol";
+import { IModule, IExecutor, Execution } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { IBicoMSA } from "contracts/interfaces/IBicoMSA.sol";
 import { ModeLib } from "contracts/lib/ModeLib.sol";

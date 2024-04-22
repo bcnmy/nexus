@@ -5,8 +5,7 @@ pragma solidity ^0.8.23;
 
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IFallback, MODULE_TYPE_FALLBACK } from "contracts/interfaces/modules/IERC7579Modules.sol";
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
+import { IModule, IFallback, MODULE_TYPE_FALLBACK } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import "../utils/EventsAndErrors.sol";
 

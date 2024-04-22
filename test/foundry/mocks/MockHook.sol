@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IHook, MODULE_TYPE_HOOK } from "contracts/interfaces/modules/IERC7579Modules.sol";
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
+import { IModule } from "contracts/interfaces/modules/IERC7579Modules.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 
 contract MockHook is IHook {

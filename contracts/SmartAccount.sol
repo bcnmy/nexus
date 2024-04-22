@@ -5,7 +5,7 @@ import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
-import { Execution } from "./interfaces/modules/IExecutor.sol";
+import { Execution } from "./interfaces/modules/IERC7579Modules.sol";
 import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IBicoMSA } from "./interfaces/IBicoMSA.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";

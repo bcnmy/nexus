@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "../../../contracts/interfaces/modules/IModule.sol";
+import { IModule } from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
 import {
     IValidator,
     VALIDATION_SUCCESS,
