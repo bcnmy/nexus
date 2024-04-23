@@ -14,7 +14,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
  * @author zeroknots.eth | rhinestone.wtf, chirag@biconomy.io
  * shoutout to solady (vectorized, ross) for this code
  */
-abstract contract BaseAccount {
+contract BaseAccount {
     error AccountAccessUnauthorized();
 
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
