@@ -109,7 +109,7 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, 
             Execution[] calldata executions = executionCalldata.decodeBatch();
             // check if execType is revert or try
             if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) returnData = _tryExecute(executions);
+            else if (execType == EXECTYPE_TRY) returnData = _tryExecuteBatch(executions);
             else revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
@@ -265,7 +265,7 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, 
     function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
         Execution[] calldata executions = executionCalldata.decodeBatch();
         if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
-        else if (execType == EXECTYPE_TRY) _tryExecute(executions);
+        else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
         else revert UnsupportedExecType(execType);
     }
 
