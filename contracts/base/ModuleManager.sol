@@ -281,19 +281,17 @@ abstract contract ModuleManager is Storage, Receiver {
         hook = address(_getAccountStorage().hook);
     }
 
-    function _getValidatorsPaginated(
+    /// @dev Helper function to paginate entries in a SentinelList.
+    /// @param list The SentinelList to paginate.
+    /// @param cursor The cursor to start paginating from.
+    /// @param size The number of entries to return.
+    /// @return array The array of addresses in the list.
+    /// @return nextCursor The cursor for the next page of entries.
+    function _paginate(
+        SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    ) private view returns (address[] memory array, address next) {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        return validators.getEntriesPaginated(cursor, size);
-    }
-
-    function _getExecutorsPaginated(
-        address cursor,
-        uint256 size
-    ) private view returns (address[] memory array, address next) {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        return executors.getEntriesPaginated(cursor, size);
+    ) private view returns (address[] memory array, address nextCursor) {
+        return list.getEntriesPaginated(cursor, size);
     }
 }
