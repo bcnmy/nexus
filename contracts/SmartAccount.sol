@@ -209,13 +209,11 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         }
     }
 
-    /**
-     */
-    function supportsModule(uint256 modulTypeId) external view virtual returns (bool) {
-        if (modulTypeId == MODULE_TYPE_VALIDATOR) return true;
-        else if (modulTypeId == MODULE_TYPE_EXECUTOR) return true;
-        else if (modulTypeId == MODULE_TYPE_FALLBACK) return true;
-        else if (modulTypeId == MODULE_TYPE_HOOK) return true;
+    function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
+        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
+        else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
         else return false;
     }
 
