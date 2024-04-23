@@ -25,14 +25,14 @@ contract BaseAccount {
     ////////////////////////////////////////////////////
 
     modifier onlyEntryPointOrSelf() virtual {
-        if (!(msg.sender == entryPoint() || msg.sender == address(this))) {
+        if (!(msg.sender == _ENTRYPOINT || msg.sender == address(this))) {
             revert AccountAccessUnauthorized();
         }
         _;
     }
 
     modifier onlyEntryPoint() virtual {
-        if (msg.sender != entryPoint()) {
+        if (msg.sender != _ENTRYPOINT) {
             revert AccountAccessUnauthorized();
         }
         _;
@@ -41,7 +41,7 @@ contract BaseAccount {
     /// @dev Returns the canonical ERC4337 EntryPoint contract.
     /// Override this function to return a different EntryPoint.
     function entryPoint() public pure returns (address) {
-        return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+        return _ENTRYPOINT;
     }
 
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
@@ -63,7 +63,7 @@ contract BaseAccount {
     }
 
     function nonce(uint192 key) public view virtual returns (uint256) {
-        return IEntryPoint(entryPoint()).getNonce(address(this), key);
+        return IEntryPoint(_ENTRYPOINT).getNonce(address(this), key);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -83,7 +83,7 @@ contract BaseAccount {
                 and(
                     // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                    staticcall(gas(), ep, 0x1c, 0x24, 0x20, 0x20)
+                    staticcall(gas(), _ENTRYPOINT, 0x1c, 0x24, 0x20, 0x20)
                 )
             )
         }
@@ -96,7 +96,7 @@ contract BaseAccount {
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
             // forgefmt: disable-next-item
-            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
                 revert(codesize(), 0x00) // For gas estimation.
             }
         }
@@ -110,7 +110,7 @@ contract BaseAccount {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(mul(extcodesize(ep), call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00))) {
+            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00))) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
