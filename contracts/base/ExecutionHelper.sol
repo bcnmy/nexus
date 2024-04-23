@@ -28,7 +28,7 @@ contract ExecutionHelper {
         }
     }
 
-    function _tryExecute(Execution[] calldata executions) internal returns (bytes[] memory result) {
+    function _tryExecuteBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
         result = new bytes[](length);
 
