@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 // has ERC-4337-v-0.7 implementations
 // houses ERC7579 config implementations
