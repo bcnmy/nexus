@@ -17,17 +17,30 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
+/// @notice Initializes the smart account by setting up the module manager and state.
     constructor() {
         _initModuleManager();
-        // Review
-        // disble initializers
     }
 
+    /// Returns the account's implementation ID.
+    /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
         return _ACCOUNT_IMPLEMENTATION_ID;
     }
 
-    /// @dev expects IValidator module address to be encoded in the nonce
+      /// Validates a user operation against a specified validator, extracted from the operation's nonce.
+    /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
+    /// Other validation failures (e.g., nonce mismatch) should revert.
+    /// @param userOp The operation to validate, encapsulating all transaction details.
+    /// @param userOpHash Hash of the operation data, used for signature validation.
+    /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
+    /// This can be zero if covered by a paymaster or sufficient deposit exists.
+    /// @return validationData Encoded validation result or failure, propagated from the validator module.
+    /// - Encoded format in validationData:
+    ///     - First 20 bytes: Validator address, 0x0 for valid or specific failure modes.
+    ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
+    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
+    /// This method forwards the validation task to the extracted validator module address.
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
@@ -46,14 +59,16 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         return validationData;
     }
 
+    /// Upgrades the contract to a new implementation and calls a function on the new contract.
+    /// @param newImplementation The address of the new contract implementation.
+    /// @param data The calldata to be sent to the new implementation.
     function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override {
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
-
-    /**
-     * Executes a transaction or a batch of transactions with specified execution mode.
-     * This function handles both single and batch transactions, supporting default execution and try/catch logic.
-     */
+/// @notice Executes transactions in single or batch modes as specified by the execution mode.
+/// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
+/// @param executionCalldata The encoded transaction data to execute.
+/// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf {
         (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
@@ -67,12 +82,11 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         _postCheck(hook, hookData, true, new bytes(0));
     }
 
-    /**
-     * @dev this function is only callable by an installed executor module
-     * @dev this function demonstrates how to implement
-     * CallType SINGLE and BATCH and ExecType DEFAULT and TRY
-     * @dev this function could implement hook support (modifier)
-     */
+/// @notice Executes transactions from an executor module, supporting both single and batch transactions.
+/// @param mode The execution mode (single or batch, default or try).
+/// @param executionCalldata The transaction data to execute.
+/// @return returnData The results of the transaction executions, which may include errors in try mode.
+/// @dev This function is callable only by an executor module and may implement hooks.
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
@@ -116,9 +130,9 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         }
         _postCheck(hook, hookData, true, new bytes(0));
     }
-
-    /**
-     */
+/// @notice Executes a user operation via delegatecall to use the contract's context.
+/// @param userOp The user operation to execute.
+/// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
@@ -128,8 +142,15 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         if (!success) revert ExecutionFailed();
     }
 
-    /**
-     */
+/// @notice Installs a new module to the smart account.
+/// @param moduleTypeId The type identifier of the module being installed, which determines its role:
+/// - 1 for Validator
+/// - 2 for Executor
+/// - 3 for Fallback
+/// - 4 for Hook
+/// @param module The address of the module to install.
+/// @param initData Initialization data for the module.
+/// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     function installModule(
         uint256 moduleTypeId,
         address module,
@@ -155,8 +176,15 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         _postCheck(hook, hookData, true, new bytes(0));
     }
 
-    /**
-     */
+/// @notice Uninstalls a module from the smart account.
+/// @param moduleTypeId The type ID of the module to be uninstalled, matching the installation type:
+/// - 1 for Validator
+/// - 2 for Executor
+/// - 3 for Fallback
+/// - 4 for Hook
+/// @param module The address of the module to uninstall.
+/// @param deInitData De-initialization data for the module.
+/// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(
         uint256 moduleTypeId,
         address module,
@@ -174,41 +202,39 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         emit ModuleUninstalled(moduleTypeId, module);
     }
 
-    // TODO // Review for initialize modifiers
-    // Review natspec
-    /**
-     * @dev Initializes the account. Function might be called directly, or by a Factory
-     * @param initData. encoded data that can be used during the initialization phase
-     */
+/// @notice Initializes the smart account with a validator.
+/// @param firstValidator The first validator to install upon initialization.
+/// @param initData Initialization data for setting up the validator.
+/// @dev This function sets the foundation for the smart account's operational logic and security.
     function initialize(address firstValidator, bytes calldata initData) external payable virtual {
         // checks if already initialized and reverts before setting the state to initialized
         _initModuleManager();
         _installValidator(firstValidator, initData);
     }
 
-    // TODO
-    // isValidSignature
-    // by base contract ERC1271 or a method like below..
-    /**
-     * @dev ERC-1271 isValidSignature
-     *         This function is intended to be used to validate a smart account signature
-     * and may forward the call to a validator module
-     *
-     * @param hash The hash of the data that is signed
-     * @param data The data that is signed
-     */
+/// @notice Validates a signature according to ERC-1271 standards.
+/// @param hash The hash of the data being validated.
+/// @param data Signature data that needs to be validated.
+/// @return The status code of the signature validation (`0x1626ba7e` if valid).
+/// bytes4(keccak256("isValidSignature(bytes32,bytes)") = 0x1626ba7e
+/// @dev Delegates the validation to a validator module specified within the signature data.
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
         return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
     }
 
+/// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
+/// @return implementation The address of the current contract implementation.
     function getImplementation() external view returns (address implementation) {
         assembly {
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
     }
 
+    /// @notice Checks if a specific module type is supported by this smart account.
+    /// @param moduleTypeId The identifier of the module type to check.
+    /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
@@ -217,34 +243,26 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         else return false;
     }
 
-    /**
-     */
+/// @notice Determines if a specific execution mode is supported.
+/// @param mode The execution mode to evaluate.
+/// @return isSupported True if the execution mode is supported, false otherwise.
     function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
-        if (callType == CALLTYPE_BATCH) {
-            isSupported = true;
-        } else if (callType == CALLTYPE_SINGLE) {
-            isSupported = true;
-        }
-        // if callType is not single or batch return false
-        // CALLTYPE_DELEGATECALL not supported
-        else {
-            return false;
-        }
 
-        if (execType == EXECTYPE_DEFAULT) {
-            isSupported = true;
-        } else if (execType == EXECTYPE_TRY) {
-            isSupported = true;
-        }
-        // if execType is not default or try, return false
-        else {
-            return false;
-        }
+        // Define supported call types.
+        bool isSupportedCallType = callType == CALLTYPE_BATCH || callType == CALLTYPE_SINGLE;
+        // Define supported execution types.
+        bool isSupportedExecType = execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY;
+
+        // Return true if both the call type and execution type are supported.
+        return isSupportedCallType && isSupportedExecType;
     }
 
-    /**
-     */
+/// @notice Determines whether a module is installed on the smart account.
+/// @param moduleTypeId The ID corresponding to the type of module (Validator, Executor, Fallback, Hook).
+/// @param module The address of the module to check.
+/// @param additionalContext Optional context that may be needed for certain checks.
+/// @return True if the module is installed, false otherwise.
     function isModuleInstalled(
         uint256 moduleTypeId,
         address module,
@@ -253,13 +271,26 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
-    // Review the need for interface
-    // Add natspec
-    /// @dev To ensure that the account itself can upgrade the implementation.
-    function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
-        // solhint-disable-previous-line no-empty-blocks
+/// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
+/// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
+/// @param newImplementation The address of the new implementation to upgrade to.
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
+        newImplementation;
     }
 
+/// @dev Executes a single transaction based on the specified execution type.
+/// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
+/// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
+    function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) private {
+        (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
+        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
+        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
+        else revert UnsupportedExecType(execType);
+    }
+
+/// @dev Executes a batch of transactions based on the specified execution type.
+/// @param executionCalldata The calldata for a batch of transactions.
+/// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
         Execution[] calldata executions = executionCalldata.decodeBatch();
         if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
@@ -267,12 +298,6 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionManager, ModuleManager,
         else revert UnsupportedExecType(execType);
     }
 
-    function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) private {
-        (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
-        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
-        else revert UnsupportedExecType(execType);
-    }
 
     /**
      * @notice Checks if a module is installed on the smart account.
