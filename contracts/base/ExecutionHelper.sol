@@ -18,6 +18,9 @@ contract ExecutionHelper {
     // //  Execution Helpers
     // ////////////////////////////////////////////////////
 
+    /// @notice Executes a batch of calls.
+    /// @param executions An array of Execution structs each containing target, value, and calldata.
+    /// @return result An array of results from each executed call.
     function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
         result = new bytes[](length);
@@ -28,6 +31,9 @@ contract ExecutionHelper {
         }
     }
 
+    /// @notice Tries to execute a batch of calls and emits an event for each unsuccessful call.
+    /// @param executions An array of Execution structs.
+    /// @return result An array of results, with unsuccessful calls marked by events.
     function _tryExecuteBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         uint256 length = executions.length;
         result = new bytes[](length);
@@ -40,6 +46,11 @@ contract ExecutionHelper {
         }
     }
 
+    /// @notice Executes a call to a target address with specified value and data.
+    /// @param target The address to execute the call on.
+    /// @param value The amount of wei to send with the call.
+    /// @param callData The calldata to send.
+    /// @return result The bytes returned from the execution.
     function _execute(
         address target,
         uint256 value,
@@ -61,6 +72,13 @@ contract ExecutionHelper {
         }
     }
 
+ /// @notice Tries to execute a call and captures if it was successful or not.
+    /// @dev Similar to _execute but returns a success boolean and catches reverts instead of propagating them.
+    /// @param target The address to execute the call on.
+    /// @param value The amount of wei to send with the call.
+    /// @param callData The calldata to send.
+    /// @return success True if the execution was successful, false otherwise.
+    /// @return result The bytes returned from the execution.
     function _tryExecute(
         address target,
         uint256 value,
@@ -78,7 +96,11 @@ contract ExecutionHelper {
         }
     }
 
-    /// @dev Execute a delegatecall with `delegate` on this account.
+
+    /// @notice Executes a delegatecall on this contract.
+    /// @param delegate The address to delegatecall to.
+    /// @param callData The calldata to send.
+    /// @return result The bytes returned from the delegatecall.
     function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -97,8 +119,11 @@ contract ExecutionHelper {
         }
     }
 
-    /// @dev Execute a delegatecall with `delegate` on this account and catch reverts.
-    function _tryExecuteDelegatecall(
+    /// @notice Tries to execute a delegatecall and captures if it was successful or not.
+    /// @param delegate The address to delegatecall to.
+    /// @param callData The calldata to send.
+    /// @return success True if the delegatecall was successful, false otherwise.
+    /// @return result The bytes returned from the delegatecall.    function _tryExecuteDelegatecall(
         address delegate,
         bytes calldata callData
     ) internal returns (bool success, bytes memory result) {
