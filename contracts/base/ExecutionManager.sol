@@ -5,7 +5,7 @@ import { Execution } from "../interfaces/modules/IERC7579Modules.sol";
 import "../lib/ModeLib.sol";
 
 /**
- * @title ExecutionHelper
+ * @title ExecutionManager
  * @dev This contract executes calls in the context of this contract.
  * @author zeroknots.eth | rhinestone.wtf
  * shoutout to solady (vectorized, ross) for this code
