@@ -39,7 +39,7 @@ contract BaseAccount {
 
     /// @dev Returns the canonical ERC4337 EntryPoint contract.
     /// Override this function to return a different EntryPoint.
-    function entryPoint() public pure returns (address) {
+    function entryPoint() external pure returns (address) {
         return _ENTRYPOINT;
     }
 
@@ -61,7 +61,7 @@ contract BaseAccount {
         }
     }
 
-    function nonce(uint192 key) public view virtual returns (uint256) {
+    function nonce(uint192 key) external view virtual returns (uint256) {
         return IEntryPoint(_ENTRYPOINT).getNonce(address(this), key);
     }
 
@@ -70,8 +70,7 @@ contract BaseAccount {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the account's balance on the EntryPoint.
-    function getDeposit() public view virtual returns (uint256 result) {
-        address ep = entryPoint();
+    function getDeposit() external view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, address()) // Store the `account` argument.
@@ -89,8 +88,7 @@ contract BaseAccount {
     }
 
     /// @dev Deposit more funds for this account in the EntryPoint.
-    function addDeposit() public payable virtual {
-        address ep = entryPoint();
+    function addDeposit() external payable virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
@@ -102,8 +100,7 @@ contract BaseAccount {
     }
 
     /// @dev Withdraw ETH from the account's deposit on the EntryPoint.
-    function withdrawDepositTo(address to, uint256 amount) public payable virtual onlyEntryPointOrSelf {
-        address ep = entryPoint();
+    function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x14, to) // Store the `to` argument.
