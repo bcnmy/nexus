@@ -15,7 +15,6 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
  * shoutout to solady (vectorized, ross) for this code
  */
 contract BaseAccount is IBaseAccount {
-
     /// @notice Identifier for this implementation on the network
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
 
@@ -67,7 +66,6 @@ contract BaseAccount is IBaseAccount {
         return _ENTRYPOINT;
     }
 
-
     /// @notice Gets the nonce for a particular key.
     /// @param key The nonce key.
     /// @return The nonce associated with the key.
@@ -79,7 +77,7 @@ contract BaseAccount is IBaseAccount {
     /*                     DEPOSIT OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-        /// @notice Returns the current deposit balance of this account on the EntryPoint.
+    /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return result The current balance held at the EntryPoint.
     function getDeposit() external view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
@@ -103,7 +101,9 @@ contract BaseAccount is IBaseAccount {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+            if iszero(
+                mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00))
+            ) {
                 revert(codesize(), 0x00) // For gas estimation.
             }
         }
