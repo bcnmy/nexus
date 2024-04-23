@@ -18,6 +18,7 @@ contract BaseAccount {
     error AccountAccessUnauthorized();
 
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.modular-smart-account.1.0.0-alpha";
+    address private constant _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     /////////////////////////////////////////////////////
     // Access Control
