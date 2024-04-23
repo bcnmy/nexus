@@ -11,7 +11,7 @@ import "../lib/ModeLib.sol";
  * shoutout to solady (vectorized, ross) for this code
  * https://github.com/Vectorized/solady/blob/main/src/accounts/ERC4337.sol
  */
-contract ExecutionHelper {
+contract ExecutionManager {
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     // /////////////////////////////////////////////////////
@@ -123,7 +123,8 @@ contract ExecutionHelper {
     /// @param delegate The address to delegatecall to.
     /// @param callData The calldata to send.
     /// @return success True if the delegatecall was successful, false otherwise.
-    /// @return result The bytes returned from the delegatecall.    function _tryExecuteDelegatecall(
+    /// @return result The bytes returned from the delegatecall.    
+    function _tryExecuteDelegatecall(
         address delegate,
         bytes calldata callData
     ) internal returns (bool success, bytes memory result) {
