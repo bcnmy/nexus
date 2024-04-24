@@ -11,7 +11,7 @@ contract TestAccountConfig_AccountId is Test {
     }
 
     function test_AccountId_ReturnsExpectedValue() public {
-        string memory expected = "biconomy.modular-smart-account.1.0.0-alpha";
+        string memory expected = "biconomy.nexus.1.0.0";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
 }
