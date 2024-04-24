@@ -1,64 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Storage } from "./Storage.sol";
-import { IModule, IValidator, IExecutor, IFallback, IHook } from "../interfaces/modules/IERC7579Modules.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../interfaces/modules/IERC7579Modules.sol";
+// ──────────────────────────────────────────────────────────────────────────────
+//     _   __    _  __
+//    / | / /__ | |/ /_  _______
+//   /  |/ / _ \|   / / / / ___/
+//  / /|  /  __/   / /_/ (__  )
+// /_/ |_/\___/_/|_\__,_/____/
+//
+// ──────────────────────────────────────────────────────────────────────────────
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337,
+// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
+
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+
+import { Storage } from "./Storage.sol";
+import { IHook } from "../interfaces/modules/IHook.sol";
+import { IExecutor } from "../interfaces/modules/IExecutor.sol";
+import { IFallback } from "../interfaces/modules/IFallback.sol";
+import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
+import { IERC7579ModuleBase } from "../interfaces/modules/IERC7579ModuleBase.sol";
+import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
-// Note: importing Receiver.sol from solady (but can make custom one for granular control for fallback management)
-// Review: This contract could also act as fallback manager rather than having a separate contract
-// Review: Kept a different linked list for validators, executors
-
-/**
- * @title ModuleManager
- * @dev This contract manages Validator, Executor, Hook and Fallback modules for the MSA
- * @dev it uses SentinelList to manage the linked list of modules
- * shoutout to zeroknots (rhinestone.wtf) for this code
- * NOTE: the linked list is just an example. accounts may implement this differently
- */
-contract ModuleManager is Storage, Receiver {
-    error CannotRemoveLastValidator();
-    error InvalidModule(address module);
-    error InvalidModuleTypeId(uint256 moduleTypeId);
-    error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
-    error UnauthorizedOperation(address operator);
-    error ModuleNotInstalled(uint256 moduleTypeId, address module);
-    error IncompatibleValidatorModule(address module);
-    error IncompatibleExecutorModule(address module);
-    error IncompatibleHookModule(address module);
-    error ModuleAddressCanNotBeZero();
-    error HookPostCheckFailed();
-    error HookAlreadyInstalled(address currentHook);
-    error FallbackAlreadyInstalledForSelector(bytes4 selector);
-    error FallbackNotInstalledForSelector(bytes4 selector);
-    error FallbackHandlerUninstallFailed();
-    error NoFallbackHandler(bytes4 selector);
-
+/// @title Nexus - ModuleManager
+/// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
+/// @dev Implements SentinelList for managing modules via a linked list structure, adhering to ERC-7579.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
+contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     using SentinelListLib for SentinelListLib.SentinelList;
-
-    /// @dev Retrieves and prepares the hook for pre-check operations.
-    function _preCheck() internal returns (address hook, bytes memory hookData) {
-        hook = _getHook();
-        if (hook != address(0)) {
-            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
-            return (hook, hookData);
-        }
-    }
-
-    /// @dev Retrieves and prepares the hook for post-check operations.
-    function _postCheck(
-        address hook,
-        bytes memory hookData,
-        bool executionSuccess,
-        bytes memory executionReturnValue
-    ) internal {
-        if (hook != address(0)) {
-            IHook(hook).postCheck(hookData, executionSuccess, executionReturnValue);
-        }
-    }
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
@@ -79,7 +55,7 @@ contract ModuleManager is Storage, Receiver {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        if (handler == address(0)) revert NoFallbackHandler(msg.sig);
+        if (handler == address(0)) revert MissingFallbackHandler(msg.sig);
 
         if (calltype == CALLTYPE_STATIC) {
             assembly {
@@ -142,10 +118,7 @@ contract ModuleManager is Storage, Receiver {
     /// @param size The number of validator addresses to return.
     /// @return array An array of validator addresses.
     /// @return next The address to use as a cursor for the next page of results.
-    function getValidatorsPaginated(
-        address cursor,
-        uint256 size
-    ) external view returns (address[] memory array, address next) {
+    function getValidatorsPaginated(address cursor, uint256 size) external view returns (address[] memory array, address next) {
         (array, next) = _paginate(_getAccountStorage().validators, cursor, size);
     }
 
@@ -156,10 +129,7 @@ contract ModuleManager is Storage, Receiver {
     /// @param size The number of executor addresses to return.
     /// @return array An array of executor addresses.
     /// @return next The address to use as a cursor for the next page of results.
-    function getExecutorsPaginated(
-        address cursor,
-        uint256 size
-    ) external view returns (address[] memory array, address next) {
+    function getExecutorsPaginated(address cursor, uint256 size) external view returns (address[] memory array, address next) {
         (array, next) = _paginate(_getAccountStorage().executors, cursor, size);
     }
 
@@ -191,7 +161,9 @@ contract ModuleManager is Storage, Receiver {
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
         // Note: Idea is should be able to check supported interface and module type - eligible validator
-        if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert IncompatibleValidatorModule(validator);
+        if (!IERC7579ModuleBase(validator).isModuleType(MODULE_TYPE_VALIDATOR)) {
+            revert IncompatibleValidatorModule(validator);
+        }
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         validators.push(validator);
@@ -206,7 +178,7 @@ contract ModuleManager is Storage, Receiver {
         // Having at least one validator is a requirement for the account to function properly
         (address[] memory array, ) = _paginate(_getAccountStorage().validators, address(0x1), 2);
         if (array.length == 1) {
-            revert CannotRemoveLastValidator();
+            revert LastValidatorRequired();
         }
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
@@ -216,16 +188,14 @@ contract ModuleManager is Storage, Receiver {
         IValidator(validator).onUninstall(disableModuleData);
     }
 
-    // /////////////////////////////////////////////////////
-    // //  Manage Executors
-    // ////////////////////////////////////////////////////
-
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
         // Note: Idea is should be able to check supported interface and module type - eligible validator
-        if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert IncompatibleExecutorModule(executor);
+        if (!IERC7579ModuleBase(executor).isModuleType(MODULE_TYPE_EXECUTOR)) {
+            revert IncompatibleExecutorModule(executor);
+        }
 
         SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         executors.push(executor);
@@ -242,10 +212,6 @@ contract ModuleManager is Storage, Receiver {
         IExecutor(executor).onUninstall(disableModuleData);
     }
 
-    // /////////////////////////////////////////////////////
-    // //  Manage Hook
-    // ////////////////////////////////////////////////////
-
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
@@ -254,7 +220,7 @@ contract ModuleManager is Storage, Receiver {
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
-        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert IncompatibleHookModule(hook);
+        if (!IERC7579ModuleBase(hook).isModuleType(MODULE_TYPE_HOOK)) revert IncompatibleHookModule(hook);
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -294,6 +260,22 @@ contract ModuleManager is Storage, Receiver {
         if (!_isFallbackHandlerInstalled(selector)) revert FallbackNotInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
         IFallback(fallbackHandler).onUninstall(deInitData);
+    }
+
+    /// @dev Retrieves and prepares the hook for pre-check operations.
+    function _preCheck() internal returns (address hook, bytes memory hookData) {
+        hook = _getHook();
+        if (hook != address(0)) {
+            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            return (hook, hookData);
+        }
+    }
+
+    /// @dev Retrieves and prepares the hook for post-check operations.
+    function _postCheck(address hook, bytes memory hookData, bool executionSuccess, bytes memory executionReturnValue) internal {
+        if (hook != address(0)) {
+            IHook(hook).postCheck(hookData, executionSuccess, executionReturnValue);
+        }
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
