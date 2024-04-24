@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       polygonMumbai: process.env.POLYGONSCAN_API_KEY || "",
       sepolia: process.env.ETHERSCAN_API_KEY || "",
-    }
+    },
   },
   docgen: {
     projectName: "Biconomy Modular Smart Account",
