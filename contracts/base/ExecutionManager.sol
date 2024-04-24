@@ -1,33 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Execution } from "../interfaces/modules/IERC7579Modules.sol";
-import "../lib/ModeLib.sol";
+// ──────────────────────────────────────────────────────────────────────────────
+//     _   __    _  __
+//    / | / /__ | |/ /_  _______
+//   /  |/ / _ \|   / / / / ___/
+//  / /|  /  __/   / /_/ (__  )
+// /_/ |_/\___/_/|_\__,_/____/
+//
+// ──────────────────────────────────────────────────────────────────────────────
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337,
+// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
 
-/**
- * @title ExecutionManager
- * @dev This contract executes calls in the context of this contract.
- * @author zeroknots.eth | rhinestone.wtf
- * shoutout to solady (vectorized, ross) for this code
- * https://github.com/Vectorized/solady/blob/main/src/accounts/ERC4337.sol
- */
-contract ExecutionManager {
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+import { Execution } from "../types/DataTypes.sol";
+import { IExecutionManagerEventsAndErrors } from "../interfaces/base/IExecutionManager.sol";
 
-    // /////////////////////////////////////////////////////
-    // //  Execution Helpers
-    // ////////////////////////////////////////////////////
-
+/// @title Nexus - ExecutionManager
+/// @notice Implements execution management within the Nexus suite, facilitating transaction execution strategies and
+/// error handling.
+/// @dev Provides mechanisms for direct and batched transactions with both committed and tentative execution strategies
+/// as per ERC-4337 and ERC-7579 standards.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
+contract ExecutionManager is IExecutionManagerEventsAndErrors {
     /// @notice Executes a call to a target address with specified value and data.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
     /// @return result The bytes returned from the execution.
-    function _execute(
-        address target,
-        uint256 value,
-        bytes calldata callData
-    ) internal virtual returns (bytes memory result) {
+    function _execute(address target, uint256 value, bytes calldata callData) internal virtual returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -51,11 +55,7 @@ contract ExecutionManager {
     /// @param callData The calldata to send.
     /// @return success True if the execution was successful, false otherwise.
     /// @return result The bytes returned from the execution.
-    function _tryExecute(
-        address target,
-        uint256 value,
-        bytes calldata callData
-    ) internal virtual returns (bool success, bytes memory result) {
+    function _tryExecute(address target, uint256 value, bytes calldata callData) internal virtual returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -123,10 +123,7 @@ contract ExecutionManager {
     /// @param callData The calldata to send.
     /// @return success True if the delegatecall was successful, false otherwise.
     /// @return result The bytes returned from the delegatecall.
-    function _tryExecuteDelegatecall(
-        address delegate,
-        bytes calldata callData
-    ) internal returns (bool success, bytes memory result) {
+    function _tryExecuteDelegatecall(address delegate, bytes calldata callData) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
