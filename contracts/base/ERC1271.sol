@@ -66,7 +66,7 @@ abstract contract ERC1271 {
     ///
     /// @return result `0x1626ba7e` if validation succeeded, else `0xffffffff`.
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
-        if (_isValidSignature({hash: replaySafeHash(hash), signature: signature})) {
+        if (_isValidSignature({ hash: replaySafeHash(hash), signature: signature })) {
             // bytes4(keccak256("isValidSignature(bytes32,bytes)"))
             return 0x1626ba7e;
         }
@@ -98,15 +98,16 @@ abstract contract ERC1271 {
     /// @return The 32 bytes domain separator result.
     function domainSeparator() public view returns (bytes32) {
         (string memory name, string memory version) = _domainNameAndVersion();
-        return keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(name)),
-                keccak256(bytes(version)),
-                block.chainid,
-                address(this)
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                    keccak256(bytes(name)),
+                    keccak256(bytes(version)),
+                    block.chainid,
+                    address(this)
+                )
+            );
     }
 
     /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.

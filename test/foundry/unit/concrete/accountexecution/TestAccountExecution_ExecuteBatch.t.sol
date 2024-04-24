@@ -146,7 +146,6 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         bytes memory signature = abi.encodePacked(r, s, v);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(hash, abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
-
     }
 
     function test_ExecuteBatch_ApproveAndTransfer_SingleOp() public {

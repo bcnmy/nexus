@@ -201,7 +201,10 @@ contract SmartAccountWith1271 is IBicoMSA, ERC1271, BaseAccount, ExecutionHelper
      * @param data The data that is signed
      */
     // Review: could be removed. only kept because it's part of interface
-    function isValidSignature(bytes32 hash, bytes calldata data) public view virtual override(ERC1271, IERC7579Account) returns (bytes4) {
+    function isValidSignature(
+        bytes32 hash,
+        bytes calldata data
+    ) public view virtual override(ERC1271, IERC7579Account) returns (bytes4) {
         return ERC1271.isValidSignature(hash, data);
     }
 
@@ -209,14 +212,20 @@ contract SmartAccountWith1271 is IBicoMSA, ERC1271, BaseAccount, ExecutionHelper
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
         bytes4 EIP1271_RESULT = IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
-        if(EIP1271_RESULT == ERC1271_MAGICVALUE) {
+        if (EIP1271_RESULT == ERC1271_MAGICVALUE) {
             return true;
         } else {
             return false;
         }
     }
 
-    function _domainNameAndVersion() internal view virtual override returns (string memory name, string memory version) {
+    function _domainNameAndVersion()
+        internal
+        view
+        virtual
+        override
+        returns (string memory name, string memory version)
+    {
         name = "SmartAccountWith1271";
         version = "0.0.1";
     }

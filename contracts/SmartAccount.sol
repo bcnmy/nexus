@@ -228,7 +228,8 @@ contract SmartAccount is IBicoMSA, EIP712, BaseAccount, ExecutionHelper, ModuleM
     ////
     /// @return The resulting EIP-712 hash.
     function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
+        return
+            keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
     }
 
     /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
