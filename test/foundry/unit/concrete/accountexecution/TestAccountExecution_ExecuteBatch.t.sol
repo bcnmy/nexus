@@ -137,6 +137,18 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
     }
 
+
+    function test_isValidSignature_MockValidator() public {
+        string memory message = "Some Message";
+        bytes32 hash = keccak256(abi.encodePacked(message));
+        bytes32 toSign = ALICE_ACCOUNT.replaySafeHash(hash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ALICE.privateKey, toSign);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(hash, abi.encodePacked(address(VALIDATOR_MODULE), signature));
+        assertEq(ret, bytes4(0x1626ba7e));
+
+    }
+
     function test_ExecuteBatch_ApproveAndTransfer_SingleOp() public {
         uint256 approvalAmount = 1000 * 10 ** token.decimals();
         uint256 transferAmount = 500 * 10 ** token.decimals();

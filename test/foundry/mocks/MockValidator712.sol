@@ -12,25 +12,15 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { EncodedModuleTypes } from "../../../contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import {EIP712} from "solady/src/utils/EIP712.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract MockValidator1271 is IValidator {
+contract MockValidator is EIP712, IValidator {
+    // keccak256(EIP712Domain(string name,string version,uint256 chainId,address verifyingContract))
+    bytes32 internal constant EIP712_DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
-    string internal constant NAME = "Mock Validator 1271";
-    string internal constant VERSION = "0.0.1";
-
-    // d87cd6ef79d4e2b95e15ce8abf732db51ec771f1ca2edccf22a46c729ac56472
-    bytes32 private constant _TYPE_HASH = keccak256(
-        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)"
-    );
-    bytes32 private constant _HASHED_NAME = keccak256(bytes(NAME));
-
-    bytes32 private constant _HASHED_VERSION = keccak256(bytes(VERSION));
-
-    bytes32 private immutable _SALT = bytes32(bytes20(address(this)));
-
-    bytes32 private constant ACCOUNT_TYPEHASH = keccak256("BiconomyNexusMessage(bytes message)");
+    string constant NAME = "Mock ECDSA Validator";
+    string constant VERSION = "0.0.1";
 
     mapping(address => address) public smartAccountOwners;
 
@@ -58,13 +48,16 @@ contract MockValidator1271 is IValidator {
         returns (bytes4)
     {
         address ownerOfSender = smartAccountOwners[sender];
-        // Todo
-        // Review: sender here is smart account which would be wrong
-        bytes32 messageHash = getMessageHash(sender, abi.encode(hash));
-        if(SignatureCheckerLib.isValidERC1271SignatureNow(ownerOfSender, messageHash, signature)) {
-          return ERC1271_MAGICVALUE;
+        bytes32 domainSeparator = _domainSeparator();
+        bytes32 signedMessageHash = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, hash)
+        );
+        bytes32 ethHash = ECDSA.toEthSignedMessageHash(signedMessageHash);
+        address owner = ECDSA.recover(ethHash, signature);
+        if(ownerOfSender == owner) {
+            return ERC1271_MAGICVALUE;
         } else {
-          return ERC1271_INVALID;
+            return ERC1271_INVALID;
         }
     }
 
@@ -96,21 +89,21 @@ contract MockValidator1271 is IValidator {
         return smartAccountOwners[account];
     }
 
-     function encodeMessageData(address account, bytes memory message)
-        public
-        view
-        returns (bytes memory)
-    {
-        bytes32 messageHash = keccak256(abi.encode(ACCOUNT_TYPEHASH, keccak256(message)));
-        return abi.encodePacked("\x19\x01", _domainSeparator(account), messageHash);
+    function _domainSeparator() internal view override returns (bytes32) {
+        (string memory _name, string memory _version) = _domainNameAndVersion();
+        bytes32 nameHash = keccak256(bytes(_name));
+        bytes32 versionHash = keccak256(bytes(_version));
+        // Should Use the proxy address for the EIP-712 domain separator?
+        // Review: this uses the validator address as the verifying contract
+        address verifyingContract = address(this);
+
+        // Construct the domain separator with name, version, chainId, and proxy address.
+        bytes32 typeHash = EIP712_DOMAIN_TYPEHASH;
+        return keccak256(abi.encode(typeHash, nameHash, versionHash, block.chainid, verifyingContract));
     }
 
-    function getMessageHash(address account, bytes memory message) public view returns (bytes32) {
-        return keccak256(encodeMessageData(account, message));
-    }
-
-    function _domainSeparator(address account) internal view returns (bytes32) {
-        return keccak256(abi.encode(_TYPE_HASH, _HASHED_NAME, _HASHED_VERSION, block.chainid, account, _SALT));
+    function _domainNameAndVersion() internal pure override returns (string memory, string memory) {
+        return (NAME, VERSION);
     }
 
     // Review

@@ -5,6 +5,7 @@ import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { Execution } from "./interfaces/modules/IERC7579Modules.sol";
 import { IValidator, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./interfaces/modules/IERC7579Modules.sol";
 import { IBicoMSA } from "./interfaces/IBicoMSA.sol";
@@ -13,9 +14,17 @@ import { ExecLib } from "./lib/ExecLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 // Review.. ERC1271
-contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract SmartAccount is IBicoMSA, EIP712, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
+
+    /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
+    ///      cross-account-replay layer.
+    ///
+    ///      The original hash must either be:
+    ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
+    ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
+    bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
     constructor() {
         _initModuleManager();
@@ -25,6 +34,12 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, 
 
     function accountId() external pure virtual returns (string memory) {
         return _ACCOUNT_IMPLEMENTATION_ID;
+    }
+
+    // Todo: Change version
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        name = "Nexus";
+        version = "0.0.1-beta";
     }
 
     /// @dev expects IValidator module address to be encoded in the nonce
@@ -200,7 +215,36 @@ contract SmartAccount is IBicoMSA, BaseAccount, ExecutionHelper, ModuleManager, 
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+        return IValidator(validator).isValidSignatureWithSender(msg.sender, _eip712Hash(hash), data[20:]);
+    }
+
+    /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
+    ///
+    /// @dev Implements encode(domainSeparator : 𝔹²⁵⁶, message : 𝕊) = "\x19\x01" || domainSeparator ||
+    ///      hashStruct(message).
+    /// @dev See https://eips.ethereum.org/EIPS/eip-712#specification.
+    ///
+    /// @param hash The `BiconomyNexusMessage.hash` field to hash.
+    ////
+    /// @return The resulting EIP-712 hash.
+    function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
+    }
+
+    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
+    ///
+    /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
+    ///      keccak256(
+    ///         \x19\x01 ||
+    ///         this.domainSeparator ||
+    ///         hashStruct(CoinbaseSmartWalletMessage({ hash: `hash`}))
+    ///      )
+    ///
+    /// @param hash The original hash.
+    ///
+    /// @return The corresponding replay-safe hash.
+    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
+        return _eip712Hash(hash);
     }
 
     function getImplementation() external view returns (address implementation) {
