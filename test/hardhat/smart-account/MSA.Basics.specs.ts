@@ -1,16 +1,27 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, ZeroAddress, concat, hashMessage, toBeHex, zeroPadBytes } from "ethers";
+import {
+  AddressLike,
+  Signer,
+  ZeroAddress,
+  concat,
+  hashMessage,
+  toBeHex,
+  zeroPadBytes,
+} from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AccountFactory,
   Counter,
   EntryPoint,
   MockValidator,
-  SmartAccount,
+  Nexus,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
-import { deployContractsAndSAFixture, deployContractsFixture } from "../utils/deployment";
+import {
+  deployContractsAndSAFixture,
+  deployContractsFixture,
+} from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
 import {
   getInitCode,
@@ -30,9 +41,9 @@ import {
   installModule,
 } from "../utils/erc7579Utils";
 
-describe("SmartAccount Basic Specs", function () {
+describe("Nexus Basic Specs", function () {
   let factory: AccountFactory;
-  let smartAccount: SmartAccount;
+  let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
   let addresses: string[] | AddressLike[];
@@ -115,7 +126,7 @@ describe("SmartAccount Basic Specs", function () {
   });
 
   describe("Smart Account Basics", function () {
-    it("Should correctly return the SmartAccount's ID", async function () {
+    it("Should correctly return the Nexus's ID", async function () {
       expect(await smartAccount.accountId()).to.equal(
         "biconomy.modular-smart-account.1.0.0-alpha",
       );
@@ -124,18 +135,18 @@ describe("SmartAccount Basic Specs", function () {
     it("Should get implementation address of smart account", async () => {
       const saImplementation = await smartAccount.getImplementation();
       expect(saImplementation).to.not.equal(ZeroAddress);
-    })
+    });
 
     it("Should check deposit amount", async () => {
-      await smartAccount.addDeposit({value: to18(1)});
+      await smartAccount.addDeposit({ value: to18(1) });
       const deposit = await smartAccount.getDeposit();
       expect(deposit).to.be.greaterThan(0);
-    })
+    });
 
     it("Should get entry point", async () => {
       const entryPointFromContract = await smartAccount.entryPoint();
       expect(entryPointFromContract).to.be.equal(entryPoint);
-    })
+    });
 
     it("Should verify supported account modes", async function () {
       expect(
@@ -200,36 +211,48 @@ describe("SmartAccount Basic Specs", function () {
 
     it("Should verify unsupported execution modes", async function () {
       // Checks support for predefined module types (e.g., Validation, Execution)
-      expect(await smartAccount.supportsExecutionMode(ethers.concat([
-        ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
-        ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
-        ethers.zeroPadValue(toBeHex(UNUSED), 4),
-        ethers.zeroPadValue(toBeHex("0x00"), 4),
-        ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
-      ]))).to.be.false;
+      expect(
+        await smartAccount.supportsExecutionMode(
+          ethers.concat([
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(UNUSED), 4),
+            ethers.zeroPadValue(toBeHex("0x00"), 4),
+            ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
+          ]),
+        ),
+      ).to.be.false;
     });
 
     it("Should return false for unsupported execution mode", async function () {
       // Checks support for predefined module types (e.g., Validation, Execution)
-      const mode = ethers.concat([CALLTYPE_SINGLE, "0x04", MODE_DEFAULT, UNUSED, MODE_PAYLOAD]);
+      const mode = ethers.concat([
+        CALLTYPE_SINGLE,
+        "0x04",
+        MODE_DEFAULT,
+        UNUSED,
+        MODE_PAYLOAD,
+      ]);
       expect(await smartAccount.supportsExecutionMode(mode)).to.be.false;
     });
 
     it("Should confirm support for specified module types", async function () {
       // Checks support for predefined module types (e.g., Validation, Execution)
-      expect(await smartAccount.supportsModule(ModuleType.Validation)).to.be.true;
-      expect(await smartAccount.supportsModule(ModuleType.Execution)).to.be.true;
+      expect(await smartAccount.supportsModule(ModuleType.Validation)).to.be
+        .true;
+      expect(await smartAccount.supportsModule(ModuleType.Execution)).to.be
+        .true;
     });
 
     it("Should withdraw deposit to owner address", async function () {
       const receiverAddress = ethers.Wallet.createRandom().address;
 
-      await smartAccount.addDeposit({value: to18(1)});
+      await smartAccount.addDeposit({ value: to18(1) });
       const callData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
         targetContract: smartAccount,
         functionName: "withdrawDepositTo",
-        args: [receiverAddress, to18(1)]
+        args: [receiverAddress, to18(1)],
       });
       const userOp = buildPackedUserOp({
         sender: smartAccountAddress,
@@ -239,15 +262,19 @@ describe("SmartAccount Basic Specs", function () {
         smartAccountAddress,
         ethers.zeroPadBytes(moduleAddress.toString(), 24),
       );
-      userOp.nonce = userOpNonce; 
+      userOp.nonce = userOpNonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const userOpSignature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+      const userOpSignature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
       userOp.signature = userOpSignature;
-      
+
       await entryPoint.handleOps([userOp], bundlerAddress);
 
-      expect(await ethers.provider.getBalance(receiverAddress)).to.be.equal(to18(1));
+      expect(await ethers.provider.getBalance(receiverAddress)).to.be.equal(
+        to18(1),
+      );
     });
 
     it("Should revert with invalid validation module error", async function () {
@@ -256,16 +283,22 @@ describe("SmartAccount Basic Specs", function () {
         ModuleType.Validation,
         randomAddress,
         ethers.hexlify("0x"),
-      )
+      );
       expect(isModuleInstalled).to.be.false;
-      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      const data = ethers.solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), "0", incrementNumber]);
-      const callData = encodeData(["bytes"], [data])
+      const incrementNumber =
+        counter.interface.encodeFunctionData("incrementNumber");
+      const data = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [await counter.getAddress(), "0", incrementNumber],
+      );
+      const callData = encodeData(["bytes"], [data]);
       const functionCalldata = concat([
         zeroPadBytes(randomAddress, 20), // Address needs to be 20 bytes, so pad it if necessary
-        callData
+        callData,
       ]);
-      await expect(smartAccount.isValidSignature(hashMessage(callData), functionCalldata)).to.be.rejected
+      await expect(
+        smartAccount.isValidSignature(hashMessage(callData), functionCalldata),
+      ).to.be.rejected;
     });
 
     it("Should check signature validity using smart account isValidSignature", async function () {
@@ -273,14 +306,14 @@ describe("SmartAccount Basic Specs", function () {
         ModuleType.Validation,
         await validatorModule.getAddress(),
         ethers.hexlify("0x"),
-      )
+      );
       expect(isModuleInstalled).to.be.true;
       const message = "Some Message";
     });
   });
 
-  describe("SmartAccount Deployment via EntryPoint", function () {
-    it("Should successfully deploy a SmartAccount via the EntryPoint", async function () {
+  describe("Nexus Deployment via EntryPoint", function () {
+    it("Should successfully deploy a Nexus via the EntryPoint", async function () {
       const saDeploymentIndex = 1;
       // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
       const initCode = await getInitCode(
@@ -312,7 +345,9 @@ describe("SmartAccount Basic Specs", function () {
 
       const userOpHash = await entryPoint.getUserOpHash(packedUserOp);
 
-      const sig = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+      const sig = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
 
       packedUserOp.signature = sig;
 
@@ -321,7 +356,7 @@ describe("SmartAccount Basic Specs", function () {
       await entryPoint.handleOps([packedUserOp], bundlerAddress);
     });
 
-    it("Should fail SmartAccount deployment with an unauthorized signer", async function () {
+    it("Should fail Nexus deployment with an unauthorized signer", async function () {
       const saDeploymentIndex = 2;
       const initCode = await getInitCode(
         ownerAddress,

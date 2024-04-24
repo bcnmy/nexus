@@ -5,8 +5,8 @@ import "./Helpers.sol";
 import "./EventsAndErrors.sol";
 
 contract SmartAccountTestLab is Helpers {
-    SmartAccount public implementation;
-    SmartAccount public smartAccount;
+    Nexus public implementation;
+    Nexus public smartAccount;
 
     function init() internal {
         initializeTestingEnvironment();
@@ -17,17 +17,25 @@ contract SmartAccountTestLab is Helpers {
         assertTrue(res, "Pre-funding account should succeed");
     }
 
-    function _prepareSingleExecution(address to, uint256 value, bytes memory data) internal returns (Execution[] memory execution) {
+    function _prepareSingleExecution(
+        address to,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+        returns (Execution[] memory execution)
+    {
         execution = new Execution[](1);
         execution[0] = Execution(to, value, data);
     }
 
     function _prepareSeveralIdenticalExecutions(
-        Execution memory execution, 
+        Execution memory execution,
         uint256 executionsNumber
-    ) 
-    internal 
-    returns (Execution[] memory) {
+    )
+        internal
+        returns (Execution[] memory)
+    {
         Execution[] memory executions = new Execution[](executionsNumber);
         for (uint256 i = 0; i < executionsNumber; i++) {
             executions[i] = execution;
@@ -38,7 +46,10 @@ contract SmartAccountTestLab is Helpers {
     function handleUserOpAndMeasureGas(
         PackedUserOperation[] memory userOps,
         address refundReceiver
-    ) internal returns (uint256 gasUsed) {
+    )
+        internal
+        returns (uint256 gasUsed)
+    {
         uint256 gasStart = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
         gasUsed = gasStart - gasleft();

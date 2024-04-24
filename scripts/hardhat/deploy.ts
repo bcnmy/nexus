@@ -1,15 +1,13 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
+  const Nexus = await ethers.getContractFactory("Nexus");
 
-  const smartAccount = await SmartAccount.deploy();
+  const smartAccount = await Nexus.deploy();
 
   await smartAccount.waitForDeployment();
 
-  console.log(
-    `SmartAccount implementation deployed at: ${smartAccount.target}`,
-  );
+  console.log(`Nexus implementation deployed at: ${smartAccount.target}`);
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
 

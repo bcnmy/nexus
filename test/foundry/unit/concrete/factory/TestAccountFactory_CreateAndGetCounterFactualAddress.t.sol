@@ -48,7 +48,11 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.modular-smart-account.1.0.0-alpha", "Not deployed properly");
+        assertEq(
+            IAccountConfig(accountAddress).accountId(),
+            "biconomy.modular-smart-account.1.0.0-alpha",
+            "Not deployed properly"
+        );
     }
 
     function test_DeployAccount_WithHandleOps_FailsIfAccountAlreadyExists() public {
@@ -69,13 +73,13 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable firstAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
         vm.prank(user.addr); // Even owner can not reinit
         vm.expectRevert(LinkedList_AlreadyInitialized.selector);
-        IBicoMSA(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
+        INexus(firstAccountAddress).initialize(address(VALIDATOR_MODULE), initData);
     }
 
     function test_CreateAccountWithDifferentIndexes() public {
         uint256 indexBase = 0;
         address payable accountAddress1 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, indexBase);
-        address payable accountAddress2 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, indexBase+1);
+        address payable accountAddress2 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, indexBase + 1);
         // Validate that the deployed addresses are different
         assertTrue(
             accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses"
@@ -92,6 +96,6 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     function test_DeployAccountWithoutEnoughGas() public {
         vm.expectRevert();
         // Adjust the gas amount based on your contract's requirements
-        FACTORY.createAccount{ gas: 1000 }(address(VALIDATOR_MODULE), initData, 0); 
+        FACTORY.createAccount{ gas: 1000 }(address(VALIDATOR_MODULE), initData, 0);
     }
 }

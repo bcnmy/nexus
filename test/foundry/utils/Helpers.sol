@@ -12,7 +12,7 @@ import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockExecutor } from "../mocks/MockExecutor.sol";
 import { MockHook } from "../mocks/MockHook.sol";
 import { MockHandler } from "../mocks/MockHandler.sol";
-import { SmartAccount } from "../../../contracts/SmartAccount.sol";
+import { Nexus } from "../../../contracts/Nexus.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
@@ -38,9 +38,9 @@ contract Helpers is CheatCodes, EventsAndErrors {
     address public CHARLIE_ADDRESS;
     address public BUNDLER_ADDRESS;
 
-    SmartAccount public BOB_ACCOUNT;
-    SmartAccount public ALICE_ACCOUNT;
-    SmartAccount public CHARLIE_ACCOUNT;
+    Nexus public BOB_ACCOUNT;
+    Nexus public ALICE_ACCOUNT;
+    Nexus public CHARLIE_ACCOUNT;
 
     IEntryPoint public ENTRYPOINT;
     AccountFactory public FACTORY;
@@ -48,7 +48,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
     MockExecutor public EXECUTOR_MODULE;
     MockHook public HOOK_MODULE;
     MockHandler public HANDLER_MODULE;
-    SmartAccount public ACCOUNT_IMPLEMENTATION;
+    Nexus public ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
     // Setup Functions
@@ -78,7 +78,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         ENTRYPOINT = new EntryPoint();
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
-        ACCOUNT_IMPLEMENTATION = new SmartAccount();
+        ACCOUNT_IMPLEMENTATION = new Nexus();
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
@@ -89,7 +89,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-    function deployAccount(Vm.Wallet memory wallet, uint256 deposit) internal returns (SmartAccount) {
+    function deployAccount(Vm.Wallet memory wallet, uint256 deposit) internal returns (Nexus) {
         address payable accountAddress = calculateAccountAddress(wallet.addr);
         bytes memory initCode = prepareInitCode(wallet.addr);
 
@@ -99,7 +99,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
         assertTrue(VALIDATOR_MODULE.isOwner(accountAddress, wallet.addr));
-        return SmartAccount(accountAddress);
+        return Nexus(accountAddress);
     }
 
     function deployAccounts() internal {
@@ -217,7 +217,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function prepareUserOperation(
         Vm.Wallet memory signer,
-        SmartAccount account,
+        Nexus account,
         ExecType execType,
         Execution[] memory executions
     )
@@ -236,12 +236,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
             executionCalldata = abi.encodeCall(
-                SmartAccount.execute,
+                Nexus.execute,
                 (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
             );
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
-            executionCalldata = abi.encodeCall(SmartAccount.execute, (mode, ExecLib.encodeBatch(executions)));
+            executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
         } else {
             revert("Executions array cannot be empty");
         }

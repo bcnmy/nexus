@@ -1,10 +1,6 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
-import {
-  ExecutionMethod,
-  PackedUserOperation,
-  UserOperation,
-} from "./types";
+import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
 import {
   Signer,
   AddressLike,
@@ -296,9 +292,15 @@ export async function generateUseropCallData({
   functionName,
   args = [],
   value = 0,
-  mode = ethers.concat([CALLTYPE_SINGLE, EXECTYPE_DEFAULT, MODE_DEFAULT, UNUSED, MODE_PAYLOAD]),
+  mode = ethers.concat([
+    CALLTYPE_SINGLE,
+    EXECTYPE_DEFAULT,
+    MODE_DEFAULT,
+    UNUSED,
+    MODE_PAYLOAD,
+  ]),
 }): Promise<string> {
-  const AccountExecution = await ethers.getContractFactory("SmartAccount");
+  const AccountExecution = await ethers.getContractFactory("Nexus");
 
   const targetAddress = await targetContract.getAddress();
   // Encode the target function call data
@@ -350,14 +352,19 @@ export async function generateUseropCallData({
   return executeCallData;
 }
 
-// Utility function to listen for UserOperationRevertReason events 
+// Utility function to listen for UserOperationRevertReason events
 export async function listenForRevertReasons(entryPointAddress: string) {
-  const entryPoint = await ethers.getContractAt("EntryPoint", entryPointAddress);
+  const entryPoint = await ethers.getContractAt(
+    "EntryPoint",
+    entryPointAddress,
+  );
   console.log("Listening for UserOperationRevertReason events...");
-  
-  entryPoint.on(entryPoint.getEvent("UserOperationRevertReason"), (userOpHash, sender, nonce, revertReason) => {
-    const reason = ethers.toUtf8String(revertReason);
-    console.log(`Revert Reason:
+
+  entryPoint.on(
+    entryPoint.getEvent("UserOperationRevertReason"),
+    (userOpHash, sender, nonce, revertReason) => {
+      const reason = ethers.toUtf8String(revertReason);
+      console.log(`Revert Reason:
       User Operation Hash: ${userOpHash}
       Sender: ${sender}
       Nonce: ${nonce}
@@ -366,9 +373,12 @@ export async function listenForRevertReasons(entryPointAddress: string) {
   );
 }
 
-export function findEventInLogs(logs: any[], eventName: string): string | Error {
+export function findEventInLogs(
+  logs: any[],
+  eventName: string,
+): string | Error {
   for (let index = 0; index < logs.length; index++) {
-    const fragmentName = logs[index].fragment.name;    
+    const fragmentName = logs[index].fragment.name;
     if (fragmentName === eventName) {
       return fragmentName;
     }
@@ -380,14 +390,22 @@ export function findEventInLogs(logs: any[], eventName: string): string | Error 
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
 
-export async function prepareUserOperation(userOp: PackedUserOperation, entryPoint: EntryPoint, validatorModuleAddress: string, smartAccountOwner: Signer, nonceIncrement: number): Promise<PackedUserOperation> {
+export async function prepareUserOperation(
+  userOp: PackedUserOperation,
+  entryPoint: EntryPoint,
+  validatorModuleAddress: string,
+  smartAccountOwner: Signer,
+  nonceIncrement: number,
+): Promise<PackedUserOperation> {
   const nonce = await entryPoint.getNonce(
     userOp.sender,
     ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
   );
   userOp.nonce = nonce + BigInt(nonceIncrement);
   const userOpHash = await entryPoint.getUserOpHash(userOp);
-  const signature = await smartAccountOwner.signMessage(ethers.getBytes(userOpHash));
+  const signature = await smartAccountOwner.signMessage(
+    ethers.getBytes(userOpHash),
+  );
   userOp.signature = signature;
 
   return userOp;

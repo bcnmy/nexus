@@ -10,7 +10,7 @@ import {
   MockToken,
   MockValidator,
   K1Validator,
-  SmartAccount,
+  Nexus,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -226,19 +226,19 @@ export async function getDeployedK1Validator(): Promise<K1Validator> {
  * Deploys the (MSA) Smart Account implementation contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed SA implementation contract instance.
  */
-export async function getDeployedMSAImplementation(): Promise<SmartAccount> {
+export async function getDeployedMSAImplementation(): Promise<Nexus> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
-  const deterministicMSAImpl = await deployments.deploy("SmartAccount", {
+  const Nexus = await ethers.getContractFactory("Nexus");
+  const deterministicMSAImpl = await deployments.deploy("Nexus", {
     from: addresses[0],
     deterministicDeployment: true,
   });
 
-  return SmartAccount.attach(deterministicMSAImpl.address) as SmartAccount;
+  return Nexus.attach(deterministicMSAImpl.address) as Nexus;
 }
 
 /**
@@ -295,8 +295,8 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWithSA> {
   const saDeploymentIndex = 0;
   const [deployer, ...accounts] = await ethers.getSigners();
-  const owner = accounts[1]
-  const alice = accounts[2]
+  const owner = accounts[1];
+  const alice = accounts[2];
 
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
@@ -336,7 +336,10 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   // Module initialization data, encoded
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
-  const aliceModuleInstallData = ethers.solidityPacked(["address"], [aliceAddress]);
+  const aliceModuleInstallData = ethers.solidityPacked(
+    ["address"],
+    [aliceAddress],
+  );
 
   const accountAddress = await msaFactory.getCounterFactualAddress(
     mockValidatorAddress,
@@ -369,11 +372,11 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   await mockToken.mint(accountAddress, to18(100));
 
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
+  const Nexus = await ethers.getContractFactory("Nexus");
 
-  // Attach the SmartAccount contract to the deployed address
-  const deployedMSA = SmartAccount.attach(accountAddress) as SmartAccount;
-  const aliceDeployedMSA = SmartAccount.attach(aliceAccountAddress) as SmartAccount;
+  // Attach the Nexus contract to the deployed address
+  const deployedMSA = Nexus.attach(accountAddress) as Nexus;
+  const aliceDeployedMSA = Nexus.attach(aliceAccountAddress) as Nexus;
 
   return {
     entryPoint,
@@ -404,7 +407,7 @@ export async function getSmartAccountWithValidator(
   validatorAddress: string,
   onInstallData: BytesLike,
   index: number,
-): Promise<SmartAccount> {
+): Promise<Nexus> {
   return null;
 }
 
@@ -426,7 +429,7 @@ export async function getDeployedSmartAccountWithValidator(
   validatorAddress: string,
   onInstallData: BytesLike,
   deploymentIndex: number = 0,
-): Promise<SmartAccount> {
+): Promise<Nexus> {
   const ownerAddress = await signer.getAddress();
   // Module initialization data, encoded
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
@@ -447,10 +450,10 @@ export async function getDeployedSmartAccountWithValidator(
     deploymentIndex,
   );
 
-  const SmartAccount = await ethers.getContractFactory("SmartAccount");
+  const Nexus = await ethers.getContractFactory("Nexus");
 
-  // Attach the SmartAccount contract to the deployed address
-  const deployedMSA = SmartAccount.attach(accountAddress) as SmartAccount;
+  // Attach the Nexus contract to the deployed address
+  const deployedMSA = Nexus.attach(accountAddress) as Nexus;
 
   return deployedMSA;
 }

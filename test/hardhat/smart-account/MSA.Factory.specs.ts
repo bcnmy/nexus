@@ -6,18 +6,15 @@ import {
   AccountFactory,
   EntryPoint,
   MockValidator,
-  SmartAccount,
+  Nexus,
 } from "../../../typechain-types";
 import { deployContractsFixture } from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
-import {
-  buildPackedUserOp,
-} from "../utils/operationHelpers";
+import { buildPackedUserOp } from "../utils/operationHelpers";
 
-
-describe("SmartAccount Factory Tests", function () {
+describe("Nexus Factory Tests", function () {
   let factory: AccountFactory;
-  let smartAccount: SmartAccount;
+  let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let validatorModule: MockValidator;
   let accounts: Signer[];
@@ -30,7 +27,7 @@ describe("SmartAccount Factory Tests", function () {
   let ownerAddress: AddressLike;
   let bundler: Signer;
   let bundlerAddress: AddressLike;
-  let ownerSA: SmartAccount;
+  let ownerSA: Nexus;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsFixture);
@@ -66,19 +63,20 @@ describe("SmartAccount Factory Tests", function () {
       saDeploymentIndex,
     );
 
-    await factory.createAccount(validatorModuleAddress, installData, saDeploymentIndex);
+    await factory.createAccount(
+      validatorModuleAddress,
+      installData,
+      saDeploymentIndex,
+    );
 
-    ownerSA = smartAccount.attach(expectedAccountAddress) as SmartAccount;
+    ownerSA = smartAccount.attach(expectedAccountAddress) as Nexus;
   });
- 
+
   describe("Contract Deployment - Should not revert", function () {
     it("Should deploy smart account with createAccount", async function () {
       const saDeploymentIndex = 0;
 
-      const installData = encodeData(
-        ["address"],
-        [ownerAddress],
-      ); // Example data, customize as needed
+      const installData = encodeData(["address"], [ownerAddress]); // Example data, customize as needed
 
       // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
@@ -109,8 +107,8 @@ describe("SmartAccount Factory Tests", function () {
       const unexpectedAccountAddress = await factory.getCounterFactualAddress(
         validatorModuleAddress,
         installData,
-        1
-      )
+        1,
+      );
 
       // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
@@ -135,8 +133,14 @@ describe("SmartAccount Factory Tests", function () {
     it("Should deploy account with zero initialization data", async function () {
       const saDeploymentIndex = 25;
 
-      const initializeData = smartAccount.interface.encodeFunctionData("initialize", [validatorModuleAddress, "0x"]);
-      const initData = ethers.solidityPacked(["address", "uint256", "bytes"], [smartAccountAddress, 0, initializeData])
+      const initializeData = smartAccount.interface.encodeFunctionData(
+        "initialize",
+        [validatorModuleAddress, "0x"],
+      );
+      const initData = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [smartAccountAddress, 0, initializeData],
+      );
 
       // Read the expected account address
       const expectedAccountAddress = await factory.getCounterFactualAddress(
@@ -159,59 +163,81 @@ describe("SmartAccount Factory Tests", function () {
     it("Should deploy account with invalid validation module", async function () {
       const saDeploymentIndex = 3;
 
-      const initializeData = smartAccount.interface.encodeFunctionData("initialize", [ZeroAddress, ownerAddress.toString()]);
-      const initData = ethers.solidityPacked(["address", "uint256", "bytes"], [smartAccountAddress, 0, initializeData])
+      const initializeData = smartAccount.interface.encodeFunctionData(
+        "initialize",
+        [ZeroAddress, ownerAddress.toString()],
+      );
+      const initData = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [smartAccountAddress, 0, initializeData],
+      );
 
-      await expect(factory.createAccount(
-        ZeroAddress,
-        initData,
-        saDeploymentIndex,
-      )).to.be.reverted;
+      await expect(
+        factory.createAccount(ZeroAddress, initData, saDeploymentIndex),
+      ).to.be.reverted;
     });
 
     it("Should deploy smart account via handleOps", async function () {
-        const saDeploymentIndex = 0;
+      const saDeploymentIndex = 0;
 
-        const installData = ethers.solidityPacked(["address"], [ownerAddress]); 
-  
-        const expectedAccountAddress = await factory.getCounterFactualAddress(
-          validatorModuleAddress, 
+      const installData = ethers.solidityPacked(["address"], [ownerAddress]);
+
+      const expectedAccountAddress = await factory.getCounterFactualAddress(
+        validatorModuleAddress,
+        installData,
+        saDeploymentIndex,
+      );
+
+      // factory address + factory data
+      const initCode = ethers.concat([
+        await factory.getAddress(),
+        factory.interface.encodeFunctionData("createAccount", [
+          validatorModuleAddress,
           installData,
           saDeploymentIndex,
-        );
+        ]),
+      ]);
 
-        // factory address + factory data
-        const initCode = ethers.concat([await factory.getAddress(), factory.interface.encodeFunctionData("createAccount", [validatorModuleAddress, installData, saDeploymentIndex])]);
-  
-        const userOp = buildPackedUserOp({
-            sender: expectedAccountAddress,
-            initCode: initCode,
-            callData: "0x",
-        })
-
-        const userOpNonce = await entryPoint.getNonce(
-          expectedAccountAddress,
-          ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-        );
-        userOp.nonce = userOpNonce; 
-    
-        const userOpHash = await entryPoint.getUserOpHash(userOp);
-        const userOpSignature = await owner.signMessage(ethers.getBytes(userOpHash));
-        userOp.signature = userOpSignature;
-
-        await entryPoint.depositTo(expectedAccountAddress, { value: to18(1) });
-        await entryPoint.handleOps([userOp], bundlerAddress);
-  
-        // Verify that the account was created
-        const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
-        expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
+      const userOp = buildPackedUserOp({
+        sender: expectedAccountAddress,
+        initCode: initCode,
+        callData: "0x",
       });
 
-      it("Should prevent account reinitialization", async function () {
-        const initData = smartAccount.interface.encodeFunctionData("initialize", [validatorModuleAddress, await owner.getAddress()]);
-  
-        const response = smartAccount.initialize(validatorModuleAddress, initData);
-        await expect(response).to.be.revertedWithCustomError(smartAccount, "LinkedList_AlreadyInitialized()");
-      });
+      const userOpNonce = await entryPoint.getNonce(
+        expectedAccountAddress,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+      userOp.nonce = userOpNonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      const userOpSignature = await owner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+      userOp.signature = userOpSignature;
+
+      await entryPoint.depositTo(expectedAccountAddress, { value: to18(1) });
+      await entryPoint.handleOps([userOp], bundlerAddress);
+
+      // Verify that the account was created
+      const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
+      expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
+    });
+
+    it("Should prevent account reinitialization", async function () {
+      const initData = smartAccount.interface.encodeFunctionData("initialize", [
+        validatorModuleAddress,
+        await owner.getAddress(),
+      ]);
+
+      const response = smartAccount.initialize(
+        validatorModuleAddress,
+        initData,
+      );
+      await expect(response).to.be.revertedWithCustomError(
+        smartAccount,
+        "LinkedList_AlreadyInitialized()",
+      );
+    });
   });
 });

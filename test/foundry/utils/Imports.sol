@@ -25,13 +25,13 @@ import "../../../contracts/lib/ModuleTypeLib.sol";
 // Interface imports
 import "../../../contracts/interfaces/base/IAccountConfig.sol";
 import "../../../contracts/interfaces/base/IModuleManager.sol";
-import "../../../contracts/interfaces/modules/IERC7579Modules.sol";
+import "../../../contracts/interfaces/modules/IERC7579ModuleBase.sol";
 import "../../../contracts/interfaces/base/IStorage.sol";
 import "../../../contracts/interfaces/factory/IAccountFactory.sol";
-import "../../../contracts/interfaces/IBicoMSA.sol";
+import "../../../contracts/interfaces/INexus.sol";
 
 // Contract implementations
-import "../../../contracts/SmartAccount.sol";
+import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing

@@ -130,7 +130,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("LastValidatorRequired()");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -256,7 +256,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "Module should be installed initially"
         );
 
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
 
         bytes memory callData = abi.encodeWithSelector(
@@ -303,7 +303,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev,customData)
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(prev, customData)
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -313,7 +313,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("LastValidatorRequired()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -327,13 +327,13 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData  ),
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData),
             "Module should be installed"
         );
     }
 
     function test_UninstallFallbackHandler_Success() public {
-                   bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
+        bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
@@ -353,7 +353,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         // Uninstall
         bytes memory callDataUninstall = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData 
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData
         );
 
         Execution[] memory executionUninstall = new Execution[](1);

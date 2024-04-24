@@ -5,7 +5,7 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
-    SmartAccount public account;
+    Nexus public account;
     MockValidator public validator;
     address public userAddress;
 
@@ -14,7 +14,6 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     }
 
     function test_ValidateUserOp_ValidOperation() public {
-
         // Initialize a user operation with a valid setup
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));

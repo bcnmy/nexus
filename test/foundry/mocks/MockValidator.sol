@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
-import {
-    IValidator,
-    VALIDATION_SUCCESS,
-    VALIDATION_FAILED,
-    MODULE_TYPE_VALIDATOR
-} from "../../../contracts/interfaces/modules/IERC7579Modules.sol";
+import { IERC7579ModuleBase } from "../../../contracts/interfaces/modules/IERC7579ModuleBase.sol";
+import { IValidator } from "../../../contracts/interfaces/modules/IValidator.sol";
+import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR } from "../../../contracts/types/Constants.sol";
 import { EncodedModuleTypes } from "../../../contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract MockValidator is IValidator {
+contract MockValidator {
     mapping(address => address) public smartAccountOwners;
 
-    /// @inheritdoc IValidator
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -29,7 +24,6 @@ contract MockValidator is IValidator {
             == smartAccountOwners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    /// @inheritdoc IValidator
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
@@ -45,17 +39,14 @@ contract MockValidator is IValidator {
         return 0xffffffff;
     }
 
-
     function onInstall(bytes calldata data) external {
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
-
 
     function onUninstall(bytes calldata data) external {
         data;
         delete smartAccountOwners[msg.sender];
     }
-
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;

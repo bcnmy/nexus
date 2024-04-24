@@ -72,7 +72,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
     function test_TryExecuteSingle_TokenTransfer() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
-        // Assuming the SmartAccount has been funded with tokens in the setUp()
+        // Assuming the Nexus has been funded with tokens in the setUp()
 
         // Encode the token transfer call
         Execution[] memory execution = new Execution[](1);
@@ -82,7 +82,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         // Prepare and execute the UserOperation
         PackedUserOperation[] memory userOps = prepareUserOperation(
             BOB, // Sender of the operation
-            BOB_ACCOUNT, // SmartAccount executing the operation
+            BOB_ACCOUNT, // Nexus executing the operation
             EXECTYPE_TRY,
             execution
         );

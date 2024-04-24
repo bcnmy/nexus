@@ -4,7 +4,15 @@ pragma solidity ^0.8.23;
 import "./MockHandler.sol";
 
 contract TriggerFallback {
-    function triggerGenericFallback(MockHandler fallbackHandler, address sender, uint256 value, bytes memory data) public returns (bytes4) {
+    function triggerGenericFallback(
+        MockHandler fallbackHandler,
+        address sender,
+        uint256 value,
+        bytes memory data
+    )
+        public
+        returns (bytes4)
+    {
         return fallbackHandler.onGenericFallback(sender, value, data);
     }
 

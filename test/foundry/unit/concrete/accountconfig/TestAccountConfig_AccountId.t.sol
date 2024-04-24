@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 
 contract TestAccountConfig_AccountId is Test {
-    SmartAccount public accountConfig;
+    Nexus public accountConfig;
 
     function setUp() public {
-        accountConfig = new SmartAccount();
+        accountConfig = new Nexus();
     }
 
     function test_AccountId_ReturnsExpectedValue() public {
