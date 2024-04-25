@@ -19,6 +19,7 @@ contract MockHook is IERC7579ModuleBase {
 
     function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {
         emit PreCheckCalled();
+        return "";
     }
 
     function postCheck(bytes calldata, bool, bytes calldata) external {
