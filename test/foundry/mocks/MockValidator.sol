@@ -9,7 +9,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract MockValidator {
+contract MockValidator is IValidator{
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(
