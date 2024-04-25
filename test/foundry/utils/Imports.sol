@@ -40,8 +40,8 @@ import "../mocks/Counter.sol";
 import { MockExecutor } from "../mocks/MockExecutor.sol";
 import { MockHandler } from "../mocks/MockHandler.sol";
 import { MockHook } from "../mocks/MockHook.sol";
-import { BadMockHandler } from "../mocks/BadMockHandler.sol";
-import { BadMockHook } from "../mocks/BadMockHook.sol";
+import { TestMockHandler } from "../mocks/TestMockHandler.sol";
+import { TestMockHook } from "../mocks/TestMockHook.sol";
 import "../mocks/NFT.sol";
 
 // Sentinel list helper
