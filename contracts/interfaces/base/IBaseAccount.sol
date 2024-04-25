@@ -22,7 +22,7 @@ import { IBaseAccountEventsAndErrors } from "./IBaseAccountEventsAndErrors.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface IBaseAccount is IBaseAccountEventsAndErrors{
+interface IBaseAccount is IBaseAccountEventsAndErrors {
     /// @notice Adds deposit to the EntryPoint to fund transactions.
     function addDeposit() external payable;
 
