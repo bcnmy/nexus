@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC7579ModuleBase } from "contracts/interfaces/modules/IERC7579ModuleBase.sol";
+import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import "contracts/types/Constants.sol";
 
-contract MockHook is IERC7579ModuleBase {
+contract MockHook is IModule {
     event PreCheckCalled();
     event PostCheckCalled();
 

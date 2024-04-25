@@ -9,13 +9,13 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
-// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io/
 
 import { Execution } from "../types/DataTypes.sol";
-import { IExecutionManagerEventsAndErrors } from "../interfaces/base/IExecutionManager.sol";
+import { IExecutionHelperEventsAndErrors } from "../interfaces/base/IExecutionHelper.sol";
 
-/// @title Nexus - ExecutionManager
+/// @title Nexus - ExecutionHelper
 /// @notice Implements execution management within the Nexus suite, facilitating transaction execution strategies and
 /// error handling.
 /// @dev Provides mechanisms for direct and batched transactions with both committed and tentative execution strategies
@@ -25,7 +25,7 @@ import { IExecutionManagerEventsAndErrors } from "../interfaces/base/IExecutionM
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract ExecutionManager is IExecutionManagerEventsAndErrors {
+contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @notice Executes a call to a target address with specified value and data.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.

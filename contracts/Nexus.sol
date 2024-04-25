@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
-// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io/
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
@@ -20,7 +20,7 @@ import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
-import { ExecutionManager } from "./base/ExecutionManager.sol";
+import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
@@ -33,7 +33,7 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionManager, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
@@ -204,6 +204,7 @@ contract Nexus is INexus, BaseAccount, ExecutionManager, ModuleManager, UUPSUpgr
     /// @param firstValidator The first validator to install upon initialization.
     /// @param initData Initialization data for setting up the validator.
     /// @dev This function sets the foundation for the smart account's operational logic and security.
+    /// @notice Implementation details may be adjusted based on factory requirements.
     function initialize(address firstValidator, bytes calldata initData) external payable virtual {
         // checks if already initialized and reverts before setting the state to initialized
         _initModuleManager();

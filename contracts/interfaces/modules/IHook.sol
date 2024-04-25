@@ -9,16 +9,16 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
-// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io/
 
-import { IERC7579ModuleBase } from "./IERC7579ModuleBase.sol";
+import { IModule } from "./IModule.sol";
 
 /// @title Hook Management Interface
 /// @notice Provides methods for pre-checks and post-checks of transactions to ensure conditions and state consistency.
 /// @dev Defines two critical lifecycle hooks in the transaction process: `preCheck` and `postCheck`.
 /// These methods facilitate validating conditions prior to execution and verifying state changes afterwards, respectively.
-interface IHook is IERC7579ModuleBase {
+interface IHook is IModule {
     /// @notice Performs checks before a transaction is executed, potentially modifying the transaction context.
     /// @dev This method is called before the execution of a transaction to validate and possibly adjust execution context.
     /// @param msgSender The original sender of the transaction.

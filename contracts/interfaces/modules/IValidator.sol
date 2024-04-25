@@ -9,19 +9,19 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
-// using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io/
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-import { IERC7579ModuleBase } from "./IERC7579ModuleBase.sol";
+import { IModule } from "./IModule.sol";
 
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface IValidator is IERC7579ModuleBase {
+interface IValidator is IModule {
     /// @notice Validates a user operation as per ERC-4337 standard requirements.
     /// @dev Should ensure that the signature and nonce are verified correctly before the transaction is allowed to proceed.
     /// The function returns a status code indicating validation success or failure.
