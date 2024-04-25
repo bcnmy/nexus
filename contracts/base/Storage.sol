@@ -9,13 +9,13 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337,
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
 // using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
 
 import { IStorage } from "../interfaces/base/IStorage.sol";
 
 /// @title Nexus - Storage
-/// @notice Manages isolated storage spaces for Modular Smart Accounts in compliance with ERC-7201 standard to ensure collision-resistant storage.
+/// @notice Manages isolated storage spaces for Modular Smart Account in compliance with ERC-7201 standard to ensure collision-resistant storage.
 /// @dev Implements the ERC-7201 namespaced storage pattern to maintain secure and isolated storage sections for different states within Nexus suite.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io

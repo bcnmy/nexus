@@ -9,7 +9,7 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337,
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
 // using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";

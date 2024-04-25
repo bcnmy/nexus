@@ -9,7 +9,7 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337,
+// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337,
 // using Entrypoint version 0.7.0, developed by Biconomy. Learn more at https://biconomy.io/
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
@@ -18,7 +18,7 @@ import { IHook } from "../modules/IHook.sol";
 import { CallType } from "../../lib/ModeLib.sol";
 
 /// @title Nexus - IStorage Interface
-/// @notice Provides structured storage for Modular Smart Accounts under the Nexus suite, compliant with ERC-7579 and ERC-4337.
+/// @notice Provides structured storage for Modular Smart Account under the Nexus suite, compliant with ERC-7579 and ERC-4337.
 /// @dev Manages structured storage using SentinelListLib for validators and executors, and a mapping for fallback handlers.
 /// This interface utilizes ERC-7201 storage location practices to ensure isolated and collision-resistant storage spaces within smart contracts.
 /// It is designed to support dynamic execution and modular management strategies essential for advanced smart account architectures.
