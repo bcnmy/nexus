@@ -32,7 +32,7 @@ interface IModuleManagerEventsAndErrors {
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
     /// @dev Thrown when an attempt is made to uninstall the last validator module, which is prohibited.
-    error LastValidatorRequired();
+    error CannotRemoveLastValidator();
 
     /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);

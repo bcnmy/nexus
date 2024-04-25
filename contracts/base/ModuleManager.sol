@@ -178,7 +178,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         // Having at least one validator is a requirement for the account to function properly
         (address[] memory array, ) = _paginate(_getAccountStorage().validators, address(0x1), 2);
         if (array.length == 1) {
-            revert LastValidatorRequired();
+            revert CannotRemoveLastValidator();
         }
 
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
