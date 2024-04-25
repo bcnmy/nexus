@@ -23,6 +23,7 @@ contract SmartAccountTestLab is Helpers {
         bytes memory data
     )
         internal
+        pure
         returns (Execution[] memory execution)
     {
         execution = new Execution[](1);
@@ -34,6 +35,7 @@ contract SmartAccountTestLab is Helpers {
         uint256 executionsNumber
     )
         internal
+        pure
         returns (Execution[] memory)
     {
         Execution[] memory executions = new Execution[](executionsNumber);
