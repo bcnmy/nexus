@@ -22,14 +22,6 @@ pragma solidity ^0.8.24;
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface IERC7579ModuleBase {
-    /// @notice Emitted when the module is already initialized but an initialization attempt was made.
-    /// @param smartAccount The address of the smart account where initialization was attempted.
-    error AlreadyInitialized(address smartAccount);
-
-    /// @notice Emitted when an uninitialized module is called for an operation requiring initialization.
-    /// @param smartAccount The address of the smart account where the operation was attempted.
-    error NotInitialized(address smartAccount);
-
     /// @notice Installs the module with necessary initialization data.
     /// @dev Reverts if the module is already initialized.
     /// @param data Arbitrary data required for initializing the module during `onInstall`.
