@@ -14,7 +14,7 @@ pragma solidity ^0.8.24;
 
 import { IERC4337Account } from "./IERC4337Account.sol";
 import { IERC7579Account } from "./IERC7579Account.sol";
-import { CallType, ExecType } from "../lib/ModeLib.sol";
+import { INexusEventsAndErrors } from "./INexusEventsAndErrors.sol";
 
 /// @title Nexus - INexus Interface
 /// @notice Integrates ERC-4337 and ERC-7579 standards to manage smart accounts within the Nexus suite.
@@ -27,16 +27,7 @@ import { CallType, ExecType } from "../lib/ModeLib.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface INexus is IERC4337Account, IERC7579Account {
-    // Error thrown when an unsupported ModuleType is requested
-    error UnsupportedModuleType(uint256 moduleTypeId);
-    // Error thrown when an execution with an unsupported CallType was made
-    error UnsupportedCallType(CallType callType);
-    // Error thrown when an execution with an unsupported ExecType was made
-    error UnsupportedExecType(ExecType execType);
-    // Error thrown on failed execution
-    error ExecutionFailed();
-
+interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
     /// @notice Initializes the smart account with a validator and custom data.
     /// @dev This method sets up the account for operation, linking it with a validator and initializing it with specific data.
     /// Can be called directly or via a factory.
