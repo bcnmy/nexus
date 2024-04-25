@@ -16,7 +16,7 @@
   test = "test"
   cache_path  = "cache_forge"
   libs = ["node_modules", "lib"]
-  gas_reports_ignore = ["LockTest"]
+  gas_reports_ignore = ["MockToken"]
 
 [profile.ci]
   fuzz = { runs = 10_000 }
@@ -50,4 +50,3 @@
   optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
   polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
   sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"
-
