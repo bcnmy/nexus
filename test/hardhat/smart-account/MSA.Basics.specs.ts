@@ -120,7 +120,6 @@ describe("Nexus Basic Specs", function () {
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
-      console.log("proxy code ========= ", proxyCode);
       expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
     });
   });
