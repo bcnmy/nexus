@@ -165,7 +165,10 @@ describe("Nexus Module Management Tests", () => {
           0n,
           functionCalldata,
         ),
-      ).to.be.revertedWithCustomError(deployedMSA, "LastValidatorRequired()");
+      ).to.be.revertedWithCustomError(
+        deployedMSA,
+        "CannotRemoveLastValidator()",
+      );
     });
   });
 

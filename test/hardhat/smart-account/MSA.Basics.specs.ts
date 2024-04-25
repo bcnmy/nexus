@@ -18,10 +18,7 @@ import {
   Nexus,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
-import {
-  deployContractsAndSAFixture,
-  deployContractsFixture,
-} from "../utils/deployment";
+import { deployContractsAndSAFixture } from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
 import {
   getInitCode,
@@ -31,14 +28,12 @@ import {
 import {
   CALLTYPE_BATCH,
   CALLTYPE_SINGLE,
-  ERC1271_MAGICVALUE,
   EXECTYPE_DEFAULT,
   EXECTYPE_DELEGATE,
   EXECTYPE_TRY,
   MODE_DEFAULT,
   MODE_PAYLOAD,
   UNUSED,
-  installModule,
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
@@ -309,8 +304,8 @@ describe("Nexus Basic Specs", function () {
     });
   });
 
-  describe("Nexus Deployment via EntryPoint", function () {
-    it("Should successfully deploy a Nexus via the EntryPoint", async function () {
+  describe("Nexus Smart Account Deployment via EntryPoint", function () {
+    it("Should successfully deploy Smart Account via the EntryPoint", async function () {
       const saDeploymentIndex = 1;
       // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
       const initCode = await getInitCode(
@@ -353,7 +348,7 @@ describe("Nexus Basic Specs", function () {
       await entryPoint.handleOps([packedUserOp], bundlerAddress);
     });
 
-    it("Should fail Nexus deployment with an unauthorized signer", async function () {
+    it("Should fail Smart Account deployment with an unauthorized signer", async function () {
       const saDeploymentIndex = 2;
       const initCode = await getInitCode(
         ownerAddress,
