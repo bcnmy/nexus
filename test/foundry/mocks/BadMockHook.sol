@@ -8,18 +8,18 @@ contract BadMockHook {
     event PreCheckCalled();
     event PostCheckCalled();
 
-    function onInstall(bytes calldata data) external {
+    function onInstall(bytes calldata) external {
         emit PreCheckCalled();
     }
 
-    function onUninstall(bytes calldata data) external {
+    function onUninstall(bytes calldata) external {
         emit PostCheckCalled();
     }
 
     function preCheck(
-        address msgSender,
-        uint256 msgValue,
-        bytes calldata msgData
+        address,
+        uint256,
+        bytes calldata
     )
         external
         returns (bytes memory hookData)
