@@ -130,7 +130,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("LastValidatorRequired()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -313,7 +313,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("LastValidatorRequired()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);

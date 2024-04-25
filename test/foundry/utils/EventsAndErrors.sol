@@ -25,7 +25,7 @@ contract EventsAndErrors {
     error LinkedList_InvalidPage();
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
 
-    error LastValidatorRequired();
+    error CannotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
