@@ -18,7 +18,6 @@ contract ModeLibTest is Test {
         assertTrue(_calltype == callType);
         assertTrue(_execType == execType);
         assertTrue(_mode == modeSelector);
-        // assertTrue(_payload == payload);
     }
 
     function test_encode_decode_batch() public {
@@ -32,6 +31,5 @@ contract ModeLibTest is Test {
         assertTrue(_calltype == callType);
         assertTrue(_execType == execType);
         assertTrue(_mode == modeSelector);
-        // assertTrue(_payload == payload);
     }
 }
