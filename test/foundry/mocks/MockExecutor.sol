@@ -46,7 +46,7 @@ contract MockExecutor is IExecutor {
         // This function is used to ignore file in coverage report
     }
 
-    function isInitialized(address smartAccount) external pure override returns (bool) {
+    function isInitialized(address) external pure override returns (bool) {
         return false;
     }
 }
