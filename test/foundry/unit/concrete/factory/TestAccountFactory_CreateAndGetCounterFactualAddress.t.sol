@@ -90,7 +90,10 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(0), initData, 0);
         // Should revert if the validator module is invalid
         vm.expectRevert();
-        FACTORY.createAccount(address(0), initData, 0);
+        address payable accountAddress = FACTORY.createAccount(address(0), initData, 0);
+                assertTrue(
+            expectedAddress != accountAddress, "Account address should be the same"
+        );
     }
 
     function test_DeployAccountWithoutEnoughGas() public {
