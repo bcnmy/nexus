@@ -24,8 +24,8 @@ import { IStorage } from "../interfaces/base/IStorage.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract Storage is IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.Nexus
-    /// ERC-7201 namespaced via `keccak256(encode(uint256(keccak256("biconomy.storage.nexus")) - 1)) & ~0xff`
-    bytes32 private constant _STORAGE_LOCATION = 0x34e06d8d82e2a2cc69c6a8a18181d71c19765c764b52180b715db4be61b27a00;
+    /// ERC-7201 namespaced via `keccak256(abi.encode(uint256(keccak256(bytes("biconomy.storage.Nexus"))) - 1)) & ~bytes32(uint256(0xff));`
+    bytes32 private constant _STORAGE_LOCATION = 0x0bb70095b32b9671358306b0339b4c06e7cbd8cb82505941fba30d1eb5b82f00;
 
     /// @dev Utilizes ERC-7201's namespaced storage pattern for isolated storage access. This method computes
     /// the storage slot based on a predetermined location, ensuring collision-resistant storage for contract states.
