@@ -65,7 +65,8 @@ contract Nexus is INexus, BaseAccount, ExecutionManager, ModuleManager, UUPSUpgr
         assembly {
             validator := shr(96, nonce)
         }
-        // check if validator is enabled. If terminate the validation phase.
+        // Check if validator is not enabled. If not, return VALIDATION_FAILED.
+
         if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
 
         // bubble up the return value of the validator module
