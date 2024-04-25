@@ -126,7 +126,6 @@ describe("K1Validator module tests", () => {
       userOp.nonce = nonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
-      console.log("userOpHash from hardhat: ", userOpHash);
 
       const signature = await accountOwner.signMessage(
         ethers.getBytes(userOpHash),
@@ -135,7 +134,6 @@ describe("K1Validator module tests", () => {
       userOp.signature = signature;
 
       const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
-      console.log("isValid: ", isValid.toString());
 
       // 0 - valid, 1 - invalid
       expect(isValid).to.equal(0n);
