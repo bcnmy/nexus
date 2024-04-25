@@ -51,6 +51,7 @@
     "typescript": ">=5.3.3"
   },
   "keywords": [
+    "nexus",
     "erc7579",
     "erc-7579",
     "modular smart account",
