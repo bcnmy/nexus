@@ -37,7 +37,7 @@ contract MockHandler is IFallback {
         return moduleTypeId == MODULE_TYPE_FALLBACK;
     }
 
-    function isInitialized(address smartAccount) external pure override returns (bool) {
+    function isInitialized(address) external pure override returns (bool) {
         return false;
     }
 
