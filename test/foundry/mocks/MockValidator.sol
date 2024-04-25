@@ -56,7 +56,7 @@ contract MockValidator {
         return smartAccountOwners[account] == owner;
     }
 
-    function isInitialized(address smartAccount) external pure returns (bool) {
+    function isInitialized(address) external pure returns (bool) {
         return false;
     }
 
