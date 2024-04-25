@@ -34,10 +34,6 @@ interface INexus is IERC4337Account, IERC7579Account {
     error UnsupportedCallType(CallType callType);
     // Error thrown when an execution with an unsupported ExecType was made
     error UnsupportedExecType(ExecType execType);
-    // Error thrown when account initialization fails
-    error AccountInitializationFailed();
-    // Error thrown when account is already initialised
-    error AccountAlreadyInitialized();
     // Error thrown on failed execution
     error ExecutionFailed();
 
