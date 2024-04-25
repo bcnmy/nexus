@@ -25,13 +25,13 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.0.0.1";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
     address private constant _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
-    /// @dev Ensures the caller is either the EntryPoint or this contract itself.
+    /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPointOrSelf() {
         if (msg.sender != _ENTRYPOINT && msg.sender != address(this)) {

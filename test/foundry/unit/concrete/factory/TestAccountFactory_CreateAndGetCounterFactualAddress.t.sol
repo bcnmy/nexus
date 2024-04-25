@@ -50,7 +50,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
         assertEq(
             IAccountConfig(accountAddress).accountId(),
-            "biconomy.nexus.1.0.0",
+            "biconomy.nexus.0.0.1",
             "Not deployed properly"
         );
     }
