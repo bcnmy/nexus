@@ -10,10 +10,10 @@ import "../utils/EventsAndErrors.sol";
 import { MODULE_TYPE_FALLBACK } from "../../../contracts/types/Constants.sol";
 
 /**
- * @title Bad Mock Handler - Impossible to Uninstall
+ * @title Test Mock Handler - Impossible to Uninstall
  */
-contract BadMockHandler {
-    string public constant NAME = "Bad Handler";
+contract TestMockHandler {
+    string public constant NAME = "Test Handler";
     string public constant VERSION = "1.0.0";
 
     event GenericFallbackCalled(address sender, uint256 value, bytes data); // Event for generic fallback

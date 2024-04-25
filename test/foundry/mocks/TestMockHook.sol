@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { MODULE_TYPE_HOOK } from "../../../contracts/types/Constants.sol";
 
-contract BadMockHook {
+contract TestMockHook {
     event PreCheckCalled();
     event PostCheckCalled();
 
