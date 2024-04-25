@@ -22,7 +22,7 @@ contract BadMockHook {
         bytes calldata
     )
         external
-        returns (bytes memory hookData)
+        returns (bytes memory)
     {
         emit PreCheckCalled();
     }
