@@ -470,7 +470,6 @@ describe("Nexus Single Execution", () => {
         ethers.hexlify(ethers.toUtf8Bytes("")),
       );
 
-      console.log("isInstalled: ", isInstalled);
       expect(isInstalled).to.be.false;
 
       await expect(
