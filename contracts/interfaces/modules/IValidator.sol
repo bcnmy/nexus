@@ -22,10 +22,6 @@ import { IERC7579ModuleBase } from "./IERC7579ModuleBase.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface IValidator is IERC7579ModuleBase {
-    /// @dev Emitted when a transaction attempts to interact with an invalid or unauthorized target address.
-    /// @param target The address that was deemed invalid or unauthorized for the operation.
-    error InvalidTargetAddress(address target);
-
     /// @notice Validates a user operation as per ERC-4337 standard requirements.
     /// @dev Should ensure that the signature and nonce are verified correctly before the transaction is allowed to proceed.
     /// The function returns a status code indicating validation success or failure.
