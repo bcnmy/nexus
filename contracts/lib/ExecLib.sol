@@ -15,10 +15,9 @@ library ExecLib {
          * Batch Call Calldata Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
          * 0x0                  | 0x4               | bytes4 function selector
-        *  0x4                  | -                 |
+         * 0x4                  | -                 |
         abi.encode(IERC7579Execution.Execution[])
          */
-        // solhint-disable-next-line no-inline-assembly
         assembly {
             let dataPointer := add(callData.offset, calldataload(callData.offset))
 
