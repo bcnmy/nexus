@@ -19,6 +19,9 @@ jobs:
         with:
           version: nightly
 
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+          
       - name: Run Tests and Generate Gas Report
         run: forge test --gas-report > gasreport.ansi
         env:
