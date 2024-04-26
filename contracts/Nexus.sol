@@ -13,6 +13,7 @@ pragma solidity ^0.8.24;
 // Learn more at https://biconomy.io/
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 import { ExecLib } from "./lib/ExecLib.sol";
@@ -33,9 +34,17 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
+
+    /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
+    ///      cross-account-replay layer.
+    ///
+    ///      The original hash must either be:
+    ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
+    ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
+    bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
     /// @notice Initializes the smart account by setting up the module manager and state.
     constructor() {
@@ -279,11 +288,46 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
+    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
+    ///
+    /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
+    ///      keccak256(
+    ///         \x19\x01 ||
+    ///         this.domainSeparator ||
+    ///         hashStruct(CoinbaseSmartWalletMessage({ hash: `hash`}))
+    ///      )
+    ///
+    /// @param hash The original hash.
+    ///
+    /// @return The corresponding replay-safe hash.
+    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
+        return _eip712Hash(hash);
+    }
+
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
         newImplementation;
+    }
+
+    /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
+    ///
+    /// @dev Implements encode(domainSeparator : 𝔹²⁵⁶, message : 𝕊) = "\x19\x01" || domainSeparator ||
+    ///      hashStruct(message).
+    /// @dev See https://eips.ethereum.org/EIPS/eip-712#specification.
+    ///
+    /// @param hash The `BiconomyNexusMessage.hash` field to hash.
+    ////
+    /// @return The resulting EIP-712 hash.
+    function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
+        return
+            keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
+    }
+
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        name = "Nexus";
+        version = "0.0.1";
     }
 
     /// @dev Executes a single transaction based on the specified execution type.
