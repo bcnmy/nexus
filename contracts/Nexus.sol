@@ -229,7 +229,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+        return IValidator(validator).isValidSignatureWithSender(msg.sender, _eip712Hash(hash), data[20:]);
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
