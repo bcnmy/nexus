@@ -17,9 +17,7 @@ on:
 jobs:
   compare_gas_reports:
     runs-on: ubuntu-latest
-    permissions: # Add this section to modify permissions
-        contents: write # This gives write permission to the repository contents
-        actions: write # This grants permission to upload artifacts
+    permissions: write-all
     steps:
       - uses: actions/checkout@v4.1.1
         with:
