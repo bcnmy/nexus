@@ -1,0 +1,44 @@
+name: Report Gas Differences
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/**/*'
+
+jobs:
+  compare_gas_reports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Tests and Generate Gas Report
+        run: forge test --gas-report > gasreport.ansi
+        env:
+          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
+
+      - name: Compare Gas Reports
+        uses: Rubilmax/foundry-gas-diff@v3.16
+        with:
+          report: gasreport.ansi
+          base: ${{ github.base_ref || 'main' }}
+          head: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          summaryQuantile: 0.9
+          sortCriteria: 'avg,max'
+          sortOrders: 'desc,asc'
+          ignore: 'test-foundry/**/*'
+        id: gas_diff
+
+      - name: Post Gas Diff as Sticky Comment
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          delete: ${{ !steps.gas_diff.outputs.markdown }}
+          message: ${{ steps.gas_diff.outputs.markdown }}
