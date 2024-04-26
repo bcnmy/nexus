@@ -33,7 +33,7 @@ contract MockValidator is IValidator {
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
-        bytes calldata data
+        bytes calldata signature
     )
         external
         pure
@@ -41,7 +41,7 @@ contract MockValidator is IValidator {
     {
         sender;
         hash;
-        data;
+        signature;
         return 0xffffffff;
     }
 
