@@ -1,10 +1,8 @@
 name: Report Gas Differences
 
 on:
-  pull_request:
-    paths:
-      - 'contracts/**/*'
-
+    pull_request:
+  
 jobs:
   compare_gas_reports:
     runs-on: ubuntu-latest
