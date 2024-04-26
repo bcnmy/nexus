@@ -2,6 +2,9 @@ name: Report Gas Differences
 
 on:
     pull_request:
+    push:
+        branches:
+        - '**'  # This line ensures that pushes to any branch are considered.
   
 jobs:
   compare_gas_reports:
