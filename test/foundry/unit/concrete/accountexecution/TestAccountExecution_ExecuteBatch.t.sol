@@ -12,7 +12,8 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
         uint256 executionsNumber = 2;
 
-        Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution memory execution =
+            Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
 
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
@@ -56,11 +57,14 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 valueToSend = 1 ether;
         uint256 numberOfExecutions = 3;
 
-        payable(address(BOB_ACCOUNT)).call{ value: valueToSend*numberOfExecutions }(""); // Fund BOB_ACCOUNT
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
+        payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
+        Execution[] memory executions =
+            _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        assertEq(receiver.balance, valueToSend*numberOfExecutions, "Receiver should have received proper amount of ETH");
+        assertEq(
+            receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH"
+        );
     }
 
     function test_ExecuteBatch_TokenTransfers() public {
@@ -146,14 +150,20 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         // Execution for approval
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(
-            address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount) // BOB_ACCOUNT is approved to transfer
+            address(token),
+            0,
+            abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount) // BOB_ACCOUNT is
+                // approved to transfer
         );
 
         executions[1] = Execution(
             address(token),
             0,
             abi.encodeWithSelector(
-                token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount // Transfer from BOB_ACCOUNT to ALICE ?! Does this make sense?
+                token.transferFrom.selector,
+                address(BOB_ACCOUNT),
+                address(ALICE_ACCOUNT),
+                transferAmount // Transfer from BOB_ACCOUNT to ALICE ?! Does this make sense?
             )
         );
 

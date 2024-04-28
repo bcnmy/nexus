@@ -16,7 +16,9 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
     function test_InitialNonce() public {
         uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(
-            BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))), nonce, "Nonce in the account and EP should be same"
+            BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))),
+            nonce,
+            "Nonce in the account and EP should be same"
         );
     }
 
@@ -24,7 +26,8 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        Execution[] memory executions = _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution[] memory executions =
+            _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -37,7 +40,8 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        Execution[] memory executions = _prepareSingleExecution(address(counter), 0,  abi.encodeWithSelector(Counter.revertOperation.selector));
+        Execution[] memory executions =
+            _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);

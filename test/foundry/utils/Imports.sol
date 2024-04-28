@@ -25,13 +25,13 @@ import "../../../contracts/lib/ModuleTypeLib.sol";
 // Interface imports
 import "../../../contracts/interfaces/base/IAccountConfig.sol";
 import "../../../contracts/interfaces/base/IModuleManager.sol";
-import "../../../contracts/interfaces/modules/IERC7579Modules.sol";
+import "../../../contracts/interfaces/modules/IModule.sol";
 import "../../../contracts/interfaces/base/IStorage.sol";
 import "../../../contracts/interfaces/factory/IAccountFactory.sol";
-import "../../../contracts/interfaces/IBicoMSA.sol";
+import "../../../contracts/interfaces/INexus.sol";
 
 // Contract implementations
-import "../../../contracts/SmartAccount.sol";
+import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing
@@ -40,8 +40,8 @@ import "../mocks/Counter.sol";
 import { MockExecutor } from "../mocks/MockExecutor.sol";
 import { MockHandler } from "../mocks/MockHandler.sol";
 import { MockHook } from "../mocks/MockHook.sol";
-import { BadMockHandler } from "../mocks/BadMockHandler.sol";
-import { BadMockHook } from "../mocks/BadMockHook.sol";
+import { TestMockHandler } from "../mocks/TestMockHandler.sol";
+import { TestMockHook } from "../mocks/TestMockHook.sol";
 import "../mocks/NFT.sol";
 
 // Sentinel list helper

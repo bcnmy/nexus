@@ -5,11 +5,11 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
-    SmartAccount public accountConfig;
+    Nexus public accountConfig;
 
     function setUp() public {
         init();
-        accountConfig = SmartAccount(BOB_ACCOUNT);
+        accountConfig = Nexus(BOB_ACCOUNT);
     }
 
     function test_SupportsBatchExecutionMode() public {
@@ -29,6 +29,9 @@ contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
         ExecutionMode unsupportedMode = ModeLib.encode(
             CALLTYPE_SINGLE, ExecType.wrap(0x10), ModeSelector.wrap(0x00000000), ModePayload.wrap(bytes22(0x00))
         );
-        assertFalse(accountConfig.supportsExecutionMode(unsupportedMode), "AccountConfig should not support this execution mode.");
+        assertFalse(
+            accountConfig.supportsExecutionMode(unsupportedMode),
+            "AccountConfig should not support this execution mode."
+        );
     }
 }

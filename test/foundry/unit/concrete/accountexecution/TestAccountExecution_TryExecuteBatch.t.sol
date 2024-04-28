@@ -34,15 +34,11 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
-
-
-    
         // Execute batch operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
-
         vm.expectEmit(true, true, true, true);
-        
+
         emit TryExecuteUnsuccessful(2, "");
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -54,18 +50,17 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
     }
 
     function test_TryExecuteBatch_HandleMultipleFailures() public {
-
         // Preparing a batch execution with three operations: revert, zero address, empty calldata
         Execution[] memory executions = new Execution[](3);
         executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
         executions[1] = Execution(address(0), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
-    
+
         // Execute batch operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         vm.expectEmit(true, true, true, true);
-        
+
         emit TryExecuteUnsuccessful(1, "");
         vm.expectEmit(true, true, true, true);
 

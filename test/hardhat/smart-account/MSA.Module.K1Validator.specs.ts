@@ -1,18 +1,25 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { AddressLike, Signer, hashMessage } from "ethers";
-import { Counter, EntryPoint, K1Validator, MockExecutor, MockValidator, SmartAccount } from "../../../typechain-types";
-import { ExecutionMethod, ModuleType } from "../utils/types";
 import {
-  deployContractsAndSAFixture,
-} from "../utils/deployment";
+  Counter,
+  EntryPoint,
+  K1Validator,
+  MockExecutor,
+  MockValidator,
+  Nexus,
+} from "../../../typechain-types";
+import { ExecutionMethod, ModuleType } from "../utils/types";
+import { deployContractsAndSAFixture } from "../utils/deployment";
 import { encodeData } from "../utils/encoding";
 import { ERC1271_MAGICVALUE, installModule } from "../utils/erc7579Utils";
-import { buildPackedUserOp, generateUseropCallData } from "../utils/operationHelpers";
+import {
+  buildPackedUserOp,
+  generateUseropCallData,
+} from "../utils/operationHelpers";
 
 describe("K1Validator module tests", () => {
-  
-  let deployedMSA: SmartAccount;
+  let deployedMSA: Nexus;
   let k1Validator: K1Validator;
   let owner: Signer;
   let ownerAddress: AddressLike;
@@ -25,8 +32,15 @@ describe("K1Validator module tests", () => {
   let counter: Counter;
 
   before(async function () {
-    ({ deployedMSA, ecdsaValidator: k1Validator, mockExecutor, accountOwner, entryPoint, mockValidator, counter } =
-      await deployContractsAndSAFixture());
+    ({
+      deployedMSA,
+      ecdsaValidator: k1Validator,
+      mockExecutor,
+      accountOwner,
+      entryPoint,
+      mockValidator,
+      counter,
+    } = await deployContractsAndSAFixture());
     owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
     k1ModuleAddress = await k1Validator.getAddress();
@@ -36,7 +50,15 @@ describe("K1Validator module tests", () => {
     bundler = ethers.Wallet.createRandom();
 
     // Install K1Validator module
-    await installModule({ deployedMSA, entryPoint, module: k1Validator, validatorModule: mockValidator, moduleType: ModuleType.Validation, accountOwner, bundler })
+    await installModule({
+      deployedMSA,
+      entryPoint,
+      module: k1Validator,
+      validatorModule: mockValidator,
+      moduleType: ModuleType.Validation,
+      accountOwner,
+      bundler,
+    });
   });
 
   describe("K1Validtor tests", () => {
@@ -66,7 +88,9 @@ describe("K1Validator module tests", () => {
     });
 
     it("should check if module is initialized", async () => {
-      const isInitialized = await k1Validator.isInitialized(await deployedMSA.getAddress());
+      const isInitialized = await k1Validator.isInitialized(
+        await deployedMSA.getAddress(),
+      );
       expect(isInitialized).to.equal(true);
     });
 
@@ -102,15 +126,15 @@ describe("K1Validator module tests", () => {
       userOp.nonce = nonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
-      console.log("userOpHash from hardhat: ", userOpHash);
-      
-      const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
+
+      const signature = await accountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
 
       userOp.signature = signature;
 
       const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
-      console.log("isValid: ", isValid.toString());
-      
+
       // 0 - valid, 1 - invalid
       expect(isValid).to.equal(0n);
     });

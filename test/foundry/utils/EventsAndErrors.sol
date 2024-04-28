@@ -11,10 +11,8 @@ contract EventsAndErrors {
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
     event GenericFallbackCalled(address sender, uint256 value, bytes data);
 
-
     event PreCheckCalled();
     event PostCheckCalled();
-
 
     // Define all errors
     error FailedOp(uint256 opIndex, string reason);
@@ -40,7 +38,5 @@ contract EventsAndErrors {
     error HookAlreadyInstalled(address currentHook);
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
 
-
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
-
 }

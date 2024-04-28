@@ -4,14 +4,14 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 
 contract TestAccountConfig_AccountId is Test {
-    SmartAccount public accountConfig;
+    Nexus public accountConfig;
 
     function setUp() public {
-        accountConfig = new SmartAccount();
+        accountConfig = new Nexus();
     }
 
     function test_AccountId_ReturnsExpectedValue() public {
-        string memory expected = "biconomy.modular-smart-account.1.0.0-alpha";
+        string memory expected = "biconomy.nexus.0.0.1";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
 }

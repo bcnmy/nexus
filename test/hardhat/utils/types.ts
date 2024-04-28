@@ -14,7 +14,7 @@ import {
   MockToken,
   MockValidator,
   K1Validator,
-  SmartAccount,
+  Nexus,
   MockExecutor,
   IValidator,
   IExecutor,
@@ -25,7 +25,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
-  smartAccountImplementation: SmartAccount;
+  smartAccountImplementation: Nexus;
   msaFactory: AccountFactory;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
@@ -37,9 +37,9 @@ export interface DeploymentFixture {
 
 export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
-  smartAccountImplementation: SmartAccount;
-  deployedMSA: SmartAccount;
-  aliceDeployedMSA: SmartAccount
+  smartAccountImplementation: Nexus;
+  deployedMSA: Nexus;
+  aliceDeployedMSA: Nexus;
   deployedMSAAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
@@ -101,24 +101,24 @@ export enum ModuleType {
 }
 
 export type ModuleParams = {
-  deployedMSA: SmartAccount,
-  entryPoint: EntryPoint,
-  module: any,
-  moduleType: ModuleType | number,
-  validatorModule: MockValidator | K1Validator,
-  accountOwner: Signer,
-  bundler: Signer
-  data?: BytesLike
-}
+  deployedMSA: Nexus;
+  entryPoint: EntryPoint;
+  module: any;
+  moduleType: ModuleType | number;
+  validatorModule: MockValidator | K1Validator;
+  accountOwner: Signer;
+  bundler: Signer;
+  data?: BytesLike;
+};
 
 export const Executions = ParamType.from({
   type: "tuple(address,uint256,bytes)[]",
   baseType: "tuple",
   name: "executions",
-  arrayLength: null,   
+  arrayLength: null,
   components: [
     { name: "target", type: "address" },
     { name: "value", type: "uint256" },
-    { name: "callData", type: "bytes" }
+    { name: "callData", type: "bytes" },
   ],
-})
+});

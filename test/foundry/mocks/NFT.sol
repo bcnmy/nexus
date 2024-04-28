@@ -20,7 +20,7 @@ contract NFT is ERC721 {
         _safeMint(to, tokenId);
     }
 
-        function test() public pure {
+    function test() public pure {
         // @todo To be removed: This function is used to ignore file in coverage report
     }
 }

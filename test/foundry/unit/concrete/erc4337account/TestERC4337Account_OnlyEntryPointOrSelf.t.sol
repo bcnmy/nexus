@@ -5,7 +5,7 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
 contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
-    SmartAccount public account;
+    Nexus public account;
     MockValidator public validator;
     address public userAddress;
 

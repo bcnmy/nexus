@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IModule, IExecutor, Execution } from "contracts/interfaces/modules/IERC7579Modules.sol";
+import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import { IBicoMSA } from "contracts/interfaces/IBicoMSA.sol";
+import { INexus } from "contracts/interfaces/INexus.sol";
 import { ModeLib } from "contracts/lib/ModeLib.sol";
 import { ExecLib } from "contracts/lib/ExecLib.sol";
+import { IExecutor } from "../../../contracts/interfaces/modules/IExecutor.sol";
+import "../../../contracts/types/DataTypes.sol";
 
 contract MockExecutor is IExecutor {
     function onInstall(bytes calldata data) external override { }
@@ -13,7 +15,7 @@ contract MockExecutor is IExecutor {
     function onUninstall(bytes calldata data) external override { }
 
     function executeViaAccount(
-        IBicoMSA account,
+        INexus account,
         address target,
         uint256 value,
         bytes calldata callData
@@ -25,7 +27,7 @@ contract MockExecutor is IExecutor {
     }
 
     function executeBatchViaAccount(
-        IBicoMSA account,
+        INexus account,
         Execution[] calldata execs
     )
         external
@@ -44,7 +46,7 @@ contract MockExecutor is IExecutor {
         // This function is used to ignore file in coverage report
     }
 
-    function isInitialized(address smartAccount) external pure override returns (bool) {
+    function isInitialized(address) external pure override returns (bool) {
         return false;
     }
 }

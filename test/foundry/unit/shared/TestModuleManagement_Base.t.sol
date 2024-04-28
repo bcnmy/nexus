@@ -24,7 +24,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     uint256 public constant INVALID_MODULE_TYPE = 999;
 
     bytes4 public constant GENERIC_FALLBACK_SELECTOR = 0xcb5baf0f;
-    bytes4 public constant UNUSED_SELECTOR = 0xdeadbeef;    
+    bytes4 public constant UNUSED_SELECTOR = 0xdeadbeef;
     // More shared state variables if needed
 
     function setUpModuleManagement_Base() internal {

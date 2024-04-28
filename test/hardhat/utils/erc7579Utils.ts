@@ -11,62 +11,87 @@ export const EXECTYPE_DELEGATE = "0xFF"; // 1 byte
 export const MODE_DEFAULT = "0x00000000"; // 4 bytes
 export const UNUSED = "0x00000000"; // 4 bytes
 export const MODE_PAYLOAD = "0x00000000000000000000000000000000000000000000"; // 22 bytes
-export const ERC1271_MAGICVALUE = "0x1626ba7e" 
-export const ERC1271_INVALID = "0xffffffff"
+export const ERC1271_MAGICVALUE = "0x1626ba7e";
+export const ERC1271_INVALID = "0xffffffff";
 
 export const GENERIC_FALLBACK_SELECTOR = "0xcb5baf0f";
 
 export const installModule = async (args: ModuleParams) => {
-    const { deployedMSA, entryPoint, module, validatorModule, accountOwner, bundler, moduleType, data } = args;
-    const installModuleData = await generateUseropCallData({
-     executionMethod: ExecutionMethod.Execute,
-     targetContract: deployedMSA,
-     functionName: "installModule",
-     args: [moduleType, await module.getAddress(), data ? data : ethers.hexlify(await accountOwner.getAddress())],
-   });
- 
-   const userOp = buildPackedUserOp({
-     sender: await deployedMSA.getAddress(),
-     callData: installModuleData,
-   });
- 
-   const nonce = await entryPoint.getNonce(
-     userOp.sender,
-     ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
-   );
-   userOp.nonce = nonce; 
- 
-   const userOpHash = await entryPoint.getUserOpHash(userOp);
-   const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
-   userOp.signature = signature;
- 
-   return await entryPoint.handleOps([userOp], await bundler.getAddress());
-}
+  const {
+    deployedMSA,
+    entryPoint,
+    module,
+    validatorModule,
+    accountOwner,
+    bundler,
+    moduleType,
+    data,
+  } = args;
+  const installModuleData = await generateUseropCallData({
+    executionMethod: ExecutionMethod.Execute,
+    targetContract: deployedMSA,
+    functionName: "installModule",
+    args: [
+      moduleType,
+      await module.getAddress(),
+      data ? data : ethers.hexlify(await accountOwner.getAddress()),
+    ],
+  });
+
+  const userOp = buildPackedUserOp({
+    sender: await deployedMSA.getAddress(),
+    callData: installModuleData,
+  });
+
+  const nonce = await entryPoint.getNonce(
+    userOp.sender,
+    ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
+  );
+  userOp.nonce = nonce;
+
+  const userOpHash = await entryPoint.getUserOpHash(userOp);
+  const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
+  userOp.signature = signature;
+
+  return await entryPoint.handleOps([userOp], await bundler.getAddress());
+};
 
 export const uninstallModule = async (args: ModuleParams) => {
-  const { deployedMSA, entryPoint, module, validatorModule, accountOwner, bundler, moduleType, data } = args;
+  const {
+    deployedMSA,
+    entryPoint,
+    module,
+    validatorModule,
+    accountOwner,
+    bundler,
+    moduleType,
+    data,
+  } = args;
   const uninstallModuleData = await generateUseropCallData({
-   executionMethod: ExecutionMethod.Execute,
-   targetContract: deployedMSA,
-   functionName: "uninstallModule",
-   args: [moduleType, await module.getAddress(), data ? data : ethers.hexlify(await accountOwner.getAddress())],
- });
+    executionMethod: ExecutionMethod.Execute,
+    targetContract: deployedMSA,
+    functionName: "uninstallModule",
+    args: [
+      moduleType,
+      await module.getAddress(),
+      data ? data : ethers.hexlify(await accountOwner.getAddress()),
+    ],
+  });
 
- const userOp = buildPackedUserOp({
-   sender: await deployedMSA.getAddress(),
-   callData: uninstallModuleData,
- });
+  const userOp = buildPackedUserOp({
+    sender: await deployedMSA.getAddress(),
+    callData: uninstallModuleData,
+  });
 
- const nonce = await entryPoint.getNonce(
-   userOp.sender,
-   ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
- );
- userOp.nonce = nonce; 
+  const nonce = await entryPoint.getNonce(
+    userOp.sender,
+    ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
+  );
+  userOp.nonce = nonce;
 
- const userOpHash = await entryPoint.getUserOpHash(userOp);
- const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
- userOp.signature = signature;
+  const userOpHash = await entryPoint.getUserOpHash(userOp);
+  const signature = await accountOwner.signMessage(ethers.getBytes(userOpHash));
+  userOp.signature = signature;
 
- await entryPoint.handleOps([userOp], await bundler.getAddress());
-}
-
+  await entryPoint.handleOps([userOp], await bundler.getAddress());
+};
