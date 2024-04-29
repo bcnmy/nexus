@@ -294,7 +294,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///      keccak256(
     ///         \x19\x01 ||
     ///         this.domainSeparator ||
-    ///         hashStruct(CoinbaseSmartWalletMessage({ hash: `hash`}))
+    ///         hashStruct(BiconomyNexusMessage({ hash: `hash`}))
     ///      )
     ///
     /// @param hash The original hash.
