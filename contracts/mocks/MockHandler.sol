@@ -37,9 +37,4 @@ contract MockHandler is IFallback {
     function isInitialized(address) external pure override returns (bool) {
         return false;
     }
-
-    // Review
-    function test() public pure {
-        // @todo To be removed
-    }
 }

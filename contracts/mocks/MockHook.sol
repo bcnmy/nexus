@@ -34,9 +34,4 @@ contract MockHook is IModule {
     function isInitialized(address) external pure returns (bool) {
         return false;
     }
-
-    // Review
-    function test() public pure {
-        // @todo To be removed
-    }
 }

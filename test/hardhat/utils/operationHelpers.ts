@@ -208,7 +208,6 @@ export async function getInitCode(
 }
 
 // Note: could be a method getAccountAddressAndInitCode
-// REVIEW
 
 /**
  * Calculates the CREATE2 address for a smart account deployment.

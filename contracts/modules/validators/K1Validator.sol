@@ -36,11 +36,9 @@ contract K1Validator {
 
     error NoOwnerProvided();
 
-    // TODO // Review comments
     function onInstall(bytes calldata data) external {
         if (data.length == 0) revert NoOwnerProvided();
         address owner = address(bytes20(data)); // encodePacked
-        // OR // abi.decode(data, (address));
         smartAccountOwners[msg.sender] = owner;
     }
 
