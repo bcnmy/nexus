@@ -34,4 +34,7 @@ interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
     /// @param firstValidator The address of the validator to install during initialization.
     /// @param initData Encoded data used for the account's configuration during initialization.
     function initialize(address firstValidator, bytes calldata initData) external payable;
+
+    // Error thrown when account installs/unistalls module with mismatched input `moduleTypeId`
+    error MismatchModuleTypeId(uint256 moduleTypeId);
 }

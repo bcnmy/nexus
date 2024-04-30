@@ -171,7 +171,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        // Idea is should be able to check supported interface and module type - eligible validator
         if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) {
             revert IncompatibleValidatorModule(validator);
         }
@@ -203,7 +203,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        // Should be able to check supported interface and module type - eligible validator
         if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) {
             revert IncompatibleExecutorModule(executor);
         }

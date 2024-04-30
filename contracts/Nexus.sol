@@ -18,6 +18,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
+import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
@@ -118,7 +119,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
             }
-            // TODO: implement event emission for tryExecute singleCall
             else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
@@ -156,6 +156,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
@@ -183,10 +184,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
+        // Should be able to validate passed moduleTypeId agaisnt the provided module
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
-        // Note: Should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
