@@ -30,7 +30,5 @@ interface IHook is IModule {
     /// @notice Performs checks after a transaction is executed to ensure state consistency and log results.
     /// @dev This method is called after the execution of a transaction to verify and react to the execution outcome.
     /// @param hookData Data returned from `preCheck`, containing execution context or modifications.
-    /// @param executionSuccess A boolean indicating if the execution was successful.
-    /// @param executionReturnValue The returned data from the execution, if any.
-    function postCheck(bytes calldata hookData, bool executionSuccess, bytes calldata executionReturnValue) external;
+    function postCheck(bytes calldata hookData) external;
 }

@@ -78,8 +78,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf {
-        (address hook, bytes memory hookData) = _preCheck();
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
@@ -88,7 +87,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else {
             revert UnsupportedCallType(callType);
         }
-        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /// @notice Executes transactions from an executor module, supporting both single and batch transactions.
@@ -103,11 +101,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyExecutorModule
+        withHook
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
@@ -137,7 +135,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else {
             revert UnsupportedCallType(callType);
         }
-        _postCheck(hook, hookData, true, new bytes(0));
     }
     /// @notice Executes a user operation via delegatecall to use the contract's context.
     /// @param userOp The user operation to execute.
@@ -157,8 +154,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
-        (address hook, bytes memory hookData) = _preCheck();
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
@@ -175,7 +171,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             revert InvalidModuleTypeId(moduleTypeId);
         }
         emit ModuleInstalled(moduleTypeId, module);
-        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /// @notice Uninstalls a module from the smart account.

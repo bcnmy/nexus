@@ -22,7 +22,8 @@ contract MockHook is IModule {
         return "";
     }
 
-    function postCheck(bytes calldata, bool, bytes calldata) external {
+    function postCheck(bytes calldata hookData) external {
+        hookData;
         emit PostCheckCalled();
     }
 
