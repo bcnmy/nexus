@@ -24,11 +24,22 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
     bytes32 internal constant _DOMAIN_SEP_B =
         0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
+    bytes32 internal constant _DOMAIN_TYPEHASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;    
+
     function setUp() public {
         init();
     }
 
-    function test_isValidSignature_MockValidator_Success() public {
+    function test_isValidSignature_PersonalSign_MockValidator_Success() public {
+        _TestTemps memory t;
+        t.contents = keccak256("123");
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271HashPersonalSign(t.contents));
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
+        assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
+    }
+
+    function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
         _TestTemps memory t;
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents));
@@ -78,6 +89,23 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
 
     function _toContentsHash(bytes32 contents) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
+    }
+
+    function _toERC1271HashPersonalSign(bytes32 childHash) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Nexus"),
+                keccak256("0.0.1"),
+                block.chainid,
+                address(ALICE_ACCOUNT)
+            )
+        );
+        bytes32 parentStructHash =
+            keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
     struct _AccountDomainStruct {
