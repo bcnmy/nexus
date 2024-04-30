@@ -56,7 +56,7 @@ export interface DeploymentFixtureWithSA {
   addresses: string[];
 }
 
-// Todo: check for need of making these optional
+// TODO: check for need of making these optional
 export interface UserOperation {
   sender: AddressLike; // Or string
   nonce?: BigNumberish;

@@ -183,7 +183,7 @@ export async function fillSignAndPack(
  * @returns The full initialization code as a hex string.
  */
 // TODO:
-// Note: This currently assumes validator to be mock validator or R1 validation. In future specific install data could be passed along
+// Note: This currently assumes validator to be mock validator or K1 validation. In future specific install data could be passed along
 // or it could be full bootstrap data
 // depending on the nature of the factory below encoding would change
 export async function getInitCode(

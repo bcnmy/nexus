@@ -88,11 +88,6 @@ ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.
  * @dev ModeLib is a helper library to encode/decode ModeCodes
  */
 library ModeLib {
-    function test() public pure {
-        // solhint-disable-previous-line no-empty-blocks
-        // @todo To be removed: This function is used to ignore file in coverage report
-    }
-
     function decode(
         ExecutionMode mode
     ) internal pure returns (CallType _calltype, ExecType _execType, ModeSelector _modeSelector, ModePayload _modePayload) {

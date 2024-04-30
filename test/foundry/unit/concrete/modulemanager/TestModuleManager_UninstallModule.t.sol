@@ -124,7 +124,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR, // Todo: Test what if you pass MODULE_TYPE_EXECUTOR here
+            MODULE_TYPE_VALIDATOR, // TODO: Test what if you pass MODULE_TYPE_EXECUTOR here
             address(VALIDATOR_MODULE),
             // uninstallData needs to provide prev module address with data to uninstall
             abi.encode(prev, "")
