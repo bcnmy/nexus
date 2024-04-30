@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
-import "../../mocks/Counter.sol";
-import "../../mocks/Token.sol";
+import "../../../../contracts/mocks/Counter.sol";
+import "../../../../contracts/mocks/MockToken.sol";
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
@@ -14,7 +14,7 @@ abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
     ExecutionMode public unsupportedMode;
 
     Counter public counter;
-    Token public token;
+    MockToken public token;
 
     // Define more shared state variables here
 
@@ -29,7 +29,7 @@ abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
 
         counter = new Counter();
         // Deploy the Token contract
-        token = new Token("Test Token", "TST");
+        token = new MockToken("Test Token", "TST");
 
         // Assuming msg.sender is the owner and receives the initial supply,
         // transfer tokens to BOB_ACCOUNT, ALICE_ACCOUNT, and CHARLIE_ACCOUNT

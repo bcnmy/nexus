@@ -16,8 +16,8 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
-import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/types/Constants.sol";
+import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 
 /// @title Nexus - K1Validator
 /// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.

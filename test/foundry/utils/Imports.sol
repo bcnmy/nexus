@@ -35,14 +35,12 @@ import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing
-import "../mocks/MockValidator.sol";
-import "../mocks/Counter.sol";
-import { MockExecutor } from "../mocks/MockExecutor.sol";
-import { MockHandler } from "../mocks/MockHandler.sol";
-import { MockHook } from "../mocks/MockHook.sol";
-import { TestMockHandler } from "../mocks/TestMockHandler.sol";
-import { TestMockHook } from "../mocks/TestMockHook.sol";
-import "../mocks/NFT.sol";
+import "../../../contracts/mocks/MockValidator.sol";
+import "../../../contracts/mocks/Counter.sol";
+import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
+import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
+import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+import "../../../contracts/mocks/NFT.sol";
 
 // Sentinel list helper
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";

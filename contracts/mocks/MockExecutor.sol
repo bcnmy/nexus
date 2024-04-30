@@ -6,8 +6,8 @@ import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { INexus } from "contracts/interfaces/INexus.sol";
 import { ModeLib } from "contracts/lib/ModeLib.sol";
 import { ExecLib } from "contracts/lib/ExecLib.sol";
-import { IExecutor } from "../../../contracts/interfaces/modules/IExecutor.sol";
-import "../../../contracts/types/DataTypes.sol";
+import { IExecutor } from "../../contracts/interfaces/modules/IExecutor.sol";
+import "../../contracts/types/DataTypes.sol";
 
 contract MockExecutor is IExecutor {
     function onInstall(bytes calldata data) external override { }
