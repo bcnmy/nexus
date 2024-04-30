@@ -37,6 +37,12 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271HashPersonalSign(t.contents));
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
+
+        unchecked {
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(t.r, vs);
+            assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
+        }
     }
 
     function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
