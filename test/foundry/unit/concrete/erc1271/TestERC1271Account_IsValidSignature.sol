@@ -82,9 +82,8 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
             abi.encodePacked(
                 abi.encode(
                     keccak256(
-                        "TypedDataSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
                     ),
-                    _toContentsHash(contents),
                     contents
                 ),
                 _accountDomainStructFields()
