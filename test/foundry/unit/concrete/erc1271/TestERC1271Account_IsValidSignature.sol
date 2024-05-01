@@ -24,9 +24,6 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
     bytes32 internal constant _DOMAIN_SEP_B =
         0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
-    bytes32 internal constant _DOMAIN_TYPEHASH =
-        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;    
-
     function setUp() public {
         init();
     }
