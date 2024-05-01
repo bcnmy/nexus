@@ -46,6 +46,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
+        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+
     /// @notice Initializes the smart account by setting up the module manager and state.
     constructor() {
         _initModuleManager();
@@ -229,7 +233,8 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, _eip712Hash(hash), data[20:]);
+        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
+        return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
@@ -324,9 +329,78 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
     }
 
+    function _erc1271HashForIsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
+        bool result;
+        bytes32 t = _typedDataSignFields();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            // Length of the contents type.
+            let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
+            for {} 1 {} {
+                let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
+                let o := add(signature.offset, sub(signature.length, l))
+                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
+                // or if the appended data is invalid (length too long, or empty contents type).
+                if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
+                    mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+                    mstore(0x20, hash) // Store the `prefixed`.
+                    hash := keccak256(0x00, 0x40) // Compute the `PersonalSign` struct hash.
+                    break
+                }
+                // Else, use the `TypedDataSign` workflow.
+                mstore(m, "TypedDataSign(") // To construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
+                let p := add(m, 0x0e) // Advance 14 bytes.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
+                d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
+                // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
+                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
+                    let b := byte(0, mload(p))
+                    if eq(40, b) { break }
+                    d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
+                }
+                mstore(p, " contents,bytes1 fields,string n")
+                mstore(add(p, 0x20), "ame,string version,uint256 chain")
+                mstore(add(p, 0x40), "Id,address verifyingContract,byt")
+                mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
+                calldatacopy(add(p, 0x7f), add(o, 0x40), c) // Copy the contents type.
+                // Fill in the missing fields of the `TypedDataSign`.
+                calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
+                mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
+                // The "\x19\x01" prefix is already at 0x00.
+                // `DOMAIN_SEP_B` is already at 0x20.
+                mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
+                // Compute the final hash, corrupted if the contents name is invalid.
+                hash := keccak256(0x1e, add(0x42, and(1, d)))
+                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                signature.length := sub(signature.length, l) // Truncate the signature.
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
+        if (!result) hash = _hashTypedData(hash);
+        return (hash, signature);
+    }
+
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
         version = "0.0.1";
+    }
+
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
     }
 
     /// @dev Executes a single transaction based on the specified execution type.
@@ -361,5 +435,31 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
         else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
+    }
+
+    /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
+    function _typedDataSignFields() private view returns (bytes32 m) {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = eip712Domain();
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40) // Grab the free memory pointer.
+            mstore(0x40, add(m, 0x120)) // Allocate the memory.
+            // Skip 2 words: `TYPED_DATA_SIGN_TYPEHASH, contents`.
+            mstore(add(m, 0x40), shl(248, byte(0, fields)))
+            mstore(add(m, 0x60), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0x80), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0xa0), chainId)
+            mstore(add(m, 0xc0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0xe0), salt)
+            mstore(add(m, 0x100), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+        }
     }
 }
