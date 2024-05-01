@@ -48,7 +48,7 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
     function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
         _TestTemps memory t;
         t.contents = keccak256("123");
-        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents));
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
          bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
@@ -56,28 +56,30 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
 
-        // unchecked {
-        //     uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
-        //     signature = abi.encodePacked(
-        //         t.r, vs, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
-        //     );
-        //     assertEq(
-        //         ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e)
-        //     );
-        // }
+        unchecked {
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(
+                t.r, vs, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
+            );
+            assertEq(
+                ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e)
+            );
+        }
     }
 
-    // function test_isValidSignature_MockValidator_Wrong1271Signer_Fail() public {
-    //     string memory message = "Some Message";
-    //     bytes32 hash = keccak256(abi.encodePacked(message));
-    //     bytes32 toSign = ALICE_ACCOUNT.replaySafeHash(hash);
-    //     (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, toSign);
-    //     bytes memory signature = abi.encodePacked(r, s, v);
-    //     bytes4 ret = ALICE_ACCOUNT.isValidSignature(hash, abi.encodePacked(address(VALIDATOR_MODULE), signature));
-    //     assertEq(ret, bytes4(0xFFFFFFFF));
-    // }
+    function test_isValidSignature_EIP712Sign_MockValidator_Wrong1271Signer_Fail() public {
+         _TestTemps memory t;
+        t.contents = keccak256("123");
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+         bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
+        );
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
+        assertEq(ret, bytes4(0xFFFFFFFF));
+    }
 
-    function _toERC1271Hash(bytes32 contents) internal view returns (bytes32) {
+    function _toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
                 abi.encode(
@@ -86,7 +88,7 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
                     ),
                     contents
                 ),
-                _accountDomainStructFields()
+                _accountDomainStructFields(account)
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
@@ -123,10 +125,10 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
         uint256[] extensions;
     }
 
-    function _accountDomainStructFields() internal view returns (bytes memory) {
+    function _accountDomainStructFields(address payable account) internal view returns (bytes memory) {
         _AccountDomainStruct memory t;
         (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            ALICE_ACCOUNT.eip712Domain();
+            Nexus(account).eip712Domain();
 
         return abi.encode(
             t.fields,
