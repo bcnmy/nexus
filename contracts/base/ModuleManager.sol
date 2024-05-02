@@ -17,11 +17,12 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
+import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
@@ -353,6 +354,12 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @return hook The address of the current hook.
     function _getHook() internal view returns (address hook) {
         hook = address(_getAccountStorage().hook);
+    }
+
+    /// @dev Retrieves the registry from the structured storage.
+    /// @return The registry currently associated with the account.
+    function _getRegistry() internal view returns (IERC7484Registry) {
+        return _getAccountStorage().registry;
     }
 
     /// @dev Helper function to paginate entries in a SentinelList.
