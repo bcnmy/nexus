@@ -11,11 +11,11 @@ contract TestModuleManager_RegistryModules is TestModuleManagement_Base {
     MockExecutor public executorModule;
 
     function setUp() public {
-        super.setUpModuleManagement_Base(); // Set up base configuration
+        setUpModuleManagement_Base();
 
         mockRegistry = new MockRegistry();  // Instantiate the mock registry
-        validatorModule = new MockValidator();  // Different validator module for specific tests
         executorModule = new MockExecutor();  // Executor module for type-specific testing
+        validatorModule = new MockValidator();  // Different validator module for specific tests
 
         // Attaching the modules with attestations
         mockRegistry.addAttestation(address(validatorModule), 1, address(this), true);  // Add self as attestor for validator
@@ -56,26 +56,14 @@ contract TestModuleManager_RegistryModules is TestModuleManagement_Base {
             ""
         );
 
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
-        // Expecting failure due to insufficient attestations
-        bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Not enough valid attestations.");
-        vm.expectEmit(true, true, true, true);
-        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
-
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        expectRevertWithReason(callData, "Not enough valid attestations.");
     }
 
     function test_InvalidModuleInstallation_WrongType() public {
         MockExecutor wrongTypeModule = new MockExecutor();
 
         mockRegistry.addAttestation(address(wrongTypeModule), 1, address(this), true);  // Adding one attestor, but threshold needs two
-        mockRegistry.addAttestation(address(wrongTypeModule), 1, address(0x123), true);  // Adding one attestor, but threshold needs two
+        mockRegistry.addAttestation(address(wrongTypeModule), 1, address(0x123), true);  // Adding one attestor threshold should be met
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, 
@@ -83,16 +71,8 @@ contract TestModuleManager_RegistryModules is TestModuleManagement_Base {
             address(wrongTypeModule),
             ""
         );
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         
-        bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Module type mismatch.");
-        vm.expectEmit(true, true, true, true);
-        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        expectRevertWithReason(callData, "Module type mismatch.");
+
     }
 }
