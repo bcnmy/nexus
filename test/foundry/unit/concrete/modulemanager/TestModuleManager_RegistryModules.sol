@@ -28,6 +28,11 @@ contract TestModuleManager_RegistryModules is TestModuleManagement_Base {
         setRegistry(address(mockRegistry));  // Setting the registry via ENTRYPOINT.handleOps
     }
 
+    function test_GetRegistry() public {
+        IERC7484Registry registryAddress = ModuleManager(BOB_ACCOUNT).getRegistry();
+        assertEq(address(registryAddress), address(mockRegistry), "The registry address should match the one set.");
+    }
+
     function test_ValidModuleInstallation() public {
                 assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
