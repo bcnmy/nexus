@@ -50,6 +50,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         _;
     }
 
+    /// @notice Does pre-checks and post-checks using an installed hook on the account.
+    /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
         address hook = _getHook();
         if (hook == address(0)) {

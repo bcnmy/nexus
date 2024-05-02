@@ -33,4 +33,7 @@ interface INexusEventsAndErrors {
 
     // Error thrown on failed execution
     error ExecutionFailed();
+
+    // Error thrown when account installs/unistalls module with mismatched input `moduleTypeId`
+    error MismatchModuleTypeId(uint256 moduleTypeId);
 }

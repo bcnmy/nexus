@@ -79,6 +79,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
+    /// @dev This function also goes through hook checks via withHook modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_SINGLE) {
@@ -94,7 +95,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param mode The execution mode (single or batch, default or try).
     /// @param executionCalldata The transaction data to execute.
     /// @return returnData The results of the transaction executions, which may include errors in try mode.
-    /// @dev This function is callable only by an executor module and may implement hooks.
+    /// @dev This function is callable only by an executor module and goes through hook checks.
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
@@ -154,6 +155,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
+    /// @dev This function also goes through hook checks via withHook modifier.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
