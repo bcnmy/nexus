@@ -6,8 +6,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { IFallback } from "contracts/interfaces/modules/IFallback.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import "../utils/EventsAndErrors.sol";
-import { MODULE_TYPE_FALLBACK } from "../../../contracts/types/Constants.sol";
+import { MODULE_TYPE_FALLBACK } from "../../contracts/types/Constants.sol";
 
 contract MockHandler is IFallback {
     string public constant NAME = "Default Handler";
@@ -37,10 +36,5 @@ contract MockHandler is IFallback {
 
     function isInitialized(address) external pure override returns (bool) {
         return false;
-    }
-
-    // Review
-    function test() public pure {
-        // @todo To be removed
     }
 }

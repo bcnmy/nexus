@@ -8,10 +8,10 @@ import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
-import { MockValidator } from "../mocks/MockValidator.sol";
-import { MockExecutor } from "../mocks/MockExecutor.sol";
-import { MockHook } from "../mocks/MockHook.sol";
-import { MockHandler } from "../mocks/MockHandler.sol";
+import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
+import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
+import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { Nexus } from "../../../contracts/Nexus.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";

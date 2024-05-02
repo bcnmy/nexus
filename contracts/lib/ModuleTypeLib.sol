@@ -6,10 +6,6 @@ type EncodedModuleTypes is uint256;
 type ModuleType is uint256;
 
 library ModuleTypeLib {
-    function test() public pure {
-        // @todo To be removed: This function is used to ignore file in coverage report
-    }
-
     function isType(EncodedModuleTypes self, ModuleType moduleTypeId) internal pure returns (bool) {
         return (EncodedModuleTypes.unwrap(self) & (2 ** ModuleType.unwrap(moduleTypeId))) != 0;
     }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 
-event DepositAdded(address indexed account, address indexed depositor, uint256 amount);
+event Deposited(address indexed account, uint256 totalDeposit);
 
 contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     Nexus private account;
@@ -30,15 +30,14 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
 
     function test_AddDeposit_EventEmitted() public {
         _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount);
-
-        // vm.expectEmit(true, true, true, true);
-        // Todo: emit the event used by EntryPoint
-
+        vm.expectEmit(true, true, true, true);
+        uint256 expectedDeposit = ENTRYPOINT.getDepositInfo(address(account)).deposit + defaultDepositAmount;
+        emit Deposited(address(account), expectedDeposit);
         account.addDeposit{ value: defaultDepositAmount }();
     }
 
     function test_AddDeposit_Revert_NoValue() public {
-        // Should we add zero value check to the addDeposit method?
+        // REVIEW: Should we add zero value check to the addDeposit method?
         account.addDeposit();
     }
 

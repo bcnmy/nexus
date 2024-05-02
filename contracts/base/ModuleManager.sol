@@ -51,6 +51,19 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         _;
     }
 
+    /// @notice Does pre-checks and post-checks using an installed hook on the account.
+    /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
+    modifier withHook() {
+        address hook = _getHook();
+        if (hook == address(0)) {
+            _;
+        } else {
+            bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            _;
+            IHook(hook).postCheck(hookData);
+        }
+    }
+
     /// @notice Ensures that the specified module conforms to the expected module type according to the registry.
     /// @dev This modifier uses the stored registry to validate the module type.
     /// If the registry address is not zero, it performs the check. Reverts if the check fails.
@@ -186,7 +199,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        // Idea is should be able to check supported interface and module type - eligible validator
         if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) {
             revert IncompatibleValidatorModule(validator);
         }
@@ -218,7 +231,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
-        // Note: Idea is should be able to check supported interface and module type - eligible validator
+        // Should be able to check supported interface and module type - eligible validator
         if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) {
             revert IncompatibleExecutorModule(executor);
         }
@@ -292,22 +305,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         if (!_isFallbackHandlerInstalled(selector)) revert FallbackNotInstalledForSelector(selector);
         _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
         IFallback(fallbackHandler).onUninstall(deInitData);
-    }
-
-    /// @dev Retrieves and prepares the hook for pre-check operations.
-    function _preCheck() internal returns (address hook, bytes memory hookData) {
-        hook = _getHook();
-        if (hook != address(0)) {
-            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
-            return (hook, hookData);
-        }
-    }
-
-    /// @dev Retrieves and prepares the hook for post-check operations.
-    function _postCheck(address hook, bytes memory hookData, bool executionSuccess, bytes memory executionReturnValue) internal {
-        if (hook != address(0)) {
-            IHook(hook).postCheck(hookData, executionSuccess, executionReturnValue);
-        }
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.

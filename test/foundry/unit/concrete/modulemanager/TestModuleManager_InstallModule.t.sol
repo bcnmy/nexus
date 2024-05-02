@@ -140,7 +140,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidModuleTypeId(uint256)", 99);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -196,7 +196,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expected revert reason encoded
         bytes memory expectedRevertReason =
-            abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(mockValidator));
+            abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -220,7 +220,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason =
-            abi.encodeWithSignature("IncompatibleExecutorModule(address)", address(newMockValidator));
+            abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -251,7 +251,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason =
-            abi.encodeWithSignature("IncompatibleValidatorModule(address)", address(newMockExecutor));
+            abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_VALIDATOR);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event

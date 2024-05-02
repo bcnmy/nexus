@@ -112,28 +112,6 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallHookModule_ExpectHookPostCheckFailed() public {
-        TestMockHook TestHook = new TestMockHook();
-
-        // Ensure the hook module is not installed initially
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(TestHook), ""),
-            "Hook module should not be installed initially"
-        );
-
-        // Prepare call data for installing the hook module
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(TestHook), "");
-
-        // Install the hook module
-        installModule(callData, MODULE_TYPE_HOOK, address(TestHook), EXECTYPE_DEFAULT);
-
-        // Assert that the hook module is now installed
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(TestHook), ""), "Hook module should be installed"
-        );
-    }
-
     function test_InstallHookModule_Success_GetActiveHook() public {
         test_InstallHookModule_Success();
         // Verify the hook module is installed
