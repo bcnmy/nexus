@@ -50,6 +50,19 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         _;
     }
 
+    /// @notice Ensures that the specified module conforms to the expected module type according to the registry.
+    /// @dev This modifier uses the stored registry to validate the module type.
+    /// If the registry address is not zero, it performs the check. Reverts if the check fails.
+    /// @param module Address of the module to validate.
+    /// @param moduleTypeId The identifier for the module type to validate against.
+    modifier withRegistry(address module, uint256 moduleTypeId) {
+        IERC7484Registry registry = _getRegistry();
+        if (address(registry) != address(0)) {
+            registry.check(module, moduleTypeId);
+        }
+        _;
+    }
+
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
     fallback() external payable override(Receiver) receiverFallback {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
