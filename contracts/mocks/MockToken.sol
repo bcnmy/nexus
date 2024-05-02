@@ -14,19 +14,20 @@ pragma solidity ^0.8.24;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// Note: could be imported from foundry mocks
 contract MockToken is ERC20 {
-    constructor() ERC20("TST", "MockToken") {}
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+        _mint(msg.sender, 10_000_000 * 10 ** decimals());
+    }
 
     function mint(address sender, uint256 amount) external {
         _mint(sender, amount);
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return 6;
+        return 18;
     }
 
     function test() public pure {
-        // @todo To be removed: This function is used to ignore file in coverage report
+        // TODO To be removed: This function is used to ignore file in coverage report
     }
 }

@@ -141,7 +141,7 @@ describe("Nexus Module Management Tests", () => {
           0n,
           functionCalldata,
         ),
-      ).to.be.revertedWithCustomError(deployedMSA, "IncompatibleHookModule");
+      ).to.be.revertedWithCustomError(deployedMSA, "MismatchModuleTypeId");
     });
 
     it("Should not be able to uninstall last validator   module", async () => {

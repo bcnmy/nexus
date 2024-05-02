@@ -16,8 +16,8 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
-import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "contracts/types/Constants.sol";
+import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 
 /// @title Nexus - K1Validator
 /// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
@@ -36,11 +36,9 @@ contract K1Validator {
 
     error NoOwnerProvided();
 
-    // TODO // Review comments
     function onInstall(bytes calldata data) external {
         if (data.length == 0) revert NoOwnerProvided();
         address owner = address(bytes20(data)); // encodePacked
-        // OR // abi.decode(data, (address));
         smartAccountOwners[msg.sender] = owner;
     }
 
@@ -83,6 +81,6 @@ contract K1Validator {
     }
 
     function test() public pure {
-        // @todo To be removed: This function is used to ignore file in coverage report
+        // TODO To be removed: This function is used to ignore file in coverage report
     }
 }

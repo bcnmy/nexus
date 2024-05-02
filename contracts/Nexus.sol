@@ -19,6 +19,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
+import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
@@ -91,8 +92,8 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf {
-        (address hook, bytes memory hookData) = _preCheck();
+    /// @dev This function also goes through hook checks via withHook modifier.
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
         (CallType callType, ExecType execType, , ) = mode.decode();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
@@ -101,14 +102,13 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         } else {
             revert UnsupportedCallType(callType);
         }
-        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /// @notice Executes transactions from an executor module, supporting both single and batch transactions.
     /// @param mode The execution mode (single or batch, default or try).
     /// @param executionCalldata The transaction data to execute.
     /// @return returnData The results of the transaction executions, which may include errors in try mode.
-    /// @dev This function is callable only by an executor module and may implement hooks.
+    /// @dev This function is callable only by an executor module and goes through hook checks.
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
@@ -116,11 +116,11 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         external
         payable
         onlyExecutorModule
+        withHook
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (address hook, bytes memory hookData) = _preCheck();
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // check if calltype is batch or single
@@ -133,7 +133,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
             }
-            // TODO: implement event emission for tryExecute singleCall
             else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
@@ -150,7 +149,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         } else {
             revert UnsupportedCallType(callType);
         }
-        _postCheck(hook, hookData, true, new bytes(0));
     }
     /// @notice Executes a user operation via delegatecall to use the contract's context.
     /// @param userOp The user operation to execute.
@@ -170,9 +168,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
-        (address hook, bytes memory hookData) = _preCheck();
+    /// @dev This function also goes through hook checks via withHook modifier.
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
@@ -188,7 +187,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             revert InvalidModuleTypeId(moduleTypeId);
         }
         emit ModuleInstalled(moduleTypeId, module);
-        _postCheck(hook, hookData, true, new bytes(0));
     }
 
     /// @notice Uninstalls a module from the smart account.
@@ -201,10 +199,11 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
+        // Should be able to validate passed moduleTypeId agaisnt the provided module
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
-        // Note: Should be able to validate passed moduleTypeId agaisnt the provided module address and interface?
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);

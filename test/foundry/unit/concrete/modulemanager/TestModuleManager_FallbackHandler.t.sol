@@ -167,37 +167,6 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
     }
 
-    function test_UninstallFallbackHandler_Failed() public {
-        TestMockHandler TestHandleModule = new TestMockHandler();
-        bytes memory customData = abi.encode(bytes4(UNUSED_SELECTOR));
-
-        // Install MockHandler as the fallback handler for BOB_ACCOUNT
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(TestHandleModule), customData
-        );
-        Execution[] memory executionInstall = new Execution[](1);
-        executionInstall[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory userOpsInstall =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionInstall);
-        ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
-
-        bytes memory uninstallCallData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(TestHandleModule), customData
-        );
-        Execution[] memory executionUninstall = new Execution[](1);
-        executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, uninstallCallData);
-        PackedUserOperation[] memory userOpsUninstall =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
-
-        ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
-
-        // Verify the fallback handler was uninstalled
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(TestHandleModule), customData),
-            "Fallback handler was uninstalled"
-        );
-    }
-
     function test_GetFallbackHandlerBySelector() public {
         (, address handlerAddress) = BOB_ACCOUNT.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
         assertEq(
