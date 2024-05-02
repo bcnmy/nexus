@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC7484Registry } from "../../../contracts/interfaces/IERC7484Registry.sol";
 contract MockRegistry {
     struct Attestation {
-        uint256 moduleType;               // The type of the module attested.
+        uint256 moduleType; // The type of the module attested.
         mapping(address => bool) attestors; // Tracks whether an address has attested
-        uint256 validCount;               // Count of valid attestations for this module.
+        uint256 validCount; // Count of valid attestations for this module.
     }
 
     mapping(address => Attestation) public moduleAttestations; // Maps modules to their attestation records.
