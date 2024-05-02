@@ -16,6 +16,7 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 import { IHook } from "../modules/IHook.sol";
 import { CallType } from "../../lib/ModeLib.sol";
+import { IERC7484Registry } from "../IERC7484Registry.sol";
 
 /// @title Nexus - IStorage Interface
 /// @notice Provides structured storage for Modular Smart Account under the Nexus suite, compliant with ERC-7579 and ERC-4337.
@@ -35,6 +36,7 @@ interface IStorage {
         SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
         mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
         IHook hook; ///< Current hook module associated with this account.
+        IERC7484Registry registry; ///< Current registry contract for this account.
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
