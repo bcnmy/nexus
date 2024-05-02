@@ -158,6 +158,12 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         return _getHook();
     }
 
+    /// @notice Retrieves the currently set registry address.
+    /// @return registry The address of the current registry module.
+    function getRegistry() external view returns (IERC7484Registry) {
+        return _getRegistry();
+    }
+
     /// @notice Fetches the fallback handler for a specific selector.
     /// @param selector The function selector to query.
     /// @return calltype The type of call that the handler manages.
@@ -256,6 +262,12 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param hook The new hook address.
     function _setHook(address hook) internal virtual {
         _getAccountStorage().hook = IHook(hook);
+    }
+
+    /// @dev Sets the registry in the structured storage to the specified address.
+    /// @param newRegistry The new registry address to set.
+    function _setRegistry(address newRegistry) internal {
+        _getAccountStorage().registry = IERC7484Registry(newRegistry);
     }
 
     /// @dev Installs a fallback handler for a given selector with initialization data.
