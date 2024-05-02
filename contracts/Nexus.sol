@@ -119,8 +119,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             // check if execType is revert(default) or try
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
-            }
-            else if (execType == EXECTYPE_TRY) {
+            } else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
             } else {
@@ -156,7 +155,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook withRegistry(module, moduleTypeId) {
+    function installModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata initData
+    ) external payable onlyEntryPointOrSelf withHook withRegistry(module, moduleTypeId) {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
