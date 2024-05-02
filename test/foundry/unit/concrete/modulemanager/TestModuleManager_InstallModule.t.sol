@@ -91,11 +91,11 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         test_InstallModule_Success(); // Use the test case directly for setup
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Module should not be installed initially"
+            "Module should be installed initially"
         );
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Module should not be installed initially"
+            "Module should be installed initially"
         );
 
         bytes memory callData = abi.encodeWithSelector(
