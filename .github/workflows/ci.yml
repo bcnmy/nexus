@@ -136,7 +136,7 @@ jobs:
           slither-version: "0.10.0"
           node-version: "20"
           fail-on: "none"
-          slither-config: './slither.config.json'
+          slither-config: './.slither.config.json'
       - name: Create/update checklist as PR comment
         uses: actions/github-script@v7
         env:
