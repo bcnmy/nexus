@@ -1,8 +1,0 @@
-{
-    "detectors_to_exclude": "assembly,solc-version",
-    "exclude_informational": true,
-    "exclude_low": false,
-    "exclude_medium": false,
-    "exclude_high": false,
-    "filter_paths": "(contracts/mock/|node_modules/)"
-}
