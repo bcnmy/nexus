@@ -68,4 +68,17 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
+
+    function setRegistry(address _registry) internal {
+        bytes memory callData = abi.encodeWithSelector(
+            ModuleManager.setRegistry.selector,
+            _registry
+        );
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
 }
