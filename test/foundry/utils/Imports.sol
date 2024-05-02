@@ -41,7 +41,7 @@ import "../../../contracts/mocks/Counter.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
-import { MockRegistry } from "../mocks/MockRegistry.sol";
+import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import "../../../contracts/mocks/NFT.sol";
 
 // Sentinel list helper
