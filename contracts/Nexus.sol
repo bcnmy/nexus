@@ -156,7 +156,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook withRegistry(module, moduleTypeId) {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
