@@ -29,6 +29,7 @@ import "../../../contracts/interfaces/modules/IModule.sol";
 import "../../../contracts/interfaces/base/IStorage.sol";
 import "../../../contracts/interfaces/factory/IAccountFactory.sol";
 import "../../../contracts/interfaces/INexus.sol";
+import "../../../contracts/interfaces/IERC7484Registry.sol";
 
 // Contract implementations
 import "../../../contracts/Nexus.sol";
@@ -42,6 +43,7 @@ import { MockHandler } from "../mocks/MockHandler.sol";
 import { MockHook } from "../mocks/MockHook.sol";
 import { TestMockHandler } from "../mocks/TestMockHandler.sol";
 import { TestMockHook } from "../mocks/TestMockHook.sol";
+import { MockRegistry } from "../mocks/MockRegistry.sol";
 import "../mocks/NFT.sol";
 
 // Sentinel list helper
