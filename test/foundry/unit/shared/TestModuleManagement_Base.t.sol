@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
-import { MockHook } from "../../mocks/MockHook.sol";
-import { MockHandler } from "../../mocks/MockHandler.sol";
-import { MockExecutor } from "../../mocks/MockExecutor.sol";
-import { MockValidator } from "../../mocks/MockValidator.sol";
+import { MockHook } from "../../../../contracts/mocks/MockHook.sol";
+import { MockHandler } from "../../../../contracts/mocks/MockHandler.sol";
+import { MockExecutor } from "../../../../contracts/mocks/MockExecutor.sol";
 import { ModuleManager } from "../../../../contracts/base/ModuleManager.sol";
+import { MockValidator } from "../../../../contracts/mocks/MockValidator.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 
