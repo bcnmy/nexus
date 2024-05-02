@@ -208,6 +208,22 @@ contract Helpers is CheatCodes, EventsAndErrors {
         });
     }
 
+    // Utility function to handle revert with require statement
+    function expectRevertWithReason(bytes memory callData, string memory reason) internal {
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", reason);
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
+
     // Utility method to encode and sign a message, then pack r, s, v into bytes
     function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
         bytes32 userOpHash = ECDSA.toEthSignedMessageHash(messageHash);
