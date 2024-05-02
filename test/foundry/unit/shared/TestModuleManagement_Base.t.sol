@@ -3,10 +3,11 @@ pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
-import { MockValidator } from "../../mocks/MockValidator.sol";
-import { MockExecutor } from "../../mocks/MockExecutor.sol";
-import { MockHandler } from "../../mocks/MockHandler.sol";
 import { MockHook } from "../../mocks/MockHook.sol";
+import { MockHandler } from "../../mocks/MockHandler.sol";
+import { MockExecutor } from "../../mocks/MockExecutor.sol";
+import { MockValidator } from "../../mocks/MockValidator.sol";
+import { ModuleManager } from "../../../../contracts/base/ModuleManager.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 
@@ -15,11 +16,11 @@ event ModuleUninstalled(uint256 moduleTypeId, address module);
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
-    MockValidator public mockValidator;
-    MockExecutor public mockExecutor;
-    MockHandler public mockHandler;
     MockHook public mockHook;
-
+    MockHandler public mockHandler;
+    MockExecutor public mockExecutor;
+    MockRegistry public mockRegistry;
+    MockValidator public mockValidator;
     address public constant INVALID_MODULE_ADDRESS = address(0);
     uint256 public constant INVALID_MODULE_TYPE = 999;
 
@@ -31,10 +32,11 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         init(); // Initialize the testing environment if necessary
 
         // Setup mock validator and executor, different from those possibly already used
-        mockValidator = new MockValidator();
-        mockExecutor = new MockExecutor();
-        mockHandler = new MockHandler();
         mockHook = new MockHook();
+        mockHandler = new MockHandler();
+        mockExecutor = new MockExecutor();
+        mockRegistry = new MockRegistry();
+        mockValidator = new MockValidator();
 
         // Additional shared setup can go here
     }
