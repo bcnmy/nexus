@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "../../../utils/Imports.sol";
 import "../../../utils/Helpers.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-import { MockValidator } from "../../../mocks/MockValidator.sol";
+import { MockValidator } from "../../../../../contracts/mocks/MockValidator.sol";
 
 contract TestAccountFactory_Operations is SmartAccountTestLab {
     // Initialize the testing environment and deploy necessary contracts

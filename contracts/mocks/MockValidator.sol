@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { IModule } from "../../../contracts/interfaces/modules/IModule.sol";
-import { IValidator } from "../../../contracts/interfaces/modules/IValidator.sol";
-import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR } from "../../../contracts/types/Constants.sol";
-import { EncodedModuleTypes } from "../../../contracts/lib/ModuleTypeLib.sol";
+import { IModule } from "../../contracts/interfaces/modules/IModule.sol";
+import { IValidator } from "../../contracts/interfaces/modules/IValidator.sol";
+import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR } from "../../contracts/types/Constants.sol";
+import { EncodedModuleTypes } from "../../contracts/lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -62,10 +62,5 @@ contract MockValidator is IValidator{
 
     function getOwner(address account) external view returns (address) {
         return smartAccountOwners[account];
-    }
-
-    // Review
-    function test(uint256 a) public pure {
-        a;
     }
 }

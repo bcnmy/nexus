@@ -22,7 +22,8 @@ contract MockHook is IModule {
         return "";
     }
 
-    function postCheck(bytes calldata, bool, bytes calldata) external {
+    function postCheck(bytes calldata hookData) external {
+        hookData;
         emit PostCheckCalled();
     }
 
@@ -32,10 +33,5 @@ contract MockHook is IModule {
 
     function isInitialized(address) external pure returns (bool) {
         return false;
-    }
-
-    // Review
-    function test() public pure {
-        // @todo To be removed
     }
 }

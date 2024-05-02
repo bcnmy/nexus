@@ -21,6 +21,6 @@ contract NFT is ERC721 {
     }
 
     function test() public pure {
-        // @todo To be removed: This function is used to ignore file in coverage report
+        // TODO To be removed: This function is used to ignore file in coverage report
     }
 }
