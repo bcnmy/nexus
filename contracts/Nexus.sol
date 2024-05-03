@@ -230,6 +230,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// bytes4(keccak256("isValidSignature(bytes32,bytes)") = 0x1626ba7e
     /// @dev Delegates the validation to a validator module specified within the signature data.
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
+        // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
@@ -328,6 +329,74 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
     }
 
+    /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
+    ///
+    /// This implementation uses a nested EIP-712 approach to
+    /// prevent signature replays when a single signer owns multiple smart contract accounts,
+    /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
+    ///
+    /// Crafted for phishing resistance, efficiency, flexibility.
+    /// __________________________________________________________________________________________
+    ///
+    /// Glossary:
+    ///
+    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
+    ///   Provided by the front end. Intended to be the domain separator of the contract
+    ///   that will call `isValidSignature` on this account.
+    ///
+    /// - `DOMAIN_SEP_A`: The domain separator of this account.
+    ///   See: `EIP712._domainSeparator()`.
+    /// __________________________________________________________________________________________
+    ///
+    /// For the `TypedDataSign` workflow, the final hash will be:
+    /// ```
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///         hashStruct(TypedDataSign({
+    ///             contents: hashStruct(originalStruct),
+    ///             name: keccak256(bytes(eip712Domain().name)),
+    ///             version: keccak256(bytes(eip712Domain().version)),
+    ///             chainId: eip712Domain().chainId,
+    ///             verifyingContract: eip712Domain().verifyingContract,
+    ///             salt: eip712Domain().salt
+    ///             extensions: keccak256(abi.encodePacked(eip712Domain().extensions))
+    ///         }))
+    ///     )
+    /// ```
+    /// where `‖` denotes the concatenation operator for bytes.
+    /// The order of the fields is important: `contents` comes before `name`.
+    ///
+    /// The signature will be `r ‖ s ‖ v ‖
+    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    /// where `contents` is the bytes32 struct hash of the original struct.
+    ///
+    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
+    /// __________________________________________________________________________________________
+    ///
+    /// For the `PersonalSign` workflow, the final hash will be:
+    /// ```
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///         hashStruct(PersonalSign({
+    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
+    ///                 base10(bytes(someString).length) ‖ someString))
+    ///         }))
+    ///     )
+    /// ```
+    /// where `‖` denotes the concatenation operator for bytes.
+    ///
+    /// The `PersonalSign` type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The signature will be `r ‖ s ‖ v`.
+    /// __________________________________________________________________________________________
+    ///
+    /// For demo and typescript code, see:
+    /// - https://github.com/junomonster/nested-eip-712
+    /// - https://github.com/frangio/eip712-wrapper-for-eip1271
+    ///
+    /// Their nomenclature may differ from ours, although the high-level idea is similar.
+    ///
+    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// you can choose a more minimalistic signature scheme like
+    /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
+    /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
     function _erc1271HashForIsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -389,15 +458,18 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return (hash, signature);
     }
 
+    /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
         version = "0.0.1";
     }
 
+    /// @dev EIP712 hashTypedData method. 
     function hashTypedData(bytes32 structHash) external view returns (bytes32) {
         return _hashTypedData(structHash);
     }
 
+    /// @dev EIP712 domain separator.
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparator();
     }
@@ -436,7 +508,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else return false;
     }
 
-    /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
+    /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,
     function _typedDataSignFields() private view returns (bytes32 m) {
         (
             bytes1 fields,
