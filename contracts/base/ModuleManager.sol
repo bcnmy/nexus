@@ -138,12 +138,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         }
     }
 
-    /// @notice Sets a new registry.
-    /// @param newRegistry The address of the new registry to set.
-    function setRegistry(address newRegistry) external {
-        _setRegistry(newRegistry);
-    }
-
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
     /// This utility function is not defined by the ERC-7579 standard and is implemented to facilitate
     /// easier management and retrieval of large sets of validator modules.

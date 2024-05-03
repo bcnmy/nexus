@@ -202,6 +202,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         emit ModuleUninstalled(moduleTypeId, module);
     }
 
+    /// @notice Sets a new registry.
+    /// @param newRegistry The address of the new registry to set.
+    /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
+    function setRegistry(address newRegistry) external onlyEntryPointOrSelf {
+        _setRegistry(newRegistry);
+    }
+
     /// @notice Initializes the smart account with a validator.
     /// @param firstValidator The first validator to install upon initialization.
     /// @param initData Initialization data for setting up the validator.
