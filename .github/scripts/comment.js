@@ -32,10 +32,10 @@ module.exports = async ({ github, context, header, body }) => {
 
   const markdownComment = `
 ## :robot: Slither Analysis Report :mag_right:
-<details>
 
 ${uniqueSlitherHeader}
 
+<details>
 ${header}
 
 ${processedBody}
