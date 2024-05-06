@@ -9,18 +9,18 @@ contract ExecLibTest is Test {
 
     function test_encode_decode(address target, uint256 value, bytes memory callData) public {
         bytes memory encoded = ExecLib.encodeSingle(target, value, callData);
-        (address _target, uint256 _value, bytes memory _callData) = this.decode(encoded);
+        (address target_, uint256 value_, bytes memory callData_) = this.decode(encoded);
 
-        assertTrue(_target == target);
-        assertTrue(_value == value);
-        assertTrue(keccak256(_callData) == keccak256(callData));
+        assertTrue(target_ == target);
+        assertTrue(value_ == value);
+        assertTrue(keccak256(callData_) == keccak256(callData));
     }
 
     function decode(bytes calldata encoded)
         public
         pure
-        returns (address _target, uint256 _value, bytes calldata _callData)
+        returns (address target, uint256 value, bytes calldata callData)
     {
-        (_target, _value, _callData) = ExecLib.decodeSingle(encoded);
+        (target, value, callData) = ExecLib.decodeSingle(encoded);
     }
 }
