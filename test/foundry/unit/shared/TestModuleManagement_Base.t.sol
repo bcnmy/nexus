@@ -73,7 +73,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
 
     function setRegistry(address _registry) internal {
         bytes memory callData = abi.encodeWithSelector(
-            Nexus.setRegistry.selector,
+            Nexus.setModuleRegistry.selector,
             _registry
         );
 

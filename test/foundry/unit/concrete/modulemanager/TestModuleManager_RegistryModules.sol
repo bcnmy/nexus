@@ -29,7 +29,7 @@ contract TestModuleManager_RegistryModules is TestModuleManagement_Base {
     }
 
     function test_GetRegistry() public {
-        IERC7484Registry registryAddress = ModuleManager(BOB_ACCOUNT).getRegistry();
+        IERC7484Registry registryAddress = ModuleManager(BOB_ACCOUNT).getModuleRegistry();
         assertEq(address(registryAddress), address(mockRegistry), "The registry address should match the one set.");
     }
 
