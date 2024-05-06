@@ -166,8 +166,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         return _getHook();
     }
 
-/// @notice Function to securely retrieve the current ERC-7484 module registry address.
-/// @return registry The address of the current module registry.
+    /// @notice Function to securely retrieve the current ERC-7484 module registry address.
+    /// @return registry The address of the current module registry.
     function getModuleRegistry() external view returns (IERC7484Registry) {
         return _getModuleRegistry();
     }
@@ -347,8 +347,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         hook = address(_getAccountStorage().hook);
     }
 
-/// @dev Internal function to securely retrieve the ERC-7484-compatible module registry address.
-/// @return The current module registry address associated with the smart account.
+    /// @dev Internal function to securely retrieve the ERC-7484-compatible module registry address.
+    /// @return The current module registry address associated with the smart account.
     function _getModuleRegistry() internal view returns (IERC7484Registry) {
         return _getAccountStorage().moduleRegistry;
     }
