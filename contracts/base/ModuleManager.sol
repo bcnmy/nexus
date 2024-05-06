@@ -70,7 +70,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param module Address of the module to validate.
     /// @param moduleTypeId The identifier for the module type to validate against.
     modifier withRegistry(address module, uint256 moduleTypeId) {
-        IERC7484Registry registry = _getRegistry();
+        IERC7484Registry registry = _getModuleRegistry();
         if (address(registry) != address(0)) {
             registry.check(module, moduleTypeId);
         }
@@ -166,10 +166,10 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         return _getHook();
     }
 
-    /// @notice Retrieves the currently set registry address.
-    /// @return registry The address of the current registry module.
-    function getRegistry() external view returns (IERC7484Registry) {
-        return _getRegistry();
+/// @notice Function to securely retrieve the current ERC-7484 module registry address.
+/// @return registry The address of the current module registry.
+    function getModuleRegistry() external view returns (IERC7484Registry) {
+        return _getModuleRegistry();
     }
 
     /// @notice Fetches the fallback handler for a specific selector.
@@ -274,7 +274,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
     /// @dev Sets the registry in the structured storage to the specified address.
     /// @param newRegistry The new registry address to set.
-    function _setRegistry(address newRegistry) internal {
+    function _setModuleRegistry(address newRegistry) internal {
         _getAccountStorage().registry = IERC7484Registry(newRegistry);
     }
 
@@ -347,9 +347,9 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         hook = address(_getAccountStorage().hook);
     }
 
-    /// @dev Retrieves the registry from the structured storage.
-    /// @return The registry currently associated with the account.
-    function _getRegistry() internal view returns (IERC7484Registry) {
+/// @dev Internal function to securely retrieve the ERC-7484-compatible module registry address.
+/// @return The current module registry address associated with the smart account.
+    function _getModuleRegistry() internal view returns (IERC7484Registry) {
         return _getAccountStorage().registry;
     }
 
