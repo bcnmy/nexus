@@ -36,7 +36,7 @@ interface IStorage {
         SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
         mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
         IHook hook; ///< Current hook module associated with this account.
-        IERC7484Registry registry; ///< Current registry contract for this account.
+        IERC7484Registry moduleRegistry; ///< Current registry contract for this account.
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.

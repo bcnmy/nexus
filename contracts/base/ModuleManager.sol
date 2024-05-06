@@ -273,9 +273,9 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     }
 
     /// @dev Sets the registry in the structured storage to the specified address.
-    /// @param newRegistry The new registry address to set.
-    function _setModuleRegistry(address newRegistry) internal {
-        _getAccountStorage().registry = IERC7484Registry(newRegistry);
+    /// @param newModuleRegistry The new module registry address to set.
+    function _setModuleRegistry(address newModuleRegistry) internal {
+        _getAccountStorage().moduleRegistry = IERC7484Registry(newModuleRegistry);
     }
 
     /// @dev Installs a fallback handler for a given selector with initialization data.
@@ -350,7 +350,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 /// @dev Internal function to securely retrieve the ERC-7484-compatible module registry address.
 /// @return The current module registry address associated with the smart account.
     function _getModuleRegistry() internal view returns (IERC7484Registry) {
-        return _getAccountStorage().registry;
+        return _getAccountStorage().moduleRegistry;
     }
 
     /// @dev Helper function to paginate entries in a SentinelList.
