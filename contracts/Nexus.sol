@@ -16,11 +16,11 @@ import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 import { ExecLib } from "./lib/ExecLib.sol";
-import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
-import { IModule } from "./interfaces/modules/IModule.sol";
+import { Execution } from "./types/DataTypes.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
+import { IModule } from "./interfaces/modules/IModule.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
