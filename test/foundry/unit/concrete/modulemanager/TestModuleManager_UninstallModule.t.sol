@@ -108,7 +108,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
     }
 
-    function test_UninstallModule_Try_Success() public {
+    function test_UninstallModul_FailWithLastValidator() public {
         bytes memory installCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
@@ -149,6 +149,51 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
+
+    function test_UninstallModule_IncorrectType() public {
+        bytes memory installCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            "Module should be installed initially"
+        );
+
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        address remove = address(mockValidator);
+        address prev = SentinelListHelper.findPrevious(array, remove);
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(VALIDATOR_MODULE),
+            // uninstallData needs to provide prev module address with data to uninstall
+            abi.encode(prev, "")
+        );
+
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        // Similar to installModule but for uninstallation
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
+
+    
+
 
     function test_UninstallModule_NotInstalled() public {
         assertTrue(
