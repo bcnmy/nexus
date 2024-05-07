@@ -136,6 +136,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             revert UnsupportedCallType(callType);
         }
     }
+    
     /// @notice Executes a user operation via delegatecall to use the contract's context.
     /// @param userOp The user operation to execute.
     /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
