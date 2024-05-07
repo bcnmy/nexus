@@ -11,29 +11,15 @@ import { IExecutor } from "../../contracts/interfaces/modules/IExecutor.sol";
 import "../../contracts/types/DataTypes.sol";
 
 contract MockExecutor is IExecutor {
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external override {}
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external override {}
 
-    function executeViaAccount(
-        INexus account,
-        address target,
-        uint256 value,
-        bytes calldata callData
-    )
-        external
-        returns (bytes[] memory returnData)
-    {
+    function executeViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
-    function executeBatchViaAccount(
-        INexus account,
-        Execution[] calldata execs
-    )
-        external
-        returns (bytes[] memory returnData)
-    {
+    function executeBatchViaAccount(INexus account, Execution[] calldata execs) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 
@@ -41,7 +27,7 @@ contract MockExecutor is IExecutor {
         return moduleTypeId == MODULE_TYPE_EXECUTOR;
     }
 
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
+    function getModuleTypes() external view returns (EncodedModuleTypes) {}
 
     function test_() public pure {
         // This function is used to ignore file in coverage report

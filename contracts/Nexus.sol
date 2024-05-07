@@ -119,8 +119,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             // check if execType is revert(default) or try
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
-            }
-            else if (execType == EXECTYPE_TRY) {
+            } else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
             } else {

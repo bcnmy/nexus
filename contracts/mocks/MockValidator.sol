@@ -9,30 +9,17 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract MockValidator is IValidator{
+contract MockValidator is IValidator {
     mapping(address => address) public smartAccountOwners;
 
-    function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    )
-        external
-        view
-        returns (uint256 validation)
-    {
-        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
-            == smartAccountOwners[msg.sender] ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
+        return
+            ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) == smartAccountOwners[msg.sender]
+                ? VALIDATION_SUCCESS
+                : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    )
-        external
-        pure
-        returns (bytes4)
-    {
+    function isValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature) external pure returns (bytes4) {
         sender;
         hash;
         signature;
