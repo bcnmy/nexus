@@ -31,7 +31,7 @@ contract TokenWithPermit is ERC20Permit {
 
     error ERC1271InvalidSigner(address signer);
 
-    bytes32 internal constant PERMIT_TYPEHASH_LOCAL =
+    bytes32 public constant PERMIT_TYPEHASH_LOCAL =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     constructor(string memory name, string memory symbol) ERC20Permit(name) ERC20(name, symbol) {
@@ -59,15 +59,15 @@ contract TokenWithPermit is ERC20Permit {
 
         bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH_LOCAL, owner, spender, value, _useNonce(owner), deadline));
 
-        bytes32 hash = _hashTypedDataV4(structHash);
+        bytes32 childHash = _hashTypedDataV4(structHash);
 
         if(owner.code.length > 0) {
-           bytes4 result = IERC1271(owner).isValidSignature(hash, signature);
+           bytes4 result = IERC1271(owner).isValidSignature(childHash, signature);
            if(result != bytes4(0x1626ba7e)) {
                 revert ERC1271InvalidSigner(owner);
            }
         } else {
-           address signer = ECDSA.recover(hash, signature);
+           address signer = ECDSA.recover(childHash, signature);
            if (signer != owner) {
                revert ERC2612InvalidSigner(signer, owner);
            }

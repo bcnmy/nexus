@@ -41,14 +41,22 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         _DOMAIN_SEP_B = permitToken.DOMAIN_SEPARATOR();
     }
 
-    function test_isValidSignature_PersonalSign_MockValidator_Success() public {
+    function test_isValidSignature_PersonalSign_MockProtocol_MockValidator_Success() public {
     }
 
-    function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
-    }
-
-    function _toContentsHash(bytes32 contents) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
+    function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Success() public {
+        _TestTemps memory t;
+        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL, address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
+        );
+        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), completeSignature);
+        assertEq(ret, bytes4(0x1626ba7e));
+        permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
+        assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 1e18);
     }
 
     function _toERC1271HashPersonalSign(bytes32 childHash) internal view returns (bytes32) {
@@ -76,6 +84,25 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         address verifyingContract;
         bytes32 salt;
         uint256[] extensions;
+    }
+
+    function _toContentsHash(bytes32 contents) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
+    }
+
+    function _toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
+        bytes32 parentStructHash = keccak256(
+            abi.encodePacked(
+                abi.encode(
+                    keccak256(
+                        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                    ),
+                    contents
+                ),
+                _accountDomainStructFields(account)
+            )
+        );
+        return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
 
     function _accountDomainStructFields(address payable account) internal view returns (bytes memory) {
