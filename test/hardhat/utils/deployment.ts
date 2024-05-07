@@ -122,7 +122,7 @@ export async function getDeployedMockToken(): Promise<MockToken> {
   const deterministicMockToken = await deployments.deploy("MockToken", {
     from: addresses[0],
     deterministicDeployment: true,
-    args: ['Test Token', 'TST']
+    args: ["Test Token", "TST"],
   });
 
   return MockToken.attach(deterministicMockToken.address) as MockToken;
