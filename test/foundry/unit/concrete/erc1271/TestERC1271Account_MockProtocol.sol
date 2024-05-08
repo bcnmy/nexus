@@ -5,13 +5,6 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.sol";
 
-
-// Todo
-// Note: remove below temp refs afterwards
-// refs
-// https://etherscan.io/address/0x00000000006c3852cbef3e08e8df289169ede581#code
-// https://github.com/thirdweb-dev/seaport-eip1271
-
 contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     struct _TestTemps {
@@ -41,12 +34,9 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         _DOMAIN_SEP_B = permitToken.DOMAIN_SEPARATOR();
     }
 
-    function test_isValidSignature_PersonalSign_MockProtocol_MockValidator_Success() public {
-    }
-
     function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Success() public {
         _TestTemps memory t;
-        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL, address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(
@@ -88,16 +78,6 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     function _toContentsHash(bytes32 contents) internal view returns (bytes32 digest) {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
-        // @todo  Review
-        // temp
-        // bytes32 ds = _DOMAIN_SEP_B;
-        // assembly {
-        //     let ptr := mload(0x40)
-        //     mstore(ptr, hex"19_01")
-        //     mstore(add(ptr, 0x02), ds)
-        //     mstore(add(ptr, 0x22), contents)
-        //     digest := keccak256(ptr, 0x42)
-        // }
     }
 
     function _toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
