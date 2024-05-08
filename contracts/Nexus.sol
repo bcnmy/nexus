@@ -104,6 +104,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         payable
         onlyExecutorModule
         withHook
+        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
         returns (
             bytes[] memory returnData // TODO returnData is not used
         )
