@@ -5,6 +5,12 @@ import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
 import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.sol";
 
+// some refs
+// https://pastebin.com/m6tqJBKh
+// https://pastebin.com/EVQxRH3n (just use typedData)
+// https://pastebin.com/XjgWxSuG
+// https://pastebin.com/y0hncv31
+
 contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     struct _TestTemps {
