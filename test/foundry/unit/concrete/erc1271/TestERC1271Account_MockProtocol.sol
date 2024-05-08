@@ -86,8 +86,18 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         uint256[] extensions;
     }
 
-    function _toContentsHash(bytes32 contents) internal view returns (bytes32) {
+    function _toContentsHash(bytes32 contents) internal view returns (bytes32 digest) {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
+        // @todo  Review
+        // temp
+        // bytes32 ds = _DOMAIN_SEP_B;
+        // assembly {
+        //     let ptr := mload(0x40)
+        //     mstore(ptr, hex"19_01")
+        //     mstore(add(ptr, 0x02), ds)
+        //     mstore(add(ptr, 0x22), contents)
+        //     digest := keccak256(ptr, 0x42)
+        // }
     }
 
     function _toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
