@@ -33,6 +33,45 @@ contract TestModuleManager_RegistryValidation is TestModuleManagement_Base {
         assertEq(address(registryAddress), address(mockRegistry), "The registry address should match the one set.");
     }
 
+    function test_ValidModuleInstallation_withSetRegistryChecks() public {
+                assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
+            "Module should not be installed initially"
+        );
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, 
+            1,  // Module type for validator
+            address(validatorModule),
+            ""
+        );
+        installModule(callData, 1, address(validatorModule), EXECTYPE_DEFAULT);
+        
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
+            "Module should be installed"
+        );
+    }
+
+    function test_ValidModuleInstallation_withSetRegistrySetToZero() public {
+                assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
+            "Module should not be installed initially"
+        );
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, 
+            1,  // Module type for validator
+            address(validatorModule),
+            ""
+        );
+        setRegistry(address(0));  // Setting the registry to zero
+        installModule(callData, 1, address(validatorModule), EXECTYPE_DEFAULT);
+        
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
+            "Module should be installed"
+        );
+    }
+
     function test_ValidModuleInstallation() public {
                 assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorModule), ""),
@@ -44,7 +83,6 @@ contract TestModuleManager_RegistryValidation is TestModuleManagement_Base {
             address(validatorModule),
             ""
         );
-
         installModule(callData, 1, address(validatorModule), EXECTYPE_DEFAULT);
         
         assertTrue(
