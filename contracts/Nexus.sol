@@ -73,7 +73,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256) {
+    ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator;
         uint256 nonce = userOp.nonce;
         assembly {
@@ -84,8 +84,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
 
         // bubble up the return value of the validator module
-        uint256 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
-        return validationData;
+        validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
