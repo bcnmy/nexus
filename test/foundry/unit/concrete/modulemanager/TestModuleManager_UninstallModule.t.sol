@@ -42,14 +42,26 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
+        installCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+        installModule(installCallData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
+
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""),
-            "Module should not be installed initially"
+            "New Mock Module should be installed initially"
+        );
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Mock Module should be installed initially"
         );
 
         (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
+        // If return is address(0), prev should be the sentinel address
+        if (prev == address(0)) prev = address(0x01);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
@@ -121,6 +133,8 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
+        // If return is address(0), prev should be the sentinel address
+        if (prev == address(0)) prev = address(0x01);
 
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
