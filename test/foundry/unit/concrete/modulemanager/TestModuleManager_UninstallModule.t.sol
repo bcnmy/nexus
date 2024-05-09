@@ -108,7 +108,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
     }
 
-    function test_UninstallModul_FailWithLastValidator() public {
+    function test_UninstallModule_Failure_LastValidator() public {
         bytes memory installCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
