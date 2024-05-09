@@ -16,7 +16,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -32,7 +32,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming you have a method to prepare a UserOperation for a single execution that should fail
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -45,7 +45,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(0), 0, "");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -63,7 +63,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -80,7 +80,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
-        PackedUserOperation[] memory userOps = prepareUserOperation(
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(
             BOB, // Sender of the operation
             BOB_ACCOUNT, // Nexus executing the operation
             EXECTYPE_TRY,
@@ -104,7 +104,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Prepare and execute the approve UserOperation
         PackedUserOperation[] memory approveOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
+            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 

@@ -17,7 +17,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed
@@ -54,7 +54,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, dataToTriggerFallback);
 
         // Prepare UserOperation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         // Expect the GenericFallbackCalled event from the MockHandler contract
         vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
@@ -71,7 +71,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed for the given selector
@@ -90,7 +90,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         // Expected UserOperationRevertReason event due to function selector already used
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -112,7 +112,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         // Expected UserOperationRevertReason event due to function selector not used
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -134,7 +134,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         // Expected UserOperationRevertReason event due to function selector not used by this handler
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -156,7 +156,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 

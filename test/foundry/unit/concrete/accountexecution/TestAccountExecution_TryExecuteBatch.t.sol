@@ -18,7 +18,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -35,7 +35,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         vm.expectEmit(true, true, true, true);
 
@@ -57,7 +57,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         vm.expectEmit(true, true, true, true);
 
@@ -79,7 +79,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(address(0), 0, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
@@ -102,7 +102,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         executions[2] = Execution(receiver, sendValue, "");
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -119,7 +119,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Execute batch operations
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Assertions
@@ -141,7 +141,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Prepare UserOperation for approval
         PackedUserOperation[] memory approvalUserOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
+            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -155,7 +155,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Prepare UserOperation for transferFrom
         PackedUserOperation[] memory transferUserOps =
-            prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution);
+            preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution);
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);
@@ -204,7 +204,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
 
         userOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
 
