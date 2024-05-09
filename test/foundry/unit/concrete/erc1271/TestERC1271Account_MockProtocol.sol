@@ -101,6 +101,8 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
+    // Review: https://github.com/Vectorized/solady/blob/08b0c1debff97f2b4984a2bbbdec7a5d9f95d5db/test/ERC1271.t.sol#L286
+
     function _toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
