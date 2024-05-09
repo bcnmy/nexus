@@ -18,7 +18,7 @@ import { deployContractsAndSAFixture } from "../utils/deployment";
 import {
   generateUseropCallData,
   buildPackedUserOp,
-  prepareUserOperation,
+  preparePackedUserOperation,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -502,7 +502,7 @@ describe("Nexus Batch Execution", () => {
         sender: smartAccountAddress,
         callData: userOpCallData,
       });
-      userOp = await prepareUserOperation(
+      userOp = await preparePackedUserOperation(
         userOp,
         entryPoint,
         validatorModuleAddress,
