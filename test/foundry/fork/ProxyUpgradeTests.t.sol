@@ -138,7 +138,12 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
 
-    function prepareUserOperation(address from, bytes memory callData, uint256 value, address target) internal view returns (UserOperation memory op) {
+    function prepareUserOperation(
+        address from,
+        bytes memory callData,
+        uint256 value,
+        address target
+    ) internal view returns (UserOperation memory op) {
         op.sender = from;
         op.nonce = entryPoint.getNonce(op.sender, 0);
         op.callData = callData;
