@@ -46,7 +46,16 @@ contract AccountFactory is IAccountFactory, StakeManager {
     /// @return The address of the newly created Nexus.
     /// @dev Deploys a new Nexus using a deterministic address based on the input parameters.
     function createAccount(address validationModule, bytes calldata moduleInstallData, uint256 index) external payable returns (address payable) {
-        bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
+        (index);
+        bytes32 salt;
+
+        assembly {
+            let ptr := mload(0x40)
+            let calldataLength := sub(calldatasize(), 0x04)
+            mstore(0x40, add(ptr, calldataLength))
+            calldatacopy(ptr, 0x04, calldataLength)
+            salt := keccak256(ptr, calldataLength)
+        }
 
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
 
@@ -68,7 +77,17 @@ contract AccountFactory is IAccountFactory, StakeManager {
         bytes calldata moduleInstallData,
         uint256 index
     ) external view returns (address payable expectedAddress) {
-        bytes32 salt = keccak256(abi.encodePacked(validationModule, moduleInstallData, index));
+        (validationModule, moduleInstallData, index);
+        bytes32 salt;
+
+        assembly {
+            let ptr := mload(0x40)
+            let calldataLength := sub(calldatasize(), 0x04)
+            mstore(0x40, add(ptr, calldataLength))
+            calldatacopy(ptr, 0x04, calldataLength)
+            salt := keccak256(ptr, calldataLength)
+        }
+
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
     }
 }
