@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Imports.sol";
-import "forge-std/src/Test.sol";
+import "forge-std/Test.sol";
 
 contract CheatCodes is Test {
     // Assign a readable name to an address to improve test output readability

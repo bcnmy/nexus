@@ -17,7 +17,7 @@ import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
 
-import "solady/src/utils/ECDSA.sol";
+import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./EventsAndErrors.sol";
 

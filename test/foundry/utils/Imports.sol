@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 // Standard library imports
-import "forge-std/src/console2.sol";
-import "forge-std/src/Test.sol";
-import "forge-std/src/Vm.sol";
+import "forge-std/console2.sol";
+import "forge-std/Test.sol";
+import "forge-std/Vm.sol";
 
 // Utility libraries
-import "solady/src/utils/ECDSA.sol";
+import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 // import "@prb/test/src/PRBTest.sol";
 
