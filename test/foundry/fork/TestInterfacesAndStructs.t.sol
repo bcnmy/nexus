@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+// Entrypoint v0.6 UserOperation struct
 struct UserOperation {
     address sender;
     uint256 nonce;
@@ -15,8 +16,9 @@ struct UserOperation {
     bytes signature;
 }
 
-interface IProxyV2 {
+interface IBiconomySmartAccountV2 {
     function updateImplementation(address _implementation) external;
+    function entryPoint() external view returns (IEntryPointV_0_6);
 }
 
 interface IEntryPointV_0_6 {
