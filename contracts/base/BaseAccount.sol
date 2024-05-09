@@ -34,7 +34,7 @@ contract BaseAccount is IBaseAccount {
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPointOrSelf() {
-        if (msg.sender != _ENTRYPOINT && msg.sender != address(this)) {
+        if (!(msg.sender == _ENTRYPOINT || msg.sender == address(this))) {
             revert AccountAccessUnauthorized();
         }
         _;
