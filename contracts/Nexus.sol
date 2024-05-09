@@ -13,6 +13,7 @@ pragma solidity ^0.8.24;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 import { ExecLib } from "./lib/ExecLib.sol";
@@ -34,9 +35,21 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
+
+    /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
+    ///      cross-account-replay layer.
+    ///
+    ///      The original hash must either be:
+    ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
+    ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
+    bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
+
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
+        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @notice Initializes the smart account by setting up the module manager and state.
     constructor() {
@@ -217,9 +230,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// bytes4(keccak256("isValidSignature(bytes32,bytes)") = 0x1626ba7e
     /// @dev Delegates the validation to a validator module specified within the signature data.
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
+        // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
         if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
+        return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
@@ -278,11 +293,198 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
+    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
+    ///
+    /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
+    ///      keccak256(
+    ///         \x19\x01 ||
+    ///         this.domainSeparator ||
+    ///         hashStruct(BiconomyNexusMessage({ hash: `hash`}))
+    ///      )
+    ///
+    /// @param hash The original hash.
+    ///
+    /// @return The corresponding replay-safe hash.
+    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
+        return _eip712Hash(hash);
+    }
+
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
         newImplementation;
+    }
+
+    /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
+    ///
+    /// @dev Implements encode(domainSeparator : 𝔹²⁵⁶, message : 𝕊) = "\x19\x01" || domainSeparator ||
+    ///      hashStruct(message).
+    /// @dev See https://eips.ethereum.org/EIPS/eip-712#specification.
+    ///
+    /// @param hash The `BiconomyNexusMessage.hash` field to hash.
+    ////
+    /// @return The resulting EIP-712 hash.
+    function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
+    }
+
+    /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
+    ///
+    /// This implementation uses a nested EIP-712 approach to
+    /// prevent signature replays when a single signer owns multiple smart contract accounts,
+    /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
+    ///
+    /// Crafted for phishing resistance, efficiency, flexibility.
+    /// __________________________________________________________________________________________
+    ///
+    /// Glossary:
+    ///
+    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
+    ///   Provided by the front end. Intended to be the domain separator of the contract
+    ///   that will call `isValidSignature` on this account.
+    ///
+    /// - `DOMAIN_SEP_A`: The domain separator of this account.
+    ///   See: `EIP712._domainSeparator()`.
+    /// __________________________________________________________________________________________
+    ///
+    /// For the `TypedDataSign` workflow, the final hash will be:
+    /// ```
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///         hashStruct(TypedDataSign({
+    ///             contents: hashStruct(originalStruct),
+    ///             name: keccak256(bytes(eip712Domain().name)),
+    ///             version: keccak256(bytes(eip712Domain().version)),
+    ///             chainId: eip712Domain().chainId,
+    ///             verifyingContract: eip712Domain().verifyingContract,
+    ///             salt: eip712Domain().salt
+    ///             extensions: keccak256(abi.encodePacked(eip712Domain().extensions))
+    ///         }))
+    ///     )
+    /// ```
+    /// where `‖` denotes the concatenation operator for bytes.
+    /// The order of the fields is important: `contents` comes before `name`.
+    ///
+    /// The signature will be `r ‖ s ‖ v ‖
+    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    /// where `contents` is the bytes32 struct hash of the original struct.
+    ///
+    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
+    /// __________________________________________________________________________________________
+    ///
+    /// For the `PersonalSign` workflow, the final hash will be:
+    /// ```
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///         hashStruct(PersonalSign({
+    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
+    ///                 base10(bytes(someString).length) ‖ someString))
+    ///         }))
+    ///     )
+    /// ```
+    /// where `‖` denotes the concatenation operator for bytes.
+    ///
+    /// The `PersonalSign` type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The signature will be `r ‖ s ‖ v`.
+    /// __________________________________________________________________________________________
+    ///
+    /// For demo and typescript code, see:
+    /// - https://github.com/junomonster/nested-eip-712
+    /// - https://github.com/frangio/eip712-wrapper-for-eip1271
+    ///
+    /// Their nomenclature may differ from ours, although the high-level idea is similar.
+    ///
+    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// you can choose a more minimalistic signature scheme like
+    /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
+    /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
+    function _erc1271HashForIsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
+        assembly {
+            // Unwraps the ERC6492 wrapper if it exists.
+            // See: https://eips.ethereum.org/EIPS/eip-6492
+            if eq(
+                calldataload(add(signature.offset, sub(signature.length, 0x20))),
+                mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
+            ) {
+                let o := add(signature.offset, calldataload(add(signature.offset, 0x40)))
+                signature.length := calldataload(o)
+                signature.offset := add(o, 0x20)
+            }
+        }
+
+        bool result;
+        bytes32 t = _typedDataSignFields();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            // Length of the contents type.
+            let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
+            for {} 1 {} {
+                let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
+                let o := add(signature.offset, sub(signature.length, l))
+                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
+                // or if the appended data is invalid (length too long, or empty contents type).
+                if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
+                    mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+                    mstore(0x20, hash) // Store the `prefixed`.
+                    hash := keccak256(0x00, 0x40) // Compute the `PersonalSign` struct hash.
+                    break
+                }
+                // Else, use the `TypedDataSign` workflow.
+                mstore(m, "TypedDataSign(") // To construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
+                let p := add(m, 0x0e) // Advance 14 bytes.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
+                d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
+                // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
+                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
+                    let b := byte(0, mload(p))
+                    if eq(40, b) { break }
+                    d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
+                }
+                mstore(p, " contents,bytes1 fields,string n")
+                mstore(add(p, 0x20), "ame,string version,uint256 chain")
+                mstore(add(p, 0x40), "Id,address verifyingContract,byt")
+                mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
+                calldatacopy(add(p, 0x7f), add(o, 0x40), c) // Copy the contents type.
+                // Fill in the missing fields of the `TypedDataSign`.
+                calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
+                mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
+                // The "\x19\x01" prefix is already at 0x00.
+                // `DOMAIN_SEP_B` is already at 0x20.
+                mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
+                // Compute the final hash, corrupted if the contents name is invalid.
+                hash := keccak256(0x1e, add(0x42, and(1, d)))
+                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                signature.length := sub(signature.length, l) // Truncate the signature.
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
+        if (!result) hash = _hashTypedData(hash);
+        return (hash, signature);
+    }
+
+    /// @dev EIP712 domain name and version.
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        name = "Nexus";
+        version = "0.0.1";
+    }
+
+    /// @dev EIP712 hashTypedData method. 
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    /// @dev EIP712 domain separator.
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
     }
 
     /// @dev Executes a single transaction based on the specified execution type.
@@ -317,5 +519,31 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
         else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
+    }
+
+    /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,
+    function _typedDataSignFields() private view returns (bytes32 m) {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = eip712Domain();
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40) // Grab the free memory pointer.
+            mstore(0x40, add(m, 0x120)) // Allocate the memory.
+            // Skip 2 words: `TYPED_DATA_SIGN_TYPEHASH, contents`.
+            mstore(add(m, 0x40), shl(248, byte(0, fields)))
+            mstore(add(m, 0x60), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0x80), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0xa0), chainId)
+            mstore(add(m, 0xc0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0xe0), salt)
+            mstore(add(m, 0x100), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+        }
     }
 }
