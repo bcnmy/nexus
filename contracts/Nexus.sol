@@ -261,13 +261,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
         (CallType callType, ExecType execType, , ) = mode.decode();
 
-        // Define supported call types.
-        bool isSupportedCallType = callType == CALLTYPE_BATCH || callType == CALLTYPE_SINGLE;
-        // Define supported execution types.
-        bool isSupportedExecType = execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY;
-
         // Return true if both the call type and execution type are supported.
-        return isSupportedCallType && isSupportedExecType;
+        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) 
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
