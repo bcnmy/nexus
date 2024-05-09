@@ -55,21 +55,36 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
         assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 1e18);
     }
 
-    function _toERC1271HashPersonalSign(bytes32 childHash) internal view returns (bytes32) {
-        bytes32 domainSeparator = keccak256(
-            abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256("Nexus"),
-                keccak256("0.0.1"),
-                block.chainid,
-                address(ALICE_ACCOUNT)
-            )
+    function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Failure_WrongSigner() public {
+        _TestTemps memory t;
+        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
         );
-        bytes32 parentStructHash =
-            keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
-        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
+        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
+
+        vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
+        permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
+
+        assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 0);
+    }
+
+    function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Failure_SignWrongAllowance() public {
+        _TestTemps memory t;
+        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e6, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
+        );
+        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
+
+        vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
+        permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
+
+        assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 0);
     }
 
     struct _AccountDomainStruct {
