@@ -12,8 +12,8 @@ pragma solidity ^0.8.24;
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
-import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
-import { EIP712 } from "solady/src/utils/EIP712.sol";
+import { UUPSUpgradeable } from "solady/utils/UUPSUpgradeable.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 import { ExecLib } from "./lib/ExecLib.sol";
