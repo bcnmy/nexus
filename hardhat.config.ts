@@ -4,6 +4,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-storage-layout";
 import "@bonadocs/docgen";
 import "hardhat-deploy";
+import "@nomicfoundation/hardhat-foundry";
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ const config: HardhatUserConfig = {
   },
   docgen: {
     projectName: "Nexus",
-    projectDescription: "Biconomy Modular Smart Account - ERC-7579",
+    projectDescription: "Biconomy Nexus - Modular Smart Account - ERC-7579",
   },
 };
 
