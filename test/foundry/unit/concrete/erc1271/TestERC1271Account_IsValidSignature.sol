@@ -50,6 +50,7 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
          bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
         );
+        if (_random() % 4 == 0) signature = _erc6492Wrap(signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
 
@@ -135,6 +136,39 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
             t.verifyingContract,
             t.salt,
             keccak256(abi.encodePacked(t.extensions))
+        );
+    }
+
+    function _randomString(string memory byteChoices, bool nonEmpty)
+        internal
+        returns (string memory result)
+    {
+        uint256 randomness = _random();
+        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, _random() % 32 != 0 ? 4 : 128);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(byteChoices) {
+                result := mload(0x40)
+                mstore(0x00, randomness)
+                mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
+                mstore(result, resultLength)
+
+                // forgefmt: disable-next-item
+                for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
+                    mstore(0x20, gas())
+                    mstore8(
+                        add(add(result, 0x20), i), 
+                        mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
+                    )
+                }
+            }
+        }
+    }
+
+    function _erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
+        return abi.encodePacked(
+            abi.encode(_randomNonZeroAddress(), bytes(_randomString("12345", false)), signature),
+            bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
         );
     }
 

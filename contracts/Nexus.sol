@@ -403,6 +403,19 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         virtual
         returns (bytes32, bytes calldata)
     {
+        assembly {
+            // Unwraps the ERC6492 wrapper if it exists.
+            // See: https://eips.ethereum.org/EIPS/eip-6492
+            if eq(
+                calldataload(add(signature.offset, sub(signature.length, 0x20))),
+                mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
+            ) {
+                let o := add(signature.offset, calldataload(add(signature.offset, 0x40)))
+                signature.length := calldataload(o)
+                signature.offset := add(o, 0x20)
+            }
+        }
+
         bool result;
         bytes32 t = _typedDataSignFields();
         /// @solidity memory-safe-assembly
