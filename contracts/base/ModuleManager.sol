@@ -38,15 +38,13 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        if (!executors.contains(msg.sender)) revert InvalidModule(msg.sender);
+        if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
         _;
     }
 
     /// @notice Ensures the specified address is a registered validator module.
     modifier onlyValidatorModule(address validator) virtual {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        if (!validators.contains(validator)) revert InvalidModule(validator);
+        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
         _;
     }
 
