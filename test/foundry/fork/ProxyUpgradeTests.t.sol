@@ -18,8 +18,10 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         vm.selectFork(mainnetFork);
         vm.rollFork(200000000);
         init();
+        // Load an existing smart account on the fork
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         entryPoint = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
+        // Deploy the new implementation of Modular Smart Account (Nexus)
         newImplementation = new Nexus();
     }
 
@@ -42,13 +44,13 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         assertEq(newEntryPoint, address(ENTRYPOINT), "Entry point should change after upgrade.");
     }
 
-function test_AccountIdValidationAfterUpgrade() public {
-    test_UpgradeV2ToV3AndInitialize();  // Ensure the smartAccountV2 is upgraded and initialized
+    function test_AccountIdValidationAfterUpgrade() public {
+        test_UpgradeV2ToV3AndInitialize();  // Ensure the smartAccountV2 is upgraded and initialized
 
-    string memory expectedAccountId = "biconomy.nexus.0.0.1";
-    string memory actualAccountId = IAccountConfig(payable(address(smartAccountV2))).accountId();
-    assertEq(actualAccountId, expectedAccountId, "Account ID does not match after upgrade.");
-}
+        string memory expectedAccountId = "biconomy.nexus.0.0.1";
+        string memory actualAccountId = IAccountConfig(payable(address(smartAccountV2))).accountId();
+        assertEq(actualAccountId, expectedAccountId, "Account ID does not match after upgrade.");
+    }
 
     function test_USDCTransferPostUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();  // Ensure the setup and upgrade are complete
