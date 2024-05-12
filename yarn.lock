@@ -4502,10 +4502,10 @@ solhint-plugin-prettier@^0.1.0:
     "@prettier/sync" "^0.3.0"
     prettier-linter-helpers "^1.0.0"
 
-solhint@^4.5.4:
-  version "4.5.4"
-  resolved "https://registry.yarnpkg.com/solhint/-/solhint-4.5.4.tgz#171cf33f46c36b8499efe60c0e425f6883a54e50"
-  integrity sha512-Cu1XiJXub2q1eCr9kkJ9VPv1sGcmj3V7Zb76B0CoezDOB9bu3DxKIFFH7ggCl9fWpEPD6xBmRLfZrYijkVmujQ==
+solhint@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/solhint/-/solhint-5.0.0.tgz#e69ffca31cbf4ad352bd693282ac0aa0ec0ab807"
+  integrity sha512-pSRKkzRsruia6/xa9L5VSyd7dMZkiiTi/aYZcvUQo7KK+S16ojPwIbt2jfjbH5WEJ83grzIIE4WrYQfAxGWh/A==
   dependencies:
     "@solidity-parser/parser" "^0.18.0"
     ajv "^6.12.6"
