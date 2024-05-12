@@ -19,11 +19,7 @@ contract TestInvariant_ERC4337Account_DepositBalance is Test, SmartAccountTestLa
         vm.deal(address(BOB_ACCOUNT), depositAmount + 1 ether); // Ensure account has enough ether
 
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: depositAmount,
-            callData: abi.encodeWithSignature("addDeposit()")
-        });
+        executions[0] = Execution({ target: address(BOB_ACCOUNT), value: depositAmount, callData: abi.encodeWithSignature("addDeposit()") });
 
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
