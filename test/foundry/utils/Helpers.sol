@@ -137,11 +137,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         Vm.Wallet memory wallet,
         bytes memory initCode,
         bytes memory callData
-    )
-        internal
-        view
-        returns (PackedUserOperation memory userOp)
-    {
+    ) internal view returns (PackedUserOperation memory userOp) {
         userOp = prepareUserOpWithCalldata(wallet, callData);
         userOp.initCode = initCode;
 
@@ -149,14 +145,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOp.signature = signature;
     }
 
-    function prepareUserOpWithCalldata(
-        Vm.Wallet memory wallet,
-        bytes memory callData
-    )
-        internal
-        view
-        returns (PackedUserOperation memory userOp)
-    {
+    function prepareUserOpWithCalldata(Vm.Wallet memory wallet, bytes memory callData) internal view returns (PackedUserOperation memory userOp) {
         address payable account = calculateAccountAddress(wallet.addr);
         uint256 nonce = getNonce(account, address(VALIDATOR_MODULE));
         userOp = buildPackedUserOp(account, nonce);
@@ -171,14 +160,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         nonce = ENTRYPOINT.getNonce(address(account), key);
     }
 
-    function signUserOp(
-        Vm.Wallet memory wallet,
-        PackedUserOperation memory userOp
-    )
-        internal
-        view
-        returns (bytes memory)
-    {
+    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }
@@ -195,17 +177,18 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     // Helper to build a user operation struct for account abstraction tests
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
-        return PackedUserOperation({
-            sender: sender,
-            nonce: nonce,
-            initCode: "",
-            callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            preVerificationGas: 3e6,
-            gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            paymasterAndData: "",
-            signature: ""
-        });
+        return
+            PackedUserOperation({
+                sender: sender,
+                nonce: nonce,
+                initCode: "",
+                callData: "",
+                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                preVerificationGas: 3e6,
+                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                paymasterAndData: "",
+                signature: ""
+            });
     }
 
     // Utility method to encode and sign a message, then pack r, s, v into bytes
@@ -220,11 +203,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         Nexus account,
         ExecType execType,
         Execution[] memory executions
-    )
-        internal
-        view
-        returns (PackedUserOperation[] memory userOps)
-    {
+    ) internal view returns (PackedUserOperation[] memory userOps) {
         // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
