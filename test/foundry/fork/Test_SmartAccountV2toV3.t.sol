@@ -8,9 +8,10 @@ import "../utils/SmartAccountTestLab.t.sol";
 import "../../../contracts/interfaces/base/IAccountConfig.sol";
 import "./TestInterfacesAndStructs.t.sol";
 
-contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkSettings {
+contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
     IBiconomySmartAccountV2 public smartAccountV2;
-    IEntryPointV_0_6 public entryPoint;
+    IEntryPointV_0_6 public ENTRYPOINT_V_0_6;
+    IEntryPoint public ENTRYPOINT_V_0_7;
     Nexus public newImplementation;
     uint256 internal signerPrivateKey;
     Vm.Wallet signer;
@@ -22,7 +23,12 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         init();
         // Load an existing smart account on the fork
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
-        entryPoint = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
+        
+        // Load the existing entrypoint v0.6
+        ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
+        // Load the existing entrypoint v0.7
+        ENTRYPOINT_V_0_7 = ENTRYPOINT;
+        
         // Deploy the new implementation of Modular Smart Account (Nexus)
         newImplementation = new Nexus();
 
@@ -39,7 +45,7 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         vm.deal(SMART_ACCOUNT_V2_ADDRESS, 1 ether);
         vm.deal(OWNER_ADDRESS, 1 ether);
 
-        entryPoint.depositTo{ value: 1 ether }(SMART_ACCOUNT_V2_ADDRESS);
+        ENTRYPOINT_V_0_6.depositTo{ value: 1 ether }(SMART_ACCOUNT_V2_ADDRESS);
 
         // Addresses and call data for batch operations
         address[] memory dest = new address[](2);
@@ -62,15 +68,15 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = prepareUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
 
-        bytes32 userOpHash = entryPoint.getUserOpHash(userOps[0]);
+        bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
 
         userOps[0].signature = abi.encode(signMessage(signer, userOpHash), MODULE_ADDRESS);
 
-        entryPoint.handleOps(userOps, address(this));
+        ENTRYPOINT_V_0_6.handleOps(userOps, address(this));
 
         // Check state after upgrade
         address newEntryPoint = Nexus(payable(address(smartAccountV2))).entryPoint();
-        assertEq(newEntryPoint, address(ENTRYPOINT), "Entry point should change after upgrade.");
+        assertEq(newEntryPoint, address(ENTRYPOINT_V_0_7), "Entry point should change after upgrade.");
 
         // Check if the Validator module is installed after upgrade and initialization is complete
         assertTrue(
@@ -110,7 +116,7 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         );
 
         // Execute the operation via the EntryPoint
-        ENTRYPOINT.handleOps(userOps, payable(OWNER_ADDRESS));
+        ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
 
         // Check the recipient received the USDC
         assertEq(usdc.balanceOf(recipient), amount, "USDC transfer failed");
@@ -132,7 +138,7 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution);
 
         // Execute the operation via the EntryPoint
-        ENTRYPOINT.handleOps(userOps, payable(OWNER_ADDRESS));
+        ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
 
         // Check the recipient received the ETH
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
@@ -145,7 +151,7 @@ contract smartAccountV2UpgradeProcessTests is SmartAccountTestLab, ArbitrumForkS
         address target
     ) internal view returns (UserOperation memory op) {
         op.sender = from;
-        op.nonce = entryPoint.getNonce(op.sender, 0);
+        op.nonce = ENTRYPOINT_V_0_6.getNonce(op.sender, 0);
         op.callData = callData;
         op.callGasLimit = 3e6;
         op.verificationGasLimit = 3e6;
