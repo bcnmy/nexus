@@ -16,18 +16,14 @@ contract TestInvariant_ERC4337Account_ValidateUserOp is Test, SmartAccountTestLa
     function invariantTest_NonceConsistency() public {
         // Fetch the nonce for BOB_ACCOUNT from ENTRYPOINT
         uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
-        
+
         // Prepare a simple operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("someExistingMethod()")
-        });
+        executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("someExistingMethod()") });
 
         // Use helpers to prepare user operation
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
-        
+
         // Execute the operation
         ENTRYPOINT.handleOps(userOps, payable(BOB_ACCOUNT));
 
@@ -36,6 +32,5 @@ contract TestInvariant_ERC4337Account_ValidateUserOp is Test, SmartAccountTestLa
 
         // Assert nonce consistency
         assertTrue(nonceAfter == nonceBefore + 1, "Nonce should be correctly incremented after operation");
-
     }
 }
