@@ -132,8 +132,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             // check if execType is revert(default) or try
             if (execType == EXECTYPE_DEFAULT) {
                 returnData[0] = _execute(target, value, callData);
-            }
-            else if (execType == EXECTYPE_TRY) {
+            } else if (execType == EXECTYPE_TRY) {
                 (success, returnData[0]) = _tryExecute(target, value, callData);
                 if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
             } else {
@@ -150,6 +149,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             revert UnsupportedCallType(callType);
         }
     }
+
     /// @notice Executes a user operation via delegatecall to use the contract's context.
     /// @param userOp The user operation to execute.
     /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
