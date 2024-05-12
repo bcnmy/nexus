@@ -9,7 +9,7 @@ contract TestInvariant_AccountFactory_Deployment is SmartAccountTestLab {
     bytes initData;
 
     function setUp() public {
-        super.init();
+        init();
         Vm.Wallet memory user = createAndFundWallet("user", 1 ether);
         initData = abi.encodePacked(user.addr);
         expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
