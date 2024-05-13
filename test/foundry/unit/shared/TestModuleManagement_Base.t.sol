@@ -40,14 +40,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     }
 
     // Shared utility and helper functions to install/uninstall modules
-    function installModule(
-        bytes memory callData,
-        uint256 moduleTypeId,
-        address moduleAddress,
-        ExecType execType
-    )
-        internal
-    {
+    function installModule(bytes memory callData, uint256 moduleTypeId, address moduleAddress, ExecType execType) internal {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
