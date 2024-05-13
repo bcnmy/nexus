@@ -12,8 +12,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
         uint256 executionsNumber = 2;
 
-        Execution memory execution =
-            Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
 
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
@@ -58,23 +57,18 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 numberOfExecutions = 3;
 
         payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
-        Execution[] memory executions =
-            _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        assertEq(
-            receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH"
-        );
+        assertEq(receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH");
     }
 
     function test_ExecuteBatch_TokenTransfers() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
         // Prepare batch token transfer operations from BOB_ACCOUNT to ALICE and CHARLIE
         Execution[] memory executions = new Execution[](2);
-        executions[0] =
-            Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, ALICE.addr, transferAmount));
-        executions[1] =
-            Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
+        executions[0] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, ALICE.addr, transferAmount));
+        executions[1] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Execute batch operations
         PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
@@ -93,27 +87,21 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
         // Execution for approval
         Execution[] memory approvalExecution = new Execution[](1);
-        approvalExecution[0] = Execution(
-            address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount)
-        );
+        approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount));
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
+        PackedUserOperation[] memory approvalUserOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
         transferExecution[0] = Execution(
             address(token),
             0,
-            abi.encodeWithSelector(
-                token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount
-            )
+            abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount)
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps =
-            prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution);
+        PackedUserOperation[] memory transferUserOps = prepareUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution);
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);
@@ -131,11 +119,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
         // Asserts to verify the outcome
         uint256 remainingAllowance = token.allowance(address(BOB_ACCOUNT), address(ALICE_ACCOUNT));
-        assertEq(
-            remainingAllowance,
-            approvalAmount - transferAmount,
-            "The remaining allowance should reflect the transferred amount"
-        );
+        assertEq(remainingAllowance, approvalAmount - transferAmount, "The remaining allowance should reflect the transferred amount");
 
         uint256 aliceBalanceAfter = token.balanceOf(address(ALICE_ACCOUNT));
         assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
@@ -153,7 +137,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
             address(token),
             0,
             abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount) // BOB_ACCOUNT is
-                // approved to transfer
+            // approved to transfer
         );
 
         executions[1] = Execution(
@@ -179,11 +163,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
         // Asserts to verify the outcome
         uint256 remainingAllowance = token.allowance(address(BOB_ACCOUNT), address(BOB_ACCOUNT));
-        assertEq(
-            remainingAllowance,
-            approvalAmount - transferAmount,
-            "The remaining allowance should reflect the transferred amount"
-        );
+        assertEq(remainingAllowance, approvalAmount - transferAmount, "The remaining allowance should reflect the transferred amount");
 
         uint256 aliceBalanceAfter = token.balanceOf(address(ALICE_ACCOUNT));
         assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");

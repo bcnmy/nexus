@@ -27,11 +27,11 @@ contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
     function test_UnsupportedExecutionMode() public {
         // Assuming delegate calls are not supported, and using an arbitrary ExecutionMode for demonstration
         ExecutionMode unsupportedMode = ModeLib.encode(
-            CALLTYPE_SINGLE, ExecType.wrap(0x10), ModeSelector.wrap(0x00000000), ModePayload.wrap(bytes22(0x00))
+            CALLTYPE_SINGLE,
+            ExecType.wrap(0x10),
+            ModeSelector.wrap(0x00000000),
+            ModePayload.wrap(bytes22(0x00))
         );
-        assertFalse(
-            accountConfig.supportsExecutionMode(unsupportedMode),
-            "AccountConfig should not support this execution mode."
-        );
+        assertFalse(accountConfig.supportsExecutionMode(unsupportedMode), "AccountConfig should not support this execution mode.");
     }
 }

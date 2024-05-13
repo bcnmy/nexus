@@ -5,7 +5,7 @@ import "forge-std/src/Test.sol";
 import "../../../../../contracts/lib/ModeLib.sol";
 
 contract ModeLibTest is Test {
-    function setUp() public { }
+    function setUp() public {}
 
     function test_encode_decode_single() public {
         CallType callType = CALLTYPE_SINGLE;

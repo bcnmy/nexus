@@ -76,8 +76,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Encode the token transfer call
         Execution[] memory execution = new Execution[](1);
-        execution[0] =
-            Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
+        execution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
         PackedUserOperation[] memory userOps = prepareUserOperation(
@@ -99,12 +98,10 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Encode the approve call
         Execution[] memory approvalExecution = new Execution[](1);
-        approvalExecution[0] =
-            Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
+        approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
+        PackedUserOperation[] memory approveOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 
@@ -115,10 +112,6 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Verify the final balances
         assertEq(token.balanceOf(ALICE.addr), transferFromAmount, "TransferFrom did not execute correctly");
-        assertEq(
-            token.allowance(address(BOB_ACCOUNT), CHARLIE.addr),
-            approvalAmount - transferFromAmount,
-            "Allowance not updated correctly"
-        );
+        assertEq(token.allowance(address(BOB_ACCOUNT), CHARLIE.addr), approvalAmount - transferFromAmount, "Allowance not updated correctly");
     }
 }

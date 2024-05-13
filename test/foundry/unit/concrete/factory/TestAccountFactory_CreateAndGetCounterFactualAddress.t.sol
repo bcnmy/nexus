@@ -48,11 +48,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(
-            IAccountConfig(accountAddress).accountId(),
-            "biconomy.nexus.0.0.1",
-            "Not deployed properly"
-        );
+        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.0.0.1", "Not deployed properly");
     }
 
     function test_DeployAccount_WithHandleOps_FailsIfAccountAlreadyExists() public {
@@ -81,9 +77,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable accountAddress1 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, indexBase);
         address payable accountAddress2 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, indexBase + 1);
         // Validate that the deployed addresses are different
-        assertTrue(
-            accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses"
-        );
+        assertTrue(accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses");
     }
 
     function test_DeployAccountWithInvalidValidatorModule() public {
@@ -91,9 +85,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         // Should revert if the validator module is invalid
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(address(0), initData, 0);
-                assertTrue(
-            expectedAddress != accountAddress, "Account address should be the same"
-        );
+        assertTrue(expectedAddress != accountAddress, "Account address should be the same");
     }
 
     function test_DeployAccountWithoutEnoughGas() public {

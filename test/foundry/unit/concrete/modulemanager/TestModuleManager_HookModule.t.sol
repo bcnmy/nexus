@@ -16,41 +16,26 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
 
     function test_InstallHookModule_Success() public {
         // Ensure the hook module is not installed initially
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""),
-            "Hook module should not be installed initially"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook module should not be installed initially");
 
         // Prepare call data for installing the hook module
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
 
         // Install the hook module
         installModule(callData, MODULE_TYPE_HOOK, address(HOOK_MODULE), EXECTYPE_DEFAULT);
 
         // Assert that the hook module is now installed
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook module should be installed"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook module should be installed");
     }
 
     function test_InstallHookModule_ReinstallationFailure() public {
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""),
-            "Hook Module should not be installed initially"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook Module should not be installed initially");
         test_InstallHookModule_Success();
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook Module should be installed"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook Module should be installed");
         MockHook newHook = new MockHook();
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(newHook), ""),
-            "Hook Module should not be installed initially"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(newHook), ""), "Hook Module should not be installed initially");
 
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(newHook), "");
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(newHook), "");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -59,8 +44,7 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason =
-            abi.encodeWithSignature("HookAlreadyInstalled(address)", address(HOOK_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", address(HOOK_MODULE));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -80,22 +64,21 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
         test_InstallHookModule_Success();
 
         // Uninstall the hook module
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
         uninstallHook(callData, address(HOOK_MODULE), EXECTYPE_DEFAULT);
 
         // Verify hook module is uninstalled
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""),
-            "Hook module should be uninstalled"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook module should be uninstalled");
     }
 
     function test_HookTriggeredOnModuleInstallation() public {
         test_InstallHookModule_Success();
         // Install the hook module to trigger the hooks
         bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(EXECUTOR_MODULE),
+            ""
         );
 
         // Prepare and execute the installation operation

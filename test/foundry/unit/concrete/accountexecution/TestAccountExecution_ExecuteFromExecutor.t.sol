@@ -17,14 +17,12 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         counter = new Counter();
 
         // Install MockExecutor as executor module on BOB_ACCOUNT
-        bytes memory callDataInstall =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
+        bytes memory callDataInstall = abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
-        PackedUserOperation[] memory userOpsInstall =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOpsInstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
 
@@ -32,7 +30,11 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
     function test_ExecSingleFromExecutor() public {
         bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         bytes memory execCallData = abi.encodeWithSelector(
-            MockExecutor.executeViaAccount.selector, BOB_ACCOUNT, address(counter), 0, incrementCallData
+            MockExecutor.executeViaAccount.selector,
+            BOB_ACCOUNT,
+            address(counter),
+            0,
+            incrementCallData
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -67,7 +69,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
     function test_ExecSingleWithValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
-        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
         assertEq(res, true, "Funding should succeed");
         mockExecutor.executeViaAccount(BOB_ACCOUNT, receiver, sendValue, "");
         assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
@@ -117,14 +119,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         address recipient = address(0x123);
 
         Execution[] memory execs = new Execution[](2);
-        execs[0] = Execution(
-            address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount)
-        );
-        execs[1] = Execution(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), recipient, transferAmount)
-        );
+        execs[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount));
+        execs[1] = Execution(address(token), 0, abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), recipient, transferAmount));
 
         bytes[] memory returnData = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, execs);
 
