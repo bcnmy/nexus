@@ -7,20 +7,25 @@ import "../../../../contracts/mocks/MockToken.sol";
 
 // BaseInvariantTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
 contract BaseInvariantTest is SmartAccountTestLab {
-
     Counter public counter;
     MockToken public token;
 
     // Initializes the SmartAccountTestLab environment along with specific test setups
-    function setUp() public {
-        init();  // Initializes wallets, accounts, and contracts including ENTRYPOINT and ACCOUNT_IMPLEMENTATION
+    function setUp() public virtual {
+        init(); // Initializes wallets, accounts, and contracts including ENTRYPOINT and ACCOUNT_IMPLEMENTATION
         counter = new Counter();
         token = new MockToken("MockToken", "MTK");
     }
 
     // Utility to prepare user operations for invariant tests.
-    function prepareUserOperation(Vm.Wallet memory signer, Nexus account, Execution[] memory executions) internal view returns (PackedUserOperation[] memory userOps) {
-        bytes memory executionCalldata = (executions.length > 1) ? ExecLib.encodeBatch(executions) : ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData);
+    function prepareUserOperation(
+        Vm.Wallet memory signer,
+        Nexus account,
+        Execution[] memory executions
+    ) internal view returns (PackedUserOperation[] memory userOps) {
+        bytes memory executionCalldata = (executions.length > 1)
+            ? ExecLib.encodeBatch(executions)
+            : ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData);
 
         userOps = new PackedUserOperation[](1);
         userOps[0] = PackedUserOperation({
