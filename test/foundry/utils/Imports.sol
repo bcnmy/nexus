@@ -26,6 +26,8 @@ import "../../../contracts/lib/ModuleTypeLib.sol";
 import "../../../contracts/interfaces/base/IAccountConfig.sol";
 import "../../../contracts/interfaces/base/IModuleManager.sol";
 import "../../../contracts/interfaces/modules/IModule.sol";
+import "../../../contracts/interfaces/modules/IExecutor.sol";
+
 import "../../../contracts/interfaces/base/IStorage.sol";
 import "../../../contracts/interfaces/factory/IAccountFactory.sol";
 import "../../../contracts/interfaces/INexus.sol";
@@ -41,6 +43,7 @@ import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import "../../../contracts/mocks/NFT.sol";
+import "../../../contracts/mocks/MockToken.sol";
 
 // Sentinel list helper
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
