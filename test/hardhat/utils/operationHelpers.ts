@@ -389,7 +389,7 @@ export function findEventInLogs(
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
 
-export async function prepareUserOperation(
+export async function preparePackedUserOperation(
   userOp: PackedUserOperation,
   entryPoint: EntryPoint,
   validatorModuleAddress: string,

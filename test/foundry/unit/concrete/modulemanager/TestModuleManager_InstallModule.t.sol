@@ -25,7 +25,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Preparing UserOperation for installing the module
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -105,7 +105,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -138,7 +138,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -167,7 +167,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -190,7 +190,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -217,7 +217,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason =
             abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
@@ -248,7 +248,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
 
         bytes memory expectedRevertReason =
             abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_VALIDATOR);
@@ -281,7 +281,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertTrue(
@@ -301,7 +301,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         executionFirstInstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataFirstInstall);
 
         PackedUserOperation[] memory userOpsFirstInstall =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall);
+            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall);
         ENTRYPOINT.handleOps(userOpsFirstInstall, payable(address(BOB.addr)));
 
         // Attempt to reinstall
@@ -313,7 +313,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
         PackedUserOperation[] memory userOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
+            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
             "ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler)
@@ -344,7 +344,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertTrue(
@@ -365,7 +365,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
         PackedUserOperation[] memory userOps =
-            prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
+            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason =
             abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_HOOK, address(mockHook));
