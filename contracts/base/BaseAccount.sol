@@ -72,7 +72,7 @@ contract BaseAccount is IBaseAccount {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+            if iszero(call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
                 revert(codesize(), 0x00)
             } // For gas estimation.
         }
@@ -87,7 +87,7 @@ contract BaseAccount is IBaseAccount {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00))) {
+            if iszero(call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00)) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
