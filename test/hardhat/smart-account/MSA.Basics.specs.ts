@@ -6,6 +6,7 @@ import {
   ZeroAddress,
   concat,
   hashMessage,
+  solidityPacked,
   toBeHex,
   zeroPadBytes,
 } from "ethers";
@@ -138,6 +139,12 @@ describe("Nexus Basic Specs", function () {
     it("Should get entry point", async () => {
       const entryPointFromContract = await smartAccount.entryPoint();
       expect(entryPointFromContract).to.be.equal(entryPoint);
+    });
+
+    it("Should get domain separator", async () => {
+      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
+      console.log("Domain Separator: ", domainSeparator);
+      expect(domainSeparator).to.not.equal(ZeroAddress);
     });
 
     it("Should verify supported account modes", async function () {
@@ -297,10 +304,22 @@ describe("Nexus Basic Specs", function () {
       const isModuleInstalled = await smartAccount.isModuleInstalled(
         ModuleType.Validation,
         await validatorModule.getAddress(),
-        ethers.hexlify("0x"),
+        ethers.hexlify("0x")
       );
       expect(isModuleInstalled).to.be.true;
-      const message = "Some Message";
+    
+      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+      const data = solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
+      
+      const signedData = await smartAccountOwner.signMessage(data);
+      console.log(signedData, "signature");
+      const isValid = await smartAccount.isValidSignature(
+        hashMessage(data),
+        solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signedData])
+      );
+      
+      console.log("isValid: ", isValid);
+      expect(isValid).to.equal("0x1626ba7e");
     });
   });
 
