@@ -13,7 +13,7 @@ pragma solidity ^0.8.24;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { LibClone } from "solady/src/utils/LibClone.sol";
-import { Stakeable } from "../utils/Stakeable.sol";
+import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 
