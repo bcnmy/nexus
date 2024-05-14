@@ -5,6 +5,10 @@ async function main() {
 
   const smartAccount = await Nexus.deploy();
 
+  const signers = await ethers.getSigners();
+
+  const factoryOwner = signers[0];
+
   await smartAccount.waitForDeployment();
 
   console.log(`Nexus implementation deployed at: ${smartAccount.target}`);
@@ -13,6 +17,7 @@ async function main() {
 
   const accountFactory = await AccountFactory.deploy(
     await smartAccount.getAddress(),
+    await factoryOwner.getAddress()
   );
 
   await accountFactory.waitForDeployment();
