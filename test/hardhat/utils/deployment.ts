@@ -67,6 +67,7 @@ async function getDeployedEntrypoint() {
  */
 export async function getDeployedAccountFactory(
   implementationAddress: string,
+  owner: string,
   // Note: this could be converted to dto so that additional args can easily be passed
 ): Promise<AccountFactory> {
   const accounts: Signer[] = await ethers.getSigners();
@@ -80,7 +81,7 @@ export async function getDeployedAccountFactory(
     {
       from: addresses[0],
       deterministicDeployment: true,
-      args: [implementationAddress],
+      args: [implementationAddress, owner],
     },
   );
 
@@ -255,12 +256,15 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
     accounts.map((account) => account.getAddress()),
   );
 
+  const factoryOwner = addresses[5];
+
   const entryPoint = await getDeployedEntrypoint();
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
   const msaFactory = await getDeployedAccountFactory(
     await smartAccountImplementation.getAddress(),
+    factoryOwner
   );
 
   const mockValidator = await deployContract<MockValidator>(
@@ -303,12 +307,15 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     accounts.map((account) => account.getAddress()),
   );
 
+  const factoryOwner = addresses[5];
+
   const entryPoint = await getDeployedEntrypoint();
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
   const msaFactory = await getDeployedAccountFactory(
     await smartAccountImplementation.getAddress(),
+    factoryOwner
   );
 
   const mockValidator = await deployContract<MockValidator>(
@@ -342,13 +349,13 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     [aliceAddress],
   );
 
-  const accountAddress = await msaFactory.getCounterFactualAddress(
+  const accountAddress = await msaFactory.computeAccountAddress(
     mockValidatorAddress,
     moduleInstallData,
     saDeploymentIndex,
   );
 
-  const aliceAccountAddress = await msaFactory.getCounterFactualAddress(
+  const aliceAccountAddress = await msaFactory.computeAccountAddress(
     mockValidatorAddress,
     aliceModuleInstallData,
     saDeploymentIndex,
@@ -435,7 +442,7 @@ export async function getDeployedSmartAccountWithValidator(
   // Module initialization data, encoded
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-  const accountAddress = await accountFactory.getCounterFactualAddress(
+  const accountAddress = await accountFactory.computeAccountAddress(
     validatorAddress,
     moduleInstallData,
     deploymentIndex,

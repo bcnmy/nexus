@@ -57,7 +57,7 @@ describe("Nexus Factory Tests", function () {
     ); // Example data, customize as needed
 
     // Read the expected account address
-    const expectedAccountAddress = await factory.getCounterFactualAddress(
+    const expectedAccountAddress = await factory.computeAccountAddress(
       validatorModuleAddress, // validator address
       installData,
       saDeploymentIndex,
@@ -79,7 +79,7 @@ describe("Nexus Factory Tests", function () {
       const installData = encodeData(["address"], [ownerAddress]); // Example data, customize as needed
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
+      const expectedAccountAddress = await factory.computeAccountAddress(
         validatorModuleAddress, // validator address
         installData,
         saDeploymentIndex,
@@ -104,14 +104,14 @@ describe("Nexus Factory Tests", function () {
         [ownerAddress],
       ); // Example data, customize as needed
 
-      const unexpectedAccountAddress = await factory.getCounterFactualAddress(
+      const unexpectedAccountAddress = await factory.computeAccountAddress(
         validatorModuleAddress,
         installData,
         1,
       );
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
+      const expectedAccountAddress = await factory.computeAccountAddress(
         validatorModuleAddress, // validator address
         installData,
         saDeploymentIndex,
@@ -143,7 +143,7 @@ describe("Nexus Factory Tests", function () {
       );
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
+      const expectedAccountAddress = await factory.computeAccountAddress(
         validatorModuleAddress, // validator address
         initData,
         saDeploymentIndex,
@@ -182,7 +182,7 @@ describe("Nexus Factory Tests", function () {
 
       const installData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
+      const expectedAccountAddress = await factory.computeAccountAddress(
         validatorModuleAddress,
         installData,
         saDeploymentIndex,

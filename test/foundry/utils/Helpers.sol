@@ -31,12 +31,14 @@ contract Helpers is CheatCodes, EventsAndErrors {
     Vm.Wallet public BOB;
     Vm.Wallet public CHARLIE;
     Vm.Wallet public BUNDLER;
+    Vm.Wallet public FACTORY_OWNER;
 
     address public DEPLOYER_ADDRESS;
     address public ALICE_ADDRESS;
     address public BOB_ADDRESS;
     address public CHARLIE_ADDRESS;
     address public BUNDLER_ADDRESS;
+    address public FACTORY_OWNER_ADDRESS;
 
     Nexus public BOB_ACCOUNT;
     Nexus public ALICE_ACCOUNT;
@@ -72,6 +74,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         BOB = createAndFundWallet("BOB", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
+        FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
     }
 
     function deployContracts() internal {
@@ -79,7 +82,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ACCOUNT_IMPLEMENTATION = new Nexus();
-        FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
+        FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
         HOOK_MODULE = new MockHook();
@@ -116,7 +119,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
         uint256 saDeploymentIndex = 0;
 
-        account = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
+        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
 
         return account;
     }

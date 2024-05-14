@@ -82,7 +82,7 @@ describe("Nexus Basic Specs", function () {
     ); // Example data, customize as needed
 
     // Read the expected account address
-    const expectedAccountAddress = await factory.getCounterFactualAddress(
+    const expectedAccountAddress = await factory.computeAccountAddress(
       moduleAddress, // validator address
       installData,
       saDeploymentIndex,
@@ -101,7 +101,7 @@ describe("Nexus Basic Specs", function () {
       ); // Example data, customize as needed
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
+      const expectedAccountAddress = await factory.computeAccountAddress(
         moduleAddress, // validator address
         installData,
         saDeploymentIndex,
@@ -318,7 +318,7 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
+      const accountAddress = await factory.computeAccountAddress(
         moduleAddress,
         moduleInitData,
         saDeploymentIndex,
@@ -359,7 +359,7 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
+      const accountAddress = await factory.computeAccountAddress(
         moduleAddress,
         moduleInitData,
         saDeploymentIndex,

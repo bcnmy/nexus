@@ -232,7 +232,7 @@ export async function getAccountAddress(
   setup.accountFactory = setup.accountFactory.attach(factoryAddress);
 
   const counterFactualAddress =
-    await setup.accountFactory.getCounterFactualAddress(
+    await setup.accountFactory.computeAccountAddress(
       validatorAddress,
       moduleInitData,
       saDeploymentIndex,

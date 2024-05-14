@@ -13,8 +13,7 @@ pragma solidity ^0.8.24;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { LibClone } from "solady/src/utils/LibClone.sol";
-import { StakeManager } from "account-abstraction/contracts/core/StakeManager.sol";
-
+import { Stakeable } from "../utils/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 
@@ -28,14 +27,14 @@ import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract AccountFactory is IAccountFactory, StakeManager {
+contract AccountFactory is IAccountFactory, Stakeable {
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
 
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
-    constructor(address implementation) {
+    constructor(address implementation, address owner) Stakeable(owner) {
         ACCOUNT_IMPLEMENTATION = implementation;
     }
 
@@ -71,8 +70,8 @@ contract AccountFactory is IAccountFactory, StakeManager {
     /// @param moduleInstallData The initialization data for the module.
     /// @param index The index or type of the module, used for generating the deployment address.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    /// @dev This function allows for address prediction without deploying the Nexus.
-    function getCounterFactualAddress(
+    /// @dev This function allows for address calculation without deploying the Nexus.
+    function computeAccountAddress(
         address validationModule,
         bytes calldata moduleInstallData,
         uint256 index

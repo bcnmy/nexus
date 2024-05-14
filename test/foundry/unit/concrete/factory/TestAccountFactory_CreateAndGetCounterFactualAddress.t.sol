@@ -20,7 +20,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
     function test_DeployAccount_WithCreateAccount() public {
         // Deploy an account using the factory directly
-        address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
+        address payable expectedAddress = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
         address payable deployedAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
@@ -29,7 +29,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccount_WithCreateAccount_ReturnsSameAddressWithSameArgs() public {
-        address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
+        address payable expectedAddress = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), initData, 0);
 
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
@@ -87,7 +87,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccountWithInvalidValidatorModule() public {
-        address payable expectedAddress = FACTORY.getCounterFactualAddress(address(0), initData, 0);
+        address payable expectedAddress = FACTORY.computeAccountAddress(address(0), initData, 0);
         // Should revert if the validator module is invalid
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(address(0), initData, 0);
