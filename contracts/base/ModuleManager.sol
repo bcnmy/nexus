@@ -39,15 +39,13 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        if (!executors.contains(msg.sender)) revert InvalidModule(msg.sender);
+        if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
         _;
     }
 
     /// @notice Ensures the specified address is a registered validator module.
     modifier onlyValidatorModule(address validator) virtual {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        if (!validators.contains(validator)) revert InvalidModule(validator);
+        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
         _;
     }
 
@@ -86,54 +84,34 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
         if (calltype == CALLTYPE_STATIC) {
             assembly {
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
+                calldatacopy(0, 0, calldatasize())
 
                 // The msg.sender address is shifted to the left by 12 bytes to remove the padding
                 // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
+                mstore(calldatasize(), shl(96, caller()))
 
-                // Add 20 bytes for the address appended add the end
-                let success := staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) {
-                    revert(returnDataPtr, returndatasize())
+                if iszero(staticcall(gas(), handler, 0, add(calldatasize(), 20), 0, 0)) {
+                    returndatacopy(0, 0, returndatasize())
+                    revert(0, returndatasize())
                 }
-                return(returnDataPtr, returndatasize())
+                returndatacopy(0, 0, returndatasize())
+                return(0, returndatasize())
             }
         }
         if (calltype == CALLTYPE_SINGLE) {
             assembly {
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
+                calldatacopy(0, 0, calldatasize())
 
                 // The msg.sender address is shifted to the left by 12 bytes to remove the padding
                 // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
+                mstore(calldatasize(), shl(96, caller()))
 
-                // Add 20 bytes for the address appended add the end
-                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) {
-                    revert(returnDataPtr, returndatasize())
+                if iszero(call(gas(), handler, 0, 0, add(calldatasize(), 20), 0, 0)) {
+                    returndatacopy(0, 0, returndatasize())
+                    revert(0, returndatasize())
                 }
-                return(returnDataPtr, returndatasize())
+                returndatacopy(0, 0, returndatasize())
+                return(0, returndatasize())
             }
         }
     }
@@ -198,8 +176,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
             revert IncompatibleValidatorModule(validator);
         }
 
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        validators.push(validator);
+        _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
@@ -207,16 +184,17 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
-        // Check if the account has at least one validator installed before proceeding
-        // Having at least one validator is a requirement for the account to function properly
-        (address[] memory array, ) = _paginate(_getAccountStorage().validators, address(0x1), 2);
-        if (array.length == 1) {
-            revert CannotRemoveLastValidator();
-        }
-
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
 
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
+
+        // Check if the account has at least one validator installed before proceeding
+        // Having at least one validator is a requirement for the account to function properly
+        if (prev == address(0x01)) {
+            if(validators.getNext(validator) == address(0x01)) {
+                revert CannotRemoveLastValidator();
+            }
+        }
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
     }
@@ -229,9 +207,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) {
             revert IncompatibleExecutorModule(executor);
         }
-
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        executors.push(executor);
+        _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
 
@@ -239,9 +215,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param executor The address of the executor to be uninstalled.
     /// @param data De-initialization data to configure the executor upon uninstallation.
     function _uninstallExecutor(address executor, bytes calldata data) internal virtual {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
-        executors.pop(prev, executor);
+        _getAccountStorage().executors.pop(prev, executor);
         IExecutor(executor).onUninstall(disableModuleData);
     }
 
@@ -322,16 +297,14 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param validator The address of the validator to check.
     /// @return True if the validator is installed, otherwise false.
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        return validators.contains(validator);
+        return _getAccountStorage().validators.contains(validator);
     }
 
     /// @dev Checks if an executor is currently installed.
     /// @param executor The address of the executor to check.
     /// @return True if the executor is installed, otherwise false.
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
-        return executors.contains(executor);
+        return _getAccountStorage().executors.contains(executor);
     }
 
     /// @dev Checks if a hook is currently installed.
