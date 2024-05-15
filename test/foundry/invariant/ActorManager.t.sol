@@ -54,17 +54,8 @@ contract ActorManager is BaseInvariantTest {
         for (uint i = 0; i < actorHandlers.length; i++) {
             targetContract(address(actorHandlers[i].moduleHandler));
             targetContract(address(actorHandlers[i].executionHandler));
-        }
-
-        bytes4[] memory selectors = new bytes4[](5);
-        selectors[0] = ModuleManagementHandler.installModule.selector;
-        selectors[1] = ModuleManagementHandler.uninstallModule.selector;
-        // selectors[2] = ModuleManagementHandler.invariant_ensureValidatorAlwaysInstalled.selector;
-        // selectors[3] = ModuleManagementHandler.invariant_preventInvalidModuleTypeInstallation.selector;
-        // selectors[4] = ModuleManagementHandler.invariant_preventUninstallingLastValidator.selector;
-
-        for (uint i = 0; i < actorHandlers.length; i++) {
-            targetSelector(FuzzSelector({ addr: address(actorHandlers[i].moduleHandler), selectors: selectors }));
+            targetContract(address(actorHandlers[i].depositHandler));
+            targetContract(address(actorHandlers[i].accountCreationHandler));
         }
     }
 
