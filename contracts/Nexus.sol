@@ -74,9 +74,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator;
-        uint256 nonce = userOp.nonce;
+        uint256 userOpnonce = userOp.nonce;
         assembly {
-            validator := shr(96, nonce)
+            validator := shr(96, userOpnonce)
         }
         // Check if validator is not enabled. If not, return VALIDATION_FAILED.
 
