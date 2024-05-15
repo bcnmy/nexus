@@ -99,6 +99,15 @@ library ModeLib {
         }
     }
 
+    function decodeBasic(
+        ExecutionMode mode
+    ) internal pure returns (CallType _calltype, ExecType _execType) {
+        assembly {
+            _calltype := mode
+            _execType := shl(8, mode)
+        }
+    }
+
     function encode(CallType callType, ExecType execType, ModeSelector mode, ModePayload payload) internal pure returns (ExecutionMode) {
         return ExecutionMode.wrap(bytes32(abi.encodePacked(callType, execType, bytes4(0), ModeSelector.unwrap(mode), payload)));
     }
@@ -138,6 +147,7 @@ function _eqExecType(ExecType a, ExecType b) pure returns (bool) {
     return ExecType.unwrap(a) == ExecType.unwrap(b);
 }
 
+//slither-disable-next-line dead-code
 function _eqModeSelector(ModeSelector a, ModeSelector b) pure returns (bool) {
     return ModeSelector.unwrap(a) == ModeSelector.unwrap(b);
 }

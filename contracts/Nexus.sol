@@ -92,7 +92,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
@@ -119,7 +119,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_SINGLE) {
@@ -173,6 +173,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
+        emit ModuleInstalled(moduleTypeId, module);
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
@@ -184,7 +185,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
-        emit ModuleInstalled(moduleTypeId, module);
     }
 
     /// @notice Uninstalls a module from the smart account.
@@ -202,12 +202,12 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
+        emit ModuleUninstalled(moduleTypeId, module);
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         else revert UnsupportedModuleType(moduleTypeId);
-        emit ModuleUninstalled(moduleTypeId, module);
     }
 
     /// @notice Initializes the smart account with a validator.
@@ -258,7 +258,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param mode The execution mode to evaluate.
     /// @return isSupported True if the execution mode is supported, false otherwise.
     function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
         return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
