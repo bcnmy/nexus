@@ -36,7 +36,7 @@ contract AccountFactory is IAccountFactory, StakeManager {
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     constructor(address implementation) {
-        if(implementation == address(0)){
+        if (implementation == address(0)) {
             revert ImplementationAddressCanNotBeZero();
         }
         ACCOUNT_IMPLEMENTATION = implementation;

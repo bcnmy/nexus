@@ -99,9 +99,7 @@ library ModeLib {
         }
     }
 
-    function decodeBasic(
-        ExecutionMode mode
-    ) internal pure returns (CallType _calltype, ExecType _execType) {
+    function decodeBasic(ExecutionMode mode) internal pure returns (CallType _calltype, ExecType _execType) {
         assembly {
             _calltype := mode
             _execType := shl(8, mode)
