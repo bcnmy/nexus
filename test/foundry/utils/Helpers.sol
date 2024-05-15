@@ -26,29 +26,29 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // State Variables
     // -----------------------------------------
 
-    Vm.Wallet public DEPLOYER;
-    Vm.Wallet public ALICE;
-    Vm.Wallet public BOB;
-    Vm.Wallet public CHARLIE;
-    Vm.Wallet public BUNDLER;
+    Vm.Wallet internal DEPLOYER;
+    Vm.Wallet internal ALICE;
+    Vm.Wallet internal BOB;
+    Vm.Wallet internal CHARLIE;
+    Vm.Wallet internal BUNDLER;
 
-    address public DEPLOYER_ADDRESS;
-    address public ALICE_ADDRESS;
-    address public BOB_ADDRESS;
-    address public CHARLIE_ADDRESS;
-    address public BUNDLER_ADDRESS;
+    address internal DEPLOYER_ADDRESS;
+    address internal ALICE_ADDRESS;
+    address internal BOB_ADDRESS;
+    address internal CHARLIE_ADDRESS;
+    address internal BUNDLER_ADDRESS;
 
-    Nexus public BOB_ACCOUNT;
-    Nexus public ALICE_ACCOUNT;
-    Nexus public CHARLIE_ACCOUNT;
+    Nexus internal BOB_ACCOUNT;
+    Nexus internal ALICE_ACCOUNT;
+    Nexus internal CHARLIE_ACCOUNT;
 
-    IEntryPoint public ENTRYPOINT;
-    AccountFactory public FACTORY;
-    MockValidator public VALIDATOR_MODULE;
-    MockExecutor public EXECUTOR_MODULE;
-    MockHook public HOOK_MODULE;
-    MockHandler public HANDLER_MODULE;
-    Nexus public ACCOUNT_IMPLEMENTATION;
+    IEntryPoint internal ENTRYPOINT;
+    AccountFactory internal FACTORY;
+    MockValidator internal VALIDATOR_MODULE;
+    MockExecutor internal EXECUTOR_MODULE;
+    MockHook internal HOOK_MODULE;
+    MockHandler internal HANDLER_MODULE;
+    Nexus internal ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
     // Setup Functions
@@ -90,7 +90,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // Account Deployment Functions
     // -----------------------------------------
     function deployAccount(Vm.Wallet memory wallet, uint256 deposit) internal returns (Nexus) {
-        address payable accountAddress = calculateAccountAddress(wallet.addr);
+        address payable accountAddress = calculateAccountAddress(wallet.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = prepareInitCode(wallet.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -99,6 +99,19 @@ contract Helpers is CheatCodes, EventsAndErrors {
         ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
         assertTrue(VALIDATOR_MODULE.isOwner(accountAddress, wallet.addr));
+        return Nexus(accountAddress);
+    }
+
+    function deployAccountWithCustomValidator(Vm.Wallet memory wallet, uint256 deposit, address validator) internal returns (Nexus) {
+        address payable accountAddress = calculateAccountAddress(wallet.addr, validator);
+        bytes memory initCode = prepareInitCodeWithCustomValidator(wallet.addr, validator);
+
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = prepareUserOpWithInitAndCalldataWithCustomValidator(wallet, initCode, "", validator);
+
+        ENTRYPOINT.depositTo{ value: deposit }(address(accountAddress));
+        ENTRYPOINT.handleOps(userOps, payable(wallet.addr));
+        assertTrue(MockValidator(validator).isOwner(accountAddress, wallet.addr));
         return Nexus(accountAddress);
     }
 
@@ -111,18 +124,30 @@ contract Helpers is CheatCodes, EventsAndErrors {
         labelAddress(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
 
-    function calculateAccountAddress(address owner) internal view returns (address payable account) {
+    function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
         bytes memory initData = abi.encodePacked(owner);
 
         uint256 saDeploymentIndex = 0;
 
-        account = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
+        account = FACTORY.getCounterFactualAddress(address(validator), initData, saDeploymentIndex);
 
         return account;
     }
 
     function prepareInitCode(address ownerAddress) internal view returns (bytes memory initCode) {
         address module = address(VALIDATOR_MODULE);
+        uint256 saDeploymentIndex = 0;
+        bytes memory moduleInitData = abi.encodePacked(ownerAddress);
+
+        // Prepend the factory address to the encoded function call to form the initCode
+        initCode = abi.encodePacked(
+            address(FACTORY),
+            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleInitData, saDeploymentIndex)
+        );
+    }
+
+    function prepareInitCodeWithCustomValidator(address ownerAddress, address validator) internal view returns (bytes memory initCode) {
+        address module = address(validator);
         uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
@@ -145,9 +170,36 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOp.signature = signature;
     }
 
+    function prepareUserOpWithInitAndCalldataWithCustomValidator(
+        Vm.Wallet memory wallet,
+        bytes memory initCode,
+        bytes memory callData,
+        address validator
+    ) internal view returns (PackedUserOperation memory userOp) {
+        userOp = prepareUserOpWithCalldataWithCustomValidator(wallet, callData, validator);
+        userOp.initCode = initCode;
+
+        bytes memory signature = signUserOp(wallet, userOp);
+        userOp.signature = signature;
+    }
+
     function prepareUserOpWithCalldata(Vm.Wallet memory wallet, bytes memory callData) internal view returns (PackedUserOperation memory userOp) {
-        address payable account = calculateAccountAddress(wallet.addr);
+        address payable account = calculateAccountAddress(wallet.addr, address(VALIDATOR_MODULE));
         uint256 nonce = getNonce(account, address(VALIDATOR_MODULE));
+        userOp = buildPackedUserOp(account, nonce);
+        userOp.callData = callData;
+
+        bytes memory signature = signUserOp(wallet, userOp);
+        userOp.signature = signature;
+    }
+
+    function prepareUserOpWithCalldataWithCustomValidator(
+        Vm.Wallet memory wallet,
+        bytes memory callData,
+        address validator
+    ) internal view returns (PackedUserOperation memory userOp) {
+        address payable account = calculateAccountAddress(wallet.addr, address(validator));
+        uint256 nonce = getNonce(account, address(validator));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
@@ -239,8 +291,57 @@ contract Helpers is CheatCodes, EventsAndErrors {
         return userOps;
     }
 
+    function prepareUserOperationWithCustomValidator(
+        Vm.Wallet memory signer,
+        Nexus account,
+        ExecType execType,
+        Execution[] memory executions,
+        address validator
+    ) internal view returns (PackedUserOperation[] memory userOps) {
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
+
+        // Determine mode and calldata based on callType and executions length
+        ExecutionMode mode;
+        bytes memory executionCalldata;
+        uint256 length = executions.length;
+
+        if (length == 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+            executionCalldata = abi.encodeCall(
+                Nexus.execute,
+                (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
+            );
+        } else if (length > 1) {
+            mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
+            executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
+        } else {
+            revert("Executions array cannot be empty");
+        }
+
+        // Initialize the userOps array with one operation
+        userOps = new PackedUserOperation[](1);
+
+        // Build the UserOperation
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(validator)));
+        userOps[0].callData = executionCalldata;
+
+        // Sign the operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessage(signer, userOpHash);
+
+        return userOps;
+    }
+
     function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
         return keccak256(a) == keccak256(b);
+    }
+
+     function isContract(address account) internal view returns (bool) {
+        uint256 size;
+
+        assembly { size := extcodesize(account) }
+        return size > 0;
     }
 
     function test() public pure {

@@ -78,15 +78,6 @@ contract AccountCreationHandler is BaseInvariantTest {
         assertEq(nonce2, 0, "Nonce for the second account is not initialized correctly");
     }
 
-    // Utility function to check if an address is a contract
-    function isContract(address _addr) internal view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(_addr)
-        }
-        return size > 0;
-    }
-
     // Asserts that the account's balance matches the expected balance
     function assertAccountBalance(address _account, uint256 _expectedBalance) internal {
         assertEq(address(_account).balance, _expectedBalance, "Balance invariant violated");
