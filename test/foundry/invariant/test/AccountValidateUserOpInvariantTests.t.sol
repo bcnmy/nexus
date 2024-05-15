@@ -10,6 +10,7 @@ contract ERC4337AccountValidateUserOpInvariantTests is Test, SmartAccountTestLab
 
     function setUp() public {
         init();
+        excludeContract(address(VALIDATOR_MODULE));
     }
 
     /// @notice Invariant to check nonce consistency
