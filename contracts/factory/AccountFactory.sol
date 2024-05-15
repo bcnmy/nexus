@@ -39,54 +39,48 @@ contract AccountFactory is IAccountFactory, Stakeable {
     }
 
     /// @notice Creates a new Nexus with a specific validator and initialization data.
-    /// @param validationModule The address of the validation module to configure the new Nexus.
-    /// @param moduleInstallData Initialization data for configuring the validation module.
-    /// @param index An identifier used to generate a unique deployment address.
+    /// @param initData initialization data to be called on the new Smart Account.
+    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return The address of the newly created Nexus.
     /// @dev Deploys a new Nexus using a deterministic address based on the input parameters.
-    function createAccount(address validationModule, bytes calldata moduleInstallData, uint256 index) external payable returns (address payable) {
-        (index);
-        bytes32 salt;
-
+    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable) {
+        bytes32 actualSalt;
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)
             mstore(0x40, add(ptr, calldataLength))
             calldatacopy(ptr, 0x04, calldataLength)
-            salt := keccak256(ptr, calldataLength)
+            actualSalt := keccak256(ptr, calldataLength)
         }
 
-        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
+        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 
         if (!alreadyDeployed) {
-            INexus(account).initialize(validationModule, moduleInstallData);
-            emit AccountCreated(account, validationModule, moduleInstallData);
+            INexus(account).initializeAccount(initData);
+            emit AccountCreated(account, initData, salt);
         }
         return payable(account);
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param validationModule The address of the module to be used in the Nexus.
-    /// @param moduleInstallData The initialization data for the module.
-    /// @param index The index or type of the module, used for generating the deployment address.
+    /// @param initData initialization data to be called on the new Smart Account.
+    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     /// @dev This function allows for address calculation without deploying the Nexus.
     function computeAccountAddress(
-        address validationModule,
-        bytes calldata moduleInstallData,
-        uint256 index
+        bytes calldata initData, bytes32 salt
     ) external view returns (address payable expectedAddress) {
-        (validationModule, moduleInstallData, index);
-        bytes32 salt;
+        (initData, salt);
+        bytes32 actualSalt;
 
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)
             mstore(0x40, add(ptr, calldataLength))
             calldatacopy(ptr, 0x04, calldataLength)
-            salt := keccak256(ptr, calldataLength)
+            actualSalt := keccak256(ptr, calldataLength)
         }
 
-        expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
+        expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 }

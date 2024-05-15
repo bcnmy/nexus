@@ -21,7 +21,9 @@ import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./EventsAndErrors.sol";
 
-contract Helpers is CheatCodes, EventsAndErrors {
+import { BootstrapUtil, BootstrapConfig } from "./Bootstrap.t.sol";
+
+contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -115,24 +117,44 @@ contract Helpers is CheatCodes, EventsAndErrors {
     }
 
     function calculateAccountAddress(address owner) internal view returns (address payable account) {
-        bytes memory initData = abi.encodePacked(owner);
+        bytes memory moduleInitData = abi.encodePacked(owner);
 
-        uint256 saDeploymentIndex = 0;
+        BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), moduleInitData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
 
-        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
+        bytes memory saDeploymentIndex = "0";
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData =
+            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        account = FACTORY.computeAccountAddress(_initData, salt);
 
         return account;
     }
 
     function prepareInitCode(address ownerAddress) internal view returns (bytes memory initCode) {
         address module = address(VALIDATOR_MODULE);
-        uint256 saDeploymentIndex = 0;
+
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
+
+        BootstrapConfig[] memory validators = makeBootstrapConfig(module, moduleInitData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+
+        bytes memory saDeploymentIndex = "0";
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData =
+            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            
+        bytes32 salt = keccak256(saDeploymentIndex);
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
             address(FACTORY),
-            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleInitData, saDeploymentIndex)
+            abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt)
         );
     }
 

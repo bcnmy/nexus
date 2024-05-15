@@ -222,6 +222,22 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         _installValidator(firstValidator, initData);
     }
 
+    function initializeAccount(bytes calldata initData) external payable virtual {
+        // checks if already initialized and reverts before setting the state to initialized
+        _initModuleManager();
+
+        // this is just implemented for demonstration purposes. You can use any other initialization
+        // logic here.
+        (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
+        (bool success,) = bootstrap.delegatecall(bootstrapCall);
+        if (!success) revert();
+
+        // broken because of calldata vs memory
+        // (address firstValidator, bytes memory moduleInstallData) = abi.decode(initData, (address, bytes));
+        //  _installValidator(firstValidator, moduleInstallData);
+
+    }
+
     /// @notice Validates a signature according to ERC-1271 standards.
     /// @param hash The hash of the data being validated.
     /// @param data Signature data that needs to be validated.

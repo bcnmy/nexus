@@ -34,4 +34,8 @@ interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
     /// @param firstValidator The address of the validator to install during initialization.
     /// @param initData Encoded data used for the account's configuration during initialization.
     function initialize(address firstValidator, bytes calldata initData) external payable;
+
+    function initializeAccount(bytes calldata initData) external payable;
+
+    // or keeping something custom tweaking above?
 }
