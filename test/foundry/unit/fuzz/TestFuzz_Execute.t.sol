@@ -95,8 +95,8 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         assertEq(counter.getNumber(), initialCount - numDecrements, "Counter decrements mismatch");
     }
 
-     function testFuzz_TokenTransfer(address to, uint256 amount) public {
-        vm.assume(to != address(0) );
+    function testFuzz_TokenTransfer(address to, uint256 amount) public {
+        vm.assume(to != address(0));
         vm.assume(amount < ~uint(0) / 0xff); // Ensure amount is manageable
         token.mint(address(BOB_ACCOUNT), amount); // Mint tokens to BOB_ACCOUNT
         // Set up the transfer operation
@@ -113,30 +113,28 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         assertEq(finalBalance, amount, "Token transfer amount mismatch");
     }
 
-function testFuzz_ComplexTokenOperations(address[] calldata receivers, uint256 amount) public {
-    vm.assume(receivers.length > 0 && receivers.length < 50);
-    vm.assume(amount < ~uint(0) / 0xff); // Ensure baseAmount is manageable
-    
-    // Ensure BOB_ACCOUNT has enough tokens to transfer
-    token.mint(address(BOB_ACCOUNT), amount * receivers.length);  // Mint enough tokens to cover all transfers
+    function testFuzz_ComplexTokenOperations(address[] calldata receivers, uint256 amount) public {
+        vm.assume(receivers.length > 0 && receivers.length < 50);
+        vm.assume(amount < ~uint(0) / 0xff); // Ensure baseAmount is manageable
 
-    Execution[] memory executions = new Execution[](receivers.length);
-    for (uint256 i = 0; i < receivers.length; i++) {
+        // Ensure BOB_ACCOUNT has enough tokens to transfer
+        token.mint(address(BOB_ACCOUNT), amount * receivers.length); // Mint enough tokens to cover all transfers
+
+        Execution[] memory executions = new Execution[](receivers.length);
+        for (uint256 i = 0; i < receivers.length; i++) {
             bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, receivers[i], amount);
             executions[i] = Execution({ target: address(token), value: 0, callData: transferCallData });
-    }
+        }
 
-    PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
-    ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
-    // Optionally verify the results for each receiver
-    for (uint256 i = 0; i < receivers.length; i++) {
-        if(receivers[i] != address(0)) {
-
-        uint256 finalBalance = token.balanceOf(receivers[i]);
-        assertGe(finalBalance, amount, "Token transfer amount mismatch for receiver");
+        // Optionally verify the results for each receiver
+        for (uint256 i = 0; i < receivers.length; i++) {
+            if (receivers[i] != address(0)) {
+                uint256 finalBalance = token.balanceOf(receivers[i]);
+                assertGe(finalBalance, amount, "Token transfer amount mismatch for receiver");
+            }
         }
     }
-}
-
 }

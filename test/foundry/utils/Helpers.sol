@@ -337,10 +337,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         return keccak256(a) == keccak256(b);
     }
 
-     function isContract(address account) internal view returns (bool) {
+    function isContract(address account) internal view returns (bool) {
         uint256 size;
 
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 

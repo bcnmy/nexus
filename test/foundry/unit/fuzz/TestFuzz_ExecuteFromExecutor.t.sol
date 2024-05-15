@@ -5,30 +5,26 @@ import "../../utils/SmartAccountTestLab.t.sol";
 
 contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
     MockExecutor public mockExecutor;
-        Counter public counter;
+    Counter public counter;
     MockToken public token;
 
     function setUp() public {
         init(); // Initializes all required contracts and wallets
         mockExecutor = new MockExecutor();
 
-                counter = new Counter();
+        counter = new Counter();
         token = new MockToken("Test Token", "TST");
 
         // Install MockExecutor as an executor module on BOB_ACCOUNT
         bytes memory installExecModuleData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, 
-            MODULE_TYPE_EXECUTOR, 
-            address(mockExecutor), 
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(mockExecutor),
             ""
         );
-        
+
         Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: installExecModuleData
-        });
+        execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });
 
         PackedUserOperation[] memory userOpsInstall = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
@@ -45,7 +41,7 @@ contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
         mockExecutor.executeViaAccount(BOB_ACCOUNT, target, value, "");
     }
 
-      function testFuzz_ExecuteIncrementCounter(uint256 numIncrements) public {
+    function testFuzz_ExecuteIncrementCounter(uint256 numIncrements) public {
         vm.assume(numIncrements < 100);
         bytes memory callData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         for (uint256 i = 0; i < numIncrements; i++) {
@@ -55,20 +51,20 @@ contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
     }
 
     function testFuzz_MultiFunctionCall(uint256 incrementTimes) public {
-    vm.assume(incrementTimes < 50); // Reasonable operation counts
-    bytes memory callDataInc = abi.encodeWithSelector(Counter.incrementNumber.selector);
-    bytes memory callDataDec = abi.encodeWithSelector(Counter.decrementNumber.selector);
+        vm.assume(incrementTimes < 50); // Reasonable operation counts
+        bytes memory callDataInc = abi.encodeWithSelector(Counter.incrementNumber.selector);
+        bytes memory callDataDec = abi.encodeWithSelector(Counter.decrementNumber.selector);
 
-    for (uint256 i = 0; i < incrementTimes; i++) {
-        mockExecutor.executeViaAccount(BOB_ACCOUNT, address(counter), 0, callDataInc);
-    }
+        for (uint256 i = 0; i < incrementTimes; i++) {
+            mockExecutor.executeViaAccount(BOB_ACCOUNT, address(counter), 0, callDataInc);
+        }
 
-    for (uint256 i = 0; i < incrementTimes; i++) {
-        mockExecutor.executeViaAccount(BOB_ACCOUNT, address(counter), 0, callDataDec);
+        for (uint256 i = 0; i < incrementTimes; i++) {
+            mockExecutor.executeViaAccount(BOB_ACCOUNT, address(counter), 0, callDataDec);
+        }
+        uint256 expectedValue = 0;
+        assertEq(counter.getNumber(), expectedValue, "Counter value mismatch after operations");
     }
-    uint256 expectedValue = 0;
-    assertEq(counter.getNumber(), expectedValue, "Counter value mismatch after operations");
-}
 
     function testFuzz_TokenTransfer(address to, uint256 amount) public {
         vm.assume(to != address(0) && amount > 0);
@@ -80,7 +76,7 @@ contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
 
         // Execute the transfer via the installed MockExecutor
         mockExecutor.executeViaAccount(BOB_ACCOUNT, address(token), 0, callData);
-        
+
         // Check the final balance of the receiver
         uint256 finalBalance = token.balanceOf(to);
         assertEq(finalBalance, amount, "Token transfer amount mismatch");
