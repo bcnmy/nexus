@@ -19,21 +19,12 @@ contract MockValidator is IValidator {
                 : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(
-        address,
-        bytes32 hash,
-        bytes calldata signature
-    )
-        external
-        view
-        returns (bytes4)
-    {
+    function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
         // MAYBE SHOULD PREPARE REPLAY RESISTANT HASH BY APPENDING MSG.SENDER
         // SEE: https://github.com/bcnmy/scw-contracts/blob/3362262dab34fa0f57e2fbe0e57a4bdbd5318165/contracts/smart-account/modules/EcdsaOwnershipRegistryModule.sol#L122-L132
         // OR USE EIP-712
-        return
-            SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
     function onInstall(bytes calldata data) external {

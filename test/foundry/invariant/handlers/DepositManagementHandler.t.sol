@@ -21,7 +21,7 @@ contract DepositManagementHandler is BaseInvariantTest {
         executions[0] = Execution({ target: address(nexusAccount), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
 
         // Execute deposit through the ENTRYPOINT with invariant checks
-        PackedUserOperation[] memory userOps = prepareUserOperation(signer, nexusAccount, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
 
         // Ensure deposit is reflected accurately, accounting for transaction fees
@@ -35,7 +35,7 @@ contract DepositManagementHandler is BaseInvariantTest {
         executions[0] = Execution({ target: address(nexusAccount), value: 0, callData: callData });
 
         // Execute withdrawal through the ENTRYPOINT and verify the remaining deposit
-        PackedUserOperation[] memory userOps = prepareUserOperation(signer, nexusAccount, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
 
         // Check that the remaining deposit is accurate after the withdrawal

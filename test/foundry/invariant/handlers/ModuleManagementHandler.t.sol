@@ -18,7 +18,7 @@ contract ModuleManagementHandler is BaseInvariantTest {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(nexusAccount), value: 0, callData: callData });
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(signer, nexusAccount, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
     }
 
@@ -28,7 +28,7 @@ contract ModuleManagementHandler is BaseInvariantTest {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(nexusAccount), value: 0, callData: callData });
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(signer, nexusAccount, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
     }
 

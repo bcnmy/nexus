@@ -52,7 +52,7 @@ contract K1Validator {
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
         address owner = smartAccountOwners[userOp.sender];
-        if(owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
+        if (owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
             return VALIDATION_SUCCESS;
         }
         if (owner.isValidSignatureNow(userOpHash, userOp.signature)) {

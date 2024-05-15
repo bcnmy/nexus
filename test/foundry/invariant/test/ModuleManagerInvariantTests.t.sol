@@ -22,7 +22,7 @@ contract ModuleManagerInvariantTests is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 

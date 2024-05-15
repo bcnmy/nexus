@@ -171,7 +171,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         // Check if the account has at least one validator installed before proceeding
         // Having at least one validator is a requirement for the account to function properly
         if (prev == address(0x01)) {
-            if(validators.getNext(validator) == address(0x01)) {
+            if (validators.getNext(validator) == address(0x01)) {
                 revert CannotRemoveLastValidator();
             }
         }

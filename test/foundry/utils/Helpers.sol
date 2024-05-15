@@ -163,7 +163,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
         bytes memory initCode,
         bytes memory callData
     ) internal view returns (PackedUserOperation memory userOp) {
-    ) internal view returns (PackedUserOperation memory userOp) {
         userOp = prepareUserOpWithCalldata(wallet, callData);
         userOp.initCode = initCode;
 
@@ -257,7 +256,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
         Nexus account,
         ExecType execType,
         Execution[] memory executions
-    ) internal view returns (PackedUserOperation[] memory userOps) {
     ) internal view returns (PackedUserOperation[] memory userOps) {
         // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");

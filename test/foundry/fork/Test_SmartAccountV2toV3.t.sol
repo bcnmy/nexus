@@ -66,7 +66,7 @@ contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
 
         // Prepare the user operation
         UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = prepareUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
+        userOps[0] = preparePackedUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
 
         bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
 
@@ -144,7 +144,7 @@ contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
 
-    function prepareUserOperation(
+    function preparePackedUserOperation(
         address from,
         bytes memory callData,
         uint256 value,

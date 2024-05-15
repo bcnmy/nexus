@@ -23,7 +23,7 @@ contract ERC4337AccountValidateUserOpInvariantTests is Test, SmartAccountTestLab
         executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("someExistingMethod()") });
 
         // Use helpers to prepare user operation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
 
         // Execute the operation
         ENTRYPOINT.handleOps(userOps, payable(BOB_ACCOUNT));
