@@ -41,8 +41,9 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
         _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
+        Execution[] memory executions =
+            _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         // Using almostEq to compare balances with a tolerance for gas costs
@@ -56,7 +57,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
 
         Execution memory execution = Execution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
         almostEq(
             depositBefore + (defaultDepositAmount * executionsNumber) - (gasUsed * tx.gasprice),
@@ -69,8 +70,9 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
         _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_TRY, executions);
+        Execution[] memory executions =
+            _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_TRY, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(depositBefore + defaultDepositAmount - (gasUsed * tx.gasprice), ENTRYPOINT.balanceOf(address(account)), defaultMaxPercentDelta);
@@ -83,7 +85,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
 
         Execution memory execution = Execution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, account, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_TRY, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(

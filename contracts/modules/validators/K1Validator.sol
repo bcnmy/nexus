@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io/
+// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
@@ -51,12 +51,14 @@ contract K1Validator {
     }
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
-        bool validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature);
-        if (!validSig) {
-            validSig = smartAccountOwners[userOp.sender].isValidSignatureNow(userOpHash, userOp.signature);
+        address owner = smartAccountOwners[userOp.sender];
+        if(owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
+            return VALIDATION_SUCCESS;
         }
-        if (!validSig) return VALIDATION_FAILED;
-        return VALIDATION_SUCCESS;
+        if (owner.isValidSignatureNow(userOpHash, userOp.signature)) {
+            return VALIDATION_SUCCESS;
+        }
+        return VALIDATION_FAILED;
     }
 
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {

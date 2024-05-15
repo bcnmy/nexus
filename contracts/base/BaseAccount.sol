@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io/
+// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
@@ -34,7 +34,7 @@ contract BaseAccount is IBaseAccount {
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPointOrSelf() {
-        if (msg.sender != _ENTRYPOINT && msg.sender != address(this)) {
+        if (!(msg.sender == _ENTRYPOINT || msg.sender == address(this))) {
             revert AccountAccessUnauthorized();
         }
         _;
@@ -72,7 +72,7 @@ contract BaseAccount is IBaseAccount {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+            if iszero(call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
                 revert(codesize(), 0x00)
             } // For gas estimation.
         }
@@ -87,7 +87,7 @@ contract BaseAccount is IBaseAccount {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(mul(extcodesize(_ENTRYPOINT), call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00))) {
+            if iszero(call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00)) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }

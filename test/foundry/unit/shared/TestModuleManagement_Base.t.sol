@@ -44,7 +44,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, execType, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, execType, execution);
 
         vm.expectEmit(true, true, true, true);
         emit ModuleInstalled(moduleTypeId, moduleAddress);
@@ -57,7 +57,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Similar to installModule but for uninstallation
-        PackedUserOperation[] memory userOps = prepareUserOperation(BOB, BOB_ACCOUNT, execType, execution);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, execType, execution);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }

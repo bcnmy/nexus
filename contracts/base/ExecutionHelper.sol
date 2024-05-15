@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io/
+// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { Execution } from "../types/DataTypes.sol";
 import { IExecutionHelperEventsAndErrors } from "../interfaces/base/IExecutionHelper.sol";
@@ -72,11 +72,11 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param executions An array of Execution structs each containing target, value, and calldata.
     /// @return result An array of results from each executed call.
     function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
-        uint256 length = executions.length;
-        result = new bytes[](length);
+        result = new bytes[](executions.length);
 
-        for (uint256 i; i < length; i++) {
-            Execution calldata exec = executions[i];
+        Execution calldata exec;
+        for (uint256 i; i < executions.length; i++) {
+            exec = executions[i];
             result[i] = _execute(exec.target, exec.value, exec.callData);
         }
     }
@@ -85,11 +85,11 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param executions An array of Execution structs.
     /// @return result An array of results, with unsuccessful calls marked by events.
     function _tryExecuteBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
-        uint256 length = executions.length;
-        result = new bytes[](length);
+        result = new bytes[](executions.length);
 
-        for (uint256 i; i < length; i++) {
-            Execution calldata exec = executions[i];
+        Execution calldata exec;
+        for (uint256 i; i < executions.length; i++) {
+            exec = executions[i];
             bool success;
             (success, result[i]) = _tryExecute(exec.target, exec.value, exec.callData);
             if (!success) emit TryExecuteUnsuccessful(i, result[i]);
