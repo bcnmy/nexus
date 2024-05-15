@@ -48,8 +48,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
-    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
-        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @notice Initializes the smart account by setting up the module manager and state.
     constructor() {
@@ -262,8 +261,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         (CallType callType, ExecType execType, , ) = mode.decode();
 
         // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) 
-            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -273,6 +271,17 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @return True if the module is installed, false otherwise.
     function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view returns (bool) {
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
+    }
+
+    /// @dev EIP712 hashTypedData method.
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    /// @dev EIP712 domain separator.
+    // solhint-disable func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
     }
 
     /// Returns the account's implementation ID.
@@ -392,12 +401,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
-    function _erc1271HashForIsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bytes32, bytes calldata)
-    {
+    function _erc1271HashForIsValidSignatureViaNestedEIP712(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual returns (bytes32, bytes calldata) {
         assembly {
             // Unwraps the ERC6492 wrapper if it exists.
             // See: https://eips.ethereum.org/EIPS/eip-6492
@@ -418,7 +425,11 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             let m := mload(0x40) // Cache the free memory pointer.
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
-            for {} 1 {} {
+            for {
+
+            } 1 {
+
+            } {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
@@ -438,9 +449,15 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
                 let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
                 d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
-                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
+                for {
+                    mstore(add(p, c), 40)
+                } 1 {
+                    p := add(p, 1)
+                } {
                     let b := byte(0, mload(p))
-                    if eq(40, b) { break }
+                    if eq(40, b) {
+                        break
+                    }
                     d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n")
@@ -470,16 +487,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
         version = "0.0.1";
-    }
-
-    /// @dev EIP712 hashTypedData method. 
-    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
-        return _hashTypedData(structHash);
-    }
-
-    /// @dev EIP712 domain separator.
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparator();
     }
 
     /// @dev Executes a single transaction based on the specified execution type.
