@@ -40,7 +40,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccount_WithHandleOps() public {
-        address payable accountAddress = calculateAccountAddress(user.addr);
+        address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = prepareInitCode(user.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -52,7 +52,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     }
 
     function test_DeployAccount_WithHandleOps_FailsIfAccountAlreadyExists() public {
-        address payable accountAddress = calculateAccountAddress(user.addr);
+        address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = prepareInitCode(user.addr);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
