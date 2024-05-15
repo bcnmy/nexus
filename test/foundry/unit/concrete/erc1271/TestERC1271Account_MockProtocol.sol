@@ -12,7 +12,6 @@ import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.
 // https://pastebin.com/y0hncv31
 
 contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
-
     struct _TestTemps {
         bytes32 userOpHash;
         bytes32 contents;
@@ -25,14 +24,12 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
     }
 
     // todo
-    bytes32 internal constant _PARENT_TYPEHASH =
-        0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
+    bytes32 internal constant _PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
 
     // todo // permit domain separator
     bytes32 internal _DOMAIN_SEP_B;
 
-
-    TokenWithPermit public permitToken;    
+    TokenWithPermit public permitToken;
 
     function setUp() public {
         init();
@@ -42,12 +39,19 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Success() public {
         _TestTemps memory t;
-        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        t.contents = keccak256(
+            abi.encode(
+                permitToken.PERMIT_TYPEHASH_LOCAL(),
+                address(ALICE_ACCOUNT),
+                address(0x69),
+                1e18,
+                permitToken.nonces(address(ALICE_ACCOUNT)),
+                block.timestamp
+            )
+        );
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
-        );
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), completeSignature);
         assertEq(ret, bytes4(0x1626ba7e));
@@ -57,12 +61,19 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Failure_WrongSigner() public {
         _TestTemps memory t;
-        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e18, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        t.contents = keccak256(
+            abi.encode(
+                permitToken.PERMIT_TYPEHASH_LOCAL(),
+                address(ALICE_ACCOUNT),
+                address(0x69),
+                1e18,
+                permitToken.nonces(address(ALICE_ACCOUNT)),
+                block.timestamp
+            )
+        );
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
-        );
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
@@ -73,12 +84,19 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     function test_isValidSignature_EIP712Sign_MockProtocol_MockValidator_Failure_SignWrongAllowance() public {
         _TestTemps memory t;
-        t.contents = keccak256(abi.encode(permitToken.PERMIT_TYPEHASH_LOCAL(), address(ALICE_ACCOUNT), address(0x69), 1e6, permitToken.nonces(address(ALICE_ACCOUNT)), block.timestamp));
+        t.contents = keccak256(
+            abi.encode(
+                permitToken.PERMIT_TYPEHASH_LOCAL(),
+                address(ALICE_ACCOUNT),
+                address(0x69),
+                1e6,
+                permitToken.nonces(address(ALICE_ACCOUNT)),
+                block.timestamp
+            )
+        );
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
-        );
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
@@ -120,18 +138,18 @@ contract TestERC1271Account_MockProtocol is Test, SmartAccountTestLab {
 
     function _accountDomainStructFields(address payable account) internal view returns (bytes memory) {
         _AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            Nexus(account).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = Nexus(account).eip712Domain();
 
-        return abi.encode(
-            t.fields,
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
-        );
+        return
+            abi.encode(
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
+            );
     }
 
     // @ TODO

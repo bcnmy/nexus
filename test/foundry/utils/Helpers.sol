@@ -230,18 +230,17 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // Helper to build a user operation struct for account abstraction tests
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
         return
-           
             PackedUserOperation({
-                    sender: sender,
-                    nonce: nonce,
-                    initCode: "",
-                    callData: "",
-                    accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                    preVerificationGas: 3e6,
-                    gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                    paymasterAndData: "",
-                    signature: ""
-                });
+                sender: sender,
+                nonce: nonce,
+                initCode: "",
+                callData: "",
+                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                preVerificationGas: 3e6,
+                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                paymasterAndData: "",
+                signature: ""
+            });
     }
 
     // Utility method to encode and sign a message, then pack r, s, v into bytes

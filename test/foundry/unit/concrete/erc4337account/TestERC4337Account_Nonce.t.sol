@@ -22,8 +22,7 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        Execution[] memory executions =
-            _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution[] memory executions = _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
