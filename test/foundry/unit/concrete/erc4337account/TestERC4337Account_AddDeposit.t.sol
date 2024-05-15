@@ -41,8 +41,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
         _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory executions =
-            _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_DEFAULT, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
@@ -70,8 +69,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
         _prefundSmartAccountAndAssertSuccess(address(account), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(account));
 
-        Execution[] memory executions =
-            _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = _prepareSingleExecution(address(account), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, account, EXECTYPE_TRY, executions);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 

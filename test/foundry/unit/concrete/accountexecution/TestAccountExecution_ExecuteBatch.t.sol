@@ -57,8 +57,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 numberOfExecutions = 3;
 
         payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
-        Execution[] memory executions =
-            _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
+        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         assertEq(receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH");
@@ -91,8 +90,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount));
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
+        PackedUserOperation[] memory approvalUserOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -103,8 +101,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps =
-            preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution);
+        PackedUserOperation[] memory transferUserOps = preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution);
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);

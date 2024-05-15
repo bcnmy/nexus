@@ -10,6 +10,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         fixtureModuleAddress();
         fixtureModuleTypeId();
     }
+
     // Fuzz testing for improper module installation with out-of-bounds parameters
     function testFuzz_InstallModule_WithInvalidParameters(uint256 randomTypeId, address randomAddress) public {
         // Restrict the type ID and address to ensure they are intentionally incorrect for testing
@@ -171,7 +172,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be uninstalled");
     }
 
-       function testFuzz_UninstallPreviousModule(uint256 moduleTypeId, address moduleAddress, bytes4 funcSig) public {
+    function testFuzz_UninstallPreviousModule(uint256 moduleTypeId, address moduleAddress, bytes4 funcSig) public {
         vm.assume(isValidModuleTypeId(moduleTypeId) && isValidModuleAddress(moduleAddress));
         testFuzz_InstallModule_CorrectType(moduleTypeId, moduleAddress, funcSig);
 
@@ -197,7 +198,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         bytes memory callData;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-        // Prepare the uninstallation calldata for Validation
+            // Prepare the uninstallation calldata for Validation
             (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
             address remove = address(VALIDATOR_MODULE);
             address prev = SentinelListHelper.findPrevious(array, remove);
@@ -216,7 +217,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             address remove = address(EXECUTOR_MODULE);
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, address(EXECUTOR_MODULE), abi.encode(prev, ""));
-                   Execution[] memory executions = new Execution[](1);
+            Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: callData });
 
             PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
@@ -372,7 +373,6 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should remain uninstalled");
     }
 
-
     // Helper function to check if the provided moduleAddress is valid
     function isValidModuleAddress(address moduleAddress) internal view returns (bool) {
         address[] memory moduleAddresses = fixtureModuleAddress();
@@ -394,8 +394,6 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         }
         return false;
     }
-
-
 
     function fixtureModuleAddress() public view returns (address[] memory) {
         address[] memory fixture = new address[](4);

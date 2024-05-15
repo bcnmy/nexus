@@ -23,12 +23,12 @@ contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
         init();
         // Load an existing smart account on the fork
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
-        
+
         // Load the existing entrypoint v0.6
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         // Load the existing entrypoint v0.7
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        
+
         // Deploy the new implementation of Modular Smart Account (Nexus)
         newImplementation = new Nexus();
 

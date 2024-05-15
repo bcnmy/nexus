@@ -270,8 +270,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory executionFirstInstall = new Execution[](1);
         executionFirstInstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataFirstInstall);
 
-        PackedUserOperation[] memory userOpsFirstInstall =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall);
+        PackedUserOperation[] memory userOpsFirstInstall = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall);
         ENTRYPOINT.handleOps(userOpsFirstInstall, payable(address(BOB.addr)));
 
         // Attempt to reinstall
@@ -285,8 +284,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
             "ModuleAlreadyInstalled(uint256,address)",
@@ -331,8 +329,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_HOOK, address(mockHook));
 

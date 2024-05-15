@@ -37,9 +37,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
-        installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
-        );
+        installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         assertTrue(
@@ -47,10 +45,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
             "New Mock Module should be installed initially"
         );
 
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Mock Module should be installed initially"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Mock Module should be installed initially");
 
         (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(VALIDATOR_MODULE);
@@ -178,25 +173,19 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
-    
-
-
     function test_UninstallModule_IncorrectType() public {
         bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_VALIDATOR,
+            address(mockValidator),
+            ""
         );
 
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Module should not be installed initially"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
 
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
-            "Module should not be installed"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
 
-        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
@@ -227,9 +216,6 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         );
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
-
-    
-
 
     function test_UninstallModule_NotInstalled() public {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
@@ -417,8 +403,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOpsUninstall =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
+        PackedUserOperation[] memory userOpsUninstall = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
         assertFalse(
@@ -441,8 +426,7 @@ contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOps =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
+        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
             "ModuleNotInstalled(uint256,address)",

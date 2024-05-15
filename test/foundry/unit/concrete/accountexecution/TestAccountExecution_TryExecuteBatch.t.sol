@@ -132,8 +132,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount));
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps =
-            preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
+        PackedUserOperation[] memory approvalUserOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution);
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -144,8 +143,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps =
-            preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution);
+        PackedUserOperation[] memory transferUserOps = preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution);
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);
