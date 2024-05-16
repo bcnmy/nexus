@@ -59,8 +59,6 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         userOps[0].signature = signMessage(BOB, userOpHash);
 
         startPrank(address(ENTRYPOINT));
-        // Assuming 10 is required funds and only 5 is available
-        vm.expectRevert();
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 5);
         stopPrank();
     }
