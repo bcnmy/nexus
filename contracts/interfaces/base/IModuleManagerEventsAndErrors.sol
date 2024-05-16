@@ -49,15 +49,6 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when there is an attempt to uninstall a module that is not installed.
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
 
-    /// @dev Thrown when a validator module is not compatible with the smart account.
-    error IncompatibleValidatorModule(address module);
-
-    /// @dev Thrown when an executor module is not compatible with the smart account.
-    error IncompatibleExecutorModule(address module);
-
-    /// @dev Thrown when a hook module is not compatible with the smart account.
-    error IncompatibleHookModule(address module);
-
     /// @dev Thrown when a module address is set to zero.
     error ModuleAddressCanNotBeZero();
 

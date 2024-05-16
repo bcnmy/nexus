@@ -29,8 +29,6 @@ contract EventsAndErrors {
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error UnauthorizedOperation(address operator);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
-    error IncompatibleValidatorModule(address module);
-    error IncompatibleExecutorModule(address module);
     error ModuleAddressCanNotBeZero();
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
