@@ -23,7 +23,6 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -151,11 +150,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
-        // Idea is should be able to check supported interface and module type - eligible validator
-        if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) {
-            revert IncompatibleValidatorModule(validator);
-        }
-
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
@@ -183,10 +177,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
-        // Should be able to check supported interface and module type - eligible validator
-        if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) {
-            revert IncompatibleExecutorModule(executor);
-        }
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -208,7 +198,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
-        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert IncompatibleHookModule(hook);
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
