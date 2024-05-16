@@ -65,14 +65,15 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
 
     function test_ValidateUserOp_InvalidNonce() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        uint256 incorrectNonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)) + 1; // deliberately incorrect
+        uint256 incorrectNonce = 123; // deliberately incorrect
         userOps[0] = buildPackedUserOp(userAddress, incorrectNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
 
         startPrank(address(ENTRYPOINT));
-        vm.expectRevert("Nonce mismatch");
-        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
+        
+        assertTrue(res == 1, "Operation with invalid nonce should fail validation");
     }
 }
