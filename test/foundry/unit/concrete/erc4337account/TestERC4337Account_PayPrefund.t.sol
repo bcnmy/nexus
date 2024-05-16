@@ -11,11 +11,10 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         init();
 
         signer = createAndFundWallet("Signer", 0.0001 ether);
-        account = deployAccount(signer, 0 ether);
+        account = deployAccount(signer, 0.0001 ether);
     }
 
     function testPayPrefund_WithSufficientFunds() public {
-        // Setup initial balances
         vm.deal(address(account), 1 ether);
 
         Execution[] memory executions = _prepareSingleExecution(address(account), 0, "");
@@ -23,7 +22,6 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
-        // ENTRYPOINT.handleOps(userOps, payable(signer.addr));
         prank(address(ENTRYPOINT));
         account.validateUserOp(userOps[0], userOpHash, 0.1 ether);
         stopPrank();
