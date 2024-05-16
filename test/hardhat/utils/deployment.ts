@@ -11,6 +11,7 @@ import {
   MockValidator,
   K1Validator,
   Nexus,
+  AccountFactoryOld,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -69,15 +70,15 @@ export async function getDeployedAccountFactory(
   implementationAddress: string,
   owner: string,
   // Note: this could be converted to dto so that additional args can easily be passed
-): Promise<AccountFactory> {
+): Promise<AccountFactoryOld> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const AccountFactory = await ethers.getContractFactory("AccountFactory");
+  const AccountFactoryOld = await ethers.getContractFactory("AccountFactoryOld");
   const deterministicAccountFactory = await deployments.deploy(
-    "AccountFactory",
+    "AccountFactoryOld",
     {
       from: addresses[0],
       deterministicDeployment: true,
@@ -85,9 +86,9 @@ export async function getDeployedAccountFactory(
     },
   );
 
-  return AccountFactory.attach(
+  return AccountFactoryOld.attach(
     deterministicAccountFactory.address,
-  ) as AccountFactory;
+  ) as AccountFactoryOld;
 }
 
 /**

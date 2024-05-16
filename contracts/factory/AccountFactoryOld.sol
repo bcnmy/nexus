@@ -27,7 +27,7 @@ import { IAccountFactoryOld } from "../interfaces/factory/IAccountFactoryOld.sol
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract AccountFactory is IAccountFactoryOld, Stakeable {
+contract AccountFactoryOld is IAccountFactoryOld, Stakeable {
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;

@@ -20,13 +20,14 @@ import {
   IExecutor,
   MockHook,
   MockHandler,
+  AccountFactoryOld,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  msaFactory: AccountFactory;
+  msaFactory: AccountFactoryOld;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
   counter: Counter;
@@ -43,7 +44,7 @@ export interface DeploymentFixtureWithSA {
   deployedMSAAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  msaFactory: AccountFactory;
+  msaFactory: AccountFactoryOld;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;

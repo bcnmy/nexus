@@ -192,11 +192,11 @@ export async function getInitCode(
   validatorAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
-  const AccountFactory = await ethers.getContractFactory("AccountFactory");
+  const AccountFactoryOld = await ethers.getContractFactory("AccountFactoryOld");
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   // Encode the createAccount function call with the provided parameters
-  const factoryDeploymentData = AccountFactory.interface
+  const factoryDeploymentData = AccountFactoryOld.interface
     .encodeFunctionData("createAccount", [
       validatorAddress,
       moduleInstallData,

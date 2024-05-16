@@ -12,6 +12,7 @@ import {
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   AccountFactory,
+  AccountFactoryOld,
   Counter,
   EntryPoint,
   MockValidator,
@@ -37,7 +38,7 @@ import {
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
-  let factory: AccountFactory;
+  let factory: AccountFactoryOld;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
