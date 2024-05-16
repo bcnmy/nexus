@@ -35,7 +35,8 @@ contract EventsAndErrors {
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
-    
+    error InvalidSignature();
+
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     error ERC1271InvalidSigner(address signer);
