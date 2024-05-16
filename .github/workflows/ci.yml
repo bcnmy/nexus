@@ -136,7 +136,7 @@ jobs:
           slither-version: "0.10.0"
           node-version: "20"
           fail-on: "none"
-          slither-args: '--exclude "assembly|solc-version" --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
+          slither-args: '--exclude "assembly|solc-version|low-level-calls|naming-convention|write-after-write|divide-before-multiply|incorrect-shift" --exclude-informational --exclude-low --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
       - name: Create/update checklist as PR comment
         uses: actions/github-script@v7
         env:

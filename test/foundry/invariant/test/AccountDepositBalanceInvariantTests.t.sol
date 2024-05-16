@@ -29,7 +29,7 @@ contract ERC4337AccountDepositBalanceInvariantTests is Test, SmartAccountTestLab
 
         // Use a small delta for balance checks to account for discrepancies
         uint256 allowedDelta = 0.001 ether;
-        require(
+        assertTrue(
             actualBalance >= expectedBalance - allowedDelta && actualBalance <= expectedBalance + allowedDelta,
             "Invariant failed: Deposit balance mismatch"
         );

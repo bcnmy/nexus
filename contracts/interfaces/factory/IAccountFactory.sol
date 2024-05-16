@@ -26,6 +26,9 @@ interface IAccountFactory {
     /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
 
+    /// @dev Thrown when the implementation address is zero address.
+    error ImplementationAddressCanNotBeZero();
+
     /// @notice Creates a new Smart Account with a specified validation module and initialization data.
     /// @dev Deploys a new Smart Account deterministically using EIP-1167 minimal proxy pattern and initializes it with the provided module and data.
     /// @param validationModule The address of the module used for validation in the new Smart Account.

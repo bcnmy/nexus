@@ -74,9 +74,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator;
-        uint256 nonce = userOp.nonce;
+        uint256 userOpnonce = userOp.nonce;
         assembly {
-            validator := shr(96, nonce)
+            validator := shr(96, userOpnonce)
         }
         // Check if validator is not enabled. If not, return VALIDATION_FAILED.
 
@@ -92,7 +92,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
@@ -119,7 +119,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             bytes[] memory returnData // TODO returnData is not used
         )
     {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_SINGLE) {
@@ -173,6 +173,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
             revert ModuleAlreadyInstalled(moduleTypeId, module);
         }
+        emit ModuleInstalled(moduleTypeId, module);
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
@@ -184,7 +185,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
-        emit ModuleInstalled(moduleTypeId, module);
     }
 
     /// @notice Uninstalls a module from the smart account.
@@ -202,12 +202,12 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
             revert ModuleNotInstalled(moduleTypeId, module);
         }
+        emit ModuleUninstalled(moduleTypeId, module);
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         else revert UnsupportedModuleType(moduleTypeId);
-        emit ModuleUninstalled(moduleTypeId, module);
     }
 
     /// @notice Initializes the smart account with a validator.
@@ -258,7 +258,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param mode The execution mode to evaluate.
     /// @return isSupported True if the execution mode is supported, false otherwise.
     function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
         return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
@@ -316,9 +316,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
-        newImplementation;
-    }
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
 
     /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
     ///
@@ -515,7 +513,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param additionalContext Additional context for checking installation.
     /// @return True if the module is installed, false otherwise.
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
-        additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
