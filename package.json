@@ -107,7 +107,7 @@
     "hooks": {
       "pre-commit": "yarn run check-branch-name && npm run lint-fix",
       "pre-push": "npm run check-branch-name",
-      "post-checkout": "npm run check-branch-name &&  yarn install"
+      "post-checkout": "npm run check-branch-name && yarn install && forge install"
     }
   }
 }

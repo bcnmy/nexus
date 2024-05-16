@@ -294,6 +294,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         address cursor,
         uint256 size
     ) private view returns (address[] memory array, address nextCursor) {
-        return list.getEntriesPaginated(cursor, size);
+        (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }
