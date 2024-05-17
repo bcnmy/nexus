@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../unit/shared/TestModuleManagement_Base.t.sol";
+import "../../../shared/TestModuleManagement_Base.t.sol";
 
 contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     function setUp() public {

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../base/BaseInvariantTest.t.sol";
+import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+import "../../utils/Imports.sol";
+
 
 // DepositManagementInvariantHandler manages deposit operations for a Nexus account,
 // ensuring invariants remain intact throughout the process.
-contract DepositManagementHandler is BaseInvariantTest {
+contract DepositManagementHandlerTest is InvariantBaseTest {
     Nexus internal nexusAccount;
     Vm.Wallet internal signer;
 

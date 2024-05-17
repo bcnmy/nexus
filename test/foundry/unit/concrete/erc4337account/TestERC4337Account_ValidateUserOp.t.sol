@@ -75,6 +75,7 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
 
+        startPrank(address(ENTRYPOINT));
         // Attempt to validate the user operation, expecting return value of 1 (failure)
         uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();

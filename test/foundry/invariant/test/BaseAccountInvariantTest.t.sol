@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../utils/SmartAccountTestLab.t.sol";
 
-contract BaseAccountInvariantTests is SmartAccountTestLab {
+contract BaseAccountInvariantTest is SmartAccountTestLab {
     MockValidator internal validator;
     Vm.Wallet internal signer;
     Nexus internal nexusAccount;

@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 import "../../utils/SmartAccountTestLab.t.sol";
 import "../../../../contracts/mocks/Counter.sol";
 import "../../../../contracts/mocks/MockToken.sol";
+import "../../utils/Imports.sol";
 
-// BaseInvariantTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
-contract BaseInvariantTest is SmartAccountTestLab {
+
+// InvariantBaseTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
+contract InvariantBaseTest is SmartAccountTestLab {
     Counter public counter;
     MockToken public token;
 

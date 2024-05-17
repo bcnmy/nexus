@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
 
-contract ERC4337AccountDepositBalanceInvariantTests is Test, SmartAccountTestLab {
+contract AccountDepositBalanceInvariantTest is Test, SmartAccountTestLab {
     uint256 private initialBalance;
 
     function setUp() public {

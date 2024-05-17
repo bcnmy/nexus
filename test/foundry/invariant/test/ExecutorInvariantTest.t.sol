@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../utils/SmartAccountTestLab.t.sol";
 
-contract ExecutorInvariantTests is SmartAccountTestLab {
+contract ExecutorInvariantTest is SmartAccountTestLab {
     MockExecutor public validExecutor;
     MockExecutor public invalidExecutor; // Another executor which is not installed
 

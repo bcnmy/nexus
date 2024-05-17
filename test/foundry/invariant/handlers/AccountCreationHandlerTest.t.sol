@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../base/BaseInvariantTest.t.sol";
+import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+import "../../utils/Imports.sol";
 
-// InvariantAccountCreationHandler is designed to handle invariant testing for the creation
+
+// AccountCreationHandlerTest is designed to handle invariant testing for the creation
 // of accounts using the AccountFactory.
-contract AccountCreationHandler is BaseInvariantTest {
+contract AccountCreationHandlerTest is InvariantBaseTest {
     IAccountFactory private accountFactory;
     address private validationModule;
     address private owner;

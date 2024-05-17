@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "../../utils/Imports.sol";
 import "../../utils/SmartAccountTestLab.t.sol";
 
-contract ERC4337AccountValidateUserOpInvariantTests is Test, SmartAccountTestLab {
+contract AccountValidateUserOpInvariantTest is Test, SmartAccountTestLab {
     Nexus public account;
     address public userAddress = address(BOB.addr);
 

@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/Imports.sol";
-import "../../utils/SmartAccountTestLab.t.sol";
-import "../../../../contracts/mocks/Counter.sol";
-import "../../../../contracts/mocks/MockToken.sol";
+import "../utils/Imports.sol";
+import "../utils/SmartAccountTestLab.t.sol";
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 

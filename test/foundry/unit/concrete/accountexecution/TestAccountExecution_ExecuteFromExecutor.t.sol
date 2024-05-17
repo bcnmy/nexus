@@ -3,9 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
-import { MockExecutor } from "../../../../../contracts/mocks/MockExecutor.sol";
-import { Counter } from "../../../../../contracts/mocks/Counter.sol";
-import "../../shared/TestAccountExecution_Base.t.sol"; // Ensure this import path matches your project structure
+import "../../../shared/TestAccountExecution_Base.t.sol";
 
 contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_Base {
     MockExecutor public mockExecutor;

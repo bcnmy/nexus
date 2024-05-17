@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../base/BaseInvariantTest.t.sol";
+import "../../utils/Imports.sol";
+import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 
-// InvariantExecutionHandler handles the execution of operations on a Nexus account,
+// ExecutionHandlerTest handles the execution of operations on a Nexus account,
 // ensuring that the expected state changes occur as per the invariants defined.
-contract ExecutionHandler is BaseInvariantTest {
+contract ExecutionHandlerTest is InvariantBaseTest {
     Nexus internal nexusAccount;
     Vm.Wallet internal signer;
     uint256 private totalDeposits; // Ghost variable to track total deposits for invariant checking

@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./base/BaseInvariantTest.t.sol";
-import "./handlers/AccountCreationHandler.t.sol";
-import "./handlers/DepositManagementHandler.t.sol";
+import "../utils/Imports.sol";
 
-import "./handlers/ExecutionHandler.t.sol";
-import "./handlers/ModuleManagementHandler.t.sol";
+import { InvariantBaseTest } from "./base/InvariantBaseTest.t.sol";
+import { ExecutionHandlerTest } from "./handlers/ExecutionHandlerTest.t.sol";
+import { AccountCreationHandlerTest } from "./handlers/AccountCreationHandlerTest.t.sol";
+import { ModuleManagementHandlerTest } from "./handlers/ModuleManagementHandlerTest.t.sol";
+import { DepositManagementHandlerTest } from "./handlers/DepositManagementHandlerTest.t.sol";
 
 // ActorManager is responsible for coordinating test actions across different actors using handlers.
-contract ActorManager is BaseInvariantTest {
+contract ActorManagerInvariantTest is InvariantBaseTest {
     struct ActorHandlers {
-        DepositManagementHandler depositHandler;
-        ModuleManagementHandler moduleHandler;
-        ExecutionHandler executionHandler;
-        AccountCreationHandler accountCreationHandler;
+        DepositManagementHandlerTest depositHandler;
+        ModuleManagementHandlerTest moduleHandler;
+        ExecutionHandlerTest executionHandler;
+        AccountCreationHandlerTest accountCreationHandler;
     }
 
     ActorHandlers[] public actorHandlers;
@@ -34,10 +35,10 @@ contract ActorManager is BaseInvariantTest {
         // Initialize the handlers for each actor
         for (uint i = 0; i < actors.length; i++) {
             // ExecutionHandler executionHandler = new ExecutionHandler(actorAccounts[i], actors[i]);
-            DepositManagementHandler depositHandler = new DepositManagementHandler(actorAccounts[i], actors[i]);
-            ModuleManagementHandler moduleHandler = new ModuleManagementHandler(actorAccounts[i], actors[i]);
-            AccountCreationHandler accountCreationHandler = new AccountCreationHandler(FACTORY, validationModule, actors[i].addr);
-            ExecutionHandler executionHandler = new ExecutionHandler(actorAccounts[i], actors[i]);
+            DepositManagementHandlerTest depositHandler = new DepositManagementHandlerTest(actorAccounts[i], actors[i]);
+            ModuleManagementHandlerTest moduleHandler = new ModuleManagementHandlerTest(actorAccounts[i], actors[i]);
+            AccountCreationHandlerTest accountCreationHandler = new AccountCreationHandlerTest(FACTORY, validationModule, actors[i].addr);
+            ExecutionHandlerTest executionHandler = new ExecutionHandlerTest(actorAccounts[i], actors[i]);
 
             // Store all handlers in an array for each actor
             actorHandlers.push(

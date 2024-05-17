@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/Imports.sol";
-import "../../utils/SmartAccountTestLab.t.sol";
-import { MockValidator } from "../../../../contracts/mocks/MockValidator.sol";
-import { MockExecutor } from "../../../../contracts/mocks/MockExecutor.sol";
-import { MockHandler } from "../../../../contracts/mocks/MockHandler.sol";
-import { MockHook } from "../../../../contracts/mocks/MockHook.sol";
+import "../utils/Imports.sol";
+import "../utils/SmartAccountTestLab.t.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 

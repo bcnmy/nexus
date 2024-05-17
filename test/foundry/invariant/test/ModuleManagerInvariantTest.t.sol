@@ -2,14 +2,55 @@
 pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
-import "../../unit/shared/TestModuleManagement_Base.t.sol";
+import {InvariantBaseTest} from "../base/InvariantBaseTest.t.sol";
+import {ModuleManagementHandlerTest} from "../handlers/ModuleManagementHandlerTest.t.sol";
 
-contract ModuleManagerInvariantTests is TestModuleManagement_Base {
-    function setUp() public {
-        setUpModuleManagement_Base();
+contract ModuleManagerInvariantTest is InvariantBaseTest {
+    ModuleManagementHandlerTest public handler;
+    Nexus public nexusAccount;
+    Vm.Wallet public signer;
+    MockValidator public mockValidator;
+    MockExecutor public mockExecutor;
+    MockHandler public mockHandler;
+    MockHook public mockHook;
+
+
+    function setUp() public override {
+        super.setUp();
+        signer = newWallet("Signer");
+        vm.deal(signer.addr, 100 ether);
+        nexusAccount = deployAccount(signer, 1 ether);
+
+        handler = new ModuleManagementHandlerTest(nexusAccount, signer);
+
+        // Setting up the test environment
+        vm.deal(address(handler), 100 ether);
+        // targetContract(address(handler));
+
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = ModuleManagementHandlerTest.installModule.selector;
+        selectors[1] = ModuleManagementHandlerTest.uninstallModule.selector;
+
+        // // Set the fuzzer to only call the specified methods
+        targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
+
+                mockValidator = new MockValidator();
+        mockExecutor = new MockExecutor();
+        mockHandler = new MockHandler();
+        mockHook = new MockHook();
     }
 
-    /// @notice Invariant to check the persistent installation of the Validator module
+    function invariant_moduleInstallation() public {
+        // Ensuring a module remains installed after a test cycle
+        assertTrue(handler.checkModuleInstalled(1, address(VALIDATOR_MODULE)), "Invariant failed: Module should be installed.");
+    }
+
+    function invariant_moduleUninstallation() public {
+        // Ensuring a module remains uninstalled after a test cycle
+        assertFalse(handler.checkModuleInstalled(1, address(EXECUTOR_MODULE)), "Invariant failed: Module should be uninstalled.");
+    }
+
+     /// @notice Invariant to check the persistent installation of the Validator module
     function invariantTest_ValidatorModuleInstalled() public {
         // Validator module should always be installed on BOB_ACCOUNT
         assertTrue(BOB_ACCOUNT.isModuleInstalled(1, address(VALIDATOR_MODULE), ""), "Validator Module should be consistently installed.");

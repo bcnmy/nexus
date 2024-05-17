@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./ArbitrumForkSettings.t.sol";
-import "../../../contracts/Nexus.sol";
-import "../../../contracts/mocks/MockToken.sol";
-import "../utils/SmartAccountTestLab.t.sol";
-import "../../../contracts/interfaces/base/IAccountConfig.sol";
-import "./TestInterfacesAndStructs.t.sol";
+import "../../utils/Imports.sol";
+import { ArbitrumSettings } from "./ArbitrumSettings.t.sol";
+import { SmartAccountTestLab } from "../../utils/SmartAccountTestLab.t.sol";
+import { UserOperation } from "../../shared/interfaces/UserOperation.t.sol";
+import { IEntryPointV_0_6 } from "../../shared/interfaces/IEntryPointV_0_6.t.sol";
+import { IBiconomySmartAccountV2 } from "../../shared/interfaces/IBiconomySmartAccountV2.t.sol";
 
-contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
-    IBiconomySmartAccountV2 public smartAccountV2;
-    IEntryPointV_0_6 public ENTRYPOINT_V_0_6;
-    IEntryPoint public ENTRYPOINT_V_0_7;
+
+contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSettings {
+    
+    Vm.Wallet internal signer;
     Nexus public newImplementation;
     uint256 internal signerPrivateKey;
-    Vm.Wallet signer;
+    IEntryPoint public ENTRYPOINT_V_0_7;
+    IEntryPointV_0_6 public ENTRYPOINT_V_0_6;
+    IBiconomySmartAccountV2 public smartAccountV2;
 
     function setUp() public {
         uint mainnetFork = vm.createFork(ARBITRUM_RPC_URL);

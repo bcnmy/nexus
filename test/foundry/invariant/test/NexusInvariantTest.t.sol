@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../utils/SmartAccountTestLab.t.sol";
 
-contract NexusInvariantTests is SmartAccountTestLab {
+contract NexusInvariantTest is SmartAccountTestLab {
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT
     }

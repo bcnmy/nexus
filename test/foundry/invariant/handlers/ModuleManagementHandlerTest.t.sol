@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../base/BaseInvariantTest.t.sol";
+import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+import "../../utils/Imports.sol";
 
-contract ModuleManagementHandler is BaseInvariantTest {
+
+contract ModuleManagementHandlerTest is InvariantBaseTest {
     Nexus public nexusAccount;
     Vm.Wallet public signer;
 
