@@ -16,7 +16,7 @@ contract ExecutorInvariantTest is SmartAccountTestLab {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(validExecutor), "");
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 

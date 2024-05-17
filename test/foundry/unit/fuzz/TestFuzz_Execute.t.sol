@@ -25,7 +25,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -36,7 +36,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -47,20 +47,20 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
     function testFuzz_ExecuteBatchDefault(Execution[] calldata executions) public {
         vm.assume(executions.length > 0);
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
     function testFuzz_ExecuteBatchTry(Execution[] calldata executions) public {
         vm.assume(executions.length > 0);
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -72,7 +72,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(counter), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         }
         assertEq(counter.getNumber(), numIncrements, "Counter increments mismatch");
@@ -89,7 +89,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(counter), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         }
         assertEq(counter.getNumber(), initialCount - numDecrements, "Counter decrements mismatch");
@@ -105,7 +105,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(token), value: 0, callData: transferCallData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Check final balances to ensure transfer was successful
@@ -126,7 +126,7 @@ contract TestFuzz_Execute is SmartAccountTestLab {
             executions[i] = Execution({ target: address(token), value: 0, callData: transferCallData });
         }
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Optionally verify the results for each receiver

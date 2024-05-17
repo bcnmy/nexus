@@ -19,7 +19,7 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
         super.setUp();
         signer = newWallet("Signer");
         vm.deal(signer.addr, 100 ether);
-        nexusAccount = deployAccount(signer, 1 ether);
+        nexusAccount = deployNexus(signer, 1 ether, address(VALIDATOR_MODULE));
 
         handler = new ModuleManagementHandlerTest(nexusAccount, signer);
 
@@ -34,7 +34,7 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
         // // Set the fuzzer to only call the specified methods
         targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
 
-                mockValidator = new MockValidator();
+        mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
         mockHandler = new MockHandler();
         mockHook = new MockHook();
@@ -63,7 +63,7 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 

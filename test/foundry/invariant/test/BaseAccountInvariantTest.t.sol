@@ -17,7 +17,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
         signer = newWallet("Signer");
         vm.deal(signer.addr, 100 ether);
         vm.deal(address(nexusAccount), 100 ether);
-        nexusAccount = deployAccountWithCustomValidator(signer, 10 ether, address(validator));
+        nexusAccount = deployNexus(signer, 10 ether, address(validator));
 
         bytes memory installData = abi.encodePacked(signer.addr);
 
@@ -28,7 +28,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
             callData: abi.encodeWithSelector(MockValidator.onInstall.selector, installData)
         });
 
-        PackedUserOperation[] memory userOps = prepareUserOperationWithCustomValidator(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             signer,
             nexusAccount,
             EXECTYPE_DEFAULT,
@@ -71,7 +71,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
             abi.encodeWithSelector(nexusAccount.withdrawDepositTo.selector, address(signer.addr), depositAmount)
         );
 
-        PackedUserOperation[] memory userOps = prepareUserOperationWithCustomValidator(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             signer,
             nexusAccount,
             EXECTYPE_DEFAULT,
@@ -100,7 +100,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(nexusAccount), 0.4 ether, abi.encodeWithSelector(nexusAccount.addDeposit.selector));
 
-        PackedUserOperation[] memory userOps = prepareUserOperationWithCustomValidator(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             signer,
             nexusAccount,
             EXECTYPE_DEFAULT,
@@ -124,7 +124,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
                 0.4 ether,
                 abi.encodeWithSelector(nexusAccount.addDeposit.selector)
             );
-            PackedUserOperation[] memory userOps = prepareUserOperationWithCustomValidator(
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
                 signer,
                 nexusAccount,
                 EXECTYPE_DEFAULT,
@@ -149,9 +149,9 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
 
         // Create an array of PackedUserOperations
         PackedUserOperation[] memory userOps = new PackedUserOperation[](3);
-        userOps[0] = prepareUserOperationWithCustomValidator(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
-        userOps[1] = prepareUserOperationWithCustomValidator(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
-        userOps[2] = prepareUserOperationWithCustomValidator(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
+        userOps[0] = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
+        userOps[1] = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
+        userOps[2] = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, execution, address(validator))[0];
 
         uint256 initialNonce = getNonce(address(nexusAccount), address(validator));
         // Set proper nonce values for each user operation

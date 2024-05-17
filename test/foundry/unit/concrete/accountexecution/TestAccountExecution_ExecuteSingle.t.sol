@@ -16,11 +16,12 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Assuming you have a method to prepare a UserOperation for a single execution
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             BOB, // Assuming `BOB` is defined in your base test setup
             BOB_ACCOUNT, // Assuming `BOB_ACCOUNT` is defined in your base test setup
             EXECTYPE_DEFAULT,
-            execution
+            execution,
+            address(VALIDATOR_MODULE)
         );
 
         // Execute the single operation
@@ -38,7 +39,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
@@ -61,7 +62,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(0), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -75,7 +76,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(0), 0, "");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -93,7 +94,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -109,11 +110,12 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             BOB, // Sender of the operation
             BOB_ACCOUNT, // Nexus executing the operation
             EXECTYPE_DEFAULT,
-            execution
+            execution,
+            address(VALIDATOR_MODULE)
         );
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -131,7 +133,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
+        PackedUserOperation[] memory approveOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 

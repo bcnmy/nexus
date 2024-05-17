@@ -68,7 +68,7 @@ contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSetting
 
         // Prepare the user operation
         UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = preparePackedUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
+        userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
 
         bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
 
@@ -110,11 +110,12 @@ contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSetting
         execution[0] = Execution(address(usdc), 0, callData);
 
         // Pack user operation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
             BOB,
             Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))),
             EXECTYPE_DEFAULT,
-            execution
+            execution,
+            address(VALIDATOR_MODULE)
         );
 
         // Execute the operation via the EntryPoint
@@ -137,7 +138,7 @@ contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSetting
         execution[0] = Execution(recipient, amount, "");
 
         // Pack user operation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
 
         // Execute the operation via the EntryPoint
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
@@ -146,7 +147,7 @@ contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSetting
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
 
-    function preparePackedUserOperation(
+    function buildUserOperation(
         address from,
         bytes memory callData,
         uint256 value,

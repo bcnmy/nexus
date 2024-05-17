@@ -10,7 +10,7 @@ contract SmartAccountTestLab is Helpers {
     Nexus public implementation;
 
     function init() internal {
-        initializeTestingEnvironment();
+        setupTestEnvironment();
     }
 
     function _prefundSmartAccountAndAssertSuccess(address sa, uint256 prefundAmount) internal {

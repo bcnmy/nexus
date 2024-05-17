@@ -20,7 +20,7 @@ contract ModuleManagementHandlerTest is InvariantBaseTest {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(nexusAccount), value: 0, callData: callData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps =  buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
     }
 
@@ -30,7 +30,7 @@ contract ModuleManagementHandlerTest is InvariantBaseTest {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(nexusAccount), value: 0, callData: callData });
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps =  buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
     }
 

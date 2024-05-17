@@ -12,7 +12,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     bytes initData;
 
     function setUp() public {
-        super.initializeTestingEnvironment();
+        super.setupTestEnvironment();
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
@@ -41,10 +41,10 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
     function test_DeployAccount_WithHandleOps() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
-        bytes memory initCode = prepareInitCode(user.addr);
+        bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInitAndCalldata(user, initCode, "");
+        userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
@@ -53,10 +53,10 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
     function test_DeployAccount_WithHandleOps_FailsIfAccountAlreadyExists() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
-        bytes memory initCode = prepareInitCode(user.addr);
+        bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = prepareUserOpWithInitAndCalldata(user, initCode, "");
+        userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
 
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));

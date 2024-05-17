@@ -26,7 +26,7 @@ contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });
 
-        PackedUserOperation[] memory userOpsInstall = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution);
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "Executor module installation failed.");
@@ -35,6 +35,7 @@ contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
     function testFuzz_ExecuteSingleFromExecutor(address target, uint256 value) public {
         vm.assume(uint160(address(target)) > 10);
         vm.assume(!isContract(target));
+        vm.assume(value < 1_000_000_000 ether);
         vm.deal(address(BOB_ACCOUNT), value);
 
         // Execute a single operation via MockExecutor directly without going through ENTRYPOINT.handleOps

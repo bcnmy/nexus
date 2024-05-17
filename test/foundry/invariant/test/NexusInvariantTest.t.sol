@@ -27,12 +27,12 @@ contract NexusInvariantTest is SmartAccountTestLab {
             ""
         );
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
-        PackedUserOperation[] memory userOpsInstall = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         // Now execute should work
         executions[0] = Execution(address(EXECUTOR_MODULE), 0, execCallData);
-        PackedUserOperation[] memory userOpsExec = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOpsExec = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
     }
 
@@ -44,7 +44,7 @@ contract NexusInvariantTest is SmartAccountTestLab {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         uint256 finalNonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));

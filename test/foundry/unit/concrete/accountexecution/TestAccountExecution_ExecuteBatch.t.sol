@@ -15,7 +15,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
 
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), executionsNumber, "Counter value should increment twice after batch execution");
@@ -29,7 +29,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Execute batch operation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
 
@@ -45,7 +45,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         // Initial state assertion
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(address(counter), 0, ""), 3);
         // Execute batch operation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         assertEq(counter.getNumber(), 0);
     }
@@ -58,7 +58,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
         payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
         Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         assertEq(receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH");
     }
@@ -71,7 +71,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         executions[1] = Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Execute batch operations
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Assertions
@@ -90,7 +90,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount));
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution);
+        PackedUserOperation[] memory approvalUserOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE));
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -101,7 +101,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps = preparePackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution);
+        PackedUserOperation[] memory transferUserOps = buildPackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution, address(VALIDATOR_MODULE));
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);
@@ -152,7 +152,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         userOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
 

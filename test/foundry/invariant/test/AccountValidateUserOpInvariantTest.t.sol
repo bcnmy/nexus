@@ -23,7 +23,7 @@ contract AccountValidateUserOpInvariantTest is Test, SmartAccountTestLab {
         executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("someExistingMethod()") });
 
         // Use helpers to prepare user operation
-        PackedUserOperation[] memory userOps = preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         // Execute the operation
         ENTRYPOINT.handleOps(userOps, payable(BOB_ACCOUNT));
