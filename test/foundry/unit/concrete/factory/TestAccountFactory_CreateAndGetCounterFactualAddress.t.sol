@@ -14,7 +14,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
     function setUp() public {
         super.initializeTestingEnvironment();
         user = newWallet("user");
-        setBalance(user.addr, 1 ether);
+        vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
     }
 
