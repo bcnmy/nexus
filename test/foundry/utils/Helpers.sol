@@ -76,7 +76,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function deployContracts() internal {
         ENTRYPOINT = new EntryPoint();
-        changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ACCOUNT_IMPLEMENTATION = new Nexus();
         FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
@@ -117,11 +117,11 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function deployAccounts() internal {
         BOB_ACCOUNT = deployAccount(BOB, 100 ether);
-        labelAddress(address(BOB_ACCOUNT), "BOB_ACCOUNT");
+        vm.label(address(BOB_ACCOUNT), "BOB_ACCOUNT");
         ALICE_ACCOUNT = deployAccount(ALICE, 100 ether);
-        labelAddress(address(ALICE_ACCOUNT), "ALICE_ACCOUNT");
+        vm.label(address(ALICE_ACCOUNT), "ALICE_ACCOUNT");
         CHARLIE_ACCOUNT = deployAccount(CHARLIE, 100 ether);
-        labelAddress(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
+        vm.label(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
 
     function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
@@ -220,12 +220,6 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // Utility Functions
     // -----------------------------------------
-
-    // Helper to modify the address of a deployed contract in a test environment
-    function changeContractAddress(address originalAddress, address newAddress) internal {
-        setContractCode(originalAddress, originalAddress.code);
-        setContractCode(newAddress, originalAddress.code);
-    }
 
     // Helper to build a user operation struct for account abstraction tests
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
