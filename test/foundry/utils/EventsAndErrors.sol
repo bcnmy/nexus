@@ -35,7 +35,6 @@ contract EventsAndErrors {
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
     error InvalidSignature();
 
-
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     error ERC1271InvalidSigner(address signer);
