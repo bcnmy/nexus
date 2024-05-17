@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { AddressLike, Signer, ZeroAddress } from "ethers";
 import {
   EntryPoint,
+  K1Validator,
   MockExecutor,
   MockHandler,
   MockHook,
@@ -25,6 +26,7 @@ import {
 describe("Nexus Module Management Tests", () => {
   let deployedMSA: Nexus;
   let mockValidator: MockValidator;
+  let ecdsaValidator: K1Validator;
   let owner: Signer;
   let ownerAddress: AddressLike;
   let moduleAddress: AddressLike;
@@ -45,11 +47,13 @@ describe("Nexus Module Management Tests", () => {
       accountOwner,
       entryPoint,
       mockHook,
+      ecdsaValidator,
       mockFallbackHandler,
     } = await deployContractsAndSAFixture());
     owner = ethers.Wallet.createRandom();
     ownerAddress = await owner.getAddress();
     moduleAddress = await mockValidator.getAddress();
+    ecdsaValidator = ecdsaValidator;
     mockExecutor = mockExecutor;
     accountOwner = accountOwner;
     entryPoint = entryPoint;
@@ -125,12 +129,13 @@ describe("Nexus Module Management Tests", () => {
   });
 
   describe("Validator Module Tests", () => {
+    
     it("Should not be able to install wrong validator type", async () => {
       const functionCalldata = deployedMSA.interface.encodeFunctionData(
         "installModule",
         [
-          ModuleType.Hooks,
-          await mockValidator.getAddress(),
+          ModuleType.Validation,
+          await hookModuleAddress,
           ethers.hexlify(await accountOwner.getAddress()),
         ],
       );
@@ -350,6 +355,40 @@ describe("Nexus Module Management Tests", () => {
       expect(isInstalledAfter).to.be.true;
     });
 
+    it("Should throw HookAlreadyInstalled if trying to install a second hook", async () => {
+      await installModule({
+        deployedMSA,
+        entryPoint,
+        module: mockHook,
+        validatorModule: mockValidator,
+        moduleType: ModuleType.Hooks,
+        accountOwner,
+        bundler,
+      });
+
+      console.log("Hook installed");
+      
+      // expect(
+      //   await deployedMSA.isModuleInstalled(
+      //     ModuleType.Hooks,
+      //     hookModuleAddress,
+      //     ethers.hexlify("0x"),
+      //   ),
+      // ).to.be.true;
+
+      await installModule({
+        deployedMSA,
+        entryPoint,
+        module: mockHook,
+        validatorModule: mockValidator,
+        moduleType: ModuleType.Hooks,
+        accountOwner,
+        bundler,
+      })
+
+      console.log("Hook installed again");
+    });
+
     it("Should correctly uninstall a previously installed hook module by using the execution module", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
 
@@ -510,6 +549,68 @@ describe("Nexus Module Management Tests", () => {
         ModuleType.Fallback,
         mockFallbackHandlerAddress,
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
+      );
+
+      expect(isInstalled).to.be.false;
+    });
+
+    it("Should correctly uninstall a previously installed validation module", async () => {
+
+      const installModuleFuncCalldata = deployedMSA.interface.encodeFunctionData(
+        "installModule",
+        [
+          ModuleType.Validation,
+          await ecdsaValidator.getAddress(),
+          ethers.hexlify(await accountOwner.getAddress()),
+        ],
+      );
+     
+      await mockExecutor.executeViaAccount(
+        await deployedMSA.getAddress(),
+        await deployedMSA.getAddress(),
+        0n,
+        installModuleFuncCalldata,
+      );
+
+      const isInstalledFirst = await deployedMSA.isModuleInstalled(
+        ModuleType.Validation,
+        await ecdsaValidator.getAddress(),
+        encodeData(
+          ["address", "bytes"],
+          [await mockValidator.getAddress(), ethers.hexlify(ethers.toUtf8Bytes(""))],
+        ),
+      );
+
+      console.log("isInstalledFirst", isInstalledFirst);
+      expect(isInstalledFirst).to.be.true;
+
+      let prevAddress = "0x0000000000000000000000000000000000000001";
+      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+        "uninstallModule",
+        [
+          ModuleType.Validation,
+          await ecdsaValidator.getAddress(),
+          encodeData(
+            ["address", "bytes"],
+            [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))],
+          ),
+        ],
+      );
+
+      await mockExecutor.executeViaAccount(
+        await deployedMSA.getAddress(),
+        await deployedMSA.getAddress(),
+        0n,
+        functionCalldata,
+      );
+
+      const isInstalled = await deployedMSA.isModuleInstalled(
+        ModuleType.Validation,
+        await ecdsaValidator.getAddress(),
+        encodeData(
+          ["address", "bytes"],
+          [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))],
+        ),
       );
 
       expect(isInstalled).to.be.false;

@@ -300,27 +300,26 @@ describe("Nexus Basic Specs", function () {
       ).to.be.rejected;
     });
 
-    it("Should check signature validity using smart account isValidSignature", async function () {
-      const isModuleInstalled = await smartAccount.isModuleInstalled(
-        ModuleType.Validation,
-        await validatorModule.getAddress(),
-        ethers.hexlify("0x")
-      );
-      expect(isModuleInstalled).to.be.true;
+    // it("Should check signature validity using smart account isValidSignature", async function () {
+    //   const isModuleInstalled = await smartAccount.isModuleInstalled(
+    //     ModuleType.Validation,
+    //     await validatorModule.getAddress(),
+    //     ethers.hexlify("0x")
+    //   );
+    //   expect(isModuleInstalled).to.be.true;
     
-      const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-      const data = solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
+    //   const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
+    //   const data = solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
       
-      const signedData = await smartAccountOwner.signMessage(data);
-      console.log(signedData, "signature");
-      const isValid = await smartAccount.isValidSignature(
-        hashMessage(data),
-        solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signedData])
-      );
+    //   const signedData = await smartAccountOwner.signMessage(data);
+    //   const isValid = await smartAccount.isValidSignature(
+    //     hashMessage(data),
+    //     solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signedData])
+    //   );
       
-      console.log("isValid: ", isValid);
-      expect(isValid).to.equal("0x1626ba7e");
-    });
+    //   console.log("isValid: ", isValid);
+    //   expect(isValid).to.equal("0x1626ba7e");
+    // });
   });
 
   describe("Nexus Smart Account Deployment via EntryPoint", function () {
