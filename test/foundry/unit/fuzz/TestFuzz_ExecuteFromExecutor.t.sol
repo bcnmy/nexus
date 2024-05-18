@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract TestFuzz_ExecuteFromExecutor is SmartAccountTestLab {
+contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
     MockExecutor public mockExecutor;
     Counter public counter;
     MockToken public token;

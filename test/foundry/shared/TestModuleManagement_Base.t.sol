@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "../utils/Imports.sol";
-import "../utils/SmartAccountTestLab.t.sol";
+import "../utils/NexusTest_Base.t.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 
@@ -10,7 +10,7 @@ event ModuleUninstalled(uint256 moduleTypeId, address module);
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
+abstract contract TestModuleManagement_Base is Test, NexusTest_Base {
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;

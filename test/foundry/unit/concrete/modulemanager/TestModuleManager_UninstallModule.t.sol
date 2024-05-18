@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 
 contract TestModuleManager_UninstallModule is Test, TestModuleManagement_Base {

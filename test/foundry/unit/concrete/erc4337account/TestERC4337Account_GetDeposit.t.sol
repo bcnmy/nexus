@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 // import {UserOperation} from "path/to/UserOperation.sol"; // Update this path
 
-contract TestERC4337Account_GetDeposit is Test, SmartAccountTestLab {
+contract TestERC4337Account_GetDeposit is Test, NexusTest_Base {
     uint256 initialDeposit;
     uint256 defaultMaxPercentDelta;
 

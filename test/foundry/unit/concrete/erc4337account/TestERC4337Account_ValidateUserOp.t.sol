@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
-contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
+contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
     address public userAddress;
 
     function setUp() public {

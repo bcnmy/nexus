@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract BaseAccountInvariantTest is SmartAccountTestLab {
+contract BaseAccountInvariantTest is NexusTest_Base {
     MockValidator internal validator;
     Vm.Wallet internal signer;
     Nexus internal nexusAccount;

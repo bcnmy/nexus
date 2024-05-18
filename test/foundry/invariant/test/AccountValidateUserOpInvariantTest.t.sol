@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract AccountValidateUserOpInvariantTest is Test, SmartAccountTestLab {
+contract AccountValidateUserOpInvariantTest is Test, NexusTest_Base {
     Nexus public account;
     address public userAddress = address(BOB.addr);
 

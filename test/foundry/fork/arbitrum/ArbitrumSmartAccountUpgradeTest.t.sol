@@ -3,13 +3,13 @@ pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
 import { ArbitrumSettings } from "./ArbitrumSettings.t.sol";
-import { SmartAccountTestLab } from "../../utils/SmartAccountTestLab.t.sol";
+import { NexusTest_Base } from "../../utils/NexusTest_Base.t.sol";
 import { UserOperation } from "../../shared/interfaces/UserOperation.t.sol";
 import { IEntryPointV_0_6 } from "../../shared/interfaces/IEntryPointV_0_6.t.sol";
 import { IBiconomySmartAccountV2 } from "../../shared/interfaces/IBiconomySmartAccountV2.t.sol";
 
 
-contract ArbitrumSmartAccountUpgradeTest is SmartAccountTestLab, ArbitrumSettings {
+contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     
     Vm.Wallet internal signer;
     Nexus public newImplementation;

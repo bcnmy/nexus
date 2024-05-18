@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract AccountDepositBalanceInvariantTest is Test, SmartAccountTestLab {
+contract AccountDepositBalanceInvariantTest is Test, NexusTest_Base {
     uint256 private initialBalance;
 
     function setUp() public {

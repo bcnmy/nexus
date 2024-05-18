@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract NexusInvariantTest is SmartAccountTestLab {
+contract NexusInvariantTest is NexusTest_Base {
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT
     }

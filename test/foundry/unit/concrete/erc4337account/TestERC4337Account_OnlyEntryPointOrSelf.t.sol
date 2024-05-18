@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
-contract TestERC4337Account_OnlyEntryPointOrSelf is Test, SmartAccountTestLab {
+contract TestERC4337Account_OnlyEntryPointOrSelf is Test, NexusTest_Base {
     function setUp() public {
         init();
         BOB_ACCOUNT.addDeposit{ value: 1 ether }(); // Ensure BOB_ACCOUNT has ether for operations requiring ETH transfers.

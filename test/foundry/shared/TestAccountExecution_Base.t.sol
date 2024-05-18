@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "../utils/Imports.sol";
-import "../utils/SmartAccountTestLab.t.sol";
+import "../utils/NexusTest_Base.t.sol";
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-abstract contract TestAccountExecution_Base is Test, SmartAccountTestLab {
+abstract contract TestAccountExecution_Base is Test, NexusTest_Base {
     ExecutionMode public singleMode;
     ExecutionMode public batchMode;
     ExecutionMode public unsupportedMode;

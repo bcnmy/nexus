@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
-contract TestAccountConfig_SupportsExecutionMode is Test, SmartAccountTestLab {
+contract TestAccountConfig_SupportsExecutionMode is Test, NexusTest_Base {
     Nexus public accountConfig;
 
     function setUp() public {

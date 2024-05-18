@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/Helpers.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/TestHelper.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 import { MockValidator } from "../../../../../contracts/mocks/MockValidator.sol";
 
-contract TestAccountFactory_Operations is SmartAccountTestLab {
+contract TestAccountFactory_Operations is NexusTest_Base {
     // Initialize the testing environment and deploy necessary contracts
     Vm.Wallet public user;
     bytes initData;

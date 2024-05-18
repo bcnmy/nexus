@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 import "../../../../contracts/mocks/Counter.sol";
 import "../../../../contracts/mocks/MockToken.sol";
 import "../../utils/Imports.sol";
 
 
 // InvariantBaseTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
-contract InvariantBaseTest is SmartAccountTestLab {
+contract InvariantBaseTest is NexusTest_Base {
     Counter public counter;
     MockToken public token;
 
-    // Initializes the SmartAccountTestLab environment along with specific test setups
+    // Initializes the NexusTest_Base environment along with specific test setups
     function setUp() public virtual {
         init(); // Initializes wallets, accounts, and contracts including ENTRYPOINT and ACCOUNT_IMPLEMENTATION
         counter = new Counter();

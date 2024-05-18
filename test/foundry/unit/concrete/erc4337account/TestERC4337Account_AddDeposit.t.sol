@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
 event Deposited(address indexed account, uint256 totalDeposit);
 
-contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
+contract TestERC4337Account_addDeposit is Test, NexusTest_Base {
     uint256 defaultMaxPercentDelta;
     uint256 defaultDepositAmount;
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract TestFuzz_ERC4337Account is SmartAccountTestLab {
+contract TestFuzz_ERC4337Account is NexusTest_Base {
     address public userAddress = address(BOB.addr);
     function setUp() public {
         init(); // Initializes all required contracts and wallets

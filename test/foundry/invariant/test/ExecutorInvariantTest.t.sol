@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 
-contract ExecutorInvariantTest is SmartAccountTestLab {
+contract ExecutorInvariantTest is NexusTest_Base {
     MockExecutor public validExecutor;
     MockExecutor public invalidExecutor; // Another executor which is not installed
 

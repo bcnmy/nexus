@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/SmartAccountTestLab.t.sol";
+import "../../utils/NexusTest_Base.t.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../../../../contracts/lib/ModeLib.sol";
 
-contract TestFuzz_Execute is SmartAccountTestLab {
+contract TestFuzz_Execute is NexusTest_Base {
     // Fixture arrays for CallType and ExecType
     CallType[] public fixtureCallType = [CALLTYPE_SINGLE, CALLTYPE_BATCH];
     ExecType[] public fixtureExecType = [EXECTYPE_DEFAULT, EXECTYPE_TRY];

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 // import {UserOperation} from "path/to/UserOperation.sol"; // Update this path
 
-contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
+contract TestERC4337Account_Nonce is Test, NexusTest_Base {
     Counter public counter;
 
     function setUp() public {

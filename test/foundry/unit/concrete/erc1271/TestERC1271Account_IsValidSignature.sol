@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
-contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
+contract TestERC1271Account_IsValidSignature is Test, NexusTest_Base {
     struct _TestTemps {
         bytes32 userOpHash;
         bytes32 contents;
