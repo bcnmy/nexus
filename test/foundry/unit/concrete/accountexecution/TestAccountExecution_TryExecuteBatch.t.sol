@@ -85,8 +85,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         uint256 sendValue = 1 ether;
 
         // Fund BOB_ACCOUNT with 10 ETH to cover the value transfer
-        payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund BOB_ACCOUNT
-
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 10 ether }(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
         assertEq(receiver.balance, 0, "Receiver should have 0 ETH");
 
         // Initial state assertion

@@ -56,7 +56,8 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 valueToSend = 1 ether;
         uint256 numberOfExecutions = 3;
 
-        payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
         Execution[] memory executions = prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

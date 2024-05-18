@@ -66,7 +66,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
 
         // Prepare the user operation
         UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData, 0, address(smartAccountV2));
+        userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData);
 
         bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
 
@@ -151,7 +151,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
 
-    function buildUserOperation(address from, bytes memory callData, uint256 value, address target) internal view returns (UserOperation memory op) {
+    function buildUserOperation(address from, bytes memory callData) internal view returns (UserOperation memory op) {
         op.sender = from;
         op.nonce = ENTRYPOINT_V_0_6.getNonce(op.sender, 0);
         op.callData = callData;

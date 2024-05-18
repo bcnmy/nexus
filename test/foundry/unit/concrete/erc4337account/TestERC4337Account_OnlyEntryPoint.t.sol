@@ -44,10 +44,8 @@ contract TestERC4337Account_OnlyEntryPoint is Test, NexusTest_Base {
         // Act: Attempt to validate the operation from a non-entry point address
         startPrank(address(BOB_ACCOUNT));
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
-
-        // Assert that the operation fails validation due to incorrect sender
     }
 
     /// Tests that the operation fails validation when the signature is invalid.

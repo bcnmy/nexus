@@ -55,8 +55,9 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         uint256 sendValue = 1 ether;
 
         // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
-        payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
-
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
+        
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(receiver, sendValue, "");
 

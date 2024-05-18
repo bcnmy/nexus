@@ -136,8 +136,6 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     }
 
     function test_UninstallFallbackHandler_FunctionSelectorNotUsedByThisHandler() public {
-        MockHandler otherHandler = new MockHandler();
-
         bytes memory customData = abi.encode(UNUSED_SELECTOR); // Assuming GENERIC_FALLBACK_SELECTOR is set
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,

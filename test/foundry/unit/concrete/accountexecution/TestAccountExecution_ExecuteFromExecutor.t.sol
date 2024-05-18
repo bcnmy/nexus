@@ -127,6 +127,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         execs[1] = Execution(address(token), 0, abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), recipient, transferAmount));
 
         bytes[] memory returnData = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, execs);
+        assertEq(returnData.length, 2, "Return data should have two elements");
 
         uint256 balanceRecipient = token.balanceOf(recipient);
         assertEq(balanceRecipient, transferAmount, "Recipient should have received the tokens via transferFrom");
