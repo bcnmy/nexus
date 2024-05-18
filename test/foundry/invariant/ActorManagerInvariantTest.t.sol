@@ -25,12 +25,11 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
 
     // Initializes handlers for each actor
     function setUpActors() public {
-        // Example actor wallets and corresponding accounts; customize as per your environment setup
         Vm.Wallet[3] memory actors = [ALICE, BOB, CHARLIE];
         Nexus[3] memory actorAccounts = [ALICE_ACCOUNT, BOB_ACCOUNT, CHARLIE_ACCOUNT];
         validationModule = address(new MockValidator());
-        testModuleType = 1; // Example module type for testing
-        testModuleAddress = address(0x123); // Example module address for testing
+        testModuleType = 1;
+        testModuleAddress = address(0x123);
 
         // Initialize the handlers for each actor
         for (uint i = 0; i < actors.length; i++) {
@@ -182,7 +181,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
 
     // Tests bounded deposit operations across all actors
     function invariant_testAllBoundedDeposits() public {
-        uint256 amount = 500 ether; // Assumes bounds set in the handler
+        uint256 amount = 500 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
             actorHandlers[i].executionHandler.invariant_handleBoundedDeposit(amount);
         }

@@ -25,7 +25,7 @@ contract TestAccountConfig_SupportsExecutionMode is Test, NexusTest_Base {
     // Optionally test for unsupported execution modes if any
     // For example, if delegate calls are not supported
     function test_UnsupportedExecutionMode() public {
-        // Assuming delegate calls are not supported, and using an arbitrary ExecutionMode for demonstration
+        // Delegate calls are not supported, and using an arbitrary ExecutionMode for demonstration
         ExecutionMode unsupportedMode = ModeLib.encode(
             CALLTYPE_SINGLE,
             ExecType.wrap(0x10),

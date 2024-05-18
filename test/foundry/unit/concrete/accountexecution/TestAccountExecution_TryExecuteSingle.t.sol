@@ -31,7 +31,6 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
-        // Assuming you have a method to prepare a UserOperation for a single execution that should fail
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

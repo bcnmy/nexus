@@ -90,7 +90,6 @@ contract TestAccountFactory_Operations is NexusTest_Base {
 
     function test_DeployAccountWithoutEnoughGas() public {
         vm.expectRevert();
-        // Adjust the gas amount based on your contract's requirements
         FACTORY.createAccount{ gas: 1000 }(address(VALIDATOR_MODULE), initData, 0);
     }
 }

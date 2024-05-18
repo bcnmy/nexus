@@ -45,6 +45,4 @@ contract InvariantBaseTest is NexusTest_Base {
 
         return userOps;
     }
-
-    // You can add additional setup functions or utility functions here to be used across various invariant tests.
 }

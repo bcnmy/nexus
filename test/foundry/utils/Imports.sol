@@ -55,5 +55,4 @@ import "./TestHelper.t.sol";
 contract Imports {
     // This contract acts as a single point of import for Foundry tests.
     // It does not require any logic, as its sole purpose is to consolidate imports.
-    // You can extend this contract in your test files to access all imported contracts and libraries.
 }

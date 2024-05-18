@@ -37,7 +37,7 @@ contract TestERC4337Account_Nonce is Test, NexusTest_Base {
 
         Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
-        // Assuming the method should fail
+        // The method should fail
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");

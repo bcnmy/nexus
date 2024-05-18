@@ -15,10 +15,9 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
-        // Assuming you have a method to prepare a UserOperation for a single execution
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            BOB, // Assuming `BOB` is defined in your base test setup
-            BOB_ACCOUNT, // Assuming `BOB_ACCOUNT` is defined in your base test setup
+            BOB,
+            BOB_ACCOUNT,
             EXECTYPE_DEFAULT,
             execution,
             address(VALIDATOR_MODULE)
@@ -38,7 +37,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
-        // Assuming the method should fail
+        // The method should fail
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -61,7 +60,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
-        // Assuming the method should fail
+        // The method should fail
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

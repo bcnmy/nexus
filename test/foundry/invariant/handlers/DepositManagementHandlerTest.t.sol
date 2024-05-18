@@ -75,7 +75,7 @@ contract DepositManagementHandlerTest is InvariantBaseTest {
     function invariant_checkBalancePostRevert() external {
         uint256 initialDeposit = nexusAccount.getDeposit();
         vm.expectRevert("Expected failure");
-        invariant_handleWithdrawal(initialDeposit + 1 ether); // Assuming failure due to overdraft
+        invariant_handleWithdrawal(initialDeposit + 1 ether);
         assertEq(nexusAccount.getDeposit(), initialDeposit, "Deposit should not change after revert.");
     }
 }

@@ -29,7 +29,7 @@ abstract contract TestAccountExecution_Base is Test, NexusTest_Base {
         // Deploy the Token contract
         token = new MockToken("Test Token", "TST");
 
-        // Assuming msg.sender is the owner and receives the initial supply,
+        // Mint tokens to the owner `(this)` and transfer to other accounts
         // transfer tokens to BOB_ACCOUNT, ALICE_ACCOUNT, and CHARLIE_ACCOUNT
         uint256 amountToEach = 10_000 * 10 ** token.decimals();
 
