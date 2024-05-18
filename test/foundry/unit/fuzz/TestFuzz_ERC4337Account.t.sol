@@ -46,7 +46,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("incrementNonce()") });
 
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
             uint256 nonceAfter = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
@@ -82,7 +88,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         // Deposit the amount to EntryPoint
         Execution[] memory depositExecutions = new Execution[](1);
         depositExecutions[0] = Execution({ target: address(BOB_ACCOUNT), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
-        PackedUserOperation[] memory depositUserOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, depositExecutions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory depositUserOps = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            depositExecutions,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(depositUserOps, payable(BOB.addr));
 
         // Capture the balance before withdrawal
@@ -95,7 +107,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             value: 0,
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
         });
-        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            withdrawExecutions,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
 
         // Capture the balance after withdrawal
@@ -135,7 +153,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
-        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            withdrawExecutions,
+            address(VALIDATOR_MODULE)
+        );
         (bool success, ) = address(ENTRYPOINT).call(abi.encodeWithSignature("handleOps(PackedUserOperation[],address)", withdrawUserOps, BOB.addr));
 
         assertFalse(success, "Withdrawal should fail due to insufficient funds");

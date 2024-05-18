@@ -24,7 +24,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
-    
+
     Vm.Wallet internal BOB;
     Vm.Wallet internal ALICE;
     Vm.Wallet internal CHARLIE;
@@ -50,7 +50,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // Setup Functions
     // -----------------------------------------
-    
+
     /// @notice Initializes the testing environment with wallets, contracts, and accounts
     function setupTestEnvironment() internal virtual {
         setupPredefinedWallets();
@@ -92,7 +92,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-    
+
     /// @notice Deploys an account with a specified wallet, deposit amount, and optional custom validator
     /// @param wallet The wallet to deploy the account for
     /// @param deposit The deposit amount
@@ -221,17 +221,18 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param nonce The nonce
     /// @return userOp The built user operation
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
-        return PackedUserOperation({
-            sender: sender,
-            nonce: nonce,
-            initCode: "",
-            callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            preVerificationGas: 3e6,
-            gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            paymasterAndData: "",
-            signature: ""
-        });
+        return
+            PackedUserOperation({
+                sender: sender,
+                nonce: nonce,
+                initCode: "",
+                callData: "",
+                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                preVerificationGas: 3e6,
+                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                paymasterAndData: "",
+                signature: ""
+            });
     }
 
     /// @notice Signs a message and packs r, s, v into bytes
@@ -325,7 +326,11 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             }
             sstore(sSlot, add(r, 1))
 
-            for {} 1 {} {
+            for {
+
+            } 1 {
+
+            } {
                 let d := byte(0, r)
                 if iszero(d) {
                     r := and(r, 3)
@@ -335,14 +340,20 @@ contract TestHelper is CheatCodes, EventsAndErrors {
                     let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
                     switch and(8, d)
                     case 0 {
-                        if iszero(and(16, d)) { t := 1 }
+                        if iszero(and(16, d)) {
+                            t := 1
+                        }
                         r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
                     default {
-                        if iszero(and(16, d)) { t := shl(255, 1) }
+                        if iszero(and(16, d)) {
+                            t := shl(255, 1)
+                        }
                         r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
-                    if iszero(and(0x20, d)) { r := not(r) }
+                    if iszero(and(0x20, d)) {
+                        r := not(r)
+                    }
                     break
                 }
                 r := xor(sValue, r)

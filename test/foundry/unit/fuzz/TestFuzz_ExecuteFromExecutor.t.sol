@@ -26,7 +26,13 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });
 
-        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            execution,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "Executor module installation failed.");

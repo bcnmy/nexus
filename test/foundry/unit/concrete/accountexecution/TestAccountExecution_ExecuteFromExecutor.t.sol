@@ -20,7 +20,13 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
-        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            execution,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
 

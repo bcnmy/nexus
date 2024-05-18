@@ -6,7 +6,6 @@ import "../../../../contracts/mocks/Counter.sol";
 import "../../../../contracts/mocks/MockToken.sol";
 import "../../utils/Imports.sol";
 
-
 // InvariantBaseTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
 contract InvariantBaseTest is NexusTest_Base {
     Counter public counter;

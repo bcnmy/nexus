@@ -115,7 +115,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Initial installation should succeed");
 
             // Attempt to reinstall the same module should fail
-            PackedUserOperation[] memory userOpsSecondAttempt = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOpsSecondAttempt = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
             bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", moduleTypeId, moduleAddress);
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOpsSecondAttempt[0]);
             vm.expectEmit(true, true, true, true);
@@ -206,7 +212,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
 
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
             // Verify that the module is uninstalled
@@ -220,7 +232,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
 
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
             // Verify that the module is uninstalled
@@ -232,7 +250,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
 
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
             // Verify that the module is uninstalled

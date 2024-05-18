@@ -27,12 +27,24 @@ contract NexusInvariantTest is NexusTest_Base {
             ""
         );
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
-        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            executions,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         // Now execute should work
         executions[0] = Execution(address(EXECUTOR_MODULE), 0, execCallData);
-        PackedUserOperation[] memory userOpsExec = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOpsExec = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            executions,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
     }
 

@@ -24,7 +24,13 @@ contract ExecutionHandlerTest is InvariantBaseTest {
         executions[0] = Execution({ target: address(nexusAccount), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
 
         // Execute operation through ENTRYPOINT and verify post-operation conditions
-        PackedUserOperation[] memory userOps =  buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            signer,
+            nexusAccount,
+            EXECTYPE_DEFAULT,
+            executions,
+            address(VALIDATOR_MODULE)
+        );
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
 
         // Function-level assertion to ensure the deposit amount reflects correctly

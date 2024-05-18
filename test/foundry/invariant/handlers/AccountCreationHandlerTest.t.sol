@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 import "../../utils/Imports.sol";
 
-
 // AccountCreationHandlerTest is designed to handle invariant testing for the creation
 // of accounts using the AccountFactory.
 contract AccountCreationHandlerTest is InvariantBaseTest {

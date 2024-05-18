@@ -21,11 +21,7 @@ contract CheatCodes is Test {
     /// @return v The recovery id (v)
     /// @return r Output of ECDSA signature (r)
     /// @return s Output of ECDSA signature (s)
-    function signMessage(address signer, bytes32 hash) 
-        internal 
-        pure 
-        returns (uint8 v, bytes32 r, bytes32 s) 
-    {
+    function signMessage(address signer, bytes32 hash) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
         uint256 privateKey = uint256(keccak256(abi.encodePacked(signer)));
         (v, r, s) = vm.sign(privateKey, hash);
     }

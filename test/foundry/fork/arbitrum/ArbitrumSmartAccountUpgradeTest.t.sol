@@ -8,9 +8,7 @@ import { UserOperation } from "../../shared/interfaces/UserOperation.t.sol";
 import { IEntryPointV_0_6 } from "../../shared/interfaces/IEntryPointV_0_6.t.sol";
 import { IBiconomySmartAccountV2 } from "../../shared/interfaces/IBiconomySmartAccountV2.t.sol";
 
-
 contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
-    
     Vm.Wallet internal signer;
     Nexus public newImplementation;
     uint256 internal signerPrivateKey;
@@ -138,7 +136,13 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         execution[0] = Execution(recipient, amount, "");
 
         // Pack user operation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB,
+            Nexus(payable(address(smartAccountV2))),
+            EXECTYPE_DEFAULT,
+            execution,
+            address(VALIDATOR_MODULE)
+        );
 
         // Execute the operation via the EntryPoint
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
@@ -147,12 +151,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
 
-    function buildUserOperation(
-        address from,
-        bytes memory callData,
-        uint256 value,
-        address target
-    ) internal view returns (UserOperation memory op) {
+    function buildUserOperation(address from, bytes memory callData, uint256 value, address target) internal view returns (UserOperation memory op) {
         op.sender = from;
         op.nonce = ENTRYPOINT_V_0_6.getNonce(op.sender, 0);
         op.callData = callData;

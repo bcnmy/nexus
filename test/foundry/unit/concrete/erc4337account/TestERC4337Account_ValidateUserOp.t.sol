@@ -79,7 +79,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         // Attempt to validate the user operation, expecting return value of 1 (failure)
         uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
-        
+
         assertTrue(res == 1, "Operation with invalid nonce should fail validation");
     }
 }

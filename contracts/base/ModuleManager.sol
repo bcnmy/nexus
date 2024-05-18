@@ -21,7 +21,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 
 /// @title Nexus - ModuleManager

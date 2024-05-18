@@ -28,13 +28,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
             callData: abi.encodeWithSelector(MockValidator.onInstall.selector, installData)
         });
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            signer,
-            nexusAccount,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(validator)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(validator));
         ENTRYPOINT.handleOps(userOps, payable(address(signer.addr)));
 
         // Ensure validator is correctly set up for nexusAccount
@@ -71,13 +65,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
             abi.encodeWithSelector(nexusAccount.withdrawDepositTo.selector, address(signer.addr), depositAmount)
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            signer,
-            nexusAccount,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(validator)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(validator));
         ENTRYPOINT.handleOps(userOps, payable(address(signer.addr)));
 
         // Verify the post-withdrawal balance within the tolerance
@@ -100,13 +88,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(nexusAccount), 0.4 ether, abi.encodeWithSelector(nexusAccount.addDeposit.selector));
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            signer,
-            nexusAccount,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(validator)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(validator));
         ENTRYPOINT.handleOps(userOps, payable(address(signer.addr)));
 
         uint256 updatedNonce = getNonce(address(nexusAccount), address(validator));
@@ -124,13 +106,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
                 0.4 ether,
                 abi.encodeWithSelector(nexusAccount.addDeposit.selector)
             );
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(
-                signer,
-                nexusAccount,
-                EXECTYPE_DEFAULT,
-                executions,
-                address(validator)
-            );
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, nexusAccount, EXECTYPE_DEFAULT, executions, address(validator));
             ENTRYPOINT.handleOps(userOps, payable(address(signer.addr)));
         }
 

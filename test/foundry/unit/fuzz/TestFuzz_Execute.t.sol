@@ -72,7 +72,13 @@ contract TestFuzz_Execute is NexusTest_Base {
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(counter), value: 0, callData: callData });
 
-            PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+            PackedUserOperation[] memory userOps = buildPackedUserOperation(
+                BOB,
+                BOB_ACCOUNT,
+                EXECTYPE_DEFAULT,
+                executions,
+                address(VALIDATOR_MODULE)
+            );
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         }
         assertEq(counter.getNumber(), numIncrements, "Counter increments mismatch");

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../../shared/TestAccountExecution_Base.t.sol"; 
+import "../../../shared/TestAccountExecution_Base.t.sol";
 
 contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
     function setUp() public {
@@ -90,7 +90,13 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(ALICE_ACCOUNT), approvalAmount));
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory approvalUserOps = buildPackedUserOperation(
+            BOB,
+            BOB_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            approvalExecution,
+            address(VALIDATOR_MODULE)
+        );
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -101,7 +107,13 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps = buildPackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, transferExecution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory transferUserOps = buildPackedUserOperation(
+            ALICE,
+            ALICE_ACCOUNT,
+            EXECTYPE_DEFAULT,
+            transferExecution,
+            address(VALIDATOR_MODULE)
+        );
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);

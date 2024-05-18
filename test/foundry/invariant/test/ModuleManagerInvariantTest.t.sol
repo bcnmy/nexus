@@ -2,8 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "../../utils/Imports.sol";
-import {InvariantBaseTest} from "../base/InvariantBaseTest.t.sol";
-import {ModuleManagementHandlerTest} from "../handlers/ModuleManagementHandlerTest.t.sol";
+import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+import { ModuleManagementHandlerTest } from "../handlers/ModuleManagementHandlerTest.t.sol";
 
 contract ModuleManagerInvariantTest is InvariantBaseTest {
     ModuleManagementHandlerTest public handler;
@@ -13,7 +13,6 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
     MockHook public mockHook;
-
 
     function setUp() public override {
         super.setUp();
@@ -50,7 +49,7 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
         assertFalse(handler.checkModuleInstalled(1, address(EXECUTOR_MODULE)), "Invariant failed: Module should be uninstalled.");
     }
 
-     /// @notice Invariant to check the persistent installation of the Validator module
+    /// @notice Invariant to check the persistent installation of the Validator module
     function invariantTest_ValidatorModuleInstalled() public {
         // Validator module should always be installed on BOB_ACCOUNT
         assertTrue(BOB_ACCOUNT.isModuleInstalled(1, address(VALIDATOR_MODULE), ""), "Validator Module should be consistently installed.");
