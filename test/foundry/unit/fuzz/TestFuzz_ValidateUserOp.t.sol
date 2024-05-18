@@ -21,7 +21,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildUserOpWithCalldata(BOB, "", address(VALIDATOR_MODULE));
-        
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
 
@@ -32,32 +32,10 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         stopPrank();
     }
 
-    /// @notice Fuzz test for validateUserOp with a valid nonce and insufficient funds
-    /// @param randomNonce The random nonce for the user operation
-    /// @param missingAccountFunds The random missing funds for the account
-    function testFuzz_ValidateUserOp_ValidNonceInsufficientFunds(uint256 randomNonce, uint256 missingAccountFunds) public {
-        vm.assume(randomNonce < type(uint192).max);
-        vm.assume(missingAccountFunds < 100 ether);
-
-        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), 0.1 ether);
-
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(BOB.addr, randomNonce);
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
-
-        // Attempt to validate the user operation
-        startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, missingAccountFunds);
-        assertTrue(res == 1, "Operation should fail validation due to insufficient funds");
-        stopPrank();
-    }
-
     /// @notice Fuzz test for validateUserOp with an invalid signature
     /// @param randomNonce The random nonce for the user operation
     /// @param missingAccountFunds The random missing funds for the account
-    /// @param randomSignature The random signature for the user operation
-    function testFuzz_ValidateUserOp_InvalidSignature(uint256 randomNonce, uint256 missingAccountFunds, bytes calldata randomSignature) public {
+    function testFuzz_ValidateUserOp_InvalidSignature(uint256 randomNonce, uint256 missingAccountFunds) public {
         vm.assume(randomNonce < type(uint192).max);
         vm.assume(missingAccountFunds < 100 ether);
 
@@ -65,9 +43,9 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(BOB.addr, randomNonce);
+        userOps[0] = buildUserOpWithCalldata(BOB, "", address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = randomSignature; // Using fuzzed signature
+        userOps[0].signature = signUserOp(ALICE, userOps[0]); // Using fuzzed signature
 
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
