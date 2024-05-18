@@ -24,7 +24,7 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_EventEmitted() public {
-        _prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount);
+        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount);
         vm.expectEmit(true, true, true, true);
         uint256 expectedDeposit = ENTRYPOINT.getDepositInfo(address(BOB_ACCOUNT)).deposit + defaultDepositAmount;
         emit Deposited(address(BOB_ACCOUNT), expectedDeposit);
@@ -37,10 +37,10 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_DepositViaHandleOps() public {
-        _prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount + 1 ether);
+        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
 
-        Execution[] memory executions = _prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
@@ -50,11 +50,11 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
 
     function test_AddDeposit_BatchDepositViaHandleOps() public {
         uint256 executionsNumber = 5;
-        _prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount * 10);
+        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount * 10);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
 
         Execution memory execution = Execution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
+        Execution[] memory executions = prepareSeveralIdenticalExecutions(execution, executionsNumber);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
         almostEq(
@@ -65,10 +65,10 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_Try_DepositViaHandleOps() public {
-        _prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount + 1 ether);
+        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount + 1 ether);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
 
-        Execution[] memory executions = _prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
+        Execution[] memory executions = prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
@@ -76,12 +76,12 @@ contract TestERC4337Account_addDeposit is Test, SmartAccountTestLab {
     }
 
     function test_AddDeposit_Try_BatchDepositViaHandleOps() public {
-        _prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount * 10);
+        prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), defaultDepositAmount * 10);
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 executionsNumber = 5;
 
         Execution memory execution = Execution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
+        Execution[] memory executions = prepareSeveralIdenticalExecutions(execution, executionsNumber);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 

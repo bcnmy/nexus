@@ -44,7 +44,7 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, _toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
-        if (_random() % 4 == 0) signature = _erc6492Wrap(signature);
+        if (random() % 4 == 0) signature = _erc6492Wrap(signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(_toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
 
@@ -128,8 +128,8 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
     }
 
     function _randomString(string memory byteChoices, bool nonEmpty) internal returns (string memory result) {
-        uint256 randomness = _random();
-        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, _random() % 32 != 0 ? 4 : 128);
+        uint256 randomness = random();
+        uint256 resultLength = _bound(random(), nonEmpty ? 1 : 0, random() % 32 != 0 ? 4 : 128);
         /// @solidity memory-safe-assembly
         assembly {
             if mload(byteChoices) {
@@ -154,7 +154,7 @@ contract TestERC1271Account_IsValidSignature is Test, SmartAccountTestLab {
     function _erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
         return
             abi.encodePacked(
-                abi.encode(_randomNonZeroAddress(), bytes(_randomString("12345", false)), signature),
+                abi.encode(randomNonZeroAddress(), bytes(_randomString("12345", false)), signature),
                 bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
             );
     }

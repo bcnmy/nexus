@@ -13,7 +13,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 executionsNumber = 2;
 
         Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(execution, executionsNumber);
+        Execution[] memory executions = prepareSeveralIdenticalExecutions(execution, executionsNumber);
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -43,7 +43,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
     function test_ExecuteBatch_Empty() public {
         // Initial state assertion
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(address(counter), 0, ""), 3);
+        Execution[] memory executions = prepareSeveralIdenticalExecutions(Execution(address(counter), 0, ""), 3);
         // Execute batch operation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -57,7 +57,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 numberOfExecutions = 3;
 
         payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund BOB_ACCOUNT
-        Execution[] memory executions = _prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
+        Execution[] memory executions = prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         assertEq(receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH");

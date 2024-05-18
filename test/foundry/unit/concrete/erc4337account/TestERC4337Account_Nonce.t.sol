@@ -22,7 +22,7 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        Execution[] memory executions = _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -35,7 +35,7 @@ contract TestERC4337Account_Nonce is Test, SmartAccountTestLab {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
-        Execution[] memory executions = _prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // Assuming the method should fail
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));

@@ -119,7 +119,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
 
         // Simulate multiple operations
         for (uint i = 0; i < 3; i++) {
-            Execution[] memory executions = _prepareSingleExecution(
+            Execution[] memory executions = prepareSingleExecution(
                 address(nexusAccount),
                 0.4 ether,
                 abi.encodeWithSelector(nexusAccount.addDeposit.selector)
@@ -141,7 +141,7 @@ contract BaseAccountInvariantTest is SmartAccountTestLab {
     // Invariant to ensure consistent nonce handling with multiple operations in a single handleOps call
     function invariant_multiOperationNonceConsistency_SingleCall() public {
         // Prepare multiple executions to be processed together
-        Execution[] memory execution = _prepareSingleExecution(
+        Execution[] memory execution = prepareSingleExecution(
             address(nexusAccount),
             0.4 ether,
             abi.encodeWithSelector(nexusAccount.addDeposit.selector)
