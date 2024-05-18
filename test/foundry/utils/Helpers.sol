@@ -1,31 +1,30 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
+
+import "solady/src/utils/ECDSA.sol";
+import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 import "./Imports.sol";
 import "./CheatCodes.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
-import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
-import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
-import { MockHook } from "../../../contracts/mocks/MockHook.sol";
-import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
-import { Nexus } from "../../../contracts/Nexus.sol";
+import "./EventsAndErrors.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
-import "../../../contracts/lib/ModuleTypeLib.sol";
+import { Nexus } from "../../../contracts/Nexus.sol";
+import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
+import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
+import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
+import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
 
-import "solady/src/utils/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "./EventsAndErrors.sol";
-
+/// @title Helpers - Utility contract for testing with cheat codes and shared setup
+/// @notice Provides various helper functions for setting up and testing contracts
 contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
-
+    
     Vm.Wallet internal DEPLOYER;
     Vm.Wallet internal ALICE;
     Vm.Wallet internal BOB;
@@ -44,28 +43,34 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     IEntryPoint internal ENTRYPOINT;
     AccountFactory internal FACTORY;
-    MockValidator internal VALIDATOR_MODULE;
-    MockExecutor internal EXECUTOR_MODULE;
     MockHook internal HOOK_MODULE;
     MockHandler internal HANDLER_MODULE;
+    MockExecutor internal EXECUTOR_MODULE;
+    MockValidator internal VALIDATOR_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
     // -----------------------------------------
     // Setup Functions
     // -----------------------------------------
+    
+    /// @notice Initializes the testing environment with wallets, contracts, and accounts
     function setupTestEnvironment() internal virtual {
-        /// Initializes the testing environment
         setupPredefinedWallets();
         deployTestContracts();
         deployNexusForPredefinedWallets();
     }
 
+    /// @notice Creates and funds a new wallet
+    /// @param name The name to label the wallet
+    /// @param amount The amount of ether to fund the wallet with
+    /// @return wallet The created and funded wallet
     function createAndFundWallet(string memory name, uint256 amount) internal returns (Vm.Wallet memory) {
         Vm.Wallet memory wallet = newWallet(name);
         vm.deal(wallet.addr, amount);
         return wallet;
     }
 
+    /// @notice Initializes the predefined wallets
     function setupPredefinedWallets() internal {
         DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
         ALICE = createAndFundWallet("ALICE", 1000 ether);
@@ -74,6 +79,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
     }
 
+    /// @notice Deploys the necessary contracts for testing
     function deployTestContracts() internal {
         ENTRYPOINT = new EntryPoint();
         vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
@@ -89,8 +95,16 @@ contract Helpers is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-
+    
+    /// @notice Deploys an account with a specified wallet, deposit amount, and optional custom validator
+    /// @param wallet The wallet to deploy the account for
+    /// @param deposit The deposit amount
+    /// @param validator The custom validator address, if not provided uses default
+    /// @return The deployed Nexus account
     function deployNexus(Vm.Wallet memory wallet, uint256 deposit, address validator) internal returns (Nexus) {
+        if (validator == address(0)) {
+            validator = address(VALIDATOR_MODULE);
+        }
         address payable accountAddress = calculateAccountAddress(wallet.addr, validator);
         bytes memory initCode = buildInitCode(wallet.addr, validator);
 
@@ -103,6 +117,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         return Nexus(accountAddress);
     }
 
+    /// @notice Deploys Nexus accounts for predefined wallets
     function deployNexusForPredefinedWallets() internal {
         BOB_ACCOUNT = deployNexus(BOB, 100 ether, address(VALIDATOR_MODULE));
         vm.label(address(BOB_ACCOUNT), "BOB_ACCOUNT");
@@ -112,28 +127,41 @@ contract Helpers is CheatCodes, EventsAndErrors {
         vm.label(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
 
+    // -----------------------------------------
+    // Utility Functions
+    // -----------------------------------------
+
+    /// @notice Calculates the address of a new account
+    /// @param owner The address of the owner
+    /// @param validator The address of the validator
+    /// @return account The calculated account address
     function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
         bytes memory initData = abi.encodePacked(owner);
-
         uint256 saDeploymentIndex = 0;
-
         account = FACTORY.getCounterFactualAddress(address(validator), initData, saDeploymentIndex);
-
         return account;
     }
 
+    /// @notice Prepares the init code for account creation with a validator
+    /// @param ownerAddress The address of the owner
+    /// @param validator The address of the validator
+    /// @return initCode The prepared init code
     function buildInitCode(address ownerAddress, address validator) internal view returns (bytes memory initCode) {
-        address module = address(validator);
         uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
-        // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
             address(FACTORY),
-            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleInitData, saDeploymentIndex)
+            abi.encodeWithSelector(FACTORY.createAccount.selector, validator, moduleInitData, saDeploymentIndex)
         );
     }
 
+    /// @notice Prepares a user operation with init code and call data
+    /// @param wallet The wallet for which the user operation is prepared
+    /// @param initCode The init code
+    /// @param callData The call data
+    /// @param validator The validator address
+    /// @return userOp The prepared user operation
     function buildUserOpWithInitAndCalldata(
         Vm.Wallet memory wallet,
         bytes memory initCode,
@@ -147,14 +175,18 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOp.signature = signature;
     }
 
-
+    /// @notice Prepares a user operation with call data and a validator
+    /// @param wallet The wallet for which the user operation is prepared
+    /// @param callData The call data
+    /// @param validator The validator address
+    /// @return userOp The prepared user operation
     function buildUserOpWithCalldata(
         Vm.Wallet memory wallet,
         bytes memory callData,
         address validator
     ) internal view returns (PackedUserOperation memory userOp) {
-        address payable account = calculateAccountAddress(wallet.addr, address(validator));
-        uint256 nonce = getNonce(account, address(validator));
+        address payable account = calculateAccountAddress(wallet.addr, validator);
+        uint256 nonce = getNonce(account, validator);
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
@@ -162,44 +194,66 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOp.signature = signature;
     }
 
+    /// @notice Retrieves the nonce for a given account and validator
+    /// @param account The account address
+    /// @param validator The validator address
+    /// @return nonce The retrieved nonce
     function getNonce(address account, address validator) internal view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = ENTRYPOINT.getNonce(address(account), key);
     }
 
+    /// @notice Signs a user operation
+    /// @param wallet The wallet to sign the operation
+    /// @param userOp The user operation to sign
+    /// @return The signed user operation
     function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }
 
-    // -----------------------------------------
-    // Utility Functions
-    // -----------------------------------------
-
-    // Helper to build a user operation struct for account abstraction tests
-    function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
-        return
-           
-            PackedUserOperation({
-                    sender: sender,
-                    nonce: nonce,
-                    initCode: "",
-                    callData: "",
-                    accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                    preVerificationGas: 3e6,
-                    gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                    paymasterAndData: "",
-                    signature: ""
-                });
+    /// @notice Modifies the address of a deployed contract in a test environment
+    /// @param originalAddress The original address of the contract
+    /// @param newAddress The new address to replace the original
+    function changeContractAddress(address originalAddress, address newAddress) internal {
+        vm.etch(newAddress, originalAddress.code);
     }
 
-    // Utility method to encode and sign a message, then pack r, s, v into bytes
+    /// @notice Builds a user operation struct for account abstraction tests
+    /// @param sender The sender address
+    /// @param nonce The nonce
+    /// @return userOp The built user operation
+    function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
+        return PackedUserOperation({
+            sender: sender,
+            nonce: nonce,
+            initCode: "",
+            callData: "",
+            accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+            preVerificationGas: 3e6,
+            gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+            paymasterAndData: "",
+            signature: ""
+        });
+    }
+
+    /// @notice Signs a message and packs r, s, v into bytes
+    /// @param wallet The wallet to sign the message
+    /// @param messageHash The hash of the message to sign
+    /// @return signature The packed signature
     function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
         bytes32 userOpHash = ECDSA.toEthSignedMessageHash(messageHash);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
         signature = abi.encodePacked(r, s, v);
     }
 
+    /// @notice Prepares a packed user operation with specified parameters
+    /// @param signer The wallet to sign the operation
+    /// @param account The Nexus account
+    /// @param execType The execution type
+    /// @param executions The executions to include
+    /// @param validator The validator address
+    /// @return userOps The prepared packed user operations
     function buildPackedUserOperation(
         Vm.Wallet memory signer,
         Nexus account,
@@ -207,10 +261,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
         Execution[] memory executions,
         address validator
     ) internal view returns (PackedUserOperation[] memory userOps) {
-        // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
-        // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
         bytes memory executionCalldata;
         uint256 length = executions.length;
@@ -228,46 +280,46 @@ contract Helpers is CheatCodes, EventsAndErrors {
             revert("Executions array cannot be empty");
         }
 
-        // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
-
-        // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(validator)));
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), validator));
         userOps[0].callData = executionCalldata;
 
-        // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
         return userOps;
     }
 
-    function bytesEqual(bytes memory a, bytes memory b) internal pure returns (bool) {
-        return keccak256(a) == keccak256(b);
+    /// @notice Checks if an address is a contract
+    /// @param account The address to check
+    /// @return True if the address is a contract, false otherwise
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 
-    /// @dev Returns a random non-zero address.
-    function _randomNonZeroAddress() internal returns (address result) {
+    /// @notice Returns a random non-zero address
+    /// @return result A random non-zero address
+    function randomNonZeroAddress() internal returns (address result) {
         do {
-            result = address(uint160(_random()));
+            result = address(uint160(random()));
         } while (result == address(0));
     }
 
     /// @dev credits: vectorized || solady
-    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
-    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
-    /// e.g. `testSomething(uint256) public`.
-    function _random() internal returns (uint256 r) {
-        /// @solidity memory-safe-assembly
+    /// @notice Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive)
+    /// @return r A pseudorandom random number
+    function random() internal returns (uint256 r) {
         assembly {
-            // This is the keccak256 of a very long string I randomly mashed on my keyboard.
             let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
             let sValue := sload(sSlot)
 
             mstore(0x20, sValue)
             r := keccak256(0x20, 0x40)
 
-            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
                 let m := mload(0x40)
@@ -276,20 +328,14 @@ contract Helpers is CheatCodes, EventsAndErrors {
             }
             sstore(sSlot, add(r, 1))
 
-            // Do some biased sampling for more robust tests.
-            // prettier-ignore
             for {} 1 {} {
                 let d := byte(0, r)
-                // With a 1/256 chance, randomly set `r` to any of 0,1,2.
                 if iszero(d) {
                     r := and(r, 3)
                     break
                 }
-                // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
-                    // Set `t` either `not(0)` or `xor(sValue, r)`.
                     let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
-                    // Set `r` to `t` shifted left or right by a random multiple of 8.
                     switch and(8, d)
                     case 0 {
                         if iszero(and(16, d)) { t := 1 }
@@ -299,27 +345,52 @@ contract Helpers is CheatCodes, EventsAndErrors {
                         if iszero(and(16, d)) { t := shl(255, 1) }
                         r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
-                    // With a 1/2 chance, negate `r`.
                     if iszero(and(0x20, d)) { r := not(r) }
                     break
                 }
-                // Otherwise, just set `r` to `xor(sValue, r)`.
                 r := xor(sValue, r)
                 break
             }
         }
     }
 
-    function isContract(address account) internal view returns (bool) {
-        uint256 size;
-
-        assembly {
-            size := extcodesize(account)
-        }
-        return size > 0;
+    /// @notice Pre-funds a smart account and asserts success
+    /// @param sa The smart account address
+    /// @param prefundAmount The amount to pre-fund
+    function prefundSmartAccountAndAssertSuccess(address sa, uint256 prefundAmount) internal {
+        (bool res, ) = sa.call{ value: prefundAmount }(""); // Pre-funding the account contract
+        assertTrue(res, "Pre-funding account should succeed");
     }
 
-    function test() public pure {
-        // This function is used to ignore file in coverage report
+    /// @notice Prepares a single execution
+    /// @param to The target address
+    /// @param value The value to send
+    /// @param data The call data
+    /// @return execution The prepared execution array
+    function prepareSingleExecution(address to, uint256 value, bytes memory data) internal pure returns (Execution[] memory execution) {
+        execution = new Execution[](1);
+        execution[0] = Execution(to, value, data);
+    }
+
+    /// @notice Prepares several identical executions
+    /// @param execution The execution to duplicate
+    /// @param executionsNumber The number of executions to prepare
+    /// @return executions The prepared executions array
+    function prepareSeveralIdenticalExecutions(Execution memory execution, uint256 executionsNumber) internal pure returns (Execution[] memory) {
+        Execution[] memory executions = new Execution[](executionsNumber);
+        for (uint256 i = 0; i < executionsNumber; i++) {
+            executions[i] = execution;
+        }
+        return executions;
+    }
+
+    /// @notice Handles a user operation and measures gas usage
+    /// @param userOps The user operations to handle
+    /// @param refundReceiver The address to receive the gas refund
+    /// @return gasUsed The amount of gas used
+    function handleUserOpAndMeasureGas(PackedUserOperation[] memory userOps, address refundReceiver) internal returns (uint256 gasUsed) {
+        uint256 gasStart = gasleft();
+        ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
+        gasUsed = gasStart - gasleft();
     }
 }
