@@ -50,7 +50,7 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { SentinelListHelper } from "sentinellist/src/SentinelListHelper.sol";
 
 // Helper and Struct imports
-import "./Helpers.sol";
+import "./TestHelper.t.sol";
 
 contract Imports {
     // This contract acts as a single point of import for Foundry tests.
