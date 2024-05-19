@@ -3,21 +3,25 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
-// import {UserOperation} from "path/to/UserOperation.sol"; // Update this path
 
-contract TestERC4337Account_Nonce is Test, NexusTest_Base {
+/// @title TestERC4337Account_Nonce
+/// @notice Tests for nonce management in the ERC4337 account.
+contract TestERC4337Account_Nonce is NexusTest_Base {
     Counter public counter;
 
+    /// @notice Sets up the testing environment.
     function setUp() public {
         init();
         counter = new Counter();
     }
 
+    /// @notice Tests the initial nonce value.
     function test_InitialNonce() public {
         uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
-        assertEq(BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))), nonce, "Nonce in the account and EP should be same");
+        assertEq(BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))), nonce, "Nonce in the account and EP should be the same");
     }
 
+    /// @notice Tests nonce increment after a successful operation.
     function test_NonceIncrementAfterOperation() public {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
@@ -31,6 +35,7 @@ contract TestERC4337Account_Nonce is Test, NexusTest_Base {
         assertEq(newNonce, initialNonce + 1, "Nonce should increment after operation");
     }
 
+    /// @notice Tests nonce increment even after a failed operation.
     function test_NonceIncrementedEvenOnFailedOperation() public {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
@@ -51,6 +56,9 @@ contract TestERC4337Account_Nonce is Test, NexusTest_Base {
         assertEq(newNonce, initialNonce + 1, "Nonce should change even on failed operation");
     }
 
+    /// @notice Creates a nonce key from an address.
+    /// @param addr The address to create the nonce key from.
+    /// @return The generated nonce key.
     function makeNonceKeyFromAddress(address addr) internal pure returns (uint192) {
         return uint192(bytes24(bytes20(address(addr))));
     }
