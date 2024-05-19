@@ -5,9 +5,10 @@ import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
-contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_Base {
+contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     MockExecutor public mockExecutor;
 
+    /// @notice Sets up the testing environment and installs the MockExecutor module
     function setUp() public {
         setUpTestAccountExecution_Base();
 
@@ -16,7 +17,6 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
 
         // Install MockExecutor as executor module on BOB_ACCOUNT
         bytes memory callDataInstall = abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
-
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
@@ -30,8 +30,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
 
-    // Test single execution via MockExecutor
-    function test_ExecSingleFromExecutor() public {
+    /// @notice Tests single execution via MockExecutor
+    function test_ExecSingleFromExecutor_Success() public {
         bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         bytes memory execCallData = abi.encodeWithSelector(
             MockExecutor.executeViaAccount.selector,
@@ -49,8 +49,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
     }
 
-    // Test batch execution via MockExecutor
-    function test_ExecuteBatchFromExecutor() public {
+    /// @notice Tests batch execution via MockExecutor
+    function test_ExecBatchFromExecutor_Success() public {
         Execution[] memory executions = new Execution[](3);
         for (uint256 i = 0; i < executions.length; i++) {
             executions[i] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
@@ -59,8 +59,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(counter.getNumber(), 3, "Counter should have incremented three times");
     }
 
-    // Test execution from an unauthorized executor
-    function test_ExecSingleFromExecutor_Unauthorized() public {
+    /// @notice Tests execution from an unauthorized executor
+    function test_RevertIf_UnauthorizedExecutor() public {
         MockExecutor unauthorizedExecutor = new MockExecutor();
         bytes memory callData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         Execution[] memory executions = new Execution[](1);
@@ -69,7 +69,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         unauthorizedExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
     }
 
-    // Test value transfer via executor
+    /// @notice Tests value transfer via executor
     function test_ExecSingleWithValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
@@ -79,15 +79,15 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(receiver.balance, sendValue, "Receiver should have received ETH");
     }
 
-    // Test executing an empty batch via executor
-    function test_ExecuteEmptyBatchFromExecutor() public {
+    /// @notice Tests executing an empty batch via executor
+    function test_ExecBatch_Empty() public {
         Execution[] memory executions = new Execution[](0);
         bytes[] memory results = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
         assertEq(results.length, 0, "Results array should be empty");
     }
 
-    // Test batch execution with mixed outcomes (success and revert)
-    function test_ExecuteBatchWithMixedOutcomes() public {
+    /// @notice Tests batch execution with mixed outcomes (success and revert)
+    function test_ExecBatchWithMixedOutcomes() public {
         Execution[] memory executions = new Execution[](3);
         executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
@@ -96,7 +96,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
     }
 
-    function test_ERC20TransferFromExecutor() public {
+    /// @notice Tests ERC20 token transfer via executor
+    function test_ExecERC20TransferFromExecutor() public {
         uint256 amount = 100 * 10 ** 18;
         bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, address(0x123), amount);
 
@@ -106,7 +107,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(balanceCharlie, amount, "Charlie should have received the tokens");
     }
 
-    function test_ERC20TransferViaExecutor() public {
+    /// @notice Tests ERC20 token transfer via executor
+    function test_ExecERC20TransferViaExecutor() public {
         uint256 amount = 100 * 10 ** 18;
         address recipient = address(0x123);
         bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, recipient, amount);
@@ -117,7 +119,8 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(balanceRecipient, amount, "Recipient should have received the tokens");
     }
 
-    function test_ERC20ApproveAndTransferFromViaBatch() public {
+    /// @notice Tests ERC20 approve and transferFrom via batch execution
+    function test_ExecERC20ApproveAndTransferFromViaBatch() public {
         uint256 approvalAmount = 200 * 10 ** 18;
         uint256 transferAmount = 150 * 10 ** 18;
         address recipient = address(0x123);
@@ -133,6 +136,7 @@ contract TestAccountExecution_ExecuteFromExecutor is Test, TestAccountExecution_
         assertEq(balanceRecipient, transferAmount, "Recipient should have received the tokens via transferFrom");
     }
 
+    /// @notice Tests zero value transfer in batch
     function test_ZeroValueTransferInBatch() public {
         uint256 amount = 0;
         address recipient = address(0x123);

@@ -3,11 +3,15 @@ pragma solidity ^0.8.24;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
+/// @title TestAccountExecution_TryExecuteSingle
+/// @notice This contract tests single execution attempts using the try method in the account execution system.
 contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
+    /// @notice Sets up the testing environment.
     function setUp() public {
         setUpTestAccountExecution_Base();
     }
 
+    /// @notice Tests successful execution of a single operation.
     function test_TryExecuteSingle_Success() public {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
@@ -24,7 +28,8 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 1, "Counter should have been incremented");
     }
 
-    function test_TryExecuteSingle_HandleFailure() public {
+    /// @notice Tests handling of failed execution.
+    function test_RevertIf_TryExecuteSingle_Fails() public {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
@@ -39,6 +44,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should not have been incremented after revert");
     }
 
+    /// @notice Tests handling of an empty execution.
     function test_TryExecuteSingle_Empty() public {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
@@ -49,6 +55,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    /// @notice Tests successful value transfer in a single execution.
     function test_TryExecuteSingle_ValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
@@ -56,7 +63,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
         (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
         assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
-        
+
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(receiver, sendValue, "");
 
@@ -70,6 +77,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(receiver.balance, 1 ether, "Receiver should have received 1 ETH");
     }
 
+    /// @notice Tests successful token transfer in a single execution.
     function test_TryExecuteSingle_TokenTransfer() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
         // Assuming the Nexus has been funded with tokens in the setUp()
@@ -93,6 +101,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(token.balanceOf(CHARLIE.addr), transferAmount, "Tokens were not transferred correctly");
     }
 
+    /// @notice Tests approval and transferFrom operation in a single execution.
     function test_TryExecuteSingle_ApproveAndTransferFrom() public {
         uint256 approvalAmount = 500 * 10 ** token.decimals();
         // Assume BOB_ACCOUNT is approving CHARLIE to spend tokens on its behalf

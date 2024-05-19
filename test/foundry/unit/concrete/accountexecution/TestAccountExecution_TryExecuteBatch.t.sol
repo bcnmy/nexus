@@ -3,11 +3,15 @@ pragma solidity ^0.8.24;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
+/// @title TestAccountExecution_TryExecuteBatch
+/// @notice This contract tests batch execution attempts using the try method in the account execution system.
 contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
+    /// @notice Sets up the testing environment.
     function setUp() public {
         setUpTestAccountExecution_Base();
     }
 
+    /// @notice Tests successful execution of a batch operation.
     function test_TryExecuteBatch_Success() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
@@ -25,7 +29,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 3, "Counter should have been incremented three times in batch execution");
     }
 
-    function test_TryExecuteBatch_HandleFailure() public {
+    /// @notice Tests handling of a batch operation with one failure.
+    function test_TryExecuteBatch_RevertIf_HandleFailure() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         // Preparing a batch execution with three operations: increment, revert, increment
@@ -38,14 +43,14 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         vm.expectEmit(true, true, true, true);
-
         emit TryExecuteUnsuccessful(2, "");
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), 2, "Counter should have been incremented even after revert operation in batch execution");
     }
 
-    function test_TryExecuteBatch_HandleMultipleFailures() public {
+    /// @notice Tests handling of a batch operation with multiple failures.
+    function test_TryExecuteBatch_RevertIf_HandleMultipleFailures() public {
         // Preparing a batch execution with three operations: revert, zero address, empty calldata
         Execution[] memory executions = new Execution[](3);
         executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
@@ -56,20 +61,18 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         vm.expectEmit(true, true, true, true);
-
         emit TryExecuteUnsuccessful(1, "");
         vm.expectEmit(true, true, true, true);
-
         emit TryExecuteUnsuccessful(2, "");
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
+    /// @notice Tests handling of a batch operation with empty executions.
     function test_TryExecuteBatch_Empty() public {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         // Preparing a batch execution with three empty operations
         Execution[] memory executions = new Execution[](3);
-
         executions[0] = Execution(address(0), 0, "");
         executions[1] = Execution(address(0), 0, "");
         executions[2] = Execution(address(0), 0, "");
@@ -80,6 +83,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
+    /// @notice Tests successful value transfer in a batch operation.
     function test_TryExecuteBatch_ValueTransfer() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
@@ -92,7 +96,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         // Initial state assertion
         Execution[] memory executions = new Execution[](3);
 
-        // Preparing a batch execution with two empty operations
+        // Preparing a batch execution with three value transfers
         executions[0] = Execution(receiver, sendValue, "");
         executions[1] = Execution(receiver, sendValue, "");
         executions[2] = Execution(receiver, sendValue, "");
@@ -105,6 +109,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         assertEq(receiver.balance, 3 ether, "Receiver should have received 3 ETH");
     }
 
+    /// @notice Tests successful token transfers in a batch operation.
     function test_TryExecuteBatch_TokenTransfers() public {
         uint256 transferAmount = 100 * 10 ** token.decimals();
         // Prepare batch token transfer operations from BOB_ACCOUNT to ALICE and CHARLIE
@@ -121,6 +126,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         assertEq(token.balanceOf(CHARLIE.addr), transferAmount, "Charlie should receive tokens");
     }
 
+    /// @notice Tests approval and transferFrom operations in separate executions.
     function test_TryExecuteBatch_ApproveAndTransfer_SeparateOps() public {
         uint256 approvalAmount = 1000 * 10 ** token.decimals();
         uint256 transferAmount = 500 * 10 ** token.decimals();
@@ -176,30 +182,29 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         assertEq(remainingAllowance, approvalAmount - transferAmount, "The remaining allowance should reflect the transferred amount");
 
         uint256 aliceBalanceAfter = token.balanceOf(address(ALICE_ACCOUNT));
-        assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
+       assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
     }
 
+    /// @notice Tests approval and transferFrom operations within a single execution.
     function test_TryExecuteBatch_ApproveAndTransfer_SingleOp() public {
         uint256 approvalAmount = 1000 * 10 ** token.decimals();
         uint256 transferAmount = 500 * 10 ** token.decimals();
 
         uint256 aliceBalanceBefore = token.balanceOf(address(ALICE_ACCOUNT));
 
-        // Execution for approval
+        // Execution for approval and transferFrom
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, address(BOB_ACCOUNT), approvalAmount));
-
         executions[1] = Execution(
             address(token),
             0,
             abi.encodeWithSelector(token.transferFrom.selector, address(BOB_ACCOUNT), address(ALICE_ACCOUNT), transferAmount)
         );
 
-        // Prepare UserOperation for transferFrom
+        // Prepare UserOperation for both actions
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         userOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
-
         userOps[0].signature = signUserOp(BOB, userOps[0]);
 
         // Execute both operations
