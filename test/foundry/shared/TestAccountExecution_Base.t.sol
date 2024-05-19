@@ -6,7 +6,9 @@ import "../utils/NexusTest_Base.t.sol";
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
-abstract contract TestAccountExecution_Base is Test, NexusTest_Base {
+/// @title Base Contract for Account Execution Tests
+/// @notice Provides shared setup and utility functions for account execution tests
+abstract contract TestAccountExecution_Base is NexusTest_Base {
     ExecutionMode public singleMode;
     ExecutionMode public batchMode;
     ExecutionMode public unsupportedMode;
@@ -14,11 +16,9 @@ abstract contract TestAccountExecution_Base is Test, NexusTest_Base {
     Counter public counter;
     MockToken public token;
 
-    // Define more shared state variables here
-
+    /// @notice Sets up the base environment for account execution tests
     function setUpTestAccountExecution_Base() internal virtual {
-        // Shared setup logic for all derived test contracts
-        init(); // Initialize the testing environment if necessary
+        init(); // Initialize the testing environment
 
         singleMode = ModeLib.encodeSimpleSingle();
         batchMode = ModeLib.encodeSimpleBatch();
@@ -26,13 +26,11 @@ abstract contract TestAccountExecution_Base is Test, NexusTest_Base {
         unsupportedMode = ModeLib.encode(CallType.wrap(0xee), EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00));
 
         counter = new Counter();
-        // Deploy the Token contract
         token = new MockToken("Test Token", "TST");
-
         // Mint tokens to the owner `(this)` and transfer to other accounts
+
         // transfer tokens to BOB_ACCOUNT, ALICE_ACCOUNT, and CHARLIE_ACCOUNT
         uint256 amountToEach = 10_000 * 10 ** token.decimals();
-
         token.transfer(address(BOB_ACCOUNT), amountToEach);
         token.transfer(address(ALICE_ACCOUNT), amountToEach);
         token.transfer(address(CHARLIE_ACCOUNT), amountToEach);
