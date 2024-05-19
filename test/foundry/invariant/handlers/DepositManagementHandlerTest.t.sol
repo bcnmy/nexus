@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.0;
 
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 import "../../utils/Imports.sol";
 
-// DepositManagementInvariantHandler manages deposit operations for a Nexus account,
-// ensuring invariants remain intact throughout the process.
+/// @title DepositManagementHandlerTest
+/// @notice Manages deposit operations for a Nexus account, ensuring invariants remain intact throughout the process.
 contract DepositManagementHandlerTest is InvariantBaseTest {
     Nexus internal nexusAccount;
     Vm.Wallet internal signer;
 
-    // Initializes the handler with a Nexus account and wallet used for signing transactions
+    /// @notice Initializes the handler with a Nexus account and wallet used for signing transactions.
+    /// @param _nexusAccount The Nexus account to manage deposits for.
+    /// @param _signer The wallet used for signing transactions.
     constructor(Nexus _nexusAccount, Vm.Wallet memory _signer) {
         nexusAccount = _nexusAccount;
         signer = _signer;
     }
 
-    // Handles a deposit operation while verifying that the state remains consistent
+    /// @notice Handles a deposit operation while verifying that the state remains consistent.
+    /// @param amount The amount to deposit.
     function invariant_handleDeposit(uint256 amount) public {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: address(nexusAccount), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
@@ -35,7 +38,8 @@ contract DepositManagementHandlerTest is InvariantBaseTest {
         assertGe(nexusAccount.getDeposit(), amount, "Invariant failed: Deposit operation state inconsistency.");
     }
 
-    // Handles a withdrawal operation while ensuring the post-withdrawal state is correct
+    /// @notice Handles a withdrawal operation while ensuring the post-withdrawal state is correct.
+    /// @param amount The amount to withdraw.
     function invariant_handleWithdrawal(uint256 amount) public {
         bytes memory callData = abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount);
         Execution[] memory executions = new Execution[](1);
@@ -55,14 +59,14 @@ contract DepositManagementHandlerTest is InvariantBaseTest {
         assertLe(nexusAccount.getDeposit(), amount, "Invariant failed: Withdrawal operation state inconsistency.");
     }
 
-    // Ensures zero-value deposits behave as expected
+    /// @notice Ensures zero-value deposits behave as expected.
     function invariant_testZeroValueDeposit() external {
         uint256 initialDeposit = nexusAccount.getDeposit();
         invariant_handleDeposit(0);
         assertEq(nexusAccount.getDeposit(), initialDeposit, "Deposit should be unchanged with zero-value input.");
     }
 
-    // Tests system behavior when attempting to withdraw more than the balance
+    /// @notice Tests system behavior when attempting to withdraw more than the balance.
     function invariant_testOverdraftWithdrawal() external {
         uint256 initialDeposit = nexusAccount.getDeposit();
         uint256 overdraftAmount = initialDeposit + 1 ether;
@@ -71,7 +75,7 @@ contract DepositManagementHandlerTest is InvariantBaseTest {
         assertEq(nexusAccount.getDeposit(), initialDeposit, "Balance should be unchanged after failed withdrawal.");
     }
 
-    // Checks the account balance integrity after a simulated transaction failure
+    /// @notice Checks the account balance integrity after a simulated transaction failure.
     function invariant_checkBalancePostRevert() external {
         uint256 initialDeposit = nexusAccount.getDeposit();
         vm.expectRevert("Expected failure");
