@@ -6,7 +6,6 @@ import "../../utils/NexusTest_Base.t.sol";
 /// @title TestFuzz_ValidateUserOp - Fuzz testing for the validateUserOp function of the Nexus smart account
 /// @notice This contract inherits from NexusTest_Base to provide common setup and utilities for fuzz testing
 contract TestFuzz_ValidateUserOp is NexusTest_Base {
-
     /// @notice Initializes the testing environment and sets the user address
     function setUp() public {
         init(); // Initializes all required contracts and wallets

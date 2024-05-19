@@ -18,4 +18,29 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
 
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address should match expected address");
     }
+
+    function testFuzz_CreateAccountWithLargeIndex(uint256 largeIndex) public {
+        Vm.Wallet memory randomUser = createAndFundWallet("RandomUser", 1 ether);
+        bytes memory initData = abi.encodePacked(randomUser.addr, largeIndex);
+
+        address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, largeIndex);
+        address payable deployedAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, largeIndex);
+
+        assertEq(deployedAccountAddress, expectedAddress, "Deployed account address should match expected address for large index");
+    }
+
+    function testFuzz_RepeatedAccountCreation(uint256 randomSeed) public {
+        Vm.Wallet memory randomUser = createAndFundWallet("RandomUser", 1 ether);
+        bytes memory initData = abi.encodePacked(randomUser.addr, randomSeed);
+
+        address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
+
+        // First deployment
+        address payable deployedAccountAddress1 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
+        assertEq(deployedAccountAddress1, expectedAddress, "First deployment address should match expected address");
+
+        // Attempt to deploy the same account again
+        address payable deployedAccountAddress2 = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
+        assertEq(deployedAccountAddress2, expectedAddress, "Repeated deployment address should match expected address");
+    }
 }

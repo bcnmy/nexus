@@ -401,4 +401,26 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
         gasUsed = gasStart - gasleft();
     }
+
+    /// @notice Helper function to execute a single operation.
+    function executeSingle(
+        Vm.Wallet memory user,
+        Nexus userAccount,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        ExecType execType
+    ) internal {
+        Execution[] memory executions = new Execution[](1);
+        executions[0] = Execution({ target: target, value: value, callData: callData });
+
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        ENTRYPOINT.handleOps(userOps, payable(user.addr));
+    }
+
+    /// @notice Helper function to execute a batch of operations.
+    function executeBatch(Vm.Wallet memory user, Nexus userAccount, Execution[] memory executions, ExecType execType) internal {
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        ENTRYPOINT.handleOps(userOps, payable(user.addr));
+    }
 }

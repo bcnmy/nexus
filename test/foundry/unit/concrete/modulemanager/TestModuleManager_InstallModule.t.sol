@@ -5,70 +5,53 @@ import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 
-contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
+/// @title TestModuleManager_InstallModule
+/// @notice Tests for installing and managing modules in a smart account
+contract TestModuleManager_InstallModule is TestModuleManagement_Base {
+    /// @notice Sets up the base environment for the module management tests
     function setUp() public {
         setUpModuleManagement_Base();
     }
 
-    // TODO:
-    // Should be moved in upgrades tests
-    function test_upgradeSA() public {
-        Nexus newSA = new Nexus();
-        bytes32 slot = ACCOUNT_IMPLEMENTATION.proxiableUUID();
-        assertEq(slot, 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc);
-        address currentImpl = BOB_ACCOUNT.getImplementation();
-        assertEq(currentImpl, address(ACCOUNT_IMPLEMENTATION));
-
-        bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(newSA), "");
-
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-
-        // Preparing UserOperation for installing the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
-
-        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-
-        address newImpl = BOB_ACCOUNT.getImplementation();
-        assertEq(newImpl, address(newSA));
-    }
-
-    function test_InstallModule_Success() public {
+    /// @notice Tests the successful installation of a module
+    function test_installModule_Success() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
 
-        // Preparing UserOperation for installing the module
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    function test_InstallModule_Try_Success() public {
+    /// @notice Tests the successful installation of a module with 'Try' execution type
+    function test_installModule_TrySuccess() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
 
-        // Preparing UserOperation for installing the module
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_TRY);
 
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    function test_InstallModule_Success_Validator() public {
+    /// @notice Tests the successful installation of a validator module
+    function test_installValidatorModule_Success() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
 
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
     }
 
-    function test_InstallModule_Success_Executor() public {
+    /// @notice Tests the successful installation of an executor module
+    function test_installExecutorModule_Success() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         installModule(callData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), EXECTYPE_DEFAULT);
     }
 
-    function test_InstallModule_Revert_AlreadyInstalled() public {
+    /// @notice Tests reversion when trying to install an already installed module
+    function test_RevertIf_ModuleAlreadyInstalled() public {
         // Setup: Install the module first
-        test_InstallModule_Success(); // Use the test case directly for setup
+        test_installModule_Success(); // Use the test case directly for setup
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should be installed initially");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed initially");
 
@@ -89,7 +72,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
@@ -100,7 +82,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallModule_Revert_InvalidModuleTypeId() public {
+    /// @notice Tests reversion when trying to install a module with an invalid module type ID
+    function test_RevertIf_InvalidModuleTypeId() public {
         MockValidator newMockValidator = new MockValidator();
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
@@ -119,7 +102,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
@@ -130,7 +112,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallModule_InvalidModuleAddress() public {
+    /// @notice Tests reversion when trying to install a module with an invalid module address
+    function test_RevertIf_InvalidModuleAddress() public {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR, // Using Validator module type for this test
@@ -155,8 +138,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    // Installing a module as an executor which does not support executor module type
-    function test_InstallModule_IncompatibleModule() public {
+    /// @notice Tests reversion when trying to install an incompatible module as an executor
+    function test_RevertIf_IncompatibleModuleAsExecutor() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), "");
 
         Execution[] memory execution = new Execution[](1);
@@ -176,12 +159,12 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallModule_Revert_IncompatibleExecutorModule() public {
+    function test_RevertIf_IncompatibleExecutorModule() public {
         MockValidator newMockValidator = new MockValidator();
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR, // Invalid module id
-            address(newMockValidator), // valid new module address
+            MODULE_TYPE_EXECUTOR, // Invalid module type
+            address(newMockValidator), // Valid new module address
             ""
         );
 
@@ -195,7 +178,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
@@ -206,12 +188,13 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallModule_Revert_IncompatibleValidatorModule() public {
+    /// @notice Tests reversion when trying to install an incompatible validator module
+    function test_RevertIf_IncompatibleValidatorModule() public {
         MockExecutor newMockExecutor = new MockExecutor();
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR, // Invalid module id
-            address(newMockExecutor), // valid new module address
+            MODULE_TYPE_VALIDATOR, // Invalid module type
+            address(newMockExecutor), // Valid new module address
             ""
         );
 
@@ -225,7 +208,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
@@ -236,7 +218,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallFallbackHandler_WithCustomData() public {
+    /// @notice Tests installing a fallback handler with custom data
+    function test_installFallbackHandler_WithCustomData() public {
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
@@ -257,8 +240,10 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         );
     }
 
-    function test_ReinstallFallbackHandler_Failure() public {
+    /// @notice Tests reversion when trying to reinstall an already installed fallback handler
+    function test_RevertIf_ReinstallFallbackHandler() public {
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
+
         // First install
         bytes memory callDataFirstInstall = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
@@ -307,7 +292,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
@@ -317,7 +301,8 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    function test_InstallHookModule_Success() public {
+    /// @notice Tests successful installation of a hook module
+    function test_installHookModule_Success() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockHook), ""), "Hook module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
@@ -331,9 +316,10 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockHook), ""), "Hook module should be installed successfully");
     }
 
-    function test_ReinstallHookModule_Failure() public {
+    /// @notice Tests reversion when trying to reinstall an already installed hook module
+    function test_RevertIf_ReinstallHookModule() public {
         // Install the hook module first
-        test_InstallHookModule_Success();
+        test_installHookModule_Success();
 
         // Attempt to reinstall
         bytes memory callDataReinstall = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
@@ -355,7 +341,6 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
-
         emit UserOperationRevertReason(
             userOpHash, // userOpHash
             address(BOB_ACCOUNT), // sender
