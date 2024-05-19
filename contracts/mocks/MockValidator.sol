@@ -29,6 +29,7 @@ contract MockValidator is IValidator {
     }
 
     function onInstall(bytes calldata data) external {
+        require(IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
