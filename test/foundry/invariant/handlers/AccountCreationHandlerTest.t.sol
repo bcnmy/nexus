@@ -4,22 +4,27 @@ pragma solidity ^0.8.0;
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 import "../../utils/Imports.sol";
 
-// AccountCreationHandlerTest is designed to handle invariant testing for the creation
-// of accounts using the AccountFactory.
+/// @title AccountCreationHandlerTest
+/// @notice Handles invariant testing for the creation of accounts using the AccountFactory.
 contract AccountCreationHandlerTest is InvariantBaseTest {
     IAccountFactory private accountFactory;
     address private validationModule;
     address private owner;
-    address private lastCreatedAccount; // Store the last created account address
+    address private lastCreatedAccount; // Stores the last created account address
 
-    // Constructor initializes the handler with dependencies
+    /// @notice Initializes the handler with dependencies.
+    /// @param _accountFactory The account factory contract.
+    /// @param _validationModule The validation module address.
+    /// @param _owner The owner address.
     constructor(IAccountFactory _accountFactory, address _validationModule, address _owner) {
         accountFactory = _accountFactory;
         validationModule = _validationModule;
         owner = _owner;
     }
 
-    // Tests account creation and asserts key invariants
+    /// @notice Tests account creation and asserts key invariants.
+    /// @param index The index for account creation.
+    /// @param nonceKey The nonce key for the account.
     function invariant_createAccount(uint256 index, uint192 nonceKey) external {
         bytes memory initData = abi.encodePacked(owner);
         address payable newAccount = accountFactory.createAccount(validationModule, initData, index);
@@ -34,9 +39,13 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
 
         // Initial nonce should be zero
         assertNonce(newAccount, nonceKey, 0);
+
+        // Validate account creation
+        assertValidCreation(Nexus(newAccount));
     }
 
-    // Ensures nonce consistency before and after account creation
+    /// @notice Ensures nonce consistency before and after account creation.
+    /// @param index The index for account creation.
     function invariant_nonceConsistency(uint256 index) external {
         address payable newAccount = accountFactory.createAccount(validationModule, abi.encodePacked(owner), index);
         assertTrue(newAccount != address(0), "Account creation failed");
@@ -47,9 +56,11 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
 
         // Assert that the calculated nonce matches the actual nonce
         assertEq(actualNonce, expectedNonce, "Nonce consistency invariant violated after account creation");
+        assertValidCreation(Nexus(newAccount));
     }
 
-    // Verifies that the nonce is reset to zero upon account creation
+    /// @notice Verifies that the nonce is reset to zero upon account creation.
+    /// @param index The index for account creation.
     function invariant_nonceResetOnCreation(uint256 index) external {
         address payable newAccount = accountFactory.createAccount(validationModule, abi.encodePacked(owner), index);
         assertTrue(newAccount != address(0), "Account creation failed");
@@ -59,9 +70,10 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
 
         // Assert that the nonce is zero for a new account
         assertEq(nonceAfterCreation, 0, "Nonce should be reset to zero upon account creation");
+        assertValidCreation(Nexus(newAccount));
     }
 
-    // Tests the creation of multiple accounts with different indices and validates nonce initialization
+    /// @notice Tests the creation of multiple accounts with different indices and validates nonce initialization.
     function invariant_multipleAccountCreationWithUniqueIndices() external {
         uint256 index1 = 1;
         uint256 index2 = 2;
@@ -77,21 +89,38 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
 
         assertEq(nonce1, 0, "Nonce for the first account is not initialized correctly");
         assertEq(nonce2, 0, "Nonce for the second account is not initialized correctly");
+
+        assertValidCreation(Nexus(account1));
+        assertValidCreation(Nexus(account2));
     }
 
-    // Asserts that the account's balance matches the expected balance
+    /// @notice Asserts that the account's balance matches the expected balance.
+    /// @param _account The account address.
+    /// @param _expectedBalance The expected balance.
     function assertAccountBalance(address _account, uint256 _expectedBalance) internal {
         assertEq(address(_account).balance, _expectedBalance, "Balance invariant violated");
     }
 
-    // Asserts that the nonce of the account matches the expected nonce
+    /// @notice Asserts that the nonce of the account matches the expected nonce.
+    /// @param _account The account address.
+    /// @param _key The nonce key.
+    /// @param _expectedNonce The expected nonce.
     function assertNonce(address _account, uint192 _key, uint256 _expectedNonce) internal {
         uint256 actualNonce = IEntryPoint(_account).getNonce(_account, _key);
         assertEq(actualNonce, _expectedNonce, "Nonce invariant violated");
     }
 
-    // Getter for the last created account
+    /// @notice Getter for the last created account.
+    /// @return The address of the last created account.
     function getLastCreatedAccount() external view returns (address) {
         return lastCreatedAccount;
+    }
+
+    /// @notice Validates the creation of a new account.
+    /// @param _account The new account address.
+    function assertValidCreation(Nexus _account) internal {
+        string memory expected = "biconomy.nexus.0.0.1";
+        assertEq(_account.accountId(), expected, "AccountConfig should return the expected account ID.");
+        assertTrue(_account.isModuleInstalled(1, validationModule, ""), "Account should have the validation module installed");
     }
 }
