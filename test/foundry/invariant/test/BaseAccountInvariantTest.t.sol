@@ -3,11 +3,14 @@ pragma solidity ^0.8.24;
 
 import "../../utils/NexusTest_Base.t.sol";
 
+/// @title BaseAccountInvariantTest
+/// @notice This contract tests various invariants related to Nexus account management, ensuring consistency and access control.
 contract BaseAccountInvariantTest is NexusTest_Base {
     MockValidator internal validator;
     Vm.Wallet internal signer;
     Nexus internal nexusAccount;
 
+    /// @notice Initializes the test environment
     function setUp() public {
         init();
 
@@ -16,7 +19,6 @@ contract BaseAccountInvariantTest is NexusTest_Base {
 
         signer = newWallet("Signer");
         vm.deal(signer.addr, 100 ether);
-        vm.deal(address(nexusAccount), 100 ether);
         nexusAccount = deployNexus(signer, 10 ether, address(validator));
 
         bytes memory installData = abi.encodePacked(signer.addr);
@@ -41,7 +43,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         excludeContract(address(HOOK_MODULE));
     }
 
-    // Invariant to ensure deposit balance integrity with tolerance for gas costs
+    /// @notice Invariant to ensure deposit balance integrity with tolerance for gas costs
     function invariant_depositBalanceConsistency() public {
         uint256 initialBalance = nexusAccount.getDeposit();
         uint256 depositAmount = 1 ether;
@@ -58,6 +60,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         uint256 postDepositBalance = nexusAccount.getDeposit();
         assertApproxEqRel(postDepositBalance, initialBalance + depositAmount, tolerance, "Deposit balance invariant failed after deposit.");
 
+        // Simulate withdrawal
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(
             address(nexusAccount),
@@ -73,14 +76,15 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         assertApproxEqRel(finalBalance, initialBalance, tolerance, "Deposit balance invariant failed after withdrawal.");
     }
 
-    // Invariant to test access control for withdrawal
+    /// @notice Invariant to test access control for withdrawal
     function invariant_accessControl() public {
+        // Attempt to withdraw without going through ENTRYPOINT
         try nexusAccount.withdrawDepositTo(address(this), 1 ether) {
             fail("withdrawDepositTo should fail when not called through ENTRYPOINT");
         } catch {}
     }
 
-    // Invariant to ensure consistent nonce handling
+    /// @notice Invariant to ensure consistent nonce handling
     function invariant_nonceConsistency() public {
         uint256 initialNonce = getNonce(address(nexusAccount), address(validator));
 
@@ -95,7 +99,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         assertGe(updatedNonce, initialNonce + 1, "Nonce should increment correctly.");
     }
 
-    // Invariant to ensure consistent nonce handling with multiple operations
+    /// @notice Invariant to ensure consistent nonce handling with multiple operations
     function invariant_multiOperationNonceConsistency() public {
         uint256 initialNonce = getNonce(address(nexusAccount), address(validator));
 
@@ -114,7 +118,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         assertGe(finalNonce, initialNonce + 3, "Nonce should increment by 3 after three operations.");
     }
 
-    // Invariant to ensure consistent nonce handling with multiple operations in a single handleOps call
+    /// @notice Invariant to ensure consistent nonce handling with multiple operations in a single handleOps call
     function invariant_multiOperationNonceConsistency_SingleCall() public {
         // Prepare multiple executions to be processed together
         Execution[] memory execution = prepareSingleExecution(
