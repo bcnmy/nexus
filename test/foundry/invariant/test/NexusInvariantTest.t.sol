@@ -3,23 +3,27 @@ pragma solidity ^0.8.24;
 
 import "../../utils/NexusTest_Base.t.sol";
 
+/// @title NexusInvariantTest
+/// @notice This contract tests invariants related to Nexus, ensuring execution consistency and proper nonce handling.
 contract NexusInvariantTest is NexusTest_Base {
+
+    /// @notice Initializes the testing environment
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT
     }
 
-    // Invariant to ensure execution consistency and access control
+    /// @notice Invariant to ensure execution consistency and access control
     function invariant_executionConsistency() public {
         bytes memory execCallData = abi.encodeWithSelector(MockExecutor.executeViaAccount.selector, BOB_ACCOUNT, address(0), 0, "");
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(EXECUTOR_MODULE), 0, execCallData);
 
-        // Try executing without the correct permissions
+        // Try executing without the correct permissions, expecting failure
         try EXECUTOR_MODULE.executeBatchViaAccount(BOB_ACCOUNT, executions) {
-            fail("Should fail without proper permissions or setup");
+            fail("Execution should fail without proper permissions or setup");
         } catch {}
 
-        // Now install and use the proper executor to perform the same execution
+        // Install the EXECUTOR_MODULE correctly
         bytes memory callDataInstall = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_EXECUTOR,
@@ -36,7 +40,7 @@ contract NexusInvariantTest is NexusTest_Base {
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
-        // Now execute should work
+        // Now execute should work with the correct setup
         executions[0] = Execution(address(EXECUTOR_MODULE), 0, execCallData);
         PackedUserOperation[] memory userOpsExec = buildPackedUserOperation(
             BOB,
@@ -48,7 +52,7 @@ contract NexusInvariantTest is NexusTest_Base {
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
     }
 
-    // Invariant to ensure nonce handling is consistent across operations
+    /// @notice Invariant to ensure nonce handling is consistent across operations
     function invariant_nonceConsistency() public {
         uint256 initialNonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
 
