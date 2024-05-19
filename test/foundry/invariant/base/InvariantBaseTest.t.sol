@@ -6,43 +6,22 @@ import "../../../../contracts/mocks/Counter.sol";
 import "../../../../contracts/mocks/MockToken.sol";
 import "../../utils/Imports.sol";
 
-// InvariantBaseTest serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
-contract InvariantBaseTest is NexusTest_Base {
+/// @title InvariantBaseTest
+/// @dev This contract serves as the foundational test setup for all invariant testing related to the Nexus contract suite.
+abstract contract InvariantBaseTest is NexusTest_Base {
     Counter public counter;
     MockToken public token;
 
-    // Initializes the NexusTest_Base environment along with specific test setups
+    /// @notice Initializes the NexusTest_Base environment and sets up the specific test environments.
     function setUp() public virtual {
-        init(); // Initializes wallets, accounts, and contracts including ENTRYPOINT and ACCOUNT_IMPLEMENTATION
+        init(); // Initialize wallets, accounts, ENTRYPOINT, and ACCOUNT_IMPLEMENTATION.
         counter = new Counter();
         token = new MockToken("MockToken", "MTK");
-    }
 
-    // Utility to prepare user operations for invariant tests.
-    function prepareUserOperation(
-        Vm.Wallet memory signer,
-        Nexus account,
-        Execution[] memory executions
-    ) internal view returns (PackedUserOperation[] memory userOps) {
-        bytes memory executionCalldata = (executions.length > 1)
-            ? ExecLib.encodeBatch(executions)
-            : ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData);
-
-        userOps = new PackedUserOperation[](1);
-        userOps[0] = PackedUserOperation({
-            sender: address(account),
-            nonce: getNonce(address(account), address(VALIDATOR_MODULE)),
-            initCode: "",
-            callData: executionCalldata,
-            accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            preVerificationGas: 3e6,
-            gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-            paymasterAndData: "",
-            signature: ""
-        });
-
-        userOps[0].signature = signUserOp(signer, userOps[0]);
-
-        return userOps;
+        // Fund the Nexus accounts with tokens.
+        uint256 amountToEach = 10_000 * 10 ** token.decimals();
+        token.transfer(address(BOB_ACCOUNT), amountToEach);
+        token.transfer(address(ALICE_ACCOUNT), amountToEach);
+        token.transfer(address(CHARLIE_ACCOUNT), amountToEach);
     }
 }
