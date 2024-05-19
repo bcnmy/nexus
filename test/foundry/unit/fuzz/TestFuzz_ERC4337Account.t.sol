@@ -84,7 +84,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
     function testFuzz_WithdrawDepositTo(address to, uint256 amount) public {
         vm.assume(to != address(0) && to != address(this)); // Valid 'to' address
         vm.assume(amount > 0.01 ether && amount <= 50 ether); // Restricting the amount to a reasonable upper limit and ensuring it's greater than 0
-
+        vm.assume(to.balance == 0);
         // Fund the BOB_ACCOUNT with more than just the deposit amount to cover potential transaction fees
         vm.deal(address(BOB_ACCOUNT), amount + 1 ether);
 
@@ -94,7 +94,6 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         executeBatch(BOB, BOB_ACCOUNT, depositExecutions, EXECTYPE_DEFAULT);
 
         // Capture the balance before withdrawal
-        uint256 balanceBefore = ENTRYPOINT.balanceOf(to);
 
         // Withdraw the amount to the 'to' address
         Execution[] memory withdrawExecutions = new Execution[](1);
@@ -105,14 +104,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         });
         executeBatch(BOB, BOB_ACCOUNT, withdrawExecutions, EXECTYPE_DEFAULT);
 
-        // Capture the balance after withdrawal
-        uint256 balanceAfter = ENTRYPOINT.balanceOf(to);
-
-        // Define a small tolerance (e.g., 0.001 ether)
-        uint256 tolerance = 0.001 ether;
-
-        // Check if the withdrawal was successful within the tolerance
-        assertApproxEqRel(balanceAfter, balanceBefore, tolerance, "Deposit balance invariant failed after withdrawal.");
+        assertEq(to.balance, amount, "Withdrawal amount should reflect in the 'to' address balance");
     }
 
     /// @notice Fuzz testing for validating user operations with invalid signatures.

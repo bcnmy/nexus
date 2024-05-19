@@ -88,6 +88,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
     function testFuzz_TokenTransfer(address to, uint256 amount) public {
         vm.assume(to != address(0) && amount > 0);
         vm.assume(amount < ~uint(0) / 0xff); // Ensure amount is manageable
+        vm.assume(token.balanceOf(to) == 0);
         bytes memory callData = abi.encodeWithSelector(token.transfer.selector, to, amount);
 
         // Mint tokens to BOB_ACCOUNT to ensure there are enough tokens to transfer

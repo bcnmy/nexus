@@ -130,7 +130,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address newEntryPoint = Nexus(payable(address(smartAccountV2))).entryPoint();
         assertEq(newEntryPoint, address(ENTRYPOINT_V_0_7), "Entry point should change after upgrade.");
         assertTrue(
-            Nexus(payable(address(smartAccountV2))).isModuleInstalled(1, address(VALIDATOR_MODULE), ""),
+            Nexus(payable(address(smartAccountV2))).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Validator module should be installed after upgrade."
         );
     }
@@ -139,7 +139,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     /// @param from The sender address.
     /// @param callData The call data for the operation.
     /// @return op The constructed UserOperation.
-    function buildUserOperation(address from, bytes memory callData) internal returns (UserOperation memory op) {
+    function buildUserOperation(address from, bytes memory callData) internal view returns (UserOperation memory op) {
         op.sender = from;
         op.nonce = ENTRYPOINT_V_0_6.getNonce(op.sender, 0);
         op.callData = callData;

@@ -121,6 +121,6 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     function assertValidCreation(Nexus _account) internal {
         string memory expected = "biconomy.nexus.0.0.1";
         assertEq(_account.accountId(), expected, "AccountConfig should return the expected account ID.");
-        assertTrue(_account.isModuleInstalled(1, validationModule, ""), "Account should have the validation module installed");
+        assertTrue(_account.isModuleInstalled(MODULE_TYPE_VALIDATOR, validationModule, ""), "Account should have the validation module installed");
     }
 }

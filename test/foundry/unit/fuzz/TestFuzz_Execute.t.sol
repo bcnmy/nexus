@@ -102,6 +102,7 @@ contract TestFuzz_Execute is NexusTest_Base {
     function testFuzz_TokenTransfer(address to, uint256 amount) public {
         vm.assume(to != address(0));
         vm.assume(amount < ~uint(0) / 0xff); // Ensure amount is manageable
+        vm.assume(token.balanceOf(to) == 0);
         token.mint(address(BOB_ACCOUNT), amount); // Mint tokens to BOB_ACCOUNT
 
         bytes memory transferCallData = abi.encodeWithSelector(ERC20.transfer.selector, address(to), amount);

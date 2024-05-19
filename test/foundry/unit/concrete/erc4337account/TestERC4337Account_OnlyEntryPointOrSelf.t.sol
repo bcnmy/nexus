@@ -7,7 +7,6 @@ import "../../../utils/NexusTest_Base.t.sol";
 /// @title TestERC4337Account_OnlyEntryPointOrSelf
 /// @notice Tests for operations that should be executed only by the EntryPoint or the account itself.
 contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
-
     /// @notice Sets up the testing environment and ensures BOB_ACCOUNT has ether.
     function setUp() public {
         init();
@@ -37,21 +36,21 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     /// @notice Tests installation of a module from the EntryPoint.
     function test_InstallModule_FromEntryPoint() public {
         startPrank(address(ENTRYPOINT));
-        BOB_ACCOUNT.installModule(2, address(EXECUTOR_MODULE), "");
+        BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         stopPrank();
     }
 
     /// @notice Tests installation of a module from the account itself.
     function test_InstallModule_FromSelf() public {
         startPrank(address(BOB_ACCOUNT));
-        BOB_ACCOUNT.installModule(2, address(EXECUTOR_MODULE), "");
+        BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
     }
 
     /// @notice Tests uninstallation of a module from a non-EntryPoint or self address, expecting failure.
     function test_UninstallModule_FromNonEntryPointOrSelf() public {
         startPrank(ALICE.addr);
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
-        BOB_ACCOUNT.uninstallModule(2, address(EXECUTOR_MODULE), new bytes(0));
+        BOB_ACCOUNT.uninstallModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), new bytes(0));
         stopPrank();
     }
 
@@ -79,7 +78,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     /// @notice Tests execution of the withdrawDepositTo function via the executor module.
     function test_ExecuteViaExecutor_WithdrawDepositTo() public {
         startPrank(address(ENTRYPOINT));
-        BOB_ACCOUNT.installModule(2, address(EXECUTOR_MODULE), "");
+        BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         stopPrank();
         uint256 depositBefore = BOB_ACCOUNT.getDeposit();
         bytes memory callData = abi.encodeWithSelector(BOB_ACCOUNT.withdrawDepositTo.selector, BOB.addr, 0.5 ether);

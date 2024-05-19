@@ -157,7 +157,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData));
 
         // Ensure the two modules are installed
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(1, address(VALIDATOR_MODULE), ""), "Module should be installed");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should be installed");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be installed");
 
         bytes memory callData;
@@ -208,7 +208,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData));
 
         // Ensure the modules are installed
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(1, address(VALIDATOR_MODULE), ""), "Validator module should be installed");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Validator module should be installed");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(2, address(EXECUTOR_MODULE), ""), "Executor module should be installed");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be installed");
 
