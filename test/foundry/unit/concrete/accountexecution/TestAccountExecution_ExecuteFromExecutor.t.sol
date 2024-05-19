@@ -31,7 +31,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests single execution via MockExecutor
-    function test_ExecSingleFromExecutor_Success() public {
+    function test_ExecuteSingleFromExecutor_Success() public {
         bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
         bytes memory execCallData = abi.encodeWithSelector(
             MockExecutor.executeViaAccount.selector,
@@ -70,7 +70,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests value transfer via executor
-    function test_ExecSingleWithValueTransfer() public {
+    function test_ExecuteSingleValueTransfer_Success() public {
         address receiver = address(0x123);
         uint256 sendValue = 1 ether;
         (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
@@ -80,14 +80,14 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests executing an empty batch via executor
-    function test_ExecBatch_Empty() public {
+    function test_ExecuteBatchEmpty_Success() public {
         Execution[] memory executions = new Execution[](0);
         bytes[] memory results = mockExecutor.executeBatchViaAccount(BOB_ACCOUNT, executions);
         assertEq(results.length, 0, "Results array should be empty");
     }
 
     /// @notice Tests batch execution with mixed outcomes (success and revert)
-    function test_ExecBatchWithMixedOutcomes() public {
+    function test_ExecuteBatch_MixedOutcomes_Success() public {
         Execution[] memory executions = new Execution[](3);
         executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
@@ -97,7 +97,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests ERC20 token transfer via executor
-    function test_ExecERC20TransferFromExecutor() public {
+    function test_ExecuteERC20TransferFromExecutor_Success() public {
         uint256 amount = 100 * 10 ** 18;
         bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, address(0x123), amount);
 
@@ -108,7 +108,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests ERC20 token transfer via executor
-    function test_ExecERC20TransferViaExecutor() public {
+    function test_ExecuteERC20TransferExecutor_Success() public {
         uint256 amount = 100 * 10 ** 18;
         address recipient = address(0x123);
         bytes memory transferCallData = abi.encodeWithSelector(token.transfer.selector, recipient, amount);
@@ -120,7 +120,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests ERC20 approve and transferFrom via batch execution
-    function test_ExecERC20ApproveAndTransferFromViaBatch() public {
+    function test_ExecuteERC20ApproveAndTransferBatch_Success() public {
         uint256 approvalAmount = 200 * 10 ** 18;
         uint256 transferAmount = 150 * 10 ** 18;
         address recipient = address(0x123);
@@ -137,7 +137,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
 
     /// @notice Tests zero value transfer in batch
-    function test_ZeroValueTransferInBatch() public {
+    function test_RevertIf_ZeroValueTransferInBatch() public {
         uint256 amount = 0;
         address recipient = address(0x123);
 

@@ -21,7 +21,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests deploying an account using the factory's createAccount method.
-    function test_DeployAccount_WithCreateAccount() public {
+    function test_DeployAccountUsingCreateAccount_Success() public {
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
@@ -30,7 +30,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests deploying an account with createAccount ensuring same address with same arguments.
-    function test_DeployAccount_WithCreateAccount_ReturnsSameAddressWithSameArgs() public {
+    function test_DeployAccountWithSameArgs_ReturnsSameAddress() public {
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
@@ -40,7 +40,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests deploying an account using handleOps method.
-    function test_DeployAccount_WithHandleOps() public {
+    function test_DeployAccountUsingHandleOps_Success() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -51,7 +51,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
-    function test_RevertIf_DeployAccount_WithHandleOps_AccountAlreadyExists() public {
+    function test_RevertIf_HandleOpsDeployAccountExists() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -63,7 +63,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that a deployed account is initialized and cannot be reinitialized.
-    function test_RevertIf_DeployAccount_InitializedAndCannotBeReinitialized() public {
+    function test_RevertIf_AccountCannotBeReinitialized() public {
         address payable firstAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
         vm.prank(user.addr);
         vm.expectRevert(LinkedList_AlreadyInitialized.selector);
@@ -79,7 +79,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that deploying an account with an invalid validator module reverts.
-    function test_RevertIf_DeployAccountWithInvalidValidatorModule() public {
+    function test_RevertIf_InvalidValidatorModuleOnDeploy() public {
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(0), initData, 0);
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(address(0), initData, 0);
@@ -87,7 +87,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that deploying an account without enough gas reverts.
-    function test_RevertIf_DeployAccountWithoutEnoughGas() public {
+    function test_RevertIf_InsufficientGasOnDeploy() public {
         vm.expectRevert();
         FACTORY.createAccount{ gas: 1000 }(address(VALIDATOR_MODULE), initData, 0);
     }

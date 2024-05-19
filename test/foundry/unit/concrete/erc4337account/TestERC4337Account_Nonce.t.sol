@@ -16,13 +16,13 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
     }
 
     /// @notice Tests the initial nonce value.
-    function test_InitialNonce() public {
+    function test_NonceIsInitiallyZero() public {
         uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))), nonce, "Nonce in the account and EP should be the same");
     }
 
     /// @notice Tests nonce increment after a successful operation.
-    function test_NonceIncrementAfterOperation() public {
+    function test_NonceIncrementsAfterOperation() public {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
@@ -36,7 +36,7 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
     }
 
     /// @notice Tests nonce increment even after a failed operation.
-    function test_NonceIncrementedEvenOnFailedOperation() public {
+    function test_NonceIncrementsOnFailedOperation() public {
         uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 

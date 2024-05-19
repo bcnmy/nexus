@@ -18,7 +18,7 @@ contract TestERC4337Account_GetDeposit is NexusTest_Base {
     }
 
     /// @notice Tests deposit amount after calling addDeposit.
-    function test_DepositAfterAddDepositCall() public {
+    function test_Deposit_IncreasesAfterAddDeposit() public {
         uint256 depositAmount = 2 ether;
         BOB_ACCOUNT.addDeposit{ value: depositAmount }(); // Function that triggers a deposit to the EntryPoint
         almostEq(initialDeposit + depositAmount, ENTRYPOINT.balanceOf(address(BOB_ACCOUNT)), defaultMaxPercentDelta);

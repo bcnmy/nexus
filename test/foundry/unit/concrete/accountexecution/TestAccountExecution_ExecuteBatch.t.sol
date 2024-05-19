@@ -44,7 +44,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
     }
 
     /// @notice Tests batch execution with empty operations
-    function test_ExecuteBatch_Empty() public {
+    function test_ExecuteBatch_Empty_Success() public {
         Execution[] memory executions = prepareSeveralIdenticalExecutions(Execution(address(counter), 0, ""), 3);
         // Execute batch operation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));

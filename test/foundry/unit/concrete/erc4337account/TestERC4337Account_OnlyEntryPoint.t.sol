@@ -18,7 +18,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
     }
 
     /// @notice Verifies that a valid operation passes validation when invoked from the EntryPoint.
-    function test_ValidUserOpValidation_FromEntryPoint() public {
+    function test_ValidUserOpFromEntryPoint() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(BOB.addr, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -32,7 +32,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
     }
 
     /// @notice Ensures that operations fail validation when invoked from an unauthorized sender.
-    function test_UserOpValidation_FailsFromNonEntryPoint() public {
+    function test_RevertIf_UserOpFromNonEntryPoint() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -45,7 +45,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
     }
 
     /// @notice Tests that the operation fails validation when the signature is invalid.
-    function test_UserOpValidation_FailsWithInvalidSignature() public {
+    function test_RevertIf_InvalidUserOpSignature() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);

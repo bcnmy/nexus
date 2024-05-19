@@ -34,20 +34,20 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     }
 
     /// @notice Tests installation of a module from the EntryPoint.
-    function test_InstallModule_FromEntryPoint() public {
+    function test_InstallModuleFromEntryPoint_Success() public {
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         stopPrank();
     }
 
     /// @notice Tests installation of a module from the account itself.
-    function test_InstallModule_FromSelf() public {
+    function test_InstallModuleFromSelf_Success() public {
         startPrank(address(BOB_ACCOUNT));
         BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
     }
 
     /// @notice Tests uninstallation of a module from a non-EntryPoint or self address, expecting failure.
-    function test_UninstallModule_FromNonEntryPointOrSelf() public {
+    function test_RevertIf_UninstallModuleFromNonEntryPointOrSelf() public {
         startPrank(ALICE.addr);
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.uninstallModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), new bytes(0));
@@ -62,13 +62,13 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     }
 
     /// @notice Tests withdrawal of deposit from the account itself.
-    function test_WithdrawDeposit_FromSelf() public {
+    function test_WithdrawDepositFromSelf_Success() public {
         startPrank(address(BOB_ACCOUNT));
         BOB_ACCOUNT.withdrawDepositTo(BOB.addr, 0.5 ether);
     }
 
     /// @notice Tests withdrawal of deposit from an unauthorized address, expecting failure.
-    function test_WithdrawDeposit_FromUnauthorizedAddress() public {
+    function test_RevertIf_WithdrawDeposit_FromUnauthorizedAddress() public {
         startPrank(ALICE.addr);
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.withdrawDepositTo(BOB.addr, 0.5 ether);
@@ -76,7 +76,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     }
 
     /// @notice Tests execution of the withdrawDepositTo function via the executor module.
-    function test_ExecuteViaExecutor_WithdrawDepositTo() public {
+    function test_WithdrawDepositViaExecutor() public {
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         stopPrank();
@@ -108,7 +108,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     }
 
     /// @notice Tests installation of a module from the EntryPoint via user operations.
-    function test_InstallModule_FromEntryPoint_WithUserOps() public {
+    function test_InstallModuleWithUserOpsFromEntryPoint_Success() public {
         Execution[] memory executions = new Execution[](1);
         bytes memory callData = abi.encodeWithSelector(BOB_ACCOUNT.installModule.selector, 2, address(EXECUTOR_MODULE), "");
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);

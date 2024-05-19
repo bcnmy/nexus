@@ -13,7 +13,7 @@ contract TestAccountConfig_AccountId is Test {
     }
 
     /// @notice Tests if the account ID returns the expected value
-    function test_AccountId_ReturnsExpectedValue() public {
+    function test_AccountId_ReturnsCorrectValue() public {
         string memory expected = "biconomy.nexus.0.0.1";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }

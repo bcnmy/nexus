@@ -67,7 +67,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
     }
 
     /// @notice Tests execution with empty calldata
-    function test_ExecuteSingle_Empty() public {
+    function test_ExecuteSingle_Empty_Success() public {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
 
