@@ -182,7 +182,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         assertEq(remainingAllowance, approvalAmount - transferAmount, "The remaining allowance should reflect the transferred amount");
 
         uint256 aliceBalanceAfter = token.balanceOf(address(ALICE_ACCOUNT));
-       assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
+        assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
     }
 
     /// @notice Tests approval and transferFrom operations within a single execution.

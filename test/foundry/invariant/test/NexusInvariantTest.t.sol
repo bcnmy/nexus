@@ -6,7 +6,6 @@ import "../../utils/NexusTest_Base.t.sol";
 /// @title NexusInvariantTest
 /// @notice This contract tests invariants related to Nexus, ensuring execution consistency and proper nonce handling.
 contract NexusInvariantTest is NexusTest_Base {
-
     /// @notice Initializes the testing environment
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT

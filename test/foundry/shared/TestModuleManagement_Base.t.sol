@@ -33,12 +33,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
     /// @param moduleTypeId The type ID of the module
     /// @param moduleAddress The address of the module
     /// @param execType The execution type for the operation
-    function installModule(
-        bytes memory callData,
-        uint256 moduleTypeId,
-        address moduleAddress,
-        ExecType execType
-    ) internal {
+    function installModule(bytes memory callData, uint256 moduleTypeId, address moduleAddress, ExecType execType) internal {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
@@ -62,4 +57,3 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 }
-

@@ -24,11 +24,7 @@ contract ExecutionHandlerTest is InvariantBaseTest {
     /// @param amount The amount to be deposited.
     function invariant_handleIncrement(uint256 amount) external {
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(nexusAccount),
-            value: amount,
-            callData: abi.encodeWithSignature("addDeposit()")
-        });
+        executions[0] = Execution({ target: address(nexusAccount), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
 
         // Execute operation through ENTRYPOINT and verify post-operation conditions
         PackedUserOperation[] memory userOps = buildPackedUserOperation(

@@ -144,14 +144,15 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
         AccountDomainStruct memory t;
         (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = Nexus(account).eip712Domain();
 
-        return abi.encode(
-            t.fields,
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
-        );
+        return
+            abi.encode(
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
+            );
     }
 }

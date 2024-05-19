@@ -12,7 +12,7 @@ contract ExecutorInvariantTest is NexusTest_Base {
     /// @notice Sets up the test environment by initializing the Nexus account and installing the valid executor module
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT
-        
+
         // Deploy the executors
         validExecutor = new MockExecutor();
         invalidExecutor = new MockExecutor();

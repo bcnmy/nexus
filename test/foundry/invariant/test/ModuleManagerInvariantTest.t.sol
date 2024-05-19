@@ -44,17 +44,26 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
 
     /// @notice Ensures that a module remains installed after a test cycle
     function invariant_moduleInstallation() public {
-        assertTrue(handler.invariant_checkModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE)), "Invariant failed: Module should be installed.");
+        assertTrue(
+            handler.invariant_checkModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE)),
+            "Invariant failed: Module should be installed."
+        );
     }
 
     /// @notice Ensures that a module remains uninstalled after a test cycle
     function invariant_moduleUninstallation() public {
-        assertFalse(handler.invariant_checkModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor)), "Invariant failed: Module should be uninstalled.");
+        assertFalse(
+            handler.invariant_checkModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor)),
+            "Invariant failed: Module should be uninstalled."
+        );
     }
 
     /// @notice Checks the persistent installation of the Validator module
     function invariantTest_ValidatorModuleInstalled() public {
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Validator Module should be consistently installed.");
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            "Validator Module should be consistently installed."
+        );
     }
 
     /// @notice Ensures that no duplicate installations occur
@@ -67,7 +76,11 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+            "ModuleAlreadyInstalled(uint256,address)",
+            MODULE_TYPE_VALIDATOR,
+            address(VALIDATOR_MODULE)
+        );
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -79,7 +92,10 @@ contract ModuleManagerInvariantTest is InvariantBaseTest {
     /// @notice Ensures that non-installed modules are not reported as installed
     function invariantTest_AbsenceOfNonInstalledModules() public {
         // Check that non-installed modules are not mistakenly installed
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "Executor Module should not be installed initially.");
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""),
+            "Executor Module should not be installed initially."
+        );
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockHook), ""), "Hook Module should not be installed initially.");
     }
 }
