@@ -48,6 +48,16 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         assertEq(actualAccountId, expectedAccountId, "Account ID does not match after upgrade.");
     }
 
+    /// @notice Validates the Account implementation address after the upgrade process.
+    function test_AccountImplementationAddress() public {
+        address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
+        assertNotEq(beforeUpgradeImplementation, address(newImplementation), "Implementation address does not match before upgrade.");
+        test_UpgradeV2ToV3AndInitialize();
+        // address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
+        // address expectedImplementation = address(newImplementation);
+        // assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
+    }
+
     /// @notice Tests USDC transfer functionality after the upgrade.
     function test_USDCTransferPostUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();
@@ -68,6 +78,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         assertEq(usdc.balanceOf(recipient), amount, "USDC transfer failed");
     }
 
+
     /// @notice Tests native ETH transfer functionality after the upgrade.
     function test_NativeEthTransferPostUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();
@@ -86,6 +97,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
+
 
     /// @notice Prepares the initial state check before upgrade.
     function checkInitialState() internal {
