@@ -4,17 +4,20 @@ pragma solidity ^0.8.24;
 import "../../utils/Imports.sol";
 import "../../utils/NexusTest_Base.t.sol";
 
-contract AccountValidateUserOpInvariantTest is Test, NexusTest_Base {
+/// @title AccountValidateUserOpInvariantTest
+/// @notice Invariant test for validating user operations and ensuring nonce consistency in Nexus accounts.
+contract AccountValidateUserOpInvariantTest is NexusTest_Base {
     Nexus public account;
     address public userAddress = address(BOB.addr);
 
+    /// @notice Sets up the testing environment.
     function setUp() public {
         init();
         excludeContract(address(VALIDATOR_MODULE));
     }
 
-    /// @notice Invariant to check nonce consistency
-    function invariantTest_NonceConsistency() public {
+    /// @notice Invariant test to check nonce consistency.
+    function invariant_NonceConsistency() public {
         // Fetch the nonce for BOB_ACCOUNT from ENTRYPOINT
         uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
 
