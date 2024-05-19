@@ -8,7 +8,7 @@ import {
   Signer,
 } from "ethers";
 import {
-  AccountFactory,
+  AccountFactoryGeneric,
   Counter,
   EntryPoint,
   MockToken,
@@ -26,7 +26,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  msaFactory: AccountFactory;
+  msaFactory: AccountFactoryGeneric;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
   counter: Counter;
@@ -43,7 +43,7 @@ export interface DeploymentFixtureWithSA {
   deployedMSAAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  msaFactory: AccountFactory;
+  msaFactory: AccountFactoryGeneric;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;

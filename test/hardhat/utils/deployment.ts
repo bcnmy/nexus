@@ -1,7 +1,7 @@
 import { BytesLike, HDNodeWallet, Signer } from "ethers";
 import { deployments, ethers } from "hardhat";
 import {
-  AccountFactory,
+  AccountFactoryGeneric,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -62,22 +62,22 @@ async function getDeployedEntrypoint() {
 }
 
 /**
- * Deploys the AccountFactory contract with a deterministic deployment.
+ * Deploys the AccountFactoryGeneric contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
 export async function getDeployedAccountFactory(
   implementationAddress: string,
   owner: string,
   // Note: this could be converted to dto so that additional args can easily be passed
-): Promise<AccountFactory> {
+): Promise<AccountFactoryGeneric> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const AccountFactory = await ethers.getContractFactory("AccountFactory");
+  const AccountFactoryGeneric = await ethers.getContractFactory("AccountFactoryGeneric");
   const deterministicAccountFactory = await deployments.deploy(
-    "AccountFactory",
+    "AccountFactoryGeneric",
     {
       from: addresses[0],
       deterministicDeployment: true,
@@ -85,9 +85,9 @@ export async function getDeployedAccountFactory(
     },
   );
 
-  return AccountFactory.attach(
+  return AccountFactoryGeneric.attach(
     deterministicAccountFactory.address,
-  ) as AccountFactory;
+  ) as AccountFactoryGeneric;
 }
 
 /**
@@ -433,7 +433,7 @@ export async function getDeployedSmartAccountWithValidator(
   entryPoint: EntryPoint,
   mockToken: MockToken,
   signer: HDNodeWallet,
-  accountFactory: AccountFactory,
+  accountFactory: AccountFactoryGeneric,
   validatorAddress: string,
   onInstallData: BytesLike,
   deploymentIndex: number = 0,

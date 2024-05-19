@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { AddressLike, Signer, ZeroAddress, toBeHex } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AccountFactory,
+  AccountFactoryGeneric,
   EntryPoint,
   MockValidator,
   Nexus,
@@ -13,7 +13,7 @@ import { encodeData, to18 } from "../utils/encoding";
 import { buildPackedUserOp } from "../utils/operationHelpers";
 
 describe("Nexus Factory Tests", function () {
-  let factory: AccountFactory;
+  let factory: AccountFactoryGeneric;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let validatorModule: MockValidator;

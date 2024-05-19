@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 import { Signer, parseEther } from "ethers";
 import {
-  AccountFactory,
+  AccountFactoryGeneric,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -30,7 +30,7 @@ import {
 import { encodeData } from "../utils/encoding";
 
 describe("Nexus Single Execution", () => {
-  let factory: AccountFactory;
+  let factory: AccountFactoryGeneric;
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let validatorModule: MockValidator;

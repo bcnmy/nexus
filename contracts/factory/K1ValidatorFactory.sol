@@ -13,9 +13,10 @@ pragma solidity ^0.8.24;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { LibClone } from "solady/src/utils/LibClone.sol";
-import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
-import { IAccountFactoryOld } from "../interfaces/factory/IAccountFactoryOld.sol";
+import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
+import { BootstrapUtil } from "../utils/BootstrapUtil.sol";
+import { Bootstrap, BootstrapConfig } from "../utils/Bootstrap.sol";
 
 /// @title Nexus - AccountFactory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
@@ -27,66 +28,78 @@ import { IAccountFactoryOld } from "../interfaces/factory/IAccountFactoryOld.sol
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract AccountFactory is IAccountFactoryOld, Stakeable {
+contract K1ValidatorFactory is IAccountFactory, BootstrapUtil {
+    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
+    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+    
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
 
+    /// @notice Stores the K1 Validator module address
+    /// @dev This address is set once upon deployment and cannot be changed afterwards.
+    address public immutable K1_VALIDATOR;
+
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
-    constructor(address implementation, address owner) Stakeable(owner) {
+    constructor(address implementation, address k1Validator) {
         ACCOUNT_IMPLEMENTATION = implementation;
+        K1_VALIDATOR = k1Validator;
     }
 
     /// @notice Creates a new Nexus with a specific validator and initialization data.
-    /// @param validationModule The address of the validation module to configure the new Nexus.
-    /// @param moduleInstallData Initialization data for configuring the validation module.
-    /// @param index An identifier used to generate a unique deployment address.
+    /// @param moduleInitData initialization data for K1 Validator.
+    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return The address of the newly created Nexus.
     /// @dev Deploys a new Nexus using a deterministic address based on the input parameters.
-    function createAccount(address validationModule, bytes calldata moduleInstallData, uint256 index) external payable returns (address payable) {
-        (index);
-        bytes32 salt;
-
+    function createAccount(bytes calldata moduleInitData, bytes32 salt) external payable returns (address payable) {
+        (salt);
+        bytes32 actualSalt;
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)
             mstore(0x40, add(ptr, calldataLength))
             calldatacopy(ptr, 0x04, calldataLength)
-            salt := keccak256(ptr, calldataLength)
+            actualSalt := keccak256(ptr, calldataLength)
         }
 
-        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, salt);
+        // Review: if salt should include K1 Validator address as well
+
+        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
+
+        // we could also just pass address eoaOwner above, if IAccountFactory consistency is not important
+        BootstrapConfig memory validator = _makeBootstrapConfig(K1_VALIDATOR, moduleInitData);
+
+        bytes memory _initData = bootstrapSingleton._getInitNexusWithSingleValidatorCalldata(validator);
 
         if (!alreadyDeployed) {
-            INexus(account).initialize(validationModule, moduleInstallData);
-            emit AccountCreatedOld(account, validationModule, moduleInstallData);
+            INexus(account).initializeAccount(_initData);
+            emit AccountCreated(account, _initData, actualSalt);
         }
         return payable(account);
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param validationModule The address of the module to be used in the Nexus.
-    /// @param moduleInstallData The initialization data for the module.
-    /// @param index The index or type of the module, used for generating the deployment address.
+    /// @param moduleInitData initialization data for K1 Validator.
+    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     /// @dev This function allows for address calculation without deploying the Nexus.
     function computeAccountAddress(
-        address validationModule,
-        bytes calldata moduleInstallData,
-        uint256 index
+        bytes calldata moduleInitData, bytes32 salt
     ) external view returns (address payable expectedAddress) {
-        (validationModule, moduleInstallData, index);
-        bytes32 salt;
+        (moduleInitData, salt);
+        bytes32 actualSalt;
 
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)
             mstore(0x40, add(ptr, calldataLength))
             calldatacopy(ptr, 0x04, calldataLength)
-            salt := keccak256(ptr, calldataLength)
+            actualSalt := keccak256(ptr, calldataLength)
         }
 
-        expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, salt, address(this)));
+        // Review: if salt should include K1 Validator address as well
+
+        expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 }

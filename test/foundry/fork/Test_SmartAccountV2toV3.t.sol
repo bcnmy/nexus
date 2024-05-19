@@ -59,7 +59,7 @@ contract Test_SmartAccountV2toV3 is SmartAccountTestLab, ArbitrumForkSettings {
 
         dest[1] = address(smartAccountV2);
         values[1] = 0;
-        calldatas[1] = abi.encodeWithSelector(Nexus.initialize.selector, VALIDATOR_MODULE, abi.encodePacked(BOB.addr));
+        calldatas[1] = abi.encodeWithSelector(Nexus.initializeAccount.selector, VALIDATOR_MODULE, abi.encodePacked(BOB.addr));
 
         // Prepare the batch execute call data
         bytes memory batchCallData = abi.encodeWithSelector(IBiconomySmartAccountV2.executeBatch.selector, dest, values, calldatas);

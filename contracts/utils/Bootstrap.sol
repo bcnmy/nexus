@@ -21,17 +21,18 @@ struct BootstrapConfig {
 }
 
 contract Bootstrap is ModuleManager {
-    function singleInitMSA(IModule validator, bytes calldata data) external {
+    /// @dev This function is intended to be called by the Nexus with a delegatecall.
+    /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
+    /// calling this function 
+    function initNexusWithSingleValidator(IModule validator, bytes calldata data) external {
         // init validator
         _installValidator(address(validator), data);
     }
 
-    /**
-     * This function is intended to be called by the MSA with a delegatecall.
-     * Make sure that the MSA already initilazed the linked lists in the ModuleManager prior to
-     * calling this function
-     */
-    function initMSA(
+    /// @dev This function is intended to be called by the Nexus with a delegatecall.
+    /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
+    /// calling this function 
+    function initNexus(
         BootstrapConfig[] calldata $valdiators,
         BootstrapConfig[] calldata $executors,
         BootstrapConfig calldata _hook,
@@ -62,7 +63,27 @@ contract Bootstrap is ModuleManager {
         }
     }
 
-    function _getInitMSACalldata(
+    /// @dev This function is intended to be called by the Nexus with a delegatecall.
+    /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
+    /// calling this function 
+    function initNexusScoped(
+        BootstrapConfig[] calldata $valdiators,
+        BootstrapConfig calldata _hook
+    )
+        external
+    {
+        // init validators
+        for (uint256 i; i < $valdiators.length; i++) {
+            _installValidator($valdiators[i].module, $valdiators[i].data);
+        }
+
+        // init hook
+        if (_hook.module != address(0)) {
+            _installHook(_hook.module, _hook.data);
+        }
+    }
+
+    function _getInitNexusCalldata(
         BootstrapConfig[] calldata $valdiators,
         BootstrapConfig[] calldata $executors,
         BootstrapConfig calldata _hook,
@@ -74,7 +95,34 @@ contract Bootstrap is ModuleManager {
     {
         init = abi.encode(
             address(this),
-            abi.encodeCall(this.initMSA, ($valdiators, $executors, _hook, _fallbacks))
+            abi.encodeCall(this.initNexus, ($valdiators, $executors, _hook, _fallbacks))
+        );
+    }
+
+    function _getInitNexusScopedCalldata(
+        BootstrapConfig[] calldata $valdiators,
+        BootstrapConfig calldata _hook
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
+        init = abi.encode(
+            address(this),
+            abi.encodeCall(this.initNexusScoped, ($valdiators, _hook))
+        );
+    }
+
+    function _getInitNexusWithSingleValidatorCalldata(
+        BootstrapConfig calldata $valdiator
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
+        init = abi.encode(
+            address(this),
+            abi.encodeCall(this.initNexusWithSingleValidator, (IModule($valdiator.module), $valdiator.data))
         );
     }
 }

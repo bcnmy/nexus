@@ -32,7 +32,7 @@ import "../../../contracts/interfaces/INexus.sol";
 
 // Contract implementations
 import "../../../contracts/Nexus.sol";
-import "../../../contracts/factory/AccountFactory.sol";
+import "../../../contracts/factory/AccountFactoryGeneric.sol";
 
 // Mock contracts for testing
 import "../../../contracts/mocks/MockValidator.sol";

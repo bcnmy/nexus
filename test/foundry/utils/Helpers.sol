@@ -7,12 +7,14 @@ import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoin
 import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
+import { AccountFactoryGeneric } from "../../../contracts/factory/AccountFactoryGeneric.sol";
+import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { Nexus } from "../../../contracts/Nexus.sol";
+import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
@@ -21,7 +23,7 @@ import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./EventsAndErrors.sol";
 
-contract Helpers is CheatCodes, EventsAndErrors {
+contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -45,7 +47,8 @@ contract Helpers is CheatCodes, EventsAndErrors {
     Nexus public CHARLIE_ACCOUNT;
 
     IEntryPoint public ENTRYPOINT;
-    AccountFactory public FACTORY;
+    AccountFactoryGeneric public FACTORY;
+    BiconomyMetaFactory public META_FACTORY;
     MockValidator public VALIDATOR_MODULE;
     MockExecutor public EXECUTOR_MODULE;
     MockHook public HOOK_MODULE;
@@ -82,7 +85,10 @@ contract Helpers is CheatCodes, EventsAndErrors {
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ACCOUNT_IMPLEMENTATION = new Nexus();
-        FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
+        FACTORY = new AccountFactoryGeneric(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
+        META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
+        vm.prank(FACTORY_OWNER.addr);
+        META_FACTORY.whitelistFactory(address(FACTORY), true);
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
         HOOK_MODULE = new MockHook();
@@ -115,24 +121,42 @@ contract Helpers is CheatCodes, EventsAndErrors {
     }
 
     function calculateAccountAddress(address owner) internal view returns (address payable account) {
-        bytes memory initData = abi.encodePacked(owner);
+        bytes memory moduleInstallData = abi.encodePacked(owner);
 
-        uint256 saDeploymentIndex = 0;
+        BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), moduleInstallData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        bytes memory saDeploymentIndex = "0";
 
-        account = FACTORY.computeAccountAddress(address(VALIDATOR_MODULE), initData, saDeploymentIndex);
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData =
+            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+        bytes32 salt = keccak256(saDeploymentIndex);
 
+        account = FACTORY.computeAccountAddress(_initData, salt);
         return account;
     }
 
     function prepareInitCode(address ownerAddress) internal view returns (bytes memory initCode) {
         address module = address(VALIDATOR_MODULE);
-        uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
+
+        BootstrapConfig[] memory validators = makeBootstrapConfig(module, moduleInitData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+
+        bytes memory saDeploymentIndex = "0";
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData =
+            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);    
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
-            address(FACTORY),
-            abi.encodeWithSelector(FACTORY.createAccount.selector, module, moduleInitData, saDeploymentIndex)
+            address(META_FACTORY),
+            abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData)
         );
     }
 
