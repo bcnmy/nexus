@@ -4,13 +4,9 @@ pragma solidity ^0.8.24;
 import "../utils/Imports.sol";
 import "../utils/NexusTest_Base.t.sol";
 
-event ModuleInstalled(uint256 moduleTypeId, address module);
-
-event ModuleUninstalled(uint256 moduleTypeId, address module);
-
-event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
-
-abstract contract TestModuleManagement_Base is Test, NexusTest_Base {
+/// @title Base Test Contract for Module Management
+/// @notice Contains setup and shared functions for testing module management
+abstract contract TestModuleManagement_Base is NexusTest_Base {
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
@@ -21,22 +17,28 @@ abstract contract TestModuleManagement_Base is Test, NexusTest_Base {
 
     bytes4 public constant GENERIC_FALLBACK_SELECTOR = 0xcb5baf0f;
     bytes4 public constant UNUSED_SELECTOR = 0xdeadbeef;
-    // More shared state variables if needed
 
+    /// @notice Sets up the base environment for module management tests
     function setUpModuleManagement_Base() internal {
-        init(); // Initialize the testing environment if necessary
+        init(); // Initialize the testing environment
 
-        // Setup mock validator and executor, different from those possibly already used
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
         mockHandler = new MockHandler();
         mockHook = new MockHook();
-
-        // Additional shared setup can go here
     }
 
-    // Shared utility and helper functions to install/uninstall modules
-    function installModule(bytes memory callData, uint256 moduleTypeId, address moduleAddress, ExecType execType) internal {
+    /// @notice Installs a module on the given account
+    /// @param callData The call data for the installation
+    /// @param moduleTypeId The type ID of the module
+    /// @param moduleAddress The address of the module
+    /// @param execType The execution type for the operation
+    function installModule(
+        bytes memory callData,
+        uint256 moduleTypeId,
+        address moduleAddress,
+        ExecType execType
+    ) internal {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
@@ -48,13 +50,16 @@ abstract contract TestModuleManagement_Base is Test, NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
+    /// @notice Uninstalls a module from the given account
+    /// @param callData The call data for the uninstallation
+    /// @param execType The execution type for the operation
     function uninstallModule(bytes memory callData, ExecType execType) internal {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        // Similar to installModule but for uninstallation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 }
+
