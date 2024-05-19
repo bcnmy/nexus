@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import "../utils/Imports.sol";
-
 import { InvariantBaseTest } from "./base/InvariantBaseTest.t.sol";
 import { ExecutionHandlerTest } from "./handlers/ExecutionHandlerTest.t.sol";
 import { AccountCreationHandlerTest } from "./handlers/AccountCreationHandlerTest.t.sol";
 import { ModuleManagementHandlerTest } from "./handlers/ModuleManagementHandlerTest.t.sol";
 import { DepositManagementHandlerTest } from "./handlers/DepositManagementHandlerTest.t.sol";
 
-// ActorManager is responsible for coordinating test actions across different actors using handlers.
+/// @title ActorManagerInvariantTest
+/// @notice Coordinates test actions across different actors using handlers.
 contract ActorManagerInvariantTest is InvariantBaseTest {
     struct ActorHandlers {
         DepositManagementHandlerTest depositHandler;
@@ -23,7 +23,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     uint256 public testModuleType;
     address public testModuleAddress;
 
-    // Initializes handlers for each actor
+    /// @notice Initializes handlers for each actor
     function setUpActors() public {
         Vm.Wallet[3] memory actors = [ALICE, BOB, CHARLIE];
         Nexus[3] memory actorAccounts = [ALICE_ACCOUNT, BOB_ACCOUNT, CHARLIE_ACCOUNT];
@@ -33,7 +33,6 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
 
         // Initialize the handlers for each actor
         for (uint i = 0; i < actors.length; i++) {
-            // ExecutionHandler executionHandler = new ExecutionHandler(actorAccounts[i], actors[i]);
             DepositManagementHandlerTest depositHandler = new DepositManagementHandlerTest(actorAccounts[i], actors[i]);
             ModuleManagementHandlerTest moduleHandler = new ModuleManagementHandlerTest(actorAccounts[i], actors[i]);
             AccountCreationHandlerTest accountCreationHandler = new AccountCreationHandlerTest(FACTORY, validationModule, actors[i].addr);
@@ -63,7 +62,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     // Account Creation Tests
     //--------------------------------------------------------------
 
-    // Test account creation across all actors
+    /// @notice Test account creation across all actors
     function invariant_CreateAccount() public {
         uint256 index = 0;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -71,7 +70,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Test nonce consistency across all actors
+    /// @notice Test nonce consistency across all actors
     function invariant_testNonceConsistency() public {
         uint256 index = 1;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -79,7 +78,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Test nonce reset on account creation across all actors
+    /// @notice Test nonce reset on account creation across all actors
     function invariant_testNonceResetOnCreation() public {
         uint256 index = 1;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -87,7 +86,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Test multiple account creation with unique indices across all actors
+    /// @notice Test multiple account creation with unique indices across all actors
     function invariant_testMultipleAccountCreationWithUniqueIndices() public {
         for (uint i = 0; i < actorHandlers.length; i++) {
             actorHandlers[i].accountCreationHandler.invariant_multipleAccountCreationWithUniqueIndices();
@@ -98,7 +97,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     // Deposit Management Tests
     //--------------------------------------------------------------
 
-    // Test deposits across all actors
+    /// @notice Test deposits across all actors
     function invariant_Deposits() public {
         uint256 depositAmount = 1 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -106,7 +105,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Test withdrawals across all actors
+    /// @notice Test withdrawals across all actors
     function invariant_Withdrawals() public {
         uint256 withdrawalAmount = 0.5 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -114,21 +113,21 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Test zero value deposits across all actors
+    /// @notice Test zero value deposits across all actors
     function invariant_testAllZeroValueDeposits() public {
         for (uint i = 0; i < actorHandlers.length; i++) {
             actorHandlers[i].depositHandler.invariant_testZeroValueDeposit();
         }
     }
 
-    // Test overdraft withdrawals across all actors
+    /// @notice Test overdraft withdrawals across all actors
     function invariant_testAllOverdraftWithdrawals() public {
         for (uint i = 0; i < actorHandlers.length; i++) {
             actorHandlers[i].depositHandler.invariant_testOverdraftWithdrawal();
         }
     }
 
-    // Check balance consistency after revert across all actors
+    /// @notice Check balance consistency after revert across all actors
     function invariant_checkAllBalancePostRevert() public {
         for (uint i = 0; i < actorHandlers.length; i++) {
             actorHandlers[i].depositHandler.invariant_checkBalancePostRevert();
@@ -139,23 +138,37 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     // Module Management Tests
     //--------------------------------------------------------------
 
-    // Ensure each actor can handle module installation correctly
+    /// @notice Ensure each actor can handle module installation correctly
     function invariant_testAllModuleInstallations() public {
         uint256 moduleType = MODULE_TYPE_VALIDATOR;
         address moduleAddress = address(validationModule);
 
         for (uint i = 0; i < actorHandlers.length; i++) {
-            actorHandlers[i].moduleHandler.installModule(moduleType, moduleAddress);
+            actorHandlers[i].moduleHandler.invariant_installModule(moduleType, moduleAddress);
         }
     }
 
-    // Ensure each actor can handle module uninstallation correctly
+    /// @notice Ensure each actor can handle invalid module installation
+    function invariant_testAllModuleInstallationsInvalidModule() public {
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].moduleHandler.invariant_installInvalidModule();
+        }
+    }
+
+    /// @notice Ensure each actor can handle module uninstallation correctly
     function invariant_testAllModuleUninstallations() public {
         uint256 moduleType = MODULE_TYPE_VALIDATOR;
         address moduleAddress = address(validationModule);
 
         for (uint i = 0; i < actorHandlers.length; i++) {
-            actorHandlers[i].moduleHandler.uninstallModule(moduleType, moduleAddress);
+            actorHandlers[i].moduleHandler.invariant_uninstallModule(moduleType, moduleAddress);
+        }
+    }
+
+    /// @notice Ensure each actor can handle uninstallation of a non-existent module
+    function invariant_testAllModuleUninstallationsNonExistentModule() public {
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].moduleHandler.invariant_uninstallNonExistentModule();
         }
     }
 
@@ -163,7 +176,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     // Execution Tests
     //--------------------------------------------------------------
 
-    // Adds testing methods for increment operations across all actors
+    /// @notice Adds testing methods for increment operations across all actors
     function invariant_testAllIncrementOperations() public {
         uint256 amount = 1 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -171,7 +184,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Tests failure handling for decrement operations across all actors
+    /// @notice Tests failure handling for decrement operations across all actors
     function invariant_testAllDecrementFailures() public {
         uint256 amount = 1 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
@@ -179,7 +192,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
         }
     }
 
-    // Tests bounded deposit operations across all actors
+    /// @notice Tests bounded deposit operations across all actors
     function invariant_testAllBoundedDeposits() public {
         uint256 amount = 500 ether;
         for (uint i = 0; i < actorHandlers.length; i++) {
