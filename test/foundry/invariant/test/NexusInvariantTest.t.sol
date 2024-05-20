@@ -9,6 +9,12 @@ contract NexusInvariantTest is NexusTest_Base {
     /// @notice Initializes the testing environment
     function setUp() public {
         init(); // Initialize environment which includes deploying Nexus as BOB_ACCOUNT
+
+        excludeContract(address(VALIDATOR_MODULE));
+        excludeContract(address(EXECUTOR_MODULE));
+        excludeContract(address(HANDLER_MODULE));
+        excludeContract(address(HOOK_MODULE));
+        excludeContract(address(FACTORY));
     }
 
     /// @notice Invariant to ensure execution consistency and access control
