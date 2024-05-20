@@ -7,16 +7,20 @@ import "../../utils/NexusTest_Base.t.sol";
 /// @title AccountDepositBalanceInvariantTest
 /// @notice Tests the consistency of the deposit balance on the ENTRYPOINT contract
 contract AccountDepositBalanceInvariantTest is NexusTest_Base {
-    uint256 private initialBalance;
-
     /// @notice Initializes the test environment and records the initial balance
     function setUp() public {
         init();
-        initialBalance = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
+        excludeContract(address(VALIDATOR_MODULE));
+        excludeContract(address(EXECUTOR_MODULE));
+        excludeContract(address(HANDLER_MODULE));
+        excludeContract(address(HOOK_MODULE));
+        excludeContract(address(FACTORY));
     }
 
     /// @notice Tests the invariant that the deposit balance on the ENTRYPOINT must always closely match the expected amounts after transactions
     function invariant_depositBalanceConsistency() public {
+        uint256 initialBalance = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
+
         uint256 depositAmount = uint256(keccak256(abi.encodePacked(block.number, block.prevrandao))) % 50 ether;
         vm.deal(address(BOB_ACCOUNT), depositAmount + 1 ether); // Ensure account has enough ether
 
