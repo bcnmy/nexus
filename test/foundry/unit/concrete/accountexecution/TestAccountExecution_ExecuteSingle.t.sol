@@ -152,7 +152,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
     }
 
     /// @notice Tests execution with an unsupported call type
-    function test_SingleExecution_RevertOnUnsupportedCallType() public {
+    function test_SingleExecution_RevertOnUnsupportedCallType_FromEntryPoint() public {
         // Initial state assertion
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
