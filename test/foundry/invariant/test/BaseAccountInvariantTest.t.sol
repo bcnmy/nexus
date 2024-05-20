@@ -41,6 +41,7 @@ contract BaseAccountInvariantTest is NexusTest_Base {
         excludeContract(address(EXECUTOR_MODULE));
         excludeContract(address(HANDLER_MODULE));
         excludeContract(address(HOOK_MODULE));
+        excludeContract(address(FACTORY));
     }
 
     /// @notice Invariant to ensure deposit balance integrity with tolerance for gas costs
