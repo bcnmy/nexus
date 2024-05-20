@@ -35,8 +35,10 @@ describe("Nexus Module Management Tests", () => {
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let mockHook: MockHook;
+  let mockHook2: MockHook;
   let mockFallbackHandler: MockHandler;
   let hookModuleAddress: AddressLike;
+  let hookModuleAddress2: AddressLike;
   let mockFallbackHandlerAddress: AddressLike;
 
   before(async function () {
@@ -47,6 +49,7 @@ describe("Nexus Module Management Tests", () => {
       accountOwner,
       entryPoint,
       mockHook,
+      mockHook2,
       ecdsaValidator,
       mockFallbackHandler,
     } = await deployContractsAndSAFixture());
@@ -58,6 +61,7 @@ describe("Nexus Module Management Tests", () => {
     accountOwner = accountOwner;
     entryPoint = entryPoint;
     hookModuleAddress = await mockHook.getAddress();
+    hookModuleAddress2 = await mockHook2.getAddress();
     mockFallbackHandlerAddress = await mockFallbackHandler.getAddress();
 
     bundler = ethers.Wallet.createRandom();
@@ -355,38 +359,66 @@ describe("Nexus Module Management Tests", () => {
       expect(isInstalledAfter).to.be.true;
     });
 
-    it("Should throw HookAlreadyInstalled if trying to install a second hook", async () => {
+    it("Should throw ModuleAlreadyInstalled if trying to install the same hook again.", async () => {
       await installModule({
         deployedMSA,
         entryPoint,
-        module: mockHook,
+        module: mockExecutor,
+        moduleType: ModuleType.Execution,
         validatorModule: mockValidator,
-        moduleType: ModuleType.Hooks,
         accountOwner,
         bundler,
       });
 
-      console.log("Hook installed");
+      expect(
+        await deployedMSA.isModuleInstalled(
+          ModuleType.Execution,
+          await mockExecutor.getAddress(),
+          ethers.hexlify("0x"),
+        ),
+      ).to.be.true;
       
-      // expect(
-      //   await deployedMSA.isModuleInstalled(
-      //     ModuleType.Hooks,
-      //     hookModuleAddress,
-      //     ethers.hexlify("0x"),
-      //   ),
-      // ).to.be.true;
+      const installHookData = deployedMSA.interface.encodeFunctionData(
+        "installModule",
+        [
+          ModuleType.Hooks,
+          await mockHook.getAddress(),
+          ethers.hexlify(await accountOwner.getAddress()),
+        ],
+      );
+      
+      await expect (mockExecutor.executeViaAccount(
+        await deployedMSA.getAddress(),
+        await deployedMSA.getAddress(),
+        0n,
+        installHookData,
+      )).to.be.revertedWithCustomError(deployedMSA, "ModuleAlreadyInstalled");
+    });
 
-      await installModule({
-        deployedMSA,
-        entryPoint,
-        module: mockHook,
-        validatorModule: mockValidator,
-        moduleType: ModuleType.Hooks,
-        accountOwner,
-        bundler,
-      })
+    it("Should throw HookAlreadyInstalled if trying to install two different hooks", async () => {
+      expect(
+        await deployedMSA.isModuleInstalled(
+          ModuleType.Hooks,
+          hookModuleAddress,
+          ethers.hexlify("0x"),
+        ),
+      ).to.be.true;
 
-      console.log("Hook installed again");
+      const installSecondHook = deployedMSA.interface.encodeFunctionData(
+        "installModule",
+        [
+          ModuleType.Hooks,
+          hookModuleAddress2,
+          ethers.hexlify(await accountOwner.getAddress()),
+        ],
+      );
+      
+      await expect (mockExecutor.executeViaAccount(
+        await deployedMSA.getAddress(),
+        await deployedMSA.getAddress(),
+        0n,
+        installSecondHook,
+      )).to.be.revertedWithCustomError(deployedMSA, "HookAlreadyInstalled");
     });
 
     it("Should correctly uninstall a previously installed hook module by using the execution module", async () => {

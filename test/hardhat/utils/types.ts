@@ -48,6 +48,7 @@ export interface DeploymentFixtureWithSA {
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
   mockHook: MockHook;
+  mockHook2: MockHook;
   mockFallbackHandler: MockHandler;
   ecdsaValidator: K1Validator;
   counter: Counter;
