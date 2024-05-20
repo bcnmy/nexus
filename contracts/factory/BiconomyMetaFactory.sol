@@ -26,10 +26,23 @@ contract BiconomyMetaFactory is Stakeable {
     constructor(address owner) Stakeable(owner) {
     }
 
-    // could be IAccountFactory
-    // whitelist / blacklist a factory
-    function whitelistFactory(address factory, bool whitelisted) external payable onlyOwner {
-        factoryWhitelist[factory] = whitelisted;
+    /// @notice Adds an address to the factory whitelist.
+    /// @param factory The address to be whitelisted.
+    function addFactoryToWhitelist(address factory) external onlyOwner {
+        factoryWhitelist[factory] = true;
+    }
+
+    /// @notice Removes an address from the factory whitelist.
+    /// @param factory The address to be removed from the whitelist.
+    function removeFactoryFromWhitelist(address factory) external onlyOwner {
+        factoryWhitelist[factory] = false;
+    }
+
+
+    /// @notice Checks if an address is whitelisted.
+    /// @param factory The address to check.
+    function isWhitelisted(address factory) public view returns (bool) {
+        return factoryWhitelist[factory];
     }
 
     // removeFactoryFromWhitelist

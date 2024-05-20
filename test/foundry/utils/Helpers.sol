@@ -88,7 +88,7 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
         FACTORY = new AccountFactoryGeneric(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
-        META_FACTORY.whitelistFactory(address(FACTORY), true);
+        META_FACTORY.addFactoryToWhitelist(address(FACTORY));
         VALIDATOR_MODULE = new MockValidator();
         EXECUTOR_MODULE = new MockExecutor();
         HOOK_MODULE = new MockHook();
