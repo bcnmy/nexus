@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {CallType, ExecType } from "../../../contracts/lib/ModeLib.sol";
+
 contract EventsAndErrors {
     // Define all events
     event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
@@ -21,6 +23,9 @@ contract EventsAndErrors {
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
     error UnauthorizedOperation(address operator);
+    error UnsupportedModuleType(uint256 moduleTypeId);
+    error UnsupportedCallType(CallType callType);
+    error UnsupportedExecType(ExecType execType);
 
     // Operation Errors
     error FailedOp(uint256 opIndex, string reason);
