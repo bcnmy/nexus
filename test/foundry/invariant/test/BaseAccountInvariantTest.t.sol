@@ -55,7 +55,8 @@ contract BaseAccountInvariantTest is NexusTest_Base {
 
         // Deposit 1 ether to nexusAccount from signer.
         vm.prank(signer.addr);
-        nexusAccount.addDeposit{ value: 1 ether }();
+        vm.deal(signer.addr, 100 ether); // Ensure signer has enough ether
+        nexusAccount.addDeposit{ value: depositAmount }();
 
         // Check if the deposit reflects correctly within the tolerance
         uint256 postDepositBalance = nexusAccount.getDeposit();
