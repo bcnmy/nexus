@@ -150,4 +150,40 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         assertEq(token.balanceOf(ALICE.addr), transferFromAmount, "TransferFrom did not execute correctly");
         assertEq(token.allowance(address(BOB_ACCOUNT), CHARLIE.addr), approvalAmount - transferFromAmount, "Allowance not updated correctly");
     }
+
+    /// @notice Tests execution with an unsupported call type
+    function test_SingleExecution_RevertOnUnsupportedCallType() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        ExecutionMode mode = unsupportedMode; // Example unsupported call type
+
+        (CallType callType,) = ModeLib.decodeBasic(mode);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
+        prank(address(ENTRYPOINT));
+        BOB_ACCOUNT.execute(mode, abi.encode(execution));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported call type revert");
+    }
+
+    /// @notice Tests execution with an unsupported call type
+    function test_SingleExecution_RevertOnUnsupportedCallType_FromAccount() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        ExecutionMode mode = unsupportedMode; // Example unsupported call type
+
+        (CallType callType,) = ModeLib.decodeBasic(mode);
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
+        prank(address(BOB_ACCOUNT));
+        BOB_ACCOUNT.execute(mode, abi.encode(execution));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported call type revert");
+    }
 }
