@@ -5,7 +5,11 @@ import "../../../utils/Imports.sol";
 
 /// @title Test suite for checking account ID in AccountConfig
 contract TestAccountConfig_AccountId is Test {
-    Nexus public accountConfig;
+    Nexus internal accountConfig;
+
+    modifier givenTheAccountConfiguration() {
+        _;
+    }
 
     /// @notice Initialize the testing environment
     function setUp() public {
@@ -13,7 +17,7 @@ contract TestAccountConfig_AccountId is Test {
     }
 
     /// @notice Tests if the account ID returns the expected value
-    function test_AccountId_ReturnsCorrectValue() public {
+    function test_WhenCheckingTheAccountID() external givenTheAccountConfiguration {
         string memory expected = "biconomy.nexus.0.0.1";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
