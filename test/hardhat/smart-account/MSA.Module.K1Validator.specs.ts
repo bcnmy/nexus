@@ -139,6 +139,94 @@ describe("K1Validator module tests", () => {
       expect(isValid).to.equal(0n);
     });
 
+    it("should fail on invalid user op", async () => {
+      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+        ModuleType.Validation,
+        k1ModuleAddress,
+        ethers.hexlify("0x"),
+      );
+
+      expect(isModuleInstalled).to.equal(true);
+
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const validatorModuleAddress = await k1Validator.getAddress();
+
+      // Build the userOp with the generated callData.
+      let userOp = buildPackedUserOp({
+        sender: await deployedMSA.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const signature = await accountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+
+      userOp.signature = signature;
+
+      // invalid signature
+      userOp.signature = await accountOwner.signMessage(
+        ethers.getBytes("0x1234"),
+      );
+      const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
+
+      // 0 - valid, 1 - invalid
+      expect(isValid).to.equal(1);
+    });
+
+    it("should work", async () => {
+      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+        ModuleType.Validation,
+        k1ModuleAddress,
+        ethers.hexlify("0x"),
+      );
+
+      expect(isModuleInstalled).to.equal(true);
+
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const validatorModuleAddress = await k1Validator.getAddress();
+
+      // Build the userOp with the generated callData.
+      const userOp = buildPackedUserOp({
+        sender: await deployedMSA.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
+
+      // 0 - valid, 1 - invalid
+      expect(isValid).to.equal(1);
+    });
+
     it("Should check signature using isValidSignatureWithSender", async () => {
       const message = "Some Message";
       // const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), , );

@@ -19,7 +19,12 @@ import {
 } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import {
+  CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
   GENERIC_FALLBACK_SELECTOR,
+  MODE_DEFAULT,
+  MODE_PAYLOAD,
+  UNUSED,
   installModule,
 } from "../utils/erc7579Utils";
 
@@ -179,6 +184,30 @@ describe("Nexus Module Management Tests", () => {
         "CannotRemoveLastValidator()",
       );
     });
+
+    it("Should revert with AccountAccessUnauthorized", async () => {
+      const installModuleData = deployedMSA.interface.encodeFunctionData(
+        "installModule",
+        [
+          ModuleType.Validation,
+          await mockValidator.getAddress(),
+          ethers.hexlify(await accountOwner.getAddress()),
+        ],
+      );
+
+      const executionCalldata = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [await deployedMSA.getAddress(), "0", installModuleData],
+      );
+
+      await expect(deployedMSA.execute(ethers.concat([
+        CALLTYPE_SINGLE,
+        EXECTYPE_DEFAULT,
+        MODE_DEFAULT,
+        UNUSED,
+        MODE_PAYLOAD,
+      ]), executionCalldata)).to.be.reverted
+    });
   });
 
   describe("Executor Module Tests", () => {
@@ -202,6 +231,30 @@ describe("Nexus Module Management Tests", () => {
       );
 
       expect(isInstalledAfter).to.be.true;
+    });
+
+    it("Should revert with AccountAccessUnauthorized", async () => {
+      const installModuleData = deployedMSA.interface.encodeFunctionData(
+        "uninstallModule",
+        [
+          ModuleType.Execution,
+          await mockExecutor.getAddress(),
+          ethers.hexlify("0x"),
+        ],
+      );
+
+      const executionCalldata = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [await deployedMSA.getAddress(), "0", installModuleData],
+      );
+
+      await expect(deployedMSA.execute(ethers.concat([
+        CALLTYPE_SINGLE,
+        EXECTYPE_DEFAULT,
+        MODE_DEFAULT,
+        UNUSED,
+        MODE_PAYLOAD,
+      ]), executionCalldata)).to.be.reverted
     });
 
     it("Should not be able to uninstall a module which is not installed", async () => {

@@ -21,6 +21,7 @@ import {
 import { ethers } from "hardhat";
 import {
   CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
   EXECTYPE_TRY,
   MODE_DEFAULT,
   MODE_PAYLOAD,
@@ -161,6 +162,25 @@ describe("Nexus Single Execution", () => {
 
       expect(await counter.getNumber()).to.equal(1);
     });
+
+    it("Should revert with AccountAccessUnauthorized", async () => {
+      const functionCallData = counter.interface.encodeFunctionData("incrementNumber");
+
+      const executionCalldata = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [await counter.getAddress(), "0", functionCallData],
+      );
+
+      // expect this function call to revert 
+      const result = await expect(smartAccount.execute(ethers.concat([
+        CALLTYPE_SINGLE,
+        EXECTYPE_DEFAULT,
+        MODE_DEFAULT,
+        UNUSED,
+        MODE_PAYLOAD,
+      ]), executionCalldata)).to.be.reverted;
+    });
+
 
     it("Should execute an empty transaction through handleOps", async () => {
       const isOwner = await validatorModule.isOwner(

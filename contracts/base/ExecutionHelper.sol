@@ -100,40 +100,40 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param delegate The address to delegatecall to.
     /// @param callData The calldata to send.
     /// @return result The bytes returned from the delegatecall.
-    function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40)
-            calldatacopy(result, callData.offset, callData.length)
-            // Forwards the `data` to `delegate` via delegatecall.
-            if iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00)) {
-                // Bubble up the revert if the call reverts.
-                returndatacopy(result, 0x00, returndatasize())
-                revert(result, returndatasize())
-            }
-            mstore(result, returndatasize()) // Store the length.
-            let o := add(result, 0x20)
-            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
-            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
-        }
-    }
+    // function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
+    //     /// @solidity memory-safe-assembly
+    //     assembly {
+    //         result := mload(0x40)
+    //         calldatacopy(result, callData.offset, callData.length)
+    //         // Forwards the `data` to `delegate` via delegatecall.
+    //         if iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00)) {
+    //             // Bubble up the revert if the call reverts.
+    //             returndatacopy(result, 0x00, returndatasize())
+    //             revert(result, returndatasize())
+    //         }
+    //         mstore(result, returndatasize()) // Store the length.
+    //         let o := add(result, 0x20)
+    //         returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
+    //         mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+    //     }
+    // }
 
     /// @notice Tries to execute a delegatecall and captures if it was successful or not.
     /// @param delegate The address to delegatecall to.
     /// @param callData The calldata to send.
     /// @return success True if the delegatecall was successful, false otherwise.
     /// @return result The bytes returned from the delegatecall.
-    function _tryExecuteDelegatecall(address delegate, bytes calldata callData) internal returns (bool success, bytes memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40)
-            calldatacopy(result, callData.offset, callData.length)
-            // Forwards the `data` to `delegate` via delegatecall.
-            success := iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00))
-            mstore(result, returndatasize()) // Store the length.
-            let o := add(result, 0x20)
-            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
-            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
-        }
-    }
+    // function _tryExecuteDelegatecall(address delegate, bytes calldata callData) internal returns (bool success, bytes memory result) {
+    //     /// @solidity memory-safe-assembly
+    //     assembly {
+    //         result := mload(0x40)
+    //         calldatacopy(result, callData.offset, callData.length)
+    //         // Forwards the `data` to `delegate` via delegatecall.
+    //         success := iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00))
+    //         mstore(result, returndatasize()) // Store the length.
+    //         let o := add(result, 0x20)
+    //         returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
+    //         mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+    //     }
+    // }
 }
