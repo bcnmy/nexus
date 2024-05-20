@@ -163,7 +163,7 @@ describe("Nexus Single Execution", () => {
       expect(await counter.getNumber()).to.equal(1);
     });
 
-    it("Should revert with AccountAccessUnauthorized", async () => {
+    it("Should revert with AccountAccessUnauthorized, execute", async () => {
       const functionCallData = counter.interface.encodeFunctionData("incrementNumber");
 
       const executionCalldata = ethers.solidityPacked(
@@ -172,13 +172,42 @@ describe("Nexus Single Execution", () => {
       );
 
       // expect this function call to revert 
-      const result = await expect(smartAccount.execute(ethers.concat([
+      await expect(smartAccount.execute(ethers.concat([
         CALLTYPE_SINGLE,
         EXECTYPE_DEFAULT,
         MODE_DEFAULT,
         UNUSED,
         MODE_PAYLOAD,
-      ]), executionCalldata)).to.be.reverted;
+      ]), executionCalldata)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+    });
+
+    it("Should revert with AccountAccessUnauthorized, executeUserOp", async function () {
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const userOp = buildPackedUserOp({
+        sender: await smartAccount.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const validatorModuleAddress = await validatorModule.getAddress()
+      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+
+      userOp.signature = signature;
+
+      await expect(smartAccount.executeUserOp(userOp, userOpHash)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
     });
 
 

@@ -131,6 +131,11 @@ describe("Nexus Basic Specs", function () {
       expect(saImplementation).to.not.equal(ZeroAddress);
     });
 
+    it("Should get smart account nonce", async () => {
+      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(moduleAddress.toString(), 24));
+      expect(nonce).to.be.greaterThanOrEqual(0);
+    });
+
     it("Should check deposit amount", async () => {
       await smartAccount.addDeposit({ value: to18(1) });
       const deposit = await smartAccount.getDeposit();
@@ -358,6 +363,37 @@ describe("Nexus Basic Specs", function () {
     //   console.log("isValid: ", isValid);
     //   expect(isValid).to.equal("0x1626ba7e");
     // });
+  });
+
+  describe("Smart Account check Only Entrypoint actions", function () {
+    it("Should revert with AccountAccessUnauthorized", async function () {
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const userOp = buildPackedUserOp({
+        sender: await smartAccount.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const validatorModuleAddress = await validatorModule.getAddress()
+      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+
+      userOp.signature = signature;
+
+      await expect(smartAccount.validateUserOp(userOp, userOpHash, 0n)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+    });
   });
 
   describe("Nexus Smart Account Deployment via EntryPoint", function () {
