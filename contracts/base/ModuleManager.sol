@@ -40,12 +40,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         _;
     }
 
-    /// @notice Ensures the specified address is a registered validator module.
-    modifier onlyValidatorModule(address validator) virtual {
-        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
-        _;
-    }
-
     /// @notice Does pre-checks and post-checks using an installed hook on the account.
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
