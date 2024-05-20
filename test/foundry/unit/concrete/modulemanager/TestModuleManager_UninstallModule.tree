@@ -1,0 +1,24 @@
+TestModuleManager_UninstallModule
+└── given the module manager with uninstallation functionality
+    ├── when installing a module successfully
+    │   └── it should install the module successfully
+    ├── when uninstalling a module successfully
+    │   └── it should uninstall the module successfully
+    ├── when uninstalling a newly installed module successfully
+    │   └── it should uninstall the module successfully
+    ├── when uninstalling an executor module successfully
+    │   └── it should uninstall the executor module successfully
+    ├── when trying to uninstall the last validator module
+    │   └── it should revert
+    ├── when trying to uninstall a module with incorrect type
+    │   └── it should revert
+    ├── when trying to uninstall a module that is not installed
+    │   └── it should revert
+    ├── when trying to uninstall a module with incorrect previous module data
+    │   └── it should revert
+    ├── when uninstalling the last validator module
+    │   └── it should revert
+    ├── when uninstalling a fallback handler successfully
+    │   └── it should uninstall the fallback handler successfully
+    └── when trying to uninstall a fallback handler that is not installed
+        └── it should revert

@@ -1,0 +1,4 @@
+TestERC4337Account_EntryPoint
+└── given the ERC4337 account with an EntryPoint
+    └── when checking the EntryPoint address
+        └── it should return the correct EntryPoint address for different accounts

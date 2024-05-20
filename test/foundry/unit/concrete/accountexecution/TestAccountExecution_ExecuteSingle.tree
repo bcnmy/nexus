@@ -1,0 +1,16 @@
+TestAccountExecution_ExecuteSingle
+└── given the Nexus account execution
+    ├── when executing a single operation
+    │   └── it should execute successfully and increment the counter
+    ├── when executing a single operation that reverts
+    │   └── it should revert and the counter should remain unchanged
+    ├── when executing a single operation with a zero address
+    │   └── it should revert and the counter should remain unchanged
+    ├── when executing a single operation with empty calldata
+    │   └── it should execute successfully with no changes
+    ├── when executing a value transfer in a single operation
+    │   └── it should transfer the correct amount of ETH to the receiver
+    ├── when executing a token transfer in a single operation
+    │   └── it should transfer the correct amount of tokens to the recipient
+    └── when executing an approve and transferFrom operation
+        └── it should approve and transfer the tokens correctly
