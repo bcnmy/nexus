@@ -20,7 +20,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
 
     /// @notice Sets up the initial test environment and forks the Arbitrum mainnet.
     function setUp() public {
-        uint mainnetFork = vm.createFork(ARBITRUM_RPC_URL);
+        uint mainnetFork = vm.createFork(getArbitrumRpcUrl());
         vm.selectFork(mainnetFork);
         vm.rollFork(209480000);
         init();
@@ -160,5 +160,11 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         op.maxFeePerGas = 3e6;
         op.maxPriorityFeePerGas = 3e6;
         op.paymasterAndData = "";
+    }
+
+    /// @notice Retrieves the Arbitrum RPC URL from the environment variable or defaults to the hardcoded URL
+    function getArbitrumRpcUrl() internal view returns (string memory) {
+        string memory rpcUrl = vm.envOr("ARBITRUM_RPC_URL", DEFAULT_ARBITRUM_RPC_URL);
+        return rpcUrl;
     }
 }
