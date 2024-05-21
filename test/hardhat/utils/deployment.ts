@@ -1,7 +1,7 @@
 import { BytesLike, HDNodeWallet, Signer } from "ethers";
 import { deployments, ethers } from "hardhat";
 import {
-  AccountFactoryGeneric,
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -11,6 +11,7 @@ import {
   MockValidator,
   K1Validator,
   Nexus,
+  Bootstrap,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -62,32 +63,34 @@ async function getDeployedEntrypoint() {
 }
 
 /**
- * Deploys the AccountFactoryGeneric contract with a deterministic deployment.
+ * Deploys the K1ValidatorFactory contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
 export async function getDeployedAccountFactory(
   implementationAddress: string,
   owner: string,
+  k1Validator: string,
+  bootstrapper: string
   // Note: this could be converted to dto so that additional args can easily be passed
-): Promise<AccountFactoryGeneric> {
+): Promise<K1ValidatorFactory> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
-  const AccountFactoryGeneric = await ethers.getContractFactory("AccountFactoryGeneric");
+  const K1ValidatorFactory = await ethers.getContractFactory("K1ValidatorFactory");
   const deterministicAccountFactory = await deployments.deploy(
-    "AccountFactoryGeneric",
+    "K1ValidatorFactory",
     {
       from: addresses[0],
       deterministicDeployment: true,
-      args: [implementationAddress, owner],
+      args: [owner, implementationAddress, k1Validator, bootstrapper],
     },
   );
 
-  return AccountFactoryGeneric.attach(
+  return K1ValidatorFactory.attach(
     deterministicAccountFactory.address,
-  ) as AccountFactoryGeneric;
+  ) as K1ValidatorFactory;
 }
 
 /**
@@ -262,14 +265,18 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
-  const msaFactory = await getDeployedAccountFactory(
-    await smartAccountImplementation.getAddress(),
-    factoryOwner
-  );
-
   const mockValidator = await deployContract<MockValidator>(
     "MockValidator",
     deployer,
+  );
+
+  const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
+
+  const msaFactory = await getDeployedAccountFactory(
+    await smartAccountImplementation.getAddress(),
+    factoryOwner,
+    await mockValidator.getAddress(),
+    await bootstrap.getAddress(),
   );
 
   const ecdsaValidator = await getDeployedK1Validator();
@@ -313,14 +320,18 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const smartAccountImplementation = await getDeployedMSAImplementation();
 
-  const msaFactory = await getDeployedAccountFactory(
-    await smartAccountImplementation.getAddress(),
-    factoryOwner
-  );
-
   const mockValidator = await deployContract<MockValidator>(
     "MockValidator",
     deployer,
+  );
+
+  const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
+
+  const msaFactory = await getDeployedAccountFactory(
+    await smartAccountImplementation.getAddress(),
+    factoryOwner,
+    await mockValidator.getAddress(),
+    await bootstrap.getAddress(),
   );
 
   const mockHook = await getDeployedMockHook();
@@ -350,27 +361,23 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   );
 
   const accountAddress = await msaFactory.computeAccountAddress(
-    mockValidatorAddress,
-    moduleInstallData,
+    ownerAddress,
     saDeploymentIndex,
   );
 
   const aliceAccountAddress = await msaFactory.computeAccountAddress(
-    mockValidatorAddress,
-    aliceModuleInstallData,
+    aliceAddress,
     saDeploymentIndex,
   );
 
   // deploy SA
   await msaFactory.createAccount(
-    mockValidatorAddress,
-    moduleInstallData,
+    ownerAddress,
     saDeploymentIndex,
   );
 
   await msaFactory.createAccount(
-    mockValidatorAddress,
-    aliceModuleInstallData,
+    aliceAddress,
     saDeploymentIndex,
   );
 
@@ -433,7 +440,7 @@ export async function getDeployedSmartAccountWithValidator(
   entryPoint: EntryPoint,
   mockToken: MockToken,
   signer: HDNodeWallet,
-  accountFactory: AccountFactoryGeneric,
+  accountFactory: K1ValidatorFactory,
   validatorAddress: string,
   onInstallData: BytesLike,
   deploymentIndex: number = 0,
@@ -443,8 +450,7 @@ export async function getDeployedSmartAccountWithValidator(
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   const accountAddress = await accountFactory.computeAccountAddress(
-    validatorAddress,
-    moduleInstallData,
+    ownerAddress,
     deploymentIndex,
   );
 
@@ -453,8 +459,7 @@ export async function getDeployedSmartAccountWithValidator(
   await mockToken.mint(accountAddress, to18(100));
 
   await accountFactory.createAccount(
-    validatorAddress,
-    moduleInstallData,
+    ownerAddress,
     deploymentIndex,
   );
 

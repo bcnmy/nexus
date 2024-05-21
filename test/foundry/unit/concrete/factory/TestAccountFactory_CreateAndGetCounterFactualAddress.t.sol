@@ -27,7 +27,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -52,7 +52,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -105,7 +105,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
@@ -126,7 +126,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         bytes memory factoryData1 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
         bytes memory factoryData2 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, keccak256("1"));
@@ -147,13 +147,13 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
         // Should revert if the validator module is invalid
         BootstrapConfig[] memory validatorsInvalid = makeBootstrapConfig(address(0), initData);
         bytes memory _initDataInvalidModule =
-            bootstrapSingleton._getInitNexusScopedCalldata(validatorsInvalid, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validatorsInvalid, hook);
 
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(_initDataInvalidModule, salt);
@@ -169,7 +169,7 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
         vm.expectRevert();
         // Adjust the gas amount based on your contract's requirements
         FACTORY.createAccount{ gas: 1000 }(_initData, salt);

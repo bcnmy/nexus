@@ -11,7 +11,7 @@ import {
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AccountFactoryGeneric,
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockValidator,
@@ -37,7 +37,7 @@ import {
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
-  let factory: AccountFactoryGeneric;
+  let factory: K1ValidatorFactory;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
@@ -83,12 +83,11 @@ describe("Nexus Basic Specs", function () {
 
     // Read the expected account address
     const expectedAccountAddress = await factory.computeAccountAddress(
-      moduleAddress, // validator address
-      installData,
+      accountOwnerAddress,
       saDeploymentIndex,
     );
 
-    await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
   });
 
   describe("Contract Deployment", function () {
@@ -102,14 +101,12 @@ describe("Nexus Basic Specs", function () {
 
       // Read the expected account address
       const expectedAccountAddress = await factory.computeAccountAddress(
-        moduleAddress, // validator address
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
       await factory.createAccount(
-        moduleAddress,
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -319,8 +316,7 @@ describe("Nexus Basic Specs", function () {
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
       const accountAddress = await factory.computeAccountAddress(
-        moduleAddress,
-        moduleInitData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -360,8 +356,7 @@ describe("Nexus Basic Specs", function () {
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
       const accountAddress = await factory.computeAccountAddress(
-        moduleAddress,
-        moduleInitData,
+        ownerAddress,
         saDeploymentIndex,
       );
 

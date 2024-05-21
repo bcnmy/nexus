@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Imports.sol";
-import "./CheatCodes.sol";
+import { CheatCodes } from "./CheatCodes.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { AccountFactoryGeneric } from "../../../contracts/factory/AccountFactoryGeneric.sol";
+import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { Nexus } from "../../../contracts/Nexus.sol";
+import { Bootstrap } from "../../../contracts/utils/Bootstrap.sol";
 import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
@@ -22,6 +21,7 @@ import "../../../contracts/lib/ModuleTypeLib.sol";
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./EventsAndErrors.sol";
+import "./Imports.sol";
 
 contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
@@ -47,13 +47,15 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
     Nexus public CHARLIE_ACCOUNT;
 
     IEntryPoint public ENTRYPOINT;
-    AccountFactoryGeneric public FACTORY;
+    NexusAccountFactory public FACTORY;
     BiconomyMetaFactory public META_FACTORY;
     MockValidator public VALIDATOR_MODULE;
     MockExecutor public EXECUTOR_MODULE;
     MockHook public HOOK_MODULE;
     MockHandler public HANDLER_MODULE;
     Nexus public ACCOUNT_IMPLEMENTATION;
+
+    Bootstrap public BOOTSTRAPPER;
 
     // -----------------------------------------
     // Setup Functions
@@ -85,7 +87,7 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
         changeContractAddress(address(ENTRYPOINT), 0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ACCOUNT_IMPLEMENTATION = new Nexus();
-        FACTORY = new AccountFactoryGeneric(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
+        FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
         META_FACTORY.addFactoryToWhitelist(address(FACTORY));
@@ -93,6 +95,7 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
         EXECUTOR_MODULE = new MockExecutor();
         HOOK_MODULE = new MockHook();
         HANDLER_MODULE = new MockHandler();
+        BOOTSTRAPPER = new Bootstrap();
     }
 
     // -----------------------------------------
@@ -129,7 +132,7 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
         bytes32 salt = keccak256(saDeploymentIndex);
 
         account = FACTORY.computeAccountAddress(_initData, salt);
@@ -147,7 +150,7 @@ contract Helpers is CheatCodes, EventsAndErrors, BootstrapUtil {
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
-            bootstrapSingleton._getInitNexusScopedCalldata(validators, hook);
+            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
 
         bytes32 salt = keccak256(saDeploymentIndex);
 

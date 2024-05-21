@@ -4,13 +4,8 @@ pragma solidity ^0.8.23;
 import { Bootstrap, BootstrapConfig } from "./Bootstrap.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 
+// Review: can make this a library?
 contract BootstrapUtil {
-    Bootstrap bootstrapSingleton;
-
-    constructor() {
-        bootstrapSingleton = new Bootstrap();
-    }
-
     function _makeBootstrapConfig(
         address module,
         bytes memory data

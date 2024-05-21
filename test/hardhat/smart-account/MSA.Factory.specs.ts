@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { AddressLike, Signer, ZeroAddress, toBeHex } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AccountFactoryGeneric,
+  K1ValidatorFactory,
   EntryPoint,
   MockValidator,
   Nexus,
@@ -13,7 +13,7 @@ import { encodeData, to18 } from "../utils/encoding";
 import { buildPackedUserOp } from "../utils/operationHelpers";
 
 describe("Nexus Factory Tests", function () {
-  let factory: AccountFactoryGeneric;
+  let factory: K1ValidatorFactory;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let validatorModule: MockValidator;
@@ -58,14 +58,12 @@ describe("Nexus Factory Tests", function () {
 
     // Read the expected account address
     const expectedAccountAddress = await factory.computeAccountAddress(
-      validatorModuleAddress, // validator address
-      installData,
+      accountOwnerAddress,
       saDeploymentIndex,
     );
 
     await factory.createAccount(
-      validatorModuleAddress,
-      installData,
+      accountOwnerAddress,
       saDeploymentIndex,
     );
 
@@ -80,14 +78,12 @@ describe("Nexus Factory Tests", function () {
 
       // Read the expected account address
       const expectedAccountAddress = await factory.computeAccountAddress(
-        validatorModuleAddress, // validator address
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
       await factory.createAccount(
-        validatorModuleAddress,
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -105,23 +101,20 @@ describe("Nexus Factory Tests", function () {
       ); // Example data, customize as needed
 
       const unexpectedAccountAddress = await factory.computeAccountAddress(
-        validatorModuleAddress,
-        installData,
+        ownerAddress,
         1,
       );
 
       // Read the expected account address
       const expectedAccountAddress = await factory.computeAccountAddress(
-        validatorModuleAddress, // validator address
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
       expect(unexpectedAccountAddress).to.not.equal(expectedAccountAddress);
 
       await factory.createAccount(
-        validatorModuleAddress,
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -130,61 +123,14 @@ describe("Nexus Factory Tests", function () {
       expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
     });
 
-    it("Should deploy account with zero initialization data", async function () {
-      const saDeploymentIndex = 25;
-
-      const initializeData = smartAccount.interface.encodeFunctionData(
-        "initialize",
-        [validatorModuleAddress, "0x"],
-      );
-      const initData = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [smartAccountAddress, 0, initializeData],
-      );
-
-      // Read the expected account address
-      const expectedAccountAddress = await factory.computeAccountAddress(
-        validatorModuleAddress, // validator address
-        initData,
-        saDeploymentIndex,
-      );
-
-      await factory.createAccount(
-        validatorModuleAddress,
-        initData,
-        saDeploymentIndex,
-      );
-
-      // Verify that the account was created
-      const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
-      expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
-    });
-
-    it("Should deploy account with invalid validation module", async function () {
-      const saDeploymentIndex = 3;
-
-      const initializeData = smartAccount.interface.encodeFunctionData(
-        "initialize",
-        [ZeroAddress, ownerAddress.toString()],
-      );
-      const initData = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [smartAccountAddress, 0, initializeData],
-      );
-
-      await expect(
-        factory.createAccount(ZeroAddress, initData, saDeploymentIndex),
-      ).to.be.reverted;
-    });
 
     it("Should deploy smart account via handleOps", async function () {
-      const saDeploymentIndex = 0;
+      const saDeploymentIndex = 1;
 
       const installData = ethers.solidityPacked(["address"], [ownerAddress]);
 
       const expectedAccountAddress = await factory.computeAccountAddress(
-        validatorModuleAddress,
-        installData,
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -192,8 +138,7 @@ describe("Nexus Factory Tests", function () {
       const initCode = ethers.concat([
         await factory.getAddress(),
         factory.interface.encodeFunctionData("createAccount", [
-          validatorModuleAddress,
-          installData,
+          ownerAddress,
           saDeploymentIndex,
         ]),
       ]);
@@ -225,14 +170,12 @@ describe("Nexus Factory Tests", function () {
     });
 
     it("Should prevent account reinitialization", async function () {
-      const initData = smartAccount.interface.encodeFunctionData("initialize", [
-        validatorModuleAddress,
-        await owner.getAddress(),
+      const initData = smartAccount.interface.encodeFunctionData("initializeAccount", [
+        "0x",
       ]);
 
-      const response = smartAccount.initialize(
-        validatorModuleAddress,
-        initData,
+      const response = smartAccount.initializeAccount(
+        "0x"
       );
       await expect(response).to.be.revertedWithCustomError(
         smartAccount,

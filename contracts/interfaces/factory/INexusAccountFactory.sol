@@ -22,7 +22,10 @@ pragma solidity ^0.8.24;
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface IAccountFactory {
+interface INexusAccountFactory {
+    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
+    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+    
     /// @notice Creates a new Smart Account with a specified validation module and initialization data.
     /// @dev Deploys a new Smart Account deterministically using EIP-1167 minimal proxy pattern and initializes it with the provided module and data.
     /// @param initData initialization data to be called on the new Smart Account.

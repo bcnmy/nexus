@@ -15,36 +15,26 @@ pragma solidity ^0.8.24;
 import { LibClone } from "solady/src/utils/LibClone.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
-import { BootstrapUtil } from "../utils/BootstrapUtil.sol";
-import { Bootstrap, BootstrapConfig } from "../utils/Bootstrap.sol";
+import { BootstrapConfig } from "../utils/Bootstrap.sol";
 
-/// @title Nexus - AccountFactory
-/// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
-/// @dev Utilizes the `StakeManager` for staking requirements and `LibClone` for creating deterministic proxy accounts.
-///       This contract serves as a factory to generate new Nexus instances with specific modules and initialization data.
-///       It combines functionality from Biconomy's implementation and external libraries to manage account deployments and initializations.
-/// @author @livingrockrises | Biconomy | chirag@biconomy.io
-/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
-/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
-/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
-/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract ModuleWhitelistFactory is Stakeable, BootstrapUtil {
-    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
+/// @title Nexus - ModuleWhitelistFactory
+contract ModuleWhitelistFactory is Stakeable {    
+    /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
-    
+
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
 
-    error ModuleNotWhitelisted();
+    /// @notice Thorwn when the module is not whitelisted
+    error ModuleNotWhitelisted(address module);
 
+    /// @notice Stores the module addresses that are whitelisted.
     mapping(address => bool) public moduleWhitelist;
-
-    // Review instead of Stakeable can just make Ownable. (Staeable gives Ownable but with Meta factory stake methods are not required)
 
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
-    constructor(address implementation, address owner) Stakeable(owner) {
+    constructor(address factoryOwner, address implementation) Stakeable(factoryOwner) {
         ACCOUNT_IMPLEMENTATION = implementation;
     }
 
@@ -66,21 +56,43 @@ contract ModuleWhitelistFactory is Stakeable, BootstrapUtil {
         return moduleWhitelist[module];
     }
 
-    /// @notice Creates a new Nexus with a specific validator and initialization data.
+    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable) {
+        // Decode the initData to extract the call target and call data
+        (, bytes memory callData) = abi.decode(initData, (address, bytes));
 
-    // Review : or (BootstrapConfig[] validators, BootstrapConfig hook)
-    function createAccount(address[] calldata validators, bytes[] calldata validatorData, address hook, bytes calldata hookData, bytes32 salt) external payable returns (address payable) {
-        // Check if all validator addresses are whitelisted
+        // Skip the first 4 bytes (the function selector)
+        // Create a new bytes array for the slice of callData
+        bytes memory data = new bytes(callData.length - 4);
+
+        // Decode the call data to extract the parameters passed to initNexus
+        // Review if we should verify calldata[0:4] against the function selector of initNexus
+        (BootstrapConfig[] memory validators, BootstrapConfig[] memory executors, BootstrapConfig memory hook, BootstrapConfig[] memory fallbacks) = abi.decode(
+            data, 
+            (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[])
+        );
+
         for (uint256 i = 0; i < validators.length; i++) {
-            if (!isWhitelisted(validators[i])) {
-                revert ModuleNotWhitelisted();
+            if (!isWhitelisted(validators[i].module)) {
+                revert ModuleNotWhitelisted(validators[i].module);
             }
         }
-        // Check if hook address is whitelisted
-        if (!isWhitelisted(hook)) {
-            revert ModuleNotWhitelisted();
+
+        for (uint256 i = 0; i < executors.length; i++) {
+            if (!isWhitelisted(executors[i].module)) {
+                revert ModuleNotWhitelisted(executors[i].module);
+            }
         }
-        (salt);
+
+        if (!isWhitelisted(hook.module)) {
+            revert ModuleNotWhitelisted(hook.module);
+        }
+
+        for (uint256 i = 0; i < fallbacks.length; i++) {
+            if (!isWhitelisted(fallbacks[i].module)) {
+                revert ModuleNotWhitelisted(fallbacks[i].module);
+            }
+        }
+
         bytes32 actualSalt;
         assembly {
             let ptr := mload(0x40)
@@ -92,15 +104,9 @@ contract ModuleWhitelistFactory is Stakeable, BootstrapUtil {
 
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 
-        // we could also just pass address eoaOwner above, if IAccountFactory consistency is not important
-        BootstrapConfig[] memory _validators = makeBootstrapConfig(validators, validatorData);
-        BootstrapConfig memory _hook = _makeBootstrapConfig(hook, hookData);
-
-        bytes memory _initData = bootstrapSingleton._getInitNexusScopedCalldata(_validators, _hook);
-
         if (!alreadyDeployed) {
-            INexus(account).initializeAccount(_initData);
-            emit AccountCreated(account, _initData, actualSalt);
+            INexus(account).initializeAccount(initData);
+            emit AccountCreated(account, initData, salt);
         }
         return payable(account);
     }
@@ -108,11 +114,9 @@ contract ModuleWhitelistFactory is Stakeable, BootstrapUtil {
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @dev This function allows for address calculation without deploying the Nexus.
     function computeAccountAddress(
-        address[] calldata validators, bytes[] calldata validatorData, address hook, bytes calldata hookData, bytes32 salt
-    ) external view returns (address payable expectedAddress) {
-        (validators, validatorData, hook, hookData, salt);
+        bytes calldata initData, bytes32 salt) external view returns (address payable expectedAddress) {
+        (initData, salt);    
         bytes32 actualSalt;
-
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)

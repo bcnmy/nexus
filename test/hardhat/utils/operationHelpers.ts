@@ -177,7 +177,7 @@ export async function fillSignAndPack(
 /**
  * Generates the full initialization code for deploying a smart account.
  * @param ownerAddress - The address of the owner of the new smart account.
- * @param factoryAddress - The address of the AccountFactoryGeneric contract.
+ * @param factoryAddress - The address of the K1ValidatorFactory contract.
  * @param validatorAddress - The address of the module to be installed in the smart account.
  * @param saDeploymentIndex: number = 0,
  * @returns The full initialization code as a hex string.
@@ -192,14 +192,13 @@ export async function getInitCode(
   validatorAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
-  const AccountFactoryGeneric = await ethers.getContractFactory("AccountFactoryGeneric");
+  const K1ValidatorFactory = await ethers.getContractFactory("K1ValidatorFactory");
   const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   // Encode the createAccount function call with the provided parameters
-  const factoryDeploymentData = AccountFactoryGeneric.interface
+  const factoryDeploymentData = K1ValidatorFactory.interface
     .encodeFunctionData("createAccount", [
-      validatorAddress,
-      moduleInstallData,
+      ownerAddress,
       saDeploymentIndex,
     ])
     .slice(2);
@@ -212,7 +211,7 @@ export async function getInitCode(
 /**
  * Calculates the CREATE2 address for a smart account deployment.
  * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
- * @param {AddressLike} factoryAddress - The address of the AccountFactoryGeneric contract.
+ * @param {AddressLike} factoryAddress - The address of the K1ValidatorFactory contract.
  * @param {AddressLike} validatorAddress - The address of the module to be installed in the smart account.
  * @param {Object} setup - The setup object containing deployed contracts and addresses.
  * @param {number} saDeploymentIndex - The deployment index for the smart account.

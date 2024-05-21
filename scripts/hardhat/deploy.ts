@@ -13,16 +13,16 @@ async function main() {
 
   console.log(`Nexus implementation deployed at: ${smartAccount.target}`);
 
-  const AccountFactoryGeneric = await ethers.getContractFactory("AccountFactoryGeneric");
+  const NexusAccountFactory = await ethers.getContractFactory("NexusAccountFactory");
 
-  const accountFactory = await AccountFactoryGeneric.deploy(
+  const accountFactory = await NexusAccountFactory.deploy(
     await smartAccount.getAddress(),
     await factoryOwner.getAddress()
   );
 
   await accountFactory.waitForDeployment();
 
-  console.log(`AccountFactoryGeneric deployed at: ${accountFactory.target}`);
+  console.log(`NexusAccountFactory deployed at: ${accountFactory.target}`);
 
   const K1Validator = await ethers.getContractFactory("K1Validator");
 

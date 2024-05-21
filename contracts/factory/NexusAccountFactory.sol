@@ -15,7 +15,7 @@ pragma solidity ^0.8.24;
 import { LibClone } from "solady/src/utils/LibClone.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
-import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
+import { INexusAccountFactory } from "../interfaces/factory/INexusAccountFactory.sol";
 
 /// @title Nexus - AccountFactory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
@@ -27,10 +27,7 @@ import { IAccountFactory } from "../interfaces/factory/IAccountFactory.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract AccountFactoryGeneric is IAccountFactory, Stakeable {
-    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
-    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
-    
+contract NexusAccountFactory is INexusAccountFactory, Stakeable {
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;

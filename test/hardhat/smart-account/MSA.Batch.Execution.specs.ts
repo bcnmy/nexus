@@ -4,7 +4,7 @@ import { expect } from "chai";
 
 import { ContractTransactionResponse, Signer } from "ethers";
 import {
-  AccountFactoryGeneric,
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -30,7 +30,7 @@ import {
 } from "../utils/erc7579Utils";
 
 describe("Nexus Batch Execution", () => {
-  let factory: AccountFactoryGeneric;
+  let factory: K1ValidatorFactory;
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let validatorModule: MockValidator;
