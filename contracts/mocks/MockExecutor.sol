@@ -33,7 +33,7 @@ contract MockExecutor is IExecutor {
     }
 
     function customExecuteViaAccount(ExecutionMode mode, INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
-        (CallType callType, ExecType execType) = ModeLib.decodeBasic(mode);
+        (CallType callType, ) = ModeLib.decodeBasic(mode);
         bytes memory executionCallData;
         if(callType == CALLTYPE_SINGLE) {
             executionCallData = ExecLib.encodeSingle(target, value, callData);

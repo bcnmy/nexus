@@ -5,11 +5,11 @@ import { IModule } from "../interfaces/modules/IModule.sol";
 contract MockInvalidModule is IModule {
  
 
-    function onInstall(bytes calldata data) external {
+    function onInstall(bytes calldata data) external pure {
         data;
     }
 
-    function onUninstall(bytes calldata data) external {
+    function onUninstall(bytes calldata data) external pure {
         data;
     }
 
@@ -17,7 +17,7 @@ contract MockInvalidModule is IModule {
         return moduleTypeId == 99;
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(address) external pure returns (bool) {
             return false;
     }
 
