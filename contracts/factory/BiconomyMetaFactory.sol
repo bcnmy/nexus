@@ -30,8 +30,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @dev Stores the factory addresses that are whitelisted.
     mapping(address => bool) public factoryWhitelist;
 
-    constructor(address owner) Stakeable(owner) {
-    }
+    constructor(address owner) Stakeable(owner) {}
 
     /// @notice Adds an address to the factory whitelist.
     /// @param factory The address to be whitelisted.
@@ -44,7 +43,6 @@ contract BiconomyMetaFactory is Stakeable {
     function removeFactoryFromWhitelist(address factory) external onlyOwner {
         factoryWhitelist[factory] = false;
     }
-
 
     /// @notice Checks if an address is whitelisted.
     /// @param factory The address to check.
@@ -60,18 +58,14 @@ contract BiconomyMetaFactory is Stakeable {
 
     /// @notice Deploys a new Nexus with a specific factory and initialization data.
     /// @dev factoryData is the encoded data for the method to be called on the Factory
-    /// @dev factoryData is posted on the factory using factory.call(factoryData) 
+    /// @dev factoryData is posted on the factory using factory.call(factoryData)
     ///      instead of calling a specific method always to allow more freedom.
     ///      factory should know how to decode this factoryData
     /// @notice These factories could possibly enshrine specific module/s to avoid arbitary execution and prevent griefing.
     /// @notice Another benefit of this pattern is that the factory can be upgraded without changing this contract.
     /// @param factory The address of the factory to be used for deployment.
     /// @param factoryData The encoded data for the method to be called on the Factory.
-    function deployWithFactory(address factory, bytes calldata factoryData)
-        external
-        payable
-        returns (address payable)
-    {
+    function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable) {
         if (!factoryWhitelist[address(factory)]) {
             revert FactoryNotWhotelisted();
         }
