@@ -1,22 +1,42 @@
 TestAccountExecution_ExecuteFromExecutor
 └── given the Nexus account execution with a mock executor
     ├── when executing a single operation via mock executor
-    │   └── it should execute successfully and increment the counter
+    │   └── it should execute successfully and increment the counter
     ├── when executing a batch operation via mock executor
-    │   └── it should execute successfully and increment the counter three times
+    │   └── it should execute successfully and increment the counter three times
     ├── when executing from an unauthorized executor
-    │   └── it should revert with an invalid module error
+    │   └── it should revert with an invalid module error
     ├── when executing a value transfer via executor
-    │   └── it should transfer the correct amount of ETH to the receiver
+    │   └── it should transfer the correct amount of ETH to the receiver
     ├── when executing an empty batch via executor
-    │   └── it should execute successfully with no changes
+    │   └── it should execute successfully with no changes
     ├── when executing a batch operation with mixed outcomes
-    │   └── it should handle the success and revert operations correctly
+    │   └── it should handle the success and revert operations correctly
     ├── when executing an ERC20 token transfer via executor
-    │   └── it should transfer the correct amount of tokens to the recipient
+    │   └── it should transfer the correct amount of tokens to the recipient
     ├── when executing an ERC20 token transfer via executor
-    │   └── it should transfer the correct amount of tokens to the recipient
+    │   └── it should transfer the correct amount of tokens to the recipient
     ├── when executing an ERC20 approve and transferFrom batch
-    │   └── it should approve and transfer the tokens correctly
-    └── when executing a zero value transfer in batch
-        └── it should execute successfully with no changes
+    │   └── it should approve and transfer the tokens correctly
+    ├── when executing a zero value transfer in batch
+    │   └── it should execute successfully with no changes
+    ├── when executing a single operation with an unsupported call type via mock executor
+    │   └── it should revert with an unsupported call type error
+    ├── when executing a single operation with an unsupported execution type via mock executor
+    │   └── it should revert with an unsupported execution type error
+    ├── when executing a batch operation with an unsupported execution type via mock executor
+    │   └── it should revert with an unsupported execution type error
+    ├── when executing a single operation with try mode via mock executor
+    │   └── it should execute successfully and increment the counter
+    ├── when executing a single operation with try mode that should revert via mock executor
+    │   └── it should capture the revert reason and the counter should remain unchanged
+    ├── when executing a single value transfer with try mode via mock executor
+    │   └── it should transfer the correct amount of ETH to the receiver
+    ├── when executing a batch operation with try mode via mock executor
+    │   └── it should execute successfully and increment the counter three times
+    ├── when executing a batch operation with try mode and mixed outcomes via mock executor
+    │   └── it should handle the success and revert operations correctly
+    ├── when executing a batch operation with try mode for value transfer via mock executor
+    │   └── it should transfer the correct amount of ETH to the receiver
+    └── when executing a batch operation with try mode and all failing transactions via mock executor
+        └── it should capture all revert reasons and the counter should remain unchanged

@@ -14,6 +14,8 @@ TestModuleManager_InstallModule
     │   └── it should revert
     ├── when trying to install a module with an invalid module address
     │   └── it should revert
+    ├── when trying to install a module with as an invalid module type ID
+    │   └── it should revert
     ├── when trying to install an incompatible module as an executor
     │   └── it should revert
     ├── when trying to install an incompatible executor module
@@ -22,5 +24,10 @@ TestModuleManager_InstallModule
     │   └── it should revert
     ├── when installing a fallback handler with custom data
     │   └── it should install the fallback handler successfully
-    └── when trying to reinstall an already installed fallback handler
+    ├── when trying to reinstall an already installed fallback handler
+    │   └── it should revert
+    ├── when installing a hook module successfully
+    │   └── it should install the hook module successfully
+    └── when trying to reinstall an already installed hook module
         └── it should revert
+        

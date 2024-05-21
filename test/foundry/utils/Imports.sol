@@ -37,11 +37,14 @@ import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing
-import "../../../contracts/mocks/MockValidator.sol";
 import "../../../contracts/mocks/Counter.sol";
+import {MockInvalidModule} from "./../../../contracts/mocks/MockInvalidModule.sol";
+
+import {MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+
 import "../../../contracts/mocks/NFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
 

@@ -349,4 +349,34 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         );
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
+
+    /// @notice Tests reversion when trying to install a module with an invalid module type ID
+    function test_RevertIf_InvalidModuleWithInvalidTypeId() public {
+        MockInvalidModule newMockInvalidModule = new MockInvalidModule();
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            99, // Invalid module id
+            newMockInvalidModule, // valid new module address
+            ""
+        );
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(InvalidModuleTypeId.selector, 99);
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
 }
