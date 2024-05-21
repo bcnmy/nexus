@@ -1,0 +1,18 @@
+TestAccountFactory_Deployments
+└── given the AccountFactory with deployment functionality
+    ├── when deploying an account using createAccount
+    │   └── it should deploy the account successfully
+    ├── when deploying an account with the same arguments
+    │   └── it should return the same address
+    ├── when deploying an account using handleOps
+    │   └── it should deploy the account successfully
+    ├── when deploying an account that already exists using handleOps
+    │   └── it should revert with the correct error
+    ├── when deploying an account and attempting to reinitialize
+    │   └── it should revert with the correct error
+    ├── when creating accounts with different indexes
+    │   └── it should create accounts with different addresses
+    ├── when deploying an account with an invalid validator module
+    │   └── it should revert with the correct error
+    └── when deploying an account without sufficient gas
+        └── it should revert with the correct error

@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 /// @title Execution Manager Events and Errors Interface
 /// @notice Interface for defining events and errors related to transaction execution processes within smart accounts.

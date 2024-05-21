@@ -1,0 +1,10 @@
+UpgradeSmartAccountTest
+└── given the smart account upgrade process
+    ├── when the current implementation address is checked
+        └── it should match the expected address
+    ├── when the proxiable UUID slot is checked
+        └── it should match the expected UUID
+    ├── when the implementation is upgraded
+        └── it should update to the new implementation address
+    └── when the entire upgrade process is performed
+        └── it should complete successfully

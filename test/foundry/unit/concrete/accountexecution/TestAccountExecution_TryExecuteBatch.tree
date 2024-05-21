@@ -1,0 +1,18 @@
+TestAccountExecution_TryExecuteBatch
+└── given the Nexus account
+    ├── when attempting to execute a batch operation
+    │   └── it should execute successfully and increment the counter
+    ├── when attempting to execute a batch operation with one failure
+    │   └── it should handle the failure and increment the counter
+    ├── when attempting to execute a batch operation with multiple failures
+    │   └── it should handle the failures correctly
+    ├── when attempting to execute a batch operation with empty executions
+    │   └── it should execute successfully with no changes
+    ├── when attempting to execute a value transfer in a batch operation
+    │   └── it should transfer the correct amount of ETH to the receiver
+    ├── when attempting to execute token transfers in a batch operation
+    │   └── it should transfer the correct amount of tokens to the recipients
+    ├── when attempting to execute separate approve and transfer operations
+    │   └── it should approve and transfer the tokens correctly
+    └── when attempting to execute combined approve and transfer operations
+        └── it should approve and transfer the tokens correctly

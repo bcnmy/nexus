@@ -1,0 +1,6 @@
+ModeLib
+└── given encoding and decoding of modes
+    ├── when encoding and decoding a batch mode
+        └── it should succeed
+    ├── when encoding and decoding a single mode
+        └── it should succeed

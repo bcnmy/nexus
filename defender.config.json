@@ -1,0 +1,24 @@
+{
+    "contract_inspector": {
+      "enabled": true,
+      "scan_directories": [
+        "contracts",
+        "contracts/base",
+        "contracts/factory",
+        "contracts/interfaces",
+        "contracts/interfaces/base",
+        "contracts/interfaces/factory",
+        "contracts/interfaces/modules",
+        "contracts/lib",
+        "contracts/modules",
+        "contracts/types"
+      ],
+      "exclude_rules": [
+        "lock-ether"
+      ]
+    },
+    "dependency_checker": {
+      "enabled": false
+    }
+  }
+  
