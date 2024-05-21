@@ -20,8 +20,9 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         initData = abi.encodePacked(user.addr);
     }
 
-    function test_DeployAccount_WithCreateAccount() public {
-        // Deploy an account using the factory directly
+    /// @notice Tests deploying an account using the factory directly.
+    function test_DeployAccount_CreateAccount() public {
+        // Prepare bootstrap configuration for validators
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
