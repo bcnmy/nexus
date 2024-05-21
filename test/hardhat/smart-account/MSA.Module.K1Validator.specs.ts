@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, hashMessage } from "ethers";
+import { AddressLike, Signer } from "ethers";
 import {
   Counter,
   EntryPoint,
@@ -11,8 +11,7 @@ import {
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
-import { encodeData } from "../utils/encoding";
-import { ERC1271_MAGICVALUE, installModule } from "../utils/erc7579Utils";
+import { installModule } from "../utils/erc7579Utils";
 import {
   buildPackedUserOp,
   generateUseropCallData,
@@ -94,7 +93,7 @@ describe("K1Validator module tests", () => {
       expect(isInitialized).to.equal(true);
     });
 
-    it("should check user op using validateUserOp", async () => {
+    it("should validateUserOp", async () => {
       const isModuleInstalled = await deployedMSA.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
@@ -130,11 +129,59 @@ describe("K1Validator module tests", () => {
       const signature = await accountOwner.signMessage(
         ethers.getBytes(userOpHash),
       );
-
       userOp.signature = signature;
 
       const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
+      // 0 - valid, 1 - invalid
+      expect(isValid).to.equal(0n);
+    });
 
+    it("should validateUserOp using an already prefixed personal sign", async () => {
+      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+        ModuleType.Validation,
+        k1ModuleAddress,
+        ethers.hexlify("0x"),
+      );
+
+      expect(isModuleInstalled).to.equal(true);
+
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const validatorModuleAddress = await k1Validator.getAddress();
+
+      // Build the userOp with the generated callData.
+      const userOp = buildPackedUserOp({
+        sender: await deployedMSA.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const nonce = await entryPoint.getNonce(
+        userOp.sender,
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const signature = await accountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+      userOp.signature = signature;
+
+      const prefix = "\x19Ethereum Signed Message:\n32";
+      const prefixBuffer = ethers.toUtf8Bytes(prefix);
+      // Concatenate the prefix and the userOpHash
+      const concatBuffer = ethers.concat([prefixBuffer, userOpHash]);
+      // Compute the keccak256 hash
+      const personalSignHash = ethers.keccak256(concatBuffer);
+
+      const isValid = await k1Validator.validateUserOp(userOp, personalSignHash);
       // 0 - valid, 1 - invalid
       expect(isValid).to.equal(0n);
     });
@@ -188,7 +235,7 @@ describe("K1Validator module tests", () => {
       expect(isValid).to.equal(1);
     });
 
-    it("should work", async () => {
+    it("should sign with eth_sign", async () => {
       const isModuleInstalled = await deployedMSA.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
