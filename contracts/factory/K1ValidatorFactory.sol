@@ -18,7 +18,7 @@ import { BootstrapUtil } from "../utils/BootstrapUtil.sol";
 import { Bootstrap, BootstrapConfig } from "../utils/Bootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 
-/// @title Nexus - K1ValidatorFactory
+/// @title Nexus - K1ValidatorFactory for Nexus account
 contract K1ValidatorFactory is BootstrapUtil, Stakeable {
     /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
     event AccountCreated(address indexed account, address indexed owner, uint256 indexed index);

@@ -17,7 +17,7 @@ import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/Bootstrap.sol";
 
-/// @title Nexus - ModuleWhitelistFactory
+/// @title Nexus - ModuleWhitelistFactory for Nexus account
 contract ModuleWhitelistFactory is Stakeable {    
     /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
