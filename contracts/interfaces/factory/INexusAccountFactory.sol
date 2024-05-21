@@ -28,14 +28,11 @@ interface INexusAccountFactory {
 
     /// @dev Thrown when the implementation address is zero address.
     error ImplementationAddressCanNotBeZero();
-    
+
     /// @notice Creates a new Smart Account with a specified validation module and initialization data.
     /// @dev Deploys a new Smart Account deterministically using EIP-1167 minimal proxy pattern and initializes it with the provided module and data.
     /// @param initData initialization data to be called on the new Smart Account.
     /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return account The address of the newly created payable Smart Account.
-    function createAccount(
-        bytes calldata initData,
-        bytes32 salt
-    ) external payable returns (address payable account);
+    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable account);
 }

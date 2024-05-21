@@ -18,7 +18,7 @@ import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/Bootstrap.sol";
 
 /// @title Nexus - ModuleWhitelistFactory for Nexus account
-contract ModuleWhitelistFactory is Stakeable {    
+contract ModuleWhitelistFactory is Stakeable {
     /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
 
@@ -66,10 +66,12 @@ contract ModuleWhitelistFactory is Stakeable {
 
         // Decode the call data to extract the parameters passed to initNexus
         // Review if we should verify calldata[0:4] against the function selector of initNexus
-        (BootstrapConfig[] memory validators, BootstrapConfig[] memory executors, BootstrapConfig memory hook, BootstrapConfig[] memory fallbacks) = abi.decode(
-            data, 
-            (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[])
-        );
+        (
+            BootstrapConfig[] memory validators,
+            BootstrapConfig[] memory executors,
+            BootstrapConfig memory hook,
+            BootstrapConfig[] memory fallbacks
+        ) = abi.decode(data, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
 
         for (uint256 i = 0; i < validators.length; i++) {
             if (!isWhitelisted(validators[i].module)) {
@@ -113,9 +115,8 @@ contract ModuleWhitelistFactory is Stakeable {
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @dev This function allows for address calculation without deploying the Nexus.
-    function computeAccountAddress(
-        bytes calldata initData, bytes32 salt) external view returns (address payable expectedAddress) {
-        (initData, salt);    
+    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view returns (address payable expectedAddress) {
+        (initData, salt);
         bytes32 actualSalt;
         assembly {
             let ptr := mload(0x40)
