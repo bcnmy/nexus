@@ -388,7 +388,7 @@ export function findEventInLogs(
 // for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
 
-export async function preparePackedUserOperation(
+export async function buildPackedUserOperation(
   userOp: PackedUserOperation,
   entryPoint: EntryPoint,
   validatorModuleAddress: string,

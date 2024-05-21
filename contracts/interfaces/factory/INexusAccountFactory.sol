@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 /// @title Nexus - IAccountFactory Interface
 /// @notice Interface for creating Smart Accounts within the Nexus suite, compliant with ERC-4337 and ERC-7579.
@@ -25,6 +25,9 @@ pragma solidity ^0.8.24;
 interface INexusAccountFactory {
     /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+
+    /// @dev Thrown when the implementation address is zero address.
+    error ImplementationAddressCanNotBeZero();
     
     /// @notice Creates a new Smart Account with a specified validation module and initialization data.
     /// @dev Deploys a new Smart Account deterministically using EIP-1167 minimal proxy pattern and initializes it with the provided module and data.

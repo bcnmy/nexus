@@ -1,0 +1,10 @@
+AccountCreationHandlerTest
+└── given an account factory and validation module
+    ├── when creating an account with a specified index and nonce key
+    │   └── it should assert key invariants including valid creation, balance, and nonce
+    ├── when ensuring nonce consistency before and after account creation
+    │   └── it should assert nonce consistency invariant
+    ├── when verifying nonce reset upon account creation
+    │   └── it should assert nonce reset invariant
+    └── when creating multiple accounts with unique indices
+        └── it should assert nonce initialization for each account

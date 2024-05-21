@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { LibClone } from "solady/src/utils/LibClone.sol";
 import { Stakeable } from "../common/Stakeable.sol";
@@ -37,6 +37,9 @@ contract NexusAccountFactory is INexusAccountFactory, Stakeable {
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     constructor(address implementation, address owner) Stakeable(owner) {
+        if (implementation == address(0)) {
+            revert ImplementationAddressCanNotBeZero();
+        }
         ACCOUNT_IMPLEMENTATION = implementation;
     }
 

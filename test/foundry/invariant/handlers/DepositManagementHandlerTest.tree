@@ -1,0 +1,12 @@
+DepositManagementHandlerTest
+└── given a Nexus account and signer
+    ├── when handling a deposit operation
+    │   └── it should assert state consistency invariant after deposit
+    ├── when handling a withdrawal operation
+    │   └── it should assert state consistency invariant after withdrawal
+    ├── when depositing zero value
+    │   └── it should assert zero-value deposit invariant
+    ├── when attempting to withdraw more than the balance
+    │   └── it should assert overdraft withdrawal invariant
+    └── when checking balance post-revert
+        └── it should assert balance integrity invariant after simulated transaction failure
