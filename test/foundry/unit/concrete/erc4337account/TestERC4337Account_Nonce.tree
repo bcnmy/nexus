@@ -1,0 +1,10 @@
+TestERC4337Account_Nonce
+└── given nonce management
+    ├── when an operation is executed
+        └── it should increment the nonce
+    ├── when an operation fails
+        └── it should increment the nonce
+    ├── when checking the initial nonce
+        └── it should be zero
+    └── when validating nonces across operations
+        └── it should handle nonces correctly

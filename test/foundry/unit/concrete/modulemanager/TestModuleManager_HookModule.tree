@@ -1,0 +1,12 @@
+TestModuleManager_HookModule
+└── given the module manager with hook module functionality
+    ├── when installing the hook module successfully
+    │   └── it should install the hook module successfully
+    ├── when reinstalling an already installed hook module
+    │   └── it should revert
+    ├── when uninstalling the hook module successfully
+    │   └── it should uninstall the hook module
+    ├── when the hook is triggered on module installation
+    │   └── it should trigger the hook successfully
+    └── when getting the active hook after installation
+        └── it should return the correct hook

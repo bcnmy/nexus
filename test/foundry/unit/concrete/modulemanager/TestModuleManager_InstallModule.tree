@@ -1,0 +1,33 @@
+TestModuleManager_InstallModule
+└── given the module manager with installation functionality
+    ├── when installing a module successfully
+    │   └── it should install the module successfully
+    ├── when installing a module with 'Try' execution type successfully
+    │   └── it should install the module successfully
+    ├── when installing a validator module
+    │   └── it should install the validator module successfully
+    ├── when installing an executor module
+    │   └── it should install the executor module successfully
+    ├── when trying to install an already installed module
+    │   └── it should revert
+    ├── when trying to install a module with an invalid module type ID
+    │   └── it should revert
+    ├── when trying to install a module with an invalid module address
+    │   └── it should revert
+    ├── when trying to install a module with as an invalid module type ID
+    │   └── it should revert
+    ├── when trying to install an incompatible module as an executor
+    │   └── it should revert
+    ├── when trying to install an incompatible executor module
+    │   └── it should revert
+    ├── when trying to install an incompatible validator module
+    │   └── it should revert
+    ├── when installing a fallback handler with custom data
+    │   └── it should install the fallback handler successfully
+    ├── when trying to reinstall an already installed fallback handler
+    │   └── it should revert
+    ├── when installing a hook module successfully
+    │   └── it should install the hook module successfully
+    └── when trying to reinstall an already installed hook module
+        └── it should revert
+        

@@ -10,7 +10,7 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
@@ -21,7 +21,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 
 /// @title Nexus - ModuleManager
@@ -38,12 +37,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
-        _;
-    }
-
-    /// @notice Ensures the specified address is a registered validator module.
-    modifier onlyValidatorModule(address validator) virtual {
-        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
         _;
     }
 
@@ -165,7 +158,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         // Check if the account has at least one validator installed before proceeding
         // Having at least one validator is a requirement for the account to function properly
         if (prev == address(0x01)) {
-            if(validators.getNext(validator) == address(0x01)) {
+            if (validators.getNext(validator) == address(0x01)) {
                 revert CannotRemoveLastValidator();
             }
         }
@@ -294,6 +287,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         address cursor,
         uint256 size
     ) private view returns (address[] memory array, address nextCursor) {
-        return list.getEntriesPaginated(cursor, size);
+        (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

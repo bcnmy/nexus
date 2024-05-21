@@ -1,0 +1,8 @@
+TestERC1271Account_IsValidSignature
+└── given initialized testing environment
+    ├── when validating a personal signature using mock validator
+    │   └── it should succeed for a valid personal signature
+    ├── when validating an EIP-712 signature using mock validator
+    │   └── it should succeed for a valid EIP-712 signature
+    └── when validating an EIP-712 signature with the wrong signer
+        └── it should fail for an invalid EIP-712 signature
