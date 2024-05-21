@@ -78,7 +78,6 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         assertEq(usdc.balanceOf(recipient), amount, "USDC transfer failed");
     }
 
-
     /// @notice Tests native ETH transfer functionality after the upgrade.
     function test_NativeEthTransferPostUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();
@@ -97,7 +96,6 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
-
 
     /// @notice Prepares the initial state check before upgrade.
     function checkInitialState() internal {

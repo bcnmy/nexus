@@ -160,7 +160,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         ExecutionMode mode = unsupportedMode; // Example unsupported call type
 
-        (CallType callType,) = ModeLib.decodeBasic(mode);
+        (CallType callType, ) = ModeLib.decodeBasic(mode);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
         prank(address(ENTRYPOINT));
         BOB_ACCOUNT.execute(mode, abi.encode(execution));
@@ -178,7 +178,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         ExecutionMode mode = unsupportedMode; // Example unsupported call type
 
-        (CallType callType,) = ModeLib.decodeBasic(mode);
+        (CallType callType, ) = ModeLib.decodeBasic(mode);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
         prank(address(BOB_ACCOUNT));
         BOB_ACCOUNT.execute(mode, abi.encode(execution));

@@ -24,7 +24,7 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     uint256 public testModuleType;
     address public testModuleAddress;
 
-       /// @notice Initializes handlers for each actor
+    /// @notice Initializes handlers for each actor
     /// @dev Actors represent different user accounts participating in the tests, and handlers manage the actions they perform.
     function setUpActors() public {
         Vm.Wallet[3] memory actors = [ALICE, BOB, CHARLIE];

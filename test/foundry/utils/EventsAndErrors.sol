@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {CallType, ExecType } from "../../../contracts/lib/ModeLib.sol";
+import { CallType, ExecType } from "../../../contracts/lib/ModeLib.sol";
 
 contract EventsAndErrors {
     // Define all events

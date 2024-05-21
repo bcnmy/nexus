@@ -5,7 +5,6 @@ import "../utils/Imports.sol";
 import "../utils/NexusTest_Base.t.sol";
 
 contract UpgradeSmartAccountTest is NexusTest_Base {
-
     function setUp() public {
         init();
     }

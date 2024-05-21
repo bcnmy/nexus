@@ -56,7 +56,10 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         unchecked {
             uint256 vs = uint256(t.s) | (uint256(t.v - 27) << 255);
             signature = abi.encodePacked(t.r, vs, DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
-            assertEq(ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
+            assertEq(
+                ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature)),
+                bytes4(0x1626ba7e)
+            );
         }
     }
 
@@ -79,7 +82,9 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
                 abi.encode(
-                    keccak256("TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"),
+                    keccak256(
+                        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                    ),
                     contents
                 ),
                 accountDomainStructFields(account)
@@ -129,15 +134,16 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         AccountDomainStruct memory t;
         (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = Nexus(account).eip712Domain();
 
-        return abi.encode(
-            t.fields,
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
-        );
+        return
+            abi.encode(
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
+            );
     }
 
     /// @notice Generates a random string from given byte choices.
@@ -170,9 +176,10 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @param signature The original signature.
     /// @return The ERC-6492 wrapped signature.
     function erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
-        return abi.encodePacked(
-            abi.encode(randomNonZeroAddress(), bytes(randomString("12345", false)), signature),
-            bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
-        );
+        return
+            abi.encodePacked(
+                abi.encode(randomNonZeroAddress(), bytes(randomString("12345", false)), signature),
+                bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
+            );
     }
 }

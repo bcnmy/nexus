@@ -88,7 +88,6 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         // Fund the BOB_ACCOUNT with more than just the deposit amount to cover potential transaction fees
         vm.deal(address(BOB_ACCOUNT), amount + 1 ether);
 
-
         // Deposit the amount to EntryPoint
         Execution[] memory depositExecutions = new Execution[](1);
         depositExecutions[0] = Execution({ target: address(BOB_ACCOUNT), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
