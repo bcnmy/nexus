@@ -25,7 +25,7 @@ import { Stakeable } from "../common/Stakeable.sol";
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 contract BiconomyMetaFactory is Stakeable {
     /// @dev Throws when the factory is not whitelisted.
-    error FactoryNotWhotelisted();
+    error FactoryNotWhitelisted();
 
     /// @dev Stores the factory addresses that are whitelisted.
     mapping(address => bool) public factoryWhitelist;
@@ -67,7 +67,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @param factoryData The encoded data for the method to be called on the Factory.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable) {
         if (!factoryWhitelist[address(factory)]) {
-            revert FactoryNotWhotelisted();
+            revert FactoryNotWhitelisted();
         }
         (bool success, bytes memory returnData) = factory.call(factoryData);
 
