@@ -65,7 +65,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @notice Another benefit of this pattern is that the factory can be upgraded without changing this contract.
     /// @param factory The address of the factory to be used for deployment.
     /// @param factoryData The encoded data for the method to be called on the Factory.
-    function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable) {
+    function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
         if (!factoryWhitelist[address(factory)]) {
             revert FactoryNotWhitelisted();
         }
@@ -77,10 +77,8 @@ contract BiconomyMetaFactory is Stakeable {
 
         // If needed to return created address mload returnData
         // Decode the returned address
-        address payable createdAccount;
         assembly {
             createdAccount := mload(add(returnData, 0x20))
         }
-        return createdAccount;
     }
 }
