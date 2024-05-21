@@ -6,6 +6,7 @@ import {
   ZeroAddress,
   concat,
   hashMessage,
+  keccak256,
   solidityPacked,
   toBeHex,
   zeroPadBytes,
@@ -36,7 +37,7 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "../utils/erc7579Utils";
-import { Hex, hashTypedData } from "viem";
+import { Hex, hashTypedData, toBytes } from "viem";
 
 describe("Nexus Basic Specs", function () {
   let factory: AccountFactory;
@@ -149,7 +150,6 @@ describe("Nexus Basic Specs", function () {
 
     it("Should get domain separator", async () => {
       const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-      console.log("Domain Separator: ", domainSeparator);
       expect(domainSeparator).to.not.equal(ZeroAddress);
     });
 
@@ -343,26 +343,46 @@ describe("Nexus Basic Specs", function () {
       ).to.be.rejected;
     });
 
-    // it("Should check signature validity using smart account isValidSignature", async function () {
-    //   const isModuleInstalled = await smartAccount.isModuleInstalled(
-    //     ModuleType.Validation,
-    //     await validatorModule.getAddress(),
-    //     ethers.hexlify("0x")
-    //   );
-    //   expect(isModuleInstalled).to.be.true;
-    
-    //   const incrementNumber = counter.interface.encodeFunctionData("incrementNumber");
-    //   const data = solidityPacked(["address", "uint256", "bytes"], [await counter.getAddress(), 0, incrementNumber]);
+    it("Should check signature validity using smart account isValidSignature", async function () {
+      const isModuleInstalled = await smartAccount.isModuleInstalled(
+        ModuleType.Validation,
+        await validatorModule.getAddress(),
+        ethers.hexlify("0x")
+      );
+      expect(isModuleInstalled).to.be.true;
+
+      const data = keccak256("0x1234")
+
+      // Define the EIP712 domain separator type hash
+      // const EIP712DomainTypeHash = ethers.keccak256(
+      //   ethers.toUtf8Bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+      // );
+
+      // // Define the hashed domain name and version
+      // const nameHash = ethers.keccak256(ethers.toUtf8Bytes("Nexus"));
+      // const versionHash = ethers.keccak256(ethers.toUtf8Bytes("0.0.1"));
+
+      // // Encode the domain separator
+      // const domainSeparator = ethers.keccak256(
+      //   solidityPacked(
+      //       ["bytes32", "bytes32", "bytes32", "uint256", "address"],
+      //       [EIP712DomainTypeHash, nameHash, versionHash, 1, await smartAccount.getAddress()]
+      //   )
+      // );
+
+      const parentStructHash = solidityPacked(["bytes", "bytes"], [toBytes("PersonalSign(bytes prefixed)"), data])
+      const dataToSign = keccak256(solidityPacked(["bytes", "bytes", "bytes"], [toBytes("\x19\x01"), await smartAccount.DOMAIN_SEPARATOR(), parentStructHash]))
+
+      const signature = await smartAccountOwner.signMessage(dataToSign);
+
+      const isValid = await smartAccount.isValidSignature(
+        data,
+        solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature])
+      );
       
-    //   const signedData = await smartAccountOwner.signMessage(data);
-    //   const isValid = await smartAccount.isValidSignature(
-    //     hashMessage(data),
-    //     solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signedData])
-    //   );
-      
-    //   console.log("isValid: ", isValid);
-    //   expect(isValid).to.equal("0x1626ba7e");
-    // });
+      console.log("isValid: ", isValid);
+      expect(isValid).to.equal("0x1626ba7e");
+    });
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
