@@ -24,7 +24,12 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 
-    function tryExecuteViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
+    function tryExecuteViaAccount(
+        INexus account,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    ) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeTrySingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
@@ -32,17 +37,23 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeTryBatch(), ExecLib.encodeBatch(execs));
     }
 
-    function customExecuteViaAccount(ExecutionMode mode, INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
+    function customExecuteViaAccount(
+        ExecutionMode mode,
+        INexus account,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    ) external returns (bytes[] memory returnData) {
         (CallType callType, ) = ModeLib.decodeBasic(mode);
         bytes memory executionCallData;
-        if(callType == CALLTYPE_SINGLE) {
+        if (callType == CALLTYPE_SINGLE) {
             executionCallData = ExecLib.encodeSingle(target, value, callData);
         } else if (callType == CALLTYPE_BATCH) {
             Execution[] memory execution = new Execution[](1);
             execution[0] = Execution(target, 0, callData);
             executionCallData = ExecLib.encodeBatch(execution);
-        } 
-            return account.executeFromExecutor(mode, ExecLib.encodeSingle(target, value, callData));
+        }
+        return account.executeFromExecutor(mode, ExecLib.encodeSingle(target, value, callData));
     }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {

@@ -3,8 +3,6 @@ pragma solidity ^0.8.24;
 
 import { IModule } from "../interfaces/modules/IModule.sol";
 contract MockInvalidModule is IModule {
- 
-
     function onInstall(bytes calldata data) external pure {
         data;
     }
@@ -18,8 +16,6 @@ contract MockInvalidModule is IModule {
     }
 
     function isInitialized(address) external pure returns (bool) {
-            return false;
+        return false;
     }
-
-
 }
