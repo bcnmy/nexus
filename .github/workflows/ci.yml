@@ -146,4 +146,8 @@ jobs:
             const script = require('.github/scripts/comment')
             const header = '# Slither report'
             const body = process.env.REPORT
+            if (!body.trim()) {
+              console.log("Slither report is empty. No comment will be posted.");
+              return;
+            }
             await script({ github, context, header, body })
