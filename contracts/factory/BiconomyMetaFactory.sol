@@ -17,10 +17,17 @@ import { Stakeable } from "../common/Stakeable.sol";
 // can stake
 // can whitelist factories
 // deployAccount with chosen factory and required data for that facotry
-contract BiconomyMetaFactory is Stakeable {
 
+/// @title Nexus - BiconomyMetaFactory
+/// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
+/// @dev Utilizes the `Stakeable` for staking requirements
+///      This contract serves as a 'Meta' factory to generate new Nexus instances using specific chosen and approved factories.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+contract BiconomyMetaFactory is Stakeable {
+    /// @dev Throws when the factory is not whitelisted.
     error FactoryNotWhotelisted();
 
+    /// @dev Stores the factory addresses that are whitelisted.
     mapping(address => bool) public factoryWhitelist;
 
     constructor(address owner) Stakeable(owner) {
@@ -45,14 +52,21 @@ contract BiconomyMetaFactory is Stakeable {
         return factoryWhitelist[factory];
     }
 
-    // removeFactoryFromWhitelist
-
     // Note: deploy using only one of the whitelisted factories
     // these factories could possibly enshrine specific module/s
     // factory should know how to decode this factoryData
 
     // Review this vs deployWithFactory(address factory, bytes calldata initData, bytes32 salt)
 
+    /// @notice Deploys a new Nexus with a specific factory and initialization data.
+    /// @dev factoryData is the encoded data for the method to be called on the Factory
+    /// @dev factoryData is posted on the factory using factory.call(factoryData) 
+    ///      instead of calling a specific method always to allow more freedom.
+    ///      factory should know how to decode this factoryData
+    /// @notice These factories could possibly enshrine specific module/s to avoid arbitary execution and prevent griefing.
+    /// @notice Another benefit of this pattern is that the factory can be upgraded without changing this contract.
+    /// @param factory The address of the factory to be used for deployment.
+    /// @param factoryData The encoded data for the method to be called on the Factory.
     function deployWithFactory(address factory, bytes calldata factoryData)
         external
         payable
@@ -65,7 +79,7 @@ contract BiconomyMetaFactory is Stakeable {
 
         // if needed to make success check add this here
         // Check if the call was successful
-        require(success, "Call to createAccount failed");
+        require(success, "Call to deployWithFactory failed");
 
         // If needed to return created address mload returnData
         // Decode the returned address
