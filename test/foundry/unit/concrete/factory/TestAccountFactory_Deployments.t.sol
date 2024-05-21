@@ -7,7 +7,7 @@ import "../../../utils/NexusTest_Base.t.sol";
 import { MockValidator } from "../../../../../contracts/mocks/MockValidator.sol";
 
 /// @title TestAccountFactory_Deployments
-/// @dev Tests for deploying accounts using the AccountFactory and various methods.
+/// @notice Tests for deploying accounts using the AccountFactory and various methods.
 contract TestAccountFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
