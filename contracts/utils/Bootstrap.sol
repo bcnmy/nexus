@@ -33,7 +33,7 @@ contract Bootstrap is ModuleManager {
     /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
     /// calling this function 
     function initNexus(
-        BootstrapConfig[] calldata $valdiators,
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig[] calldata $executors,
         BootstrapConfig calldata _hook,
         BootstrapConfig[] calldata _fallbacks
@@ -41,8 +41,8 @@ contract Bootstrap is ModuleManager {
         external
     {
         // init validators
-        for (uint256 i; i < $valdiators.length; i++) {
-            _installValidator($valdiators[i].module, $valdiators[i].data);
+        for (uint256 i; i < $validators.length; i++) {
+            _installValidator($validators[i].module, $validators[i].data);
         }
 
         // init executors
@@ -67,14 +67,14 @@ contract Bootstrap is ModuleManager {
     /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
     /// calling this function 
     function initNexusScoped(
-        BootstrapConfig[] calldata $valdiators,
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig calldata _hook
     )
         external
     {
         // init validators
-        for (uint256 i; i < $valdiators.length; i++) {
-            _installValidator($valdiators[i].module, $valdiators[i].data);
+        for (uint256 i; i < $validators.length; i++) {
+            _installValidator($validators[i].module, $validators[i].data);
         }
 
         // init hook
@@ -83,8 +83,8 @@ contract Bootstrap is ModuleManager {
         }
     }
 
-    function _getInitNexusCalldata(
-        BootstrapConfig[] calldata $valdiators,
+    function getInitNexusCalldata(
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig[] calldata $executors,
         BootstrapConfig calldata _hook,
         BootstrapConfig[] calldata _fallbacks
@@ -95,12 +95,12 @@ contract Bootstrap is ModuleManager {
     {
         init = abi.encode(
             address(this),
-            abi.encodeCall(this.initNexus, ($valdiators, $executors, _hook, _fallbacks))
+            abi.encodeCall(this.initNexus, ($validators, $executors, _hook, _fallbacks))
         );
     }
 
-    function _getInitNexusScopedCalldata(
-        BootstrapConfig[] calldata $valdiators,
+    function getInitNexusScopedCalldata(
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig calldata _hook
     )
         external
@@ -109,12 +109,12 @@ contract Bootstrap is ModuleManager {
     {
         init = abi.encode(
             address(this),
-            abi.encodeCall(this.initNexusScoped, ($valdiators, _hook))
+            abi.encodeCall(this.initNexusScoped, ($validators, _hook))
         );
     }
 
-    function _getInitNexusWithSingleValidatorCalldata(
-        BootstrapConfig calldata $valdiator
+    function getInitNexusWithSingleValidatorCalldata(
+        BootstrapConfig calldata $validator
     )
         external
         view
@@ -122,7 +122,7 @@ contract Bootstrap is ModuleManager {
     {
         init = abi.encode(
             address(this),
-            abi.encodeCall(this.initNexusWithSingleValidator, (IModule($valdiator.module), $valdiator.data))
+            abi.encodeCall(this.initNexusWithSingleValidator, (IModule($validator.module), $validator.data))
         );
     }
 }
