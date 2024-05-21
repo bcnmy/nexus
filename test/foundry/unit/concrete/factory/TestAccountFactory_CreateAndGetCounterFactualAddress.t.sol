@@ -23,7 +23,10 @@ contract TestAccountFactory_Operations is SmartAccountTestLab {
         address payable expectedAddress = FACTORY.getCounterFactualAddress(address(VALIDATOR_MODULE), initData, 0);
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, address(VALIDATOR_MODULE), initData);
+        uint256 initialGas = gasleft();
         address payable deployedAccountAddress = FACTORY.createAccount(address(VALIDATOR_MODULE), initData, 0);
+        console2.logUint(initialGas - gasleft());
+        console2.log("Gas used using old factory (single validator) printed above");
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
     }
