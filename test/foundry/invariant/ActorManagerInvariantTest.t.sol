@@ -10,6 +10,7 @@ import { DepositManagementHandlerTest } from "./handlers/DepositManagementHandle
 
 /// @title ActorManagerInvariantTest
 /// @notice Coordinates test actions across different actors using handlers.
+/// @dev Actors represent different user accounts, and handlers manage the specific actions they perform in the invariant tests.
 contract ActorManagerInvariantTest is InvariantBaseTest {
     struct ActorHandlers {
         DepositManagementHandlerTest depositHandler;
@@ -23,7 +24,8 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     uint256 public testModuleType;
     address public testModuleAddress;
 
-    /// @notice Initializes handlers for each actor
+       /// @notice Initializes handlers for each actor
+    /// @dev Actors represent different user accounts participating in the tests, and handlers manage the actions they perform.
     function setUpActors() public {
         Vm.Wallet[3] memory actors = [ALICE, BOB, CHARLIE];
         Nexus[3] memory actorAccounts = [ALICE_ACCOUNT, BOB_ACCOUNT, CHARLIE_ACCOUNT];

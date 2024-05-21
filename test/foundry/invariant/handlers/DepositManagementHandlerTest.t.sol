@@ -6,6 +6,7 @@ import "../../utils/Imports.sol";
 
 /// @title DepositManagementHandlerTest
 /// @notice Manages deposit operations for a Nexus account, ensuring invariants remain intact throughout the process.
+/// @dev This handler manages the deposit and withdrawal operations, checking for consistency and correctness of account balances.
 contract DepositManagementHandlerTest is InvariantBaseTest {
     Nexus internal nexusAccount;
     Vm.Wallet internal signer;

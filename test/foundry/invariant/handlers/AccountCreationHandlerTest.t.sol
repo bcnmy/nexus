@@ -6,6 +6,7 @@ import "../../utils/Imports.sol";
 
 /// @title AccountCreationHandlerTest
 /// @notice Handles invariant testing for the creation of accounts using the AccountFactory.
+/// @dev This handler is responsible for simulating the creation of accounts, ensuring the process adheres to defined invariants.
 contract AccountCreationHandlerTest is InvariantBaseTest {
     IAccountFactory private accountFactory;
     address private validationModule;

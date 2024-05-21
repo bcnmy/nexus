@@ -6,6 +6,7 @@ import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 
 /// @title ExecutionHandlerTest
 /// @notice Handles the execution of operations on a Nexus account and ensures that the expected state changes occur as per the defined invariants.
+/// @dev This handler executes various operations on a Nexus account and verifies the resulting state against the expected outcomes.
 contract ExecutionHandlerTest is InvariantBaseTest {
     Nexus internal nexusAccount;
     Vm.Wallet internal signer;

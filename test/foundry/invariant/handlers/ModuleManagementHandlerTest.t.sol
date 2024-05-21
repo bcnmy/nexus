@@ -5,7 +5,8 @@ import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
 import "../../utils/Imports.sol";
 
 /// @title ModuleManagementHandlerTest
-/// @notice Handles invariant testing for module management in Nexus accounts
+/// @notice Handles invariant testing for module management in Nexus accounts.
+/// @dev This handler manages the installation and uninstallation of modules, ensuring that modules are handled correctly and adhere to defined invariants.
 contract ModuleManagementHandlerTest is InvariantBaseTest {
     Nexus public nexusAccount;
     Vm.Wallet public signer;
