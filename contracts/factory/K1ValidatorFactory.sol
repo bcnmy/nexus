@@ -66,7 +66,7 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
 
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
         BootstrapConfig memory validator = _makeBootstrapConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
-        bytes memory _initData = BOOTSTRAPPER._getInitNexusWithSingleValidatorCalldata(validator);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator);
 
         if (!alreadyDeployed) {
             INexus(account).initializeAccount(_initData);
