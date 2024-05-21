@@ -1,0 +1,24 @@
+TestERC4337Account_OnlyEntryPointOrSelf
+└── given the ERC4337 account with onlyEntryPointOrSelf modifier
+    ├── when executing user operations from EntryPoint
+    │   └── it should pass validation
+    ├── when executing user operations from a non-EntryPoint address
+    │   └── it should fail validation
+    ├── when installing a module from EntryPoint
+    │   └── it should pass validation
+    ├── when installing a module from the account itself
+    │   └── it should pass validation
+    ├── when uninstalling a module from a non-EntryPoint or self address
+    │   └── it should fail validation
+    ├── when withdrawing deposit to an authorized address from EntryPoint
+    │   └── it should pass validation
+    ├── when withdrawing deposit from the account itself
+    │   └── it should pass validation
+    ├── when withdrawing deposit from an unauthorized address
+    │   └── it should fail validation
+    ├── when executing withdrawDepositTo via the executor module
+    │   └── it should pass validation
+    ├── when withdrawing deposit to an authorized address via user operations
+    │   └── it should pass validation
+    └── when installing a module from EntryPoint via user operations
+        └── it should pass validation

@@ -37,11 +37,14 @@ import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/AccountFactory.sol";
 
 // Mock contracts for testing
-import "../../../contracts/mocks/MockValidator.sol";
 import "../../../contracts/mocks/Counter.sol";
+import { MockInvalidModule } from "./../../../contracts/mocks/MockInvalidModule.sol";
+
+import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+
 import "../../../contracts/mocks/NFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
 
@@ -50,10 +53,9 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { SentinelListHelper } from "sentinellist/src/SentinelListHelper.sol";
 
 // Helper and Struct imports
-import "./Helpers.sol";
+import "./TestHelper.t.sol";
 
 contract Imports {
     // This contract acts as a single point of import for Foundry tests.
     // It does not require any logic, as its sole purpose is to consolidate imports.
-    // You can extend this contract in your test files to access all imported contracts and libraries.
 }

@@ -21,7 +21,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 
 /// @title Nexus - ModuleManager
@@ -38,12 +37,6 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
-        _;
-    }
-
-    /// @notice Ensures the specified address is a registered validator module.
-    modifier onlyValidatorModule(address validator) virtual {
-        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
         _;
     }
 
