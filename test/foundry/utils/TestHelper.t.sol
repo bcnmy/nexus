@@ -1,5 +1,3 @@
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -23,25 +21,22 @@ import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFact
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
 
-
 contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
 
     Vm.Wallet internal DEPLOYER;
-    Vm.Wallet internal ALICE;
     Vm.Wallet internal BOB;
+    Vm.Wallet internal ALICE;
     Vm.Wallet internal CHARLIE;
     Vm.Wallet internal BUNDLER;
     Vm.Wallet internal FACTORY_OWNER;
 
-    address internal DEPLOYER_ADDRESS;
-    address internal ALICE_ADDRESS;
     address internal BOB_ADDRESS;
+    address internal ALICE_ADDRESS;
     address internal CHARLIE_ADDRESS;
     address internal BUNDLER_ADDRESS;
-    address internal FACTORY_OWNER_ADDRESS;
 
     Nexus internal BOB_ACCOUNT;
     Nexus internal ALICE_ACCOUNT;
@@ -50,10 +45,10 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     IEntryPoint internal ENTRYPOINT;
     NexusAccountFactory internal FACTORY;
     BiconomyMetaFactory internal META_FACTORY;
-    MockValidator internal VALIDATOR_MODULE;
-    MockExecutor internal EXECUTOR_MODULE;
     MockHook internal HOOK_MODULE;
     MockHandler internal HANDLER_MODULE;
+    MockExecutor internal EXECUTOR_MODULE;
+    MockValidator internal VALIDATOR_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
     Bootstrap internal BOOTSTRAPPER;
@@ -61,7 +56,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
     // Setup Functions
     // -----------------------------------------
-     /// @notice Initializes the testing environment with wallets, contracts, and accounts
+    /// @notice Initializes the testing environment with wallets, contracts, and accounts
     function setupTestEnvironment() internal virtual {
         /// Initializes the testing environment
         setupPredefinedWallets();
@@ -77,8 +72,8 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
 
     function setupPredefinedWallets() internal {
         DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
-        ALICE = createAndFundWallet("ALICE", 1000 ether);
         BOB = createAndFundWallet("BOB", 1000 ether);
+        ALICE = createAndFundWallet("ALICE", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
         FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
@@ -93,10 +88,10 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
         META_FACTORY.addFactoryToWhitelist(address(FACTORY));
-        VALIDATOR_MODULE = new MockValidator();
-        EXECUTOR_MODULE = new MockExecutor();
         HOOK_MODULE = new MockHook();
         HANDLER_MODULE = new MockHandler();
+        EXECUTOR_MODULE = new MockExecutor();
+        VALIDATOR_MODULE = new MockValidator();
         BOOTSTRAPPER = new Bootstrap();
     }
 
@@ -108,7 +103,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     /// @param deposit The deposit amount
     /// @param validator The custom validator address, if not provided uses default
     /// @return The deployed Nexus account
-        function deployNexus(Vm.Wallet memory wallet, uint256 deposit, address validator) internal returns (Nexus) {
+    function deployNexus(Vm.Wallet memory wallet, uint256 deposit, address validator) internal returns (Nexus) {
         address payable accountAddress = calculateAccountAddress(wallet.addr, validator);
         bytes memory initCode = buildInitCode(wallet.addr, validator);
 
@@ -146,15 +141,14 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
         bytes32 salt = keccak256(saDeploymentIndex);
 
         account = FACTORY.computeAccountAddress(_initData, salt);
         return account;
     }
 
- /// @notice Prepares the init code for account creation with a validator
+    /// @notice Prepares the init code for account creation with a validator
     /// @param ownerAddress The address of the owner
     /// @param validator The address of the validator
     /// @return initCode The prepared init code
@@ -167,12 +161,11 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);    
+        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
@@ -205,7 +198,11 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     /// @param callData The call data
     /// @param validator The validator address
     /// @return userOp The prepared user operation
-    function buildUserOpWithCalldata(Vm.Wallet memory wallet, bytes memory callData, address validator) internal view returns (PackedUserOperation memory userOp) {
+    function buildUserOpWithCalldata(
+        Vm.Wallet memory wallet,
+        bytes memory callData,
+        address validator
+    ) internal view returns (PackedUserOperation memory userOp) {
         address payable account = calculateAccountAddress(wallet.addr, validator);
         uint256 nonce = getNonce(account, validator);
         userOp = buildPackedUserOp(account, nonce);
@@ -460,4 +457,3 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 }
-
