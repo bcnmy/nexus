@@ -81,6 +81,8 @@ jobs:
 
       - name: Run Forge and Hardhat Tests
         run: yarn test
+        env:
+          ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
 
   coverage:
     needs: setup
@@ -106,6 +108,8 @@ jobs:
 
       - name: Generate Hardhat & Foundry Coverage Report
         run: yarn coverage:report
+        env:
+          ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
 
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -113,7 +117,7 @@ jobs:
           file: ./coverage/foundry/lcov.info
           flags: foundry
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
 
       - name: Upload Hardhat Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1
