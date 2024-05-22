@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.24;
 
-import { Bootstrap, BootstrapConfig } from "./Bootstrap.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
+import { BootstrapConfig } from "./Bootstrap.sol";
 
 // Review: can make this a library?
 contract BootstrapUtil {
