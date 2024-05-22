@@ -13,7 +13,7 @@ contract TestModuleManager_SupportsModule is TestModuleManagement_Base {
     /// @notice Tests the successful support of the Validator module.
     function test_SupportsModuleValidator_Success() public {
         assertTrue(BOB_ACCOUNT.supportsModule(MODULE_TYPE_VALIDATOR), "Validator module not supported");
-    } 
+    }
 
     /// @notice Tests the successful support of the Executor module.
     function test_SupportsModuleExecutor_Success() public {
