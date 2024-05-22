@@ -11,8 +11,8 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     function setUp() public {
         init();
 
-        // Custom data for installing the MockHandler
-        bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
+        // Custom data for installing the MockHandler with call type STATIC
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(GENERIC_FALLBACK_SELECTOR, CALLTYPE_SINGLE)));
 
         // Install MockHandler as the fallback handler for BOB_ACCOUNT
         bytes memory callData = abi.encodeWithSelector(
@@ -21,6 +21,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
             address(HANDLER_MODULE),
             customData
         );
+
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
@@ -145,7 +146,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
     /// @notice Tests reversion when uninstalling a fallback handler with a function selector not used by this handler.
     function test_RevertIf_FunctionSelectorNotUsedByThisHandler() public {
-        bytes memory customData = abi.encode(UNUSED_SELECTOR); // Assuming GENERIC_FALLBACK_SELECTOR is set
+        bytes memory customData = abi.encode(UNUSED_SELECTOR);
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_FALLBACK,
@@ -174,6 +175,26 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     function test_UninstallFallbackHandler_Success() public {
         // Correctly uninstall the fallback handler
         bytes memory customData = abi.encode(GENERIC_FALLBACK_SELECTOR);
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        // Verify the fallback handler was uninstalled
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler was not uninstalled");
+    }
+
+    /// @notice Tests the successful uninstallation of the fallback handler.
+    function test_RevertIf_UninstallNonInstalledFallbackHandler() public {
+        // Correctly uninstall the fallback handler
+        bytes memory customData = abi.encode(UNUSED_SELECTOR);
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.uninstallModule.selector,
             MODULE_TYPE_FALLBACK,
