@@ -207,7 +207,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
-        else revert UnsupportedModuleType(moduleTypeId);
     }
 
     function initializeAccount(bytes calldata initData) external payable virtual {
@@ -512,7 +511,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
         else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }
