@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
 
 /// @title TestERC4337Account_OnlyEntryPointOrSelf
@@ -22,7 +21,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     }
 
     /// @notice Tests execution of user operations from a non-EntryPoint address, expecting failure.
-    function test_ExecuteUserOp_Invalid_FromNonEntryPoint() public {
+    function test_RevertIf_ExecuteUserOp_FromNonEntryPoint() public {
         startPrank(ALICE.addr);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
@@ -30,6 +29,14 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
 
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.executeUserOp(userOps[0], bytes32(0));
+        stopPrank();
+    }
+
+    /// @notice Tests installation of a module from an unauthorized address, expecting failure.
+    function test_RevertIf_InstallModuleFromUnauthorized() public {
+        startPrank(address(ALICE_ACCOUNT));
+        vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
+        BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         stopPrank();
     }
 
@@ -44,6 +51,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     function test_InstallModuleFromSelf_Success() public {
         startPrank(address(BOB_ACCOUNT));
         BOB_ACCOUNT.installModule(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
+        stopPrank();
     }
 
     /// @notice Tests uninstallation of a module from a non-EntryPoint or self address, expecting failure.
@@ -65,6 +73,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     function test_WithdrawDepositFromSelf_Success() public {
         startPrank(address(BOB_ACCOUNT));
         BOB_ACCOUNT.withdrawDepositTo(BOB.addr, 0.5 ether);
+        stopPrank();
     }
 
     /// @notice Tests withdrawal of deposit from an unauthorized address, expecting failure.
