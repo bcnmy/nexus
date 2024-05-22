@@ -16,10 +16,10 @@ import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
-import { Bootstrap } from "../../../contracts/utils/Bootstrap.sol";
+import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
-import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
+import { BootstrapUtil } from "../../../contracts/utils/BootstrapUtil.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
