@@ -23,7 +23,7 @@ struct BootstrapConfig {
 contract Bootstrap is ModuleManager {
     /// @dev This function is intended to be called by the Nexus with a delegatecall.
     /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
-    /// calling this function 
+    /// calling this function
     function initNexusWithSingleValidator(IModule validator, bytes calldata data) external {
         // init validator
         _installValidator(address(validator), data);
@@ -31,18 +31,16 @@ contract Bootstrap is ModuleManager {
 
     /// @dev This function is intended to be called by the Nexus with a delegatecall.
     /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
-    /// calling this function 
+    /// calling this function
     function initNexus(
-        BootstrapConfig[] calldata $valdiators,
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig[] calldata $executors,
-        BootstrapConfig calldata _hook,
-        BootstrapConfig[] calldata _fallbacks
-    )
-        external
-    {
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks
+    ) external {
         // init validators
-        for (uint256 i; i < $valdiators.length; i++) {
-            _installValidator($valdiators[i].module, $valdiators[i].data);
+        for (uint256 i; i < $validators.length; i++) {
+            _installValidator($validators[i].module, $validators[i].data);
         }
 
         // init executors
@@ -52,77 +50,49 @@ contract Bootstrap is ModuleManager {
         }
 
         // init hook
-        if (_hook.module != address(0)) {
-            _installHook(_hook.module, _hook.data);
+        if (hook.module != address(0)) {
+            _installHook(hook.module, hook.data);
         }
 
         // init fallback
-        for (uint256 i; i < _fallbacks.length; i++) {
-            if (_fallbacks[i].module == address(0)) continue;
-            _installFallbackHandler(_fallbacks[i].module, _fallbacks[i].data);
+        for (uint256 i; i < fallbacks.length; i++) {
+            if (fallbacks[i].module == address(0)) continue;
+            _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
         }
     }
 
     /// @dev This function is intended to be called by the Nexus with a delegatecall.
     /// Make sure that the Nexus already initilazed the linked lists in the ModuleManager prior to
-    /// calling this function 
-    function initNexusScoped(
-        BootstrapConfig[] calldata $valdiators,
-        BootstrapConfig calldata _hook
-    )
-        external
-    {
+    /// calling this function
+    function initNexusScoped(BootstrapConfig[] calldata $validators, BootstrapConfig calldata hook) external {
         // init validators
-        for (uint256 i; i < $valdiators.length; i++) {
-            _installValidator($valdiators[i].module, $valdiators[i].data);
+        for (uint256 i; i < $validators.length; i++) {
+            _installValidator($validators[i].module, $validators[i].data);
         }
 
         // init hook
-        if (_hook.module != address(0)) {
-            _installHook(_hook.module, _hook.data);
+        if (hook.module != address(0)) {
+            _installHook(hook.module, hook.data);
         }
     }
 
-    function _getInitNexusCalldata(
-        BootstrapConfig[] calldata $valdiators,
+    function getInitNexusCalldata(
+        BootstrapConfig[] calldata $validators,
         BootstrapConfig[] calldata $executors,
-        BootstrapConfig calldata _hook,
-        BootstrapConfig[] calldata _fallbacks
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(
-            address(this),
-            abi.encodeCall(this.initNexus, ($valdiators, $executors, _hook, _fallbacks))
-        );
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks
+    ) external view returns (bytes memory init) {
+        init = abi.encode(address(this), abi.encodeCall(this.initNexus, ($validators, $executors, hook, fallbacks)));
     }
 
-    function _getInitNexusScopedCalldata(
-        BootstrapConfig[] calldata $valdiators,
-        BootstrapConfig calldata _hook
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(
-            address(this),
-            abi.encodeCall(this.initNexusScoped, ($valdiators, _hook))
-        );
+    function getInitNexusScopedCalldata(
+        BootstrapConfig[] calldata $validators,
+        BootstrapConfig calldata hook
+    ) external view returns (bytes memory init) {
+        init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, ($validators, hook)));
     }
 
-    function _getInitNexusWithSingleValidatorCalldata(
-        BootstrapConfig calldata $valdiator
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(
-            address(this),
-            abi.encodeCall(this.initNexusWithSingleValidator, (IModule($valdiator.module), $valdiator.data))
-        );
+    function getInitNexusWithSingleValidatorCalldata(BootstrapConfig calldata $validator) external view returns (bytes memory init) {
+        init = abi.encode(address(this), abi.encodeCall(this.initNexusWithSingleValidator, (IModule($validator.module), $validator.data)));
     }
 }

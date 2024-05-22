@@ -72,9 +72,7 @@ contract NexusAccountFactory is INexusAccountFactory, Stakeable {
     /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     /// @dev This function allows for address calculation without deploying the Nexus.
-    function computeAccountAddress(
-        bytes calldata initData, bytes32 salt
-    ) external view returns (address payable expectedAddress) {
+    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view returns (address payable expectedAddress) {
         (initData, salt);
         bytes32 actualSalt;
 

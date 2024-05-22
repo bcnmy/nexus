@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../../utils/Imports.sol";
-import "../../../utils/TestHelper.t.sol";
 import "../../../utils/NexusTest_Base.t.sol";
-import { MockValidator } from "../../../../../contracts/mocks/MockValidator.sol";
 
 /// @title TestAccountFactory_Deployments
-/// @dev Tests for deploying accounts using the AccountFactory and various methods.
+/// @notice Tests for deploying accounts using the AccountFactory and various methods.
 contract TestAccountFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
@@ -20,48 +17,49 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         initData = abi.encodePacked(user.addr);
     }
 
-    function test_DeployAccount_WithCreateAccount() public {
-        // Deploy an account using the factory directly
+    /// @notice Tests deploying an account using the factory directly.
+    function test_DeployAccount_CreateAccount() public {
+        // Prepare bootstrap configuration for validators
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         vm.expectEmit(true, true, true, true);
-        emit AccountCreated(expectedAddress, _initData, salt);   
+        emit AccountCreated(expectedAddress, _initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);    
+        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
         console2.logUint(gasBefore - gasleft());
         console2.log("Gas used to deploy account using meta factory + generic factory printed above");
+
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
     }
 
-    function test_DeployAccount_WithCreateAccount_ReturnsSameAddressWithSameArgs() public {
+    /// @notice Tests that deploying an account returns the same address with the same arguments.
+    function test_DeployAccount_CreateAccount_SameAddress() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         vm.expectEmit(true, true, true, true);
-        emit AccountCreated(expectedAddress, _initData, salt);   
-        
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);    
+        emit AccountCreated(expectedAddress, _initData, salt);
+
+        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
 
@@ -70,7 +68,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests deploying an account using handleOps method.
-    function test_DeployAccountUsingHandleOps_Success() public {
+    function test_DeployAccount_HandleOps_Success() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -81,7 +79,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
-    function test_RevertIf_HandleOpsDeployAccountExists() public {
+    function test_RevertIf_HandleOps_AccountExists() public {
         address payable accountAddress = calculateAccountAddress(user.addr, address(VALIDATOR_MODULE));
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -92,15 +90,15 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
-    function test_DeployAccount_DeployedAccountIsInitializedAndCannotBeReInitialized() public {
+    /// @notice Tests that a deployed account is initialized and cannot be reinitialized.
+    function test_DeployAccount_CannotReinitialize() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
@@ -109,65 +107,61 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         console2.logUint(gasBefore - gasleft());
         console2.log("Gas used to deploy account directly using generic factory printed above");
 
-        vm.prank(user.addr); // Even owner can not reinit
+        vm.prank(user.addr); // Even owner cannot reinitialize the account
         vm.expectRevert(LinkedList_AlreadyInitialized.selector);
-        INexus(firstAccountAddress).initializeAccount(_initData);
+        INexus(firstAccountAddress).initializeAccount(factoryData);
     }
 
     /// @notice Tests creating accounts with different indexes.
-    function test_CreateAccountWithDifferentIndexes() public {
+    function test_DeployAccount_DifferentIndexes() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         bytes memory factoryData1 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
         bytes memory factoryData2 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, keccak256("1"));
 
-
         address payable accountAddress1 = META_FACTORY.deployWithFactory(address(FACTORY), factoryData1);
         address payable accountAddress2 = META_FACTORY.deployWithFactory(address(FACTORY), factoryData2);
+
         // Validate that the deployed addresses are different
-        assertTrue(
-            accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses"
-        );
+        assertTrue(accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses");
     }
 
-    function test_DeployAccountWithInvalidValidatorModule() public {
+    /// @notice Tests creating accounts with an invalid validator module.
+    function test_DeployAccount_InvalidValidatorModule() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
+
         // Should revert if the validator module is invalid
         BootstrapConfig[] memory validatorsInvalid = makeBootstrapConfig(address(0), initData);
-        bytes memory _initDataInvalidModule =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validatorsInvalid, hook);
+        bytes memory _initDataInvalidModule = BOOTSTRAPPER.getInitNexusScopedCalldata(validatorsInvalid, hook);
 
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(_initDataInvalidModule, salt);
-                assertTrue(
-            expectedAddress != accountAddress, "Account address should be the same"
-        );
+        assertTrue(expectedAddress != accountAddress, "Account address should be different for invalid module");
     }
 
-    function test_DeployAccountWithoutEnoughGas() public {
+    /// @notice Tests creating accounts without enough gas.
+    function test_RevertIf_DeployAccount_InsufficientGas() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+
         vm.expectRevert();
-        // Adjust the gas amount based on your contract's requirements
+        // Should revert if there is not enough gas
         FACTORY.createAccount{ gas: 1000 }(_initData, salt);
     }
 }

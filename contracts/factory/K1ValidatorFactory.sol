@@ -22,7 +22,7 @@ import { Stakeable } from "../common/Stakeable.sol";
 contract K1ValidatorFactory is BootstrapUtil, Stakeable {
     /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
     event AccountCreated(address indexed account, address indexed owner, uint256 indexed index);
-    
+
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
@@ -66,10 +66,10 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
 
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
         BootstrapConfig memory validator = _makeBootstrapConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
-        bytes memory _initData = BOOTSTRAPPER._getInitNexusWithSingleValidatorCalldata(validator);
+        bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator);
 
         if (!alreadyDeployed) {
-            INexus(account).initializeAccount(_initData);
+            INexus(account).initializeAccount(initData);
             emit AccountCreated(account, eoaOwner, index);
         }
         return payable(account);
@@ -80,9 +80,7 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
     /// @param index The index of the Nexus.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     /// @dev This function allows for address calculation without deploying the Nexus.
-    function computeAccountAddress(
-        address eoaOwner, uint256 index
-    ) external view returns (address payable expectedAddress) {
+    function computeAccountAddress(address eoaOwner, uint256 index) external view returns (address payable expectedAddress) {
         (eoaOwner, index);
         bytes32 actualSalt;
 

@@ -125,8 +125,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData =
-            BOOTSTRAPPER._getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
 
         dest[1] = address(smartAccountV2);
         values[1] = 0;

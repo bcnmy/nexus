@@ -214,7 +214,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         // checks if already initialized and reverts before setting the state to initialized
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
-        (bool success,) = bootstrap.delegatecall(bootstrapCall);
+        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
         if (!success) revert();
     }
 
