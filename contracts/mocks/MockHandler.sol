@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.24;
 
-import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { IFallback } from "contracts/interfaces/modules/IFallback.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { MODULE_TYPE_FALLBACK } from "../../contracts/types/Constants.sol";
 
 contract MockHandler is IFallback {
+
+    uint256 public count;
     string public constant NAME = "Default Handler";
     string public constant VERSION = "1.0.0";
 
@@ -36,5 +34,41 @@ contract MockHandler is IFallback {
 
     function isInitialized(address) external pure override returns (bool) {
         return false;
+    }
+
+    function staticFunction() external pure returns (bytes32) {
+        return keccak256("STATIC_CALL");
+    }
+
+    function stateChangingFunction() external {
+        count++;
+    }
+
+    function singleFunction() external pure returns (bytes32) {
+        return keccak256("SINGLE_CALL");
+    }
+
+    function batchFunction() external pure returns (bytes32) {
+        return keccak256("BATCH_CALL");
+    }
+
+    function revertingStaticFunction() external pure {
+        require(false, "Static call revert reason");
+    }
+
+    function revertingSingleFunction() external pure {
+        require(false, "Single call revert reason");
+    }
+
+    function gasIntensiveFunction() external {
+        while (true) {}
+    }
+
+    function dynamicFunction() external pure returns (bytes32) {
+        return keccak256("DYNAMIC_CALL");
+    }
+
+    function getState() external view returns (uint256) {
+        return count;
     }
 }
