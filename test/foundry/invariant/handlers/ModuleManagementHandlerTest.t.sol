@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+
 import "../../utils/Imports.sol";
 
 /// @title ModuleManagementHandlerTest
@@ -63,15 +64,7 @@ contract ModuleManagementHandlerTest is InvariantBaseTest {
         assertFalse(nexusAccount.isModuleInstalled(moduleType, moduleAddress, ""), "Module should be uninstalled");
     }
 
-    /// @notice Checks if a module is installed in the Nexus account
-    /// @param moduleType The type of the module
-    /// @param moduleAddress The address of the module
-    /// @return bool indicating if the module is installed
-    function invariant_checkModuleInstalled(uint256 moduleType, address moduleAddress) public view returns (bool) {
-        return nexusAccount.isModuleInstalled(moduleType, moduleAddress, "");
-    }
-
-    /// @notice Tests installation of an invalid module and expects revert
+    /// @notice Tests system behavior when attempting to install an invalid module
     function invariant_installInvalidModule() public {
         uint256 invalidModuleType = 999;
         address invalidModuleAddress = address(0);
@@ -93,7 +86,7 @@ contract ModuleManagementHandlerTest is InvariantBaseTest {
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
     }
 
-    /// @notice Tests uninstallation of a module that isn't installed and expects revert
+    /// @notice Tests system behavior when attempting to uninstall a non-existent module
     function invariant_uninstallNonExistentModule() public {
         uint256 moduleType = MODULE_TYPE_VALIDATOR;
         address moduleAddress = address(0x123);
@@ -113,5 +106,13 @@ contract ModuleManagementHandlerTest is InvariantBaseTest {
 
         vm.expectRevert("Module not installed");
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
+    }
+
+    /// @notice Checks if a module is installed in the Nexus account
+    /// @param moduleType The type of the module
+    /// @param moduleAddress The address of the module
+    /// @return bool indicating if the module is installed
+    function invariant_checkModuleInstalled(uint256 moduleType, address moduleAddress) public view returns (bool) {
+        return nexusAccount.isModuleInstalled(moduleType, moduleAddress, "");
     }
 }

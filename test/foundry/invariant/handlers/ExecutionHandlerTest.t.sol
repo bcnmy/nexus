@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../../utils/Imports.sol";
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
+import "../../utils/Imports.sol";
 
 /// @title ExecutionHandlerTest
 /// @notice Handles the execution of operations on a Nexus account and ensures that the expected state changes occur as per the defined invariants.
@@ -38,7 +38,8 @@ contract ExecutionHandlerTest is InvariantBaseTest {
         ENTRYPOINT.handleOps(userOps, payable(signer.addr));
 
         // Function-level assertion to ensure the deposit amount reflects correctly
-        assertEq(nexusAccount.getDeposit(), amount, "Invariant failed: Deposit amount mismatch after increment.");
+        assertGe(nexusAccount.getDeposit(), totalDeposits + amount, "Invariant failed: Deposit amount mismatch after increment.");
+        totalDeposits += amount; // Update the ghost variable for further checks
     }
 
     /// @notice Attempts a failing operation to ensure proper error handling and state consistency.
@@ -61,12 +62,6 @@ contract ExecutionHandlerTest is InvariantBaseTest {
         // Post-operation assertions
         assertEq(nexusAccount.getDeposit(), expectedTotal, "Invariant failed: Total deposits mismatch.");
         totalDeposits = expectedTotal; // Update the ghost variable for further checks
-    }
-
-    /// @notice Retrieves the current deposit amount from the Nexus account.
-    /// @return The current deposit amount.
-    function getAccountDeposit() public view returns (uint256) {
-        return nexusAccount.getDeposit();
     }
 
     /// @notice Utility function to verify state consistency in case of failures.

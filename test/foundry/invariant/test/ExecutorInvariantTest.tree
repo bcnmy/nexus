@@ -1,4 +1,0 @@
-ExecutorInvariantTest
-└── given an initialized Nexus account with valid and invalid executors
-    └── when executing operations via executors
-        └── it should assert only installed executor can execute invariant

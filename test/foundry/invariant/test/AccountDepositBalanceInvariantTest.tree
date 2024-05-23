@@ -1,4 +1,0 @@
-AccountDepositBalanceInvariantTest
-└── given an initialized test environment
-    └── when executing a deposit operation
-        └── it should assert deposit balance consistency invariant
