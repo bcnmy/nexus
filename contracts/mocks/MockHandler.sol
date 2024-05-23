@@ -61,7 +61,9 @@ contract MockHandler is IFallback {
     }
 
     function gasIntensiveFunction() external {
-        while (true) {}
+        while (true) {
+            count++;
+        }
     }
 
     function dynamicFunction() external pure returns (bytes32) {
