@@ -1,0 +1,10 @@
+TestAccountConfig_SupportsExecutionMode
+└── given the account configuration
+    ├── when initializing the testing environment
+    │   └── it should set up the account configuration with BOB_ACCOUNT
+    ├── when testing if batch execution mode is supported
+    │   └── it should support batch execution mode
+    ├── when testing if single execution mode is supported
+    │   └── it should support single execution mode
+    └── when testing an unsupported execution mode
+        └── it should not support the unsupported execution mode

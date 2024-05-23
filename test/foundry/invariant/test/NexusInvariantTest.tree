@@ -1,0 +1,6 @@
+NexusInvariantTest
+└── given an initialized Nexus account
+    ├── when executing operations
+    │   └── it should assert execution consistency and access control invariant
+    └── when performing state-changing operations
+        └── it should assert nonce handling consistency invariant

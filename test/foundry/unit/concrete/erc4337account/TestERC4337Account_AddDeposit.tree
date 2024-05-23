@@ -1,0 +1,16 @@
+TestERC4337Account_AddDeposit
+└── given the ERC4337 account with deposit functionality
+    ├── when adding a deposit successfully
+    │   └── it should increase the deposit balance
+    ├── when adding a deposit
+    │   └── it should emit the Deposited event
+    ├── when adding a deposit with no value
+    │   └── it should revert
+    ├── when adding a deposit via handleOps
+    │   └── it should increase the deposit balance
+    ├── when adding a batch deposit via handleOps
+    │   └── it should increase the deposit balance
+    ├── when adding a deposit via handleOps with EXECTYPE_TRY
+    │   └── it should increase the deposit balance
+    └── when adding a batch deposit via handleOps with EXECTYPE_TRY
+        └── it should increase the deposit balance

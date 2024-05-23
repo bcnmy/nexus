@@ -10,12 +10,13 @@ pragma solidity ^0.8.24;
 //
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
+import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 
@@ -29,7 +30,7 @@ import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "..
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract K1Validator {
+contract K1Validator is IValidator {
     using SignatureCheckerLib for address;
 
     mapping(address sa => address owner) public smartAccountOwners;
@@ -52,7 +53,7 @@ contract K1Validator {
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
         address owner = smartAccountOwners[userOp.sender];
-        if(owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
+        if (owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
             return VALIDATION_SUCCESS;
         }
         if (owner.isValidSignatureNow(userOpHash, userOp.signature)) {
