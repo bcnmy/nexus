@@ -21,7 +21,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         bytes4 selector = GENERIC_FALLBACK_SELECTOR;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
 
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Verify the fallback handler was installed
         (CallType callType, address handler) = BOB_ACCOUNT.getFallbackHandlerBySelector(selector);
@@ -33,7 +33,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerStaticCall_Success() public {
         bytes4 selector = mockFallbackHandler.staticFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_STATIC);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function
         (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
@@ -48,7 +48,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerSingleCall_Success() public {
         bytes4 selector = mockFallbackHandler.singleFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function
         (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
@@ -63,7 +63,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerStateChange_SingleCall() public {
         bytes4 selector = mockFallbackHandler.stateChangingFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function that changes state
         (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
@@ -78,10 +78,10 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerStateChange_StaticCall() public {
         bytes4 selector = mockFallbackHandler.stateChangingFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_STATIC);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function that changes state (should fail)
-        (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
+        (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
         assertFalse(success, "State change through fallback static call should fail");
     }
 
@@ -90,10 +90,10 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         bytes4 selector = mockFallbackHandler.stateChangingFunction.selector;
         // Use an invalid call type (0xFF is not defined)
         bytes memory customData = abi.encodePacked(selector, bytes1(0xFF));
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function with an invalid call type
-        (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
+        (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
         assertTrue(success, "Call with invalid call type should fail");
     }
 
@@ -108,10 +108,10 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerInvalidFunctionSelector() public {
         bytes4 selector = bytes4(keccak256("invalidFunction()"));
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function with an invalid selector
-        (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
+        (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
         assertFalse(success, "Call with invalid function selector should fail");
     }
 
@@ -119,10 +119,10 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerInsufficientGas() public {
         bytes4 selector = mockFallbackHandler.stateChangingFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function with insufficient gas
-        (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call{ gas: 1000 }(abi.encodeWithSelector(selector));
+        (bool success, ) = address(BOB_ACCOUNT).call{ gas: 1000 }(abi.encodeWithSelector(selector));
         assertFalse(success, "Call with insufficient gas should fail");
     }
 
@@ -130,7 +130,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerSingleCall_Revert() public {
         bytes4 selector = mockFallbackHandler.revertingSingleFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function that reverts
         (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
@@ -145,7 +145,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerStaticCall_Revert() public {
         bytes4 selector = mockFallbackHandler.revertingStaticFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_STATIC);
-        installFallbackHandler(selector, customData);
+        installFallbackHandler(customData);
 
         // Make a call to the fallback function that reverts
         (bool success, bytes memory returnData) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
@@ -157,9 +157,8 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     }
 
     /// @notice Installs the fallback handler with the given selector and custom data.
-    /// @param selector The function selector.
     /// @param customData The custom data for the handler.
-    function installFallbackHandler(bytes4 selector, bytes memory customData) internal {
+    function installFallbackHandler(bytes memory customData) internal {
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_FALLBACK,
