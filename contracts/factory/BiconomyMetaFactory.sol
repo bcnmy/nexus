@@ -54,8 +54,6 @@ contract BiconomyMetaFactory is Stakeable {
     // these factories could possibly enshrine specific module/s
     // factory should know how to decode this factoryData
 
-    // Review this vs deployWithFactory(address factory, bytes calldata initData, bytes32 salt)
-
     /// @notice Deploys a new Nexus with a specific factory and initialization data.
     /// @dev factoryData is the encoded data for the method to be called on the Factory
     /// @dev factoryData is posted on the factory using factory.call(factoryData)
