@@ -7,7 +7,7 @@ import "../utils/NexusTest_Base.t.sol";
 /// @title TestNexusERC721Integration
 /// @notice Tests Nexus smart account functionalities with ERC721 token transfers
 contract TestNexusERC721Integration is NexusTest_Base {
-    NFT private ERC721;
+    MockNFTprivate ERC721;
     MockPaymaster private paymaster;
     Vm.Wallet private user;
     address payable private preComputedAddress;
