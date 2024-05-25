@@ -512,10 +512,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            if(additionalContext.length < 4) return false;
+            if (additionalContext.length < 4) return false;
             return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
-        }
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }
 

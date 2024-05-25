@@ -7,9 +7,8 @@ import { BasePaymaster } from "account-abstraction/contracts/core/BasePaymaster.
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 contract MockPaymaster is BasePaymaster {
-    
     constructor(address _entryPoint) BasePaymaster(IEntryPoint(_entryPoint)) {}
-    
+
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
@@ -26,12 +25,7 @@ contract MockPaymaster is BasePaymaster {
         validationData = uint256(0);
     }
 
-    function _postOp(
-        IPaymaster.PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    ) internal override {
+    function _postOp(IPaymaster.PostOpMode mode, bytes calldata context, uint256 actualGasCost, uint256 actualUserOpFeePerGas) internal override {
         // For the mock, we don't need to do anything in postOp
         // You can add logging or other state updates here if needed
     }

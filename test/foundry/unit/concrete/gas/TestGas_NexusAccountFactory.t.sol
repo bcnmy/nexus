@@ -5,7 +5,6 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 
 /// @title Gas benchmark tests for NexusAccountFactory
 contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
-
     function setUp() public {
         init();
     }
@@ -13,10 +12,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     /// @notice Tests gas usage for deploying a new account
     function test_Gas_DeployAccount() public {
         uint256 initialGas = gasleft();
-        address newAccount = FACTORY.createAccount(
-            getInitData(address(VALIDATOR_MODULE), address(this)), 
-            keccak256("deploy_account_test")
-        );
+        address newAccount = FACTORY.createAccount(getInitData(address(VALIDATOR_MODULE), address(this)), keccak256("deploy_account_test"));
         uint256 gasUsed = initialGas - gasleft();
         console.log("Gas used for deploying a new account: ", gasUsed);
 
@@ -28,7 +24,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     function test_Gas_DeployAccountWithDifferentParams() public {
         uint256 initialGas = gasleft();
         address newAccount = FACTORY.createAccount(
-            getInitData(address(VALIDATOR_MODULE), address(mockExecutor)), 
+            getInitData(address(VALIDATOR_MODULE), address(mockExecutor)),
             keccak256("deploy_account_with_diff_params_test")
         );
         uint256 gasUsed = initialGas - gasleft();
@@ -42,10 +38,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     function test_Gas_DeployMultipleAccounts() public {
         uint256 initialGas = gasleft();
         for (uint i = 0; i < 5; i++) {
-            FACTORY.createAccount(
-                getInitData(address(VALIDATOR_MODULE), address(this)), 
-                keccak256(abi.encodePacked("deploy_multiple_accounts", i))
-            );
+            FACTORY.createAccount(getInitData(address(VALIDATOR_MODULE), address(this)), keccak256(abi.encodePacked("deploy_multiple_accounts", i)));
         }
         uint256 gasUsed = initialGas - gasleft();
         console.log("Gas used for deploying multiple accounts: ", gasUsed);
@@ -54,10 +47,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     /// @notice Tests gas usage for deploying an account and verifying module installation
     function test_Gas_DeployAccountAndVerifyModuleInstallation() public {
         uint256 initialGas = gasleft();
-        address newAccount = FACTORY.createAccount(
-            getInitData(address(VALIDATOR_MODULE), address(this)), 
-            keccak256("deploy_account_verify_module")
-        );
+        address newAccount = FACTORY.createAccount(getInitData(address(VALIDATOR_MODULE), address(this)), keccak256("deploy_account_verify_module"));
         uint256 gasUsed = initialGas - gasleft();
         console.log("Gas used for deploying a new account and verifying module installation: ", gasUsed);
 

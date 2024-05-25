@@ -5,7 +5,7 @@ import { BootstrapConfig } from "./Bootstrap.sol";
 
 // Review: can make this a library?
 contract BootstrapUtil {
-    function _makeBootstrapConfig(address module, bytes memory data) public pure returns (BootstrapConfig memory config) {
+    function makeBootstrapConfig(address module, bytes memory data) public pure returns (BootstrapConfig memory config) {
         config.module = module;
         config.data = data;
     }

@@ -1,53 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
- /// @title ModeLib
- /// @author zeroknots.eth | rhinestone.wtf
- /// To allow smart accounts to be very simple, but allow for more complex execution, A custom mode
- /// encoding is used.
- ///    Function Signature of execute function:
- ///           function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable;
- /// This allows for a single bytes32 to be used to encode the execution mode, calltype, execType and
- /// context.
- /// NOTE: Simple Account implementations only have to scope for the most significant byte. Account  that
- /// implement
- /// more complex execution modes may use the entire bytes32.
- ///
- /// |--------------------------------------------------------------------|
- /// | CALLTYPE  | EXECTYPE  |   UNUSED   | ModeSelector  |  ModePayload  |
- /// |--------------------------------------------------------------------|
- /// | 1 byte    | 1 byte    |   4 bytes  | 4 bytes       |   22 bytes    |
- /// |--------------------------------------------------------------------|
- ///
- /// CALLTYPE: 1 byte
- /// CallType is used to determine how the executeCalldata paramter of the execute function has to be
- /// decoded.
- /// It can be either single, batch or delegatecall. In the future different calls could be added.
- /// CALLTYPE can be used by a validation module to determine how to decode <userOp.callData[36:]>.
- ///
- /// EXECTYPE: 1 byte
- /// ExecType is used to determine how the account should handle the execution.
- /// It can indicate if the execution should revert on failure or continue execution.
- /// In the future more execution modes may be added.
- /// Default Behavior (EXECTYPE = 0x00) is to revert on a single failed execution. If one execution in
- /// a batch fails, the entire batch is reverted
- ///
- /// UNUSED: 4 bytes
- /// Unused bytes are reserved for future use.
- ///
- /// ModeSelector: bytes4
- /// The "optional" mode selector can be used by account vendors, to implement custom behavior in
- /// their accounts.
- /// the way a ModeSelector is to be calculated is bytes4(keccak256("vendorname.featurename"))
- /// this is to prevent collisions between different vendors, while allowing innovation and the
- /// development of new features without coordination between ERC-7579 implementing accounts
- ///
- /// ModePayload: 22 bytes
- /// Mode payload is used to pass additional data to the smart account execution, this may be
- /// interpreted depending on the ModeSelector
- ///
- /// ExecutionCallData: n bytes
- /// single, delegatecall or batch exec abi.encoded as bytes
+/// @title ModeLib
+/// @author zeroknots.eth | rhinestone.wtf
+/// To allow smart accounts to be very simple, but allow for more complex execution, A custom mode
+/// encoding is used.
+///    Function Signature of execute function:
+///           function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable;
+/// This allows for a single bytes32 to be used to encode the execution mode, calltype, execType and
+/// context.
+/// NOTE: Simple Account implementations only have to scope for the most significant byte. Account  that
+/// implement
+/// more complex execution modes may use the entire bytes32.
+///
+/// |--------------------------------------------------------------------|
+/// | CALLTYPE  | EXECTYPE  |   UNUSED   | ModeSelector  |  ModePayload  |
+/// |--------------------------------------------------------------------|
+/// | 1 byte    | 1 byte    |   4 bytes  | 4 bytes       |   22 bytes    |
+/// |--------------------------------------------------------------------|
+///
+/// CALLTYPE: 1 byte
+/// CallType is used to determine how the executeCalldata paramter of the execute function has to be
+/// decoded.
+/// It can be either single, batch or delegatecall. In the future different calls could be added.
+/// CALLTYPE can be used by a validation module to determine how to decode <userOp.callData[36:]>.
+///
+/// EXECTYPE: 1 byte
+/// ExecType is used to determine how the account should handle the execution.
+/// It can indicate if the execution should revert on failure or continue execution.
+/// In the future more execution modes may be added.
+/// Default Behavior (EXECTYPE = 0x00) is to revert on a single failed execution. If one execution in
+/// a batch fails, the entire batch is reverted
+///
+/// UNUSED: 4 bytes
+/// Unused bytes are reserved for future use.
+///
+/// ModeSelector: bytes4
+/// The "optional" mode selector can be used by account vendors, to implement custom behavior in
+/// their accounts.
+/// the way a ModeSelector is to be calculated is bytes4(keccak256("vendorname.featurename"))
+/// this is to prevent collisions between different vendors, while allowing innovation and the
+/// development of new features without coordination between ERC-7579 implementing accounts
+///
+/// ModePayload: 22 bytes
+/// Mode payload is used to pass additional data to the smart account execution, this may be
+/// interpreted depending on the ModeSelector
+///
+/// ExecutionCallData: n bytes
+/// single, delegatecall or batch exec abi.encoded as bytes
 
 // Custom type for improved developer experience
 type ExecutionMode is bytes32;
@@ -81,7 +81,6 @@ ExecType constant EXECTYPE_TRY = ExecType.wrap(0x01);
 ModeSelector constant MODE_DEFAULT = ModeSelector.wrap(bytes4(0x00000000));
 // Example declaration of a custom mode selector
 ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.mode.offset")));
-
 
 /// @dev ModeLib is a helper library to encode/decode ModeCodes
 library ModeLib {

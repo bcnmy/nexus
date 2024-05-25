@@ -72,19 +72,19 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
 
     function setupPredefinedWallets() internal {
         DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
-        
+
         BOB = createAndFundWallet("BOB", 1000 ether);
         BOB_ADDRESS = BOB.addr;
-        
+
         ALICE = createAndFundWallet("ALICE", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
-        
+
         ALICE_ADDRESS = ALICE.addr;
         CHARLIE_ADDRESS = CHARLIE.addr;
-        
+
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
         BUNDLER_ADDRESS = payable(BUNDLER.addr);
-        
+
         FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
     }
 
@@ -467,9 +467,9 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     }
 
     function measureGasAndEmitLog(string memory logName, function() external fn) internal {
-    uint256 initialGas = gasleft();
-    fn();
-    uint256 gasUsed = initialGas - gasleft();
-    emit log_named_uint(logName, gasUsed);
-}
+        uint256 initialGas = gasleft();
+        fn();
+        uint256 gasUsed = initialGas - gasleft();
+        emit log_named_uint(logName, gasUsed);
+    }
 }

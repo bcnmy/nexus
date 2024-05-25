@@ -47,7 +47,7 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
 
         // Initialize Nexus
         paymaster = new MockPaymaster(address(ENTRYPOINT));
-        ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
+        ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
 
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
@@ -63,14 +63,9 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
         path[1] = address(usdc);
 
         uint256 initialTokenBalance = usdc.balanceOf(swapper);
-        
+
         uint256 initialGas = gasleft();
-        uniswapV2Router.swapExactETHForTokens{value: SWAP_AMOUNT}(
-            0,
-            path,
-            swapper,
-            block.timestamp
-        );
+        uniswapV2Router.swapExactETHForTokens{ value: SWAP_AMOUNT }(0, path, swapper, block.timestamp);
         uint256 gasUsed = initialGas - gasleft();
         emit log_named_uint("UniswapV2::swapExactETHForTokens::Gas used for swapping ETH for USDC (EOA)", gasUsed);
 
@@ -82,20 +77,20 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
     function test_Gas_Swap_DeployedNexus_SwapEthForTokens() public {
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
         uint256 initialGas = gasleft();
-        
+
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), address(deployedNexus), block.timestamp)
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)",
+                0,
+                getPathForETHtoUSDC(),
+                address(deployedNexus),
+                block.timestamp
+            )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            deployedNexus,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
         uint256 gasUsed = initialGas - gasleft();
@@ -107,11 +102,17 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
     /// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
     function test_Gas_Swap_DeployAndSwap_WithPaymaster() public {
         uint256 initialGas = gasleft();
-        
+
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), preComputedAddress, block.timestamp)
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)",
+                0,
+                getPathForETHtoUSDC(),
+                preComputedAddress,
+                block.timestamp
+            )
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
@@ -128,7 +129,7 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
         userOps[0].paymasterAndData = abi.encodePacked(
             address(paymaster),
             uint128(3e6), // verification gas limit
-            uint128(3e6)  // postOp gas limit
+            uint128(3e6) // postOp gas limit
         );
 
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -143,17 +144,23 @@ contract TestNexusSwapETHIntegration is NexusTest_Base, BaseSettings {
     /// @notice Tests deploying Nexus and swapping ETH for USDC using deposit
     function test_Gas_Swap_DeployAndSwap_UsingDeposit() public {
         uint256 depositAmount = 1 ether;
-        ENTRYPOINT.depositTo{value: depositAmount}(preComputedAddress);
+        ENTRYPOINT.depositTo{ value: depositAmount }(preComputedAddress);
 
         uint256 newBalance = ENTRYPOINT.balanceOf(preComputedAddress);
         assertEq(newBalance, depositAmount);
 
         uint256 initialGas = gasleft();
-        
+
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), preComputedAddress, block.timestamp)
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)",
+                0,
+                getPathForETHtoUSDC(),
+                preComputedAddress,
+                block.timestamp
+            )
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(

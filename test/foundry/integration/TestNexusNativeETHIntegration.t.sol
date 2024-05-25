@@ -28,7 +28,7 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         init();
         user = createAndFundWallet("user", 1 ether);
         paymaster = new MockPaymaster(address(ENTRYPOINT));
-        ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
+        ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
 
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
@@ -49,11 +49,10 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         prank(BOB.addr);
         bool res;
         uint256 initialGas = gasleft();
-        (res, ) = payable(recipient).call{value: transferAmount}("");
+        (res, ) = payable(recipient).call{ value: transferAmount }("");
         uint256 gasUsed = initialGas - gasleft();
         emit log_named_uint("NativeETH::SimpleTransfer::Gas used for simple ETH transfer using Call", gasUsed);
     }
-
 
     /// @notice Tests gas consumption for a simple ETH transfer
     function test_Gas_NativeETH_SimpleTransfer_UsingSend() public checkETHBalance(recipient, transferAmount) {
@@ -65,25 +64,14 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         emit log_named_uint("NativeETH::SimpleTransfer::Gas used for simple ETH transfer using Call", gasUsed);
     }
 
-
     /// @notice Tests sending ETH from an already deployed Nexus smart account
     function test_Gas_NativeETH_DeployedNexusTransfer() public checkETHBalance(recipient, transferAmount) {
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
 
         assertEq(address(deployedNexus), calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
-        Execution[] memory executions = prepareSingleExecution(
-            recipient,
-            transferAmount,
-            ""
-        );
+        Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            deployedNexus,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
@@ -95,21 +83,11 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
     function test_Gas_NativeETH_DeployAndTransferWithPaymaster() public checkETHBalance(recipient, transferAmount) {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
-        Execution[] memory executions = prepareSingleExecution(
-            recipient,
-            transferAmount,
-            ""
-        );
+        Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        
-        userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+
+        userOps = buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         userOps[0].initCode = initCode;
 
@@ -117,7 +95,7 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         userOps[0].paymasterAndData = abi.encodePacked(
             address(paymaster),
             uint128(3e6), // verification gas limit
-            uint128(3e6)  // postOp gas limit
+            uint128(3e6) // postOp gas limit
         );
 
         uint256 initialGas = gasleft();
@@ -133,7 +111,7 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         uint256 depositAmount = 1 ether;
 
         // Add deposit to the precomputed address
-        ENTRYPOINT.depositTo{value: depositAmount}(preComputedAddress);
+        ENTRYPOINT.depositTo{ value: depositAmount }(preComputedAddress);
 
         uint256 newBalance = ENTRYPOINT.balanceOf(preComputedAddress);
         assertEq(newBalance, depositAmount);
@@ -142,11 +120,7 @@ contract TestNexusNativeETHIntegration is NexusTest_Base {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Prepare execution to transfer ETH
-        Execution[] memory executions = prepareSingleExecution(
-            recipient,
-            transferAmount,
-            ""
-        );
+        Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
         // Build user operation with initCode and callData
         PackedUserOperation[] memory userOps = buildPackedUserOperation(

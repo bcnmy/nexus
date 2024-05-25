@@ -30,7 +30,7 @@ contract TestNexusERC20Integration is NexusTest_Base {
         user = createAndFundWallet("user", 1 ether);
         ERC20 = new MockToken("Mock ERC20", "MOCK");
         paymaster = new MockPaymaster(address(ENTRYPOINT));
-        ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
+        ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
 
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
@@ -57,13 +57,7 @@ contract TestNexusERC20Integration is NexusTest_Base {
             abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            deployedNexus,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
@@ -82,14 +76,8 @@ contract TestNexusERC20Integration is NexusTest_Base {
         );
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        
-        userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+
+        userOps = buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
         userOps[0].initCode = initCode;
 
@@ -97,7 +85,7 @@ contract TestNexusERC20Integration is NexusTest_Base {
         userOps[0].paymasterAndData = abi.encodePacked(
             address(paymaster),
             uint128(3e6), // verification gas limit
-            uint128(3e6)  // postOp gas limit
+            uint128(3e6) // postOp gas limit
         );
 
         uint256 initialGas = gasleft();
@@ -113,7 +101,7 @@ contract TestNexusERC20Integration is NexusTest_Base {
         uint256 depositAmount = 1 ether;
 
         // Add deposit to the precomputed address
-        ENTRYPOINT.depositTo{value: depositAmount}(preComputedAddress);
+        ENTRYPOINT.depositTo{ value: depositAmount }(preComputedAddress);
 
         uint256 newBalance = ENTRYPOINT.balanceOf(preComputedAddress);
         assertEq(newBalance, depositAmount);
@@ -145,6 +133,9 @@ contract TestNexusERC20Integration is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, BUNDLER_ADDRESS);
 
         uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("ERC20::transfer::DeployUsingDepositTransfer::Gas used for deploying Nexus and transferring ERC20 using deposit", gasUsed);
+        emit log_named_uint(
+            "ERC20::transfer::DeployUsingDepositTransfer::Gas used for deploying Nexus and transferring ERC20 using deposit",
+            gasUsed
+        );
     }
 }

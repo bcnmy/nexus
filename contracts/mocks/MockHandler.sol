@@ -5,7 +5,6 @@ import { IFallback } from "contracts/interfaces/modules/IFallback.sol";
 import { MODULE_TYPE_FALLBACK } from "../../contracts/types/Constants.sol";
 
 contract MockHandler is IFallback {
-
     uint256 public count;
     string public constant NAME = "Default Handler";
     string public constant VERSION = "1.0.0";

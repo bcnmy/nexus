@@ -5,7 +5,6 @@ import "../../../shared/TestAccountExecution_Base.t.sol";
 
 /// @title Gas benchmark tests for AccountExecution
 contract TestGas_ExecutionHelper is TestAccountExecution_Base {
-
     MockExecutor public mockExecutor;
 
     function setUp() public {

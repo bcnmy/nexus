@@ -47,7 +47,12 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
-        assertApproxEqRel(depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost");
+        assertApproxEqRel(
+            depositAfter,
+            depositBefore - amount - gasUsed * tx.gasprice,
+            defaultTolerance,
+            "Deposit should be reduced by the withdrawal amount and gas cost"
+        );
     }
 
     /// @notice Tests withdrawal of deposit to an authorized address from the EntryPoint.
@@ -78,7 +83,12 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
-        assertApproxEqRel(depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost");
+        assertApproxEqRel(
+            depositAfter,
+            depositBefore - amount - gasUsed * tx.gasprice,
+            defaultTolerance,
+            "Deposit should be reduced by the withdrawal amount and gas cost"
+        );
     }
 
     /// @notice Tests withdrawal of deposit from the account itself.
@@ -109,7 +119,12 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in BOB's address balance");
-        assertApproxEqRel(depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost");
+        assertApproxEqRel(
+            depositAfter,
+            depositBefore - amount - gasUsed * tx.gasprice,
+            defaultTolerance,
+            "Deposit should be reduced by the withdrawal amount and gas cost"
+        );
     }
 
     /// @notice Tests withdrawal of deposit from an unauthorized address, expecting failure.
@@ -179,6 +194,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         // Expect revert due to insufficient gas
         prank(address(BOB_ACCOUNT));
         vm.expectRevert();
-        BOB_ACCOUNT.withdrawDepositTo{gas: 1000}(to, amount);
+        BOB_ACCOUNT.withdrawDepositTo{ gas: 1000 }(to, amount);
     }
 }

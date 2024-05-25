@@ -29,7 +29,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
         user = createAndFundWallet("user", 1 ether);
         ERC721 = new NFT("Mock NFT", "MNFT");
         paymaster = new MockPaymaster(address(ENTRYPOINT));
-        ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
+        ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
         console.log(preComputedAddress);
@@ -48,13 +48,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
             0,
             abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            deployedNexus,
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
     }
 
@@ -82,7 +76,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
         userOps[0].paymasterAndData = abi.encodePacked(
             address(paymaster),
             uint128(3e6), // verification gas limit
-            uint128(3e6)  // postOp gas limit
+            uint128(3e6) // postOp gas limit
         );
 
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -93,7 +87,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
     /// @notice Helper function to handle operations using deposit
     function handleOpsForDeposit() external {
         uint256 depositAmount = 1 ether;
-        ENTRYPOINT.depositTo{value: depositAmount}(preComputedAddress);
+        ENTRYPOINT.depositTo{ value: depositAmount }(preComputedAddress);
 
         uint256 newBalance = ENTRYPOINT.balanceOf(preComputedAddress);
         assertEq(newBalance, depositAmount);
@@ -134,12 +128,18 @@ contract TestNexusERC721Integration is NexusTest_Base {
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using a paymaster
     function test_Gas_ERC721_DeployWithPaymaster_Transfer() public checkERC721Balance(recipient, tokenId) {
         ERC721.mint(preComputedAddress, tokenId);
-        measureGasAndEmitLog("ERC721::DeployWithPaymasterTransfer::Gas used for deploying Nexus and sending ERC721 with paymaster", this.handleOpsForPaymaster);
+        measureGasAndEmitLog(
+            "ERC721::DeployWithPaymasterTransfer::Gas used for deploying Nexus and sending ERC721 with paymaster",
+            this.handleOpsForPaymaster
+        );
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using deposited funds without a paymaster
     function test_Gas_ERC721_DeployUsingDeposit_Transfer() public checkERC721Balance(recipient, tokenId) {
         ERC721.mint(preComputedAddress, tokenId);
-        measureGasAndEmitLog("ERC721::DeployUsingDepositTransfer::Gas used for deploying Nexus and transferring ERC721 using deposit", this.handleOpsForDeposit);
+        measureGasAndEmitLog(
+            "ERC721::DeployUsingDepositTransfer::Gas used for deploying Nexus and transferring ERC721 using deposit",
+            this.handleOpsForDeposit
+        );
     }
 }
