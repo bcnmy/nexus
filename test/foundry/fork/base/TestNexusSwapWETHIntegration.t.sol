@@ -51,7 +51,7 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         require(success, "WETH deposit failed");
 
         // Initialize Nexus
-        paymaster = new MockPaymaster();
+        paymaster = new MockPaymaster(address(ENTRYPOINT));
         ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
 
         vm.deal(address(paymaster), 100 ether);

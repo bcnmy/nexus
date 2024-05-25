@@ -28,7 +28,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
         init();
         user = createAndFundWallet("user", 1 ether);
         ERC721 = new NFT("Mock NFT", "MNFT");
-        paymaster = new MockPaymaster();
+        paymaster = new MockPaymaster(address(ENTRYPOINT));
         ENTRYPOINT.depositTo{value: 10 ether}(address(paymaster));
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
