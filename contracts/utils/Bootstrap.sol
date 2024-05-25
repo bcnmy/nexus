@@ -76,6 +76,8 @@ contract Bootstrap is ModuleManager {
         }
     }
 
+    /// @dev This function is used to prepare calldata for initNexus function which can install any amount of modules.
+    /// n validators, n executors, 1 hook and n fallbacks can be installed
     function getInitNexusCalldata(
         BootstrapConfig[] calldata $validators,
         BootstrapConfig[] calldata $executors,
@@ -85,6 +87,8 @@ contract Bootstrap is ModuleManager {
         init = abi.encode(address(this), abi.encodeCall(this.initNexus, ($validators, $executors, hook, fallbacks)));
     }
 
+    /// @dev This function is used to prepare calldata for initNexusScoped function which can install limited amount of modules.
+    /// n validators and 1 hook can be installed
     function getInitNexusScopedCalldata(
         BootstrapConfig[] calldata $validators,
         BootstrapConfig calldata hook
@@ -92,6 +96,7 @@ contract Bootstrap is ModuleManager {
         init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, ($validators, hook)));
     }
 
+    /// @dev This function is used to prepare calldata for initNexusWithSingleValidator function which can install only 1 validator.
     function getInitNexusWithSingleValidatorCalldata(BootstrapConfig calldata $validator) external view returns (bytes memory init) {
         init = abi.encode(address(this), abi.encodeCall(this.initNexusWithSingleValidator, (IModule($validator.module), $validator.data)));
     }

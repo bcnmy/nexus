@@ -17,6 +17,19 @@ import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/Bootstrap.sol";
 
+library BytesLib {
+    function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory) {
+        require(data.length >= start + length, "BytesLib: Slice out of range");
+        bytes memory result = new bytes(length);
+
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = data[start + i];
+        }
+
+        return result;
+    }
+}
+
 /// @title Nexus - ModuleWhitelistFactory for Nexus account
 contract ModuleWhitelistFactory is Stakeable {
     /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
@@ -60,9 +73,8 @@ contract ModuleWhitelistFactory is Stakeable {
         // Decode the initData to extract the call target and call data
         (, bytes memory callData) = abi.decode(initData, (address, bytes));
 
-        // Skip the first 4 bytes (the function selector)
-        // Create a new bytes array for the slice of callData
-        bytes memory data = new bytes(callData.length - 4);
+        // Extract the inner data by removing the first 4 bytes (the function selector)
+        bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
 
         // Decode the call data to extract the parameters passed to initNexus
         // Review if we should verify calldata[0:4] against the function selector of initNexus
@@ -71,7 +83,7 @@ contract ModuleWhitelistFactory is Stakeable {
             BootstrapConfig[] memory executors,
             BootstrapConfig memory hook,
             BootstrapConfig[] memory fallbacks
-        ) = abi.decode(data, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
+        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
 
         for (uint256 i = 0; i < validators.length; i++) {
             if (!isWhitelisted(validators[i].module)) {

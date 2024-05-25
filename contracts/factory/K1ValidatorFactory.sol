@@ -50,7 +50,6 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
     /// @param index The index of the Nexus.
     /// @return The address of the newly created Nexus.
     /// @dev Deploys a new Nexus using a deterministic address based on the input parameters.
-    // Review: can be uint256 index or bytes32 salt
     function createAccount(address eoaOwner, uint256 index) external payable returns (address payable) {
         (index);
         bytes32 actualSalt;
@@ -93,7 +92,6 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
         }
 
         // Review: if salt should include K1 Validator address as well
-
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 }
