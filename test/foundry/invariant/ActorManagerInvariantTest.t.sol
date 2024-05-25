@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-
 import "../utils/Imports.sol";
 import { InvariantBaseTest } from "./base/InvariantBaseTest.t.sol";
 import { ExecutionHandlerTest } from "./handlers/ExecutionHandlerTest.t.sol";
@@ -27,13 +26,14 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     /// @dev Actors represent different user accounts participating in the tests, and handlers manage the actions they perform.
     function setUp() public override {
         super.setUp();
+        setUpActors();
     }
 
     /// @notice Initializes handlers for each actor.
     function setUpActors() internal {
         Vm.Wallet[3] memory actors = [ALICE, BOB, CHARLIE];
         Nexus[3] memory actorAccounts = [ALICE_ACCOUNT, BOB_ACCOUNT, CHARLIE_ACCOUNT];
-        validationModule = address(new MockValidator());
+        validationModule = address(VALIDATOR_MODULE);
 
         for (uint i = 0; i < actors.length; i++) {
             DepositManagementHandlerTest depositHandler = new DepositManagementHandlerTest(actorAccounts[i], actors[i], address(VALIDATOR_MODULE));
@@ -64,36 +64,36 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
     // Account Creation Tests
     //--------------------------------------------------------------
 
-    // /// @notice Test account creation across all actors.
-    // function invariant_CreateAccount() public {
-    //     uint256 index = 0;
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].accountCreationHandler.invariant_createAccount(index++, 0);
-    //     }
-    // }
+    /// @notice Test account creation across all actors.
+    function invariant_CreateAccount() public {
+        uint256 index = 0;
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].accountCreationHandler.invariant_createAccount((index++));
+        }
+    }
 
-    // /// @notice Test nonce consistency across all actors.
-    // function invariant_testNonceConsistency() public {
-    //     uint256 index = 1;
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].accountCreationHandler.invariant_nonceConsistency(index++);
-    //     }
-    // }
+    /// @notice Test nonce consistency across all actors.
+    function invariant_testNonceConsistency() public {
+        uint256 index = 1;
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].accountCreationHandler.invariant_nonceConsistency((index++));
+        }
+    }
 
-    // /// @notice Test nonce reset on account creation across all actors.
-    // function invariant_testNonceResetOnCreation() public {
-    //     uint256 index = 1;
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].accountCreationHandler.invariant_nonceResetOnCreation(index++);
-    //     }
-    // }
+    /// @notice Test nonce reset on account creation across all actors.
+    function invariant_testNonceResetOnCreation() public {
+        uint256 index = 1;
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].accountCreationHandler.invariant_nonceResetOnCreation((index++));
+        }
+    }
 
-    // /// @notice Test multiple account creation with unique indices across all actors.
-    // function invariant_testMultipleAccountCreationWithUniqueIndices() public {
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].accountCreationHandler.invariant_multipleAccountCreationWithUniqueIndices();
-    //     }
-    // }
+    /// @notice Test multiple account creation with unique indices across all actors.
+    function invariant_testMultipleAccountCreationWithUniqueIndices() public {
+        for (uint i = 0; i < actorHandlers.length; i++) {
+            actorHandlers[i].accountCreationHandler.invariant_multipleAccountCreationWithUniqueIndices();
+        }
+    }
 
     //--------------------------------------------------------------
     // Deposit Management Tests
@@ -114,27 +114,6 @@ contract ActorManagerInvariantTest is InvariantBaseTest {
             actorHandlers[i].depositHandler.invariant_handleWithdrawal(withdrawalAmount);
         }
     }
-
-    // /// @notice Test zero value deposits across all actors.
-    // function invariant_testAllZeroValueDeposits() public {
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].depositHandler.invariant_testZeroValueDeposit();
-    //     }
-    // }
-
-    // /// @notice Test overdraft withdrawals across all actors.
-    // function invariant_testAllOverdraftWithdrawals() public {
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].depositHandler.invariant_testOverdraftWithdrawal();
-    //     }
-    // }
-
-    // /// @notice Check balance consistency after revert across all actors.
-    // function invariant_checkAllBalancePostRevert() public {
-    //     for (uint i = 0; i < actorHandlers.length; i++) {
-    //         actorHandlers[i].depositHandler.invariant_checkBalancePostRevert();
-    //     }
-    // }
 
     //--------------------------------------------------------------
     // Module Management Tests

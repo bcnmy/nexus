@@ -24,8 +24,9 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     }
 
     /// @notice Tests account creation and asserts key invariants.
-    /// @param salt The salt used for creating the account address.
-    function invariant_createAccount(bytes32 salt) external {
+    /// @param index The index used for creating the account address.
+    function invariant_createAccount(uint256 index) external {
+        bytes32 salt = keccak256(abi.encodePacked(index));
         bytes memory initData = abi.encodePacked(owner);
         address payable newAccount = deployAccount(initData, salt);
         require(newAccount != address(0), "Account creation failed");
@@ -45,8 +46,9 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     }
 
     /// @notice Ensures nonce consistency before and after account creation.
-    /// @param salt The salt used for creating the account address.
-    function invariant_nonceConsistency(bytes32 salt) external {
+    /// @param index The index used for creating the account address.
+    function invariant_nonceConsistency(uint256 index) external {
+        bytes32 salt = keccak256(abi.encodePacked(index));
         bytes memory initData = abi.encodePacked(owner);
         address payable newAccount = deployAccount(initData, salt);
         require(newAccount != address(0), "Account creation failed");
@@ -61,8 +63,9 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     }
 
     /// @notice Verifies that the nonce is reset to zero upon account creation.
-    /// @param salt The salt used for creating the account address.
-    function invariant_nonceResetOnCreation(bytes32 salt) external {
+    /// @param index The index used for creating the account address.
+    function invariant_nonceResetOnCreation(uint256 index) external {
+        bytes32 salt = keccak256(abi.encodePacked(index));
         bytes memory initData = abi.encodePacked(owner);
         address payable newAccount = deployAccount(initData, salt);
         require(newAccount != address(0), "Account creation failed");
@@ -128,7 +131,11 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     /// @param salt The salt used for creating the account address.
     /// @return The address of the deployed account.
     function deployAccount(bytes memory initData, bytes32 salt) internal returns (address payable) {
-        bytes memory factoryData = abi.encodeWithSelector(accountFactory.createAccount.selector, initData, salt);
+        BootstrapConfig[] memory validators = makeBootstrapConfig(validationModule, initData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+
+        bytes memory factoryData = abi.encodeWithSelector(accountFactory.createAccount.selector, _initData, salt);
         return META_FACTORY.deployWithFactory(address(accountFactory), factoryData);
     }
 
@@ -137,7 +144,11 @@ contract AccountCreationHandlerTest is InvariantBaseTest {
     /// @param salt The salt used for creating the account address.
     /// @return The address of the deployed account.
     function deployAccountWithSalt(bytes memory initData, bytes32 salt) internal returns (address payable) {
-        bytes memory factoryData = abi.encodeWithSelector(accountFactory.createAccount.selector, initData, salt);
+        BootstrapConfig[] memory validators = makeBootstrapConfig(validationModule, initData);
+        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+
+        bytes memory factoryData = abi.encodeWithSelector(accountFactory.createAccount.selector, _initData, salt);
         return META_FACTORY.deployWithFactory(address(accountFactory), factoryData);
     }
 

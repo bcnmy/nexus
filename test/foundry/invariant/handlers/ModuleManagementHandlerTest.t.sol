@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import { InvariantBaseTest } from "../base/InvariantBaseTest.t.sol";
-
 import "../../utils/Imports.sol";
 
 /// @title ModuleManagementHandlerTest
