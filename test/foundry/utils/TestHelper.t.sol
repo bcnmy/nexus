@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.0;
 
 import "solady/src/utils/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-import "./Imports.sol";
 import "./CheatCodes.sol";
 import "./EventsAndErrors.sol";
 import "../../../contracts/lib/ModeLib.sol";
@@ -16,19 +16,22 @@ import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
-import { AccountFactory } from "../../../contracts/factory/AccountFactory.sol";
+import { Bootstrap } from "../../../contracts/utils/Bootstrap.sol";
+import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
+import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
+import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
 
-/// @title Helpers - Utility contract for testing with cheat codes and shared setup
-/// @notice Provides various helper functions for setting up and testing contracts
-contract TestHelper is CheatCodes, EventsAndErrors {
+contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
 
+    Vm.Wallet internal DEPLOYER;
     Vm.Wallet internal BOB;
     Vm.Wallet internal ALICE;
     Vm.Wallet internal CHARLIE;
     Vm.Wallet internal BUNDLER;
+    Vm.Wallet internal FACTORY_OWNER;
 
     address internal BOB_ADDRESS;
     address internal ALICE_ADDRESS;
@@ -40,68 +43,67 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     Nexus internal CHARLIE_ACCOUNT;
 
     IEntryPoint internal ENTRYPOINT;
-    AccountFactory internal FACTORY;
+    NexusAccountFactory internal FACTORY;
+    BiconomyMetaFactory internal META_FACTORY;
     MockHook internal HOOK_MODULE;
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
+    Bootstrap internal BOOTSTRAPPER;
+
     // -----------------------------------------
     // Setup Functions
     // -----------------------------------------
-
     /// @notice Initializes the testing environment with wallets, contracts, and accounts
     function setupTestEnvironment() internal virtual {
+        /// Initializes the testing environment
         setupPredefinedWallets();
         deployTestContracts();
         deployNexusForPredefinedWallets();
     }
 
-    /// @notice Creates and funds a new wallet
-    /// @param name The name to label the wallet
-    /// @param amount The amount of ether to fund the wallet with
-    /// @return wallet The created and funded wallet
     function createAndFundWallet(string memory name, uint256 amount) internal returns (Vm.Wallet memory) {
         Vm.Wallet memory wallet = newWallet(name);
         vm.deal(wallet.addr, amount);
         return wallet;
     }
 
-    /// @notice Initializes the predefined wallets
     function setupPredefinedWallets() internal {
+        DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
         BOB = createAndFundWallet("BOB", 1000 ether);
         ALICE = createAndFundWallet("ALICE", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
+        FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
     }
 
-    /// @notice Deploys the necessary contracts for testing
     function deployTestContracts() internal {
         ENTRYPOINT = new EntryPoint();
         vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
         ACCOUNT_IMPLEMENTATION = new Nexus();
-        FACTORY = new AccountFactory(address(ACCOUNT_IMPLEMENTATION));
-        VALIDATOR_MODULE = new MockValidator();
-        EXECUTOR_MODULE = new MockExecutor();
+        FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
+        META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
+        vm.prank(FACTORY_OWNER.addr);
+        META_FACTORY.addFactoryToWhitelist(address(FACTORY));
         HOOK_MODULE = new MockHook();
         HANDLER_MODULE = new MockHandler();
+        EXECUTOR_MODULE = new MockExecutor();
+        VALIDATOR_MODULE = new MockValidator();
+        BOOTSTRAPPER = new Bootstrap();
     }
 
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------
-
     /// @notice Deploys an account with a specified wallet, deposit amount, and optional custom validator
     /// @param wallet The wallet to deploy the account for
     /// @param deposit The deposit amount
     /// @param validator The custom validator address, if not provided uses default
     /// @return The deployed Nexus account
     function deployNexus(Vm.Wallet memory wallet, uint256 deposit, address validator) internal returns (Nexus) {
-        if (validator == address(0)) {
-            validator = address(VALIDATOR_MODULE);
-        }
         address payable accountAddress = calculateAccountAddress(wallet.addr, validator);
         bytes memory initCode = buildInitCode(wallet.addr, validator);
 
@@ -123,7 +125,6 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         CHARLIE_ACCOUNT = deployNexus(CHARLIE, 100 ether, address(VALIDATOR_MODULE));
         vm.label(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
-
     // -----------------------------------------
     // Utility Functions
     // -----------------------------------------
@@ -133,9 +134,17 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param validator The address of the validator
     /// @return account The calculated account address
     function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
-        bytes memory initData = abi.encodePacked(owner);
-        uint256 saDeploymentIndex = 0;
-        account = FACTORY.getCounterFactualAddress(address(validator), initData, saDeploymentIndex);
+        bytes memory moduleInstallData = abi.encodePacked(owner);
+
+        BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInstallData);
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
+        bytes memory saDeploymentIndex = "0";
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        account = FACTORY.computeAccountAddress(_initData, salt);
         return account;
     }
 
@@ -144,12 +153,24 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param validator The address of the validator
     /// @return initCode The prepared init code
     function buildInitCode(address ownerAddress, address validator) internal view returns (bytes memory initCode) {
-        uint256 saDeploymentIndex = 0;
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
+        BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInitData);
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
+
+        bytes memory saDeploymentIndex = "0";
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
+
+        // Prepend the factory address to the encoded function call to form the initCode
         initCode = abi.encodePacked(
-            address(FACTORY),
-            abi.encodeWithSelector(FACTORY.createAccount.selector, validator, moduleInitData, saDeploymentIndex)
+            address(META_FACTORY),
+            abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData)
         );
     }
 
@@ -190,7 +211,6 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory signature = signUserOp(wallet, userOp);
         userOp.signature = signature;
     }
-
     /// @notice Retrieves the nonce for a given account and validator
     /// @param account The account address
     /// @param validator The validator address
@@ -208,6 +228,10 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }
+
+    // -----------------------------------------
+    // Utility Functions
+    // -----------------------------------------
 
     /// @notice Modifies the address of a deployed contract in a test environment
     /// @param originalAddress The original address of the contract
@@ -259,8 +283,10 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         Execution[] memory executions,
         address validator
     ) internal view returns (PackedUserOperation[] memory userOps) {
+        // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
+        // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
         bytes memory executionCalldata;
         uint256 length = executions.length;
@@ -278,14 +304,27 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             revert("Executions array cannot be empty");
         }
 
+        // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
+
+        // Build the UserOperation
         userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), validator));
         userOps[0].callData = executionCalldata;
 
+        // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
         return userOps;
+    }
+
+    /// @dev Returns a random non-zero address.
+    /// @notice Returns a random non-zero address
+    /// @return result A random non-zero address
+    function randomNonZeroAddress() internal returns (address result) {
+        do {
+            result = address(uint160(random()));
+        } while (result == address(0));
     }
 
     /// @notice Checks if an address is a contract
@@ -299,25 +338,21 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         return size > 0;
     }
 
-    /// @notice Returns a random non-zero address
-    /// @return result A random non-zero address
-    function randomNonZeroAddress() internal returns (address result) {
-        do {
-            result = address(uint160(random()));
-        } while (result == address(0));
-    }
-
     /// @dev credits: vectorized || solady
-    /// @notice Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive)
-    /// @return r A pseudorandom random number
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
+    /// e.g. `testSomething(uint256) public`.
     function random() internal returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
+            // This is the keccak256 of a very long string I randomly mashed on my keyboard.
             let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
             let sValue := sload(sSlot)
 
             mstore(0x20, sValue)
             r := keccak256(0x20, 0x40)
 
+            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
                 let m := mload(0x40)
@@ -326,36 +361,34 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             }
             sstore(sSlot, add(r, 1))
 
-            for {
-
-            } 1 {
-
-            } {
+            // Do some biased sampling for more robust tests.
+            // prettier-ignore
+            for {} 1 {} {
                 let d := byte(0, r)
+                // With a 1/256 chance, randomly set `r` to any of 0,1,2.
                 if iszero(d) {
                     r := and(r, 3)
                     break
                 }
+                // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
+                    // Set `t` either `not(0)` or `xor(sValue, r)`.
                     let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
+                    // Set `r` to `t` shifted left or right by a random multiple of 8.
                     switch and(8, d)
                     case 0 {
-                        if iszero(and(16, d)) {
-                            t := 1
-                        }
+                        if iszero(and(16, d)) { t := 1 }
                         r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
                     default {
-                        if iszero(and(16, d)) {
-                            t := shl(255, 1)
-                        }
+                        if iszero(and(16, d)) { t := shl(255, 1) }
                         r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
-                    if iszero(and(0x20, d)) {
-                        r := not(r)
-                    }
+                    // With a 1/2 chance, negate `r`.
+                    if iszero(and(0x20, d)) { r := not(r) }
                     break
                 }
+                // Otherwise, just set `r` to `xor(sValue, r)`.
                 r := xor(sValue, r)
                 break
             }
