@@ -122,7 +122,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         calldatas[0] = abi.encodeWithSelector(IBiconomySmartAccountV2.updateImplementation.selector, newImplementation);
 
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);

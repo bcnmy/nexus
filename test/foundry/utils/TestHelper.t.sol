@@ -146,7 +146,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         bytes memory moduleInstallData = abi.encodePacked(owner);
 
         BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInstallData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
@@ -165,7 +165,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
         BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInitData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
 
         bytes memory saDeploymentIndex = "0";
 

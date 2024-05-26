@@ -32,7 +32,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         // Prepare bootstrap configuration for validators
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig[] memory executors = makeBootstrapConfig(address(EXECUTOR_MODULE), "");
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(HOOK_MODULE), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(HOOK_MODULE), "");
         BootstrapConfig[] memory fallbacks = makeBootstrapConfig(address(HANDLER_MODULE), abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR)));
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
@@ -42,7 +42,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         address payable expectedAddress = whitelistFactory.computeAccountAddress(_initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(whitelistFactory.createAccount.selector, _initData, salt);
+        // bytes memory factoryData = abi.encodeWithSelector(whitelistFactory.createAccount.selector, _initData, salt);
 
         uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = whitelistFactory.createAccount(_initData, salt);

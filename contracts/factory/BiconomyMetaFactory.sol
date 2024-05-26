@@ -24,11 +24,11 @@ import { Stakeable } from "../common/Stakeable.sol";
 ///      This contract serves as a 'Meta' factory to generate new Nexus instances using specific chosen and approved factories.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 contract BiconomyMetaFactory is Stakeable {
-    /// @dev Throws when the factory is not whitelisted.
-    error FactoryNotWhitelisted();
-
     /// @dev Stores the factory addresses that are whitelisted.
     mapping(address => bool) public factoryWhitelist;
+
+    /// @dev Throws when the factory is not whitelisted.
+    error FactoryNotWhitelisted();
 
     constructor(address owner) Stakeable(owner) {}
 
@@ -42,12 +42,6 @@ contract BiconomyMetaFactory is Stakeable {
     /// @param factory The address to be removed from the whitelist.
     function removeFactoryFromWhitelist(address factory) external onlyOwner {
         factoryWhitelist[factory] = false;
-    }
-
-    /// @notice Checks if an address is whitelisted.
-    /// @param factory The address to check.
-    function isWhitelisted(address factory) public view returns (bool) {
-        return factoryWhitelist[factory];
     }
 
     // Note: deploy using only one of the whitelisted factories
@@ -78,5 +72,11 @@ contract BiconomyMetaFactory is Stakeable {
         assembly {
             createdAccount := mload(add(returnData, 0x20))
         }
+    }
+
+    /// @notice Checks if an address is whitelisted.
+    /// @param factory The address to check.
+    function isWhitelisted(address factory) public view returns (bool) {
+        return factoryWhitelist[factory];
     }
 }

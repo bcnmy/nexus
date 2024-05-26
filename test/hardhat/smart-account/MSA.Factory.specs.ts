@@ -62,10 +62,7 @@ describe("Nexus Factory Tests", function () {
       saDeploymentIndex,
     );
 
-    await factory.createAccount(
-      accountOwnerAddress,
-      saDeploymentIndex,
-    );
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
 
     ownerSA = smartAccount.attach(expectedAccountAddress) as Nexus;
   });
@@ -82,10 +79,7 @@ describe("Nexus Factory Tests", function () {
         saDeploymentIndex,
       );
 
-      await factory.createAccount(
-        ownerAddress,
-        saDeploymentIndex,
-      );
+      await factory.createAccount(ownerAddress, saDeploymentIndex);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -113,16 +107,12 @@ describe("Nexus Factory Tests", function () {
 
       expect(unexpectedAccountAddress).to.not.equal(expectedAccountAddress);
 
-      await factory.createAccount(
-        ownerAddress,
-        saDeploymentIndex,
-      );
+      await factory.createAccount(ownerAddress, saDeploymentIndex);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
       expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
     });
-
 
     it("Should deploy smart account via handleOps", async function () {
       const saDeploymentIndex = 1;
@@ -170,13 +160,12 @@ describe("Nexus Factory Tests", function () {
     });
 
     it("Should prevent account reinitialization", async function () {
-      const initData = smartAccount.interface.encodeFunctionData("initializeAccount", [
-        "0x",
-      ]);
-
-      const response = smartAccount.initializeAccount(
-        "0x"
+      const initData = smartAccount.interface.encodeFunctionData(
+        "initializeAccount",
+        ["0x"],
       );
+
+      const response = smartAccount.initializeAccount("0x");
       await expect(response).to.be.revertedWithCustomError(
         smartAccount,
         "LinkedList_AlreadyInitialized()",
