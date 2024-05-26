@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -34,18 +34,14 @@ contract BaseAccount is IBaseAccount {
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPointOrSelf() {
-        if (!(msg.sender == _ENTRYPOINT || msg.sender == address(this))) {
-            revert AccountAccessUnauthorized();
-        }
+        require(msg.sender == _ENTRYPOINT || msg.sender == address(this), AccountAccessUnauthorized());
         _;
     }
 
     /// @dev Ensures the caller is the EntryPoint.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPoint() {
-        if (msg.sender != _ENTRYPOINT) {
-            revert AccountAccessUnauthorized();
-        }
+        require(msg.sender == _ENTRYPOINT, AccountAccessUnauthorized());
         _;
     }
 

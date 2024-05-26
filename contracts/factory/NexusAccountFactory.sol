@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -37,9 +37,7 @@ contract NexusAccountFactory is INexusAccountFactory, Stakeable {
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     constructor(address implementation, address owner) Stakeable(owner) {
-        if (implementation == address(0)) {
-            revert ImplementationAddressCanNotBeZero();
-        }
+        require(implementation != address(0), ImplementationAddressCanNotBeZero());
         ACCOUNT_IMPLEMENTATION = implementation;
     }
 

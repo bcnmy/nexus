@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 /// @title ArbitrumSettings
 /// @notice This contract sets up the constants required for Arbitrum fork tests

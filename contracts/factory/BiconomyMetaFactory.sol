@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -58,9 +58,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @param factory The address of the factory to be used for deployment.
     /// @param factoryData The encoded data for the method to be called on the Factory.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
-        if (!factoryWhitelist[address(factory)]) {
-            revert FactoryNotWhitelisted();
-        }
+        require(factoryWhitelist[address(factory)], FactoryNotWhitelisted());
         (bool success, bytes memory returnData) = factory.call(factoryData);
 
         // if needed to make success check add this here

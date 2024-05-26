@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -38,9 +38,8 @@ contract K1Validator is IValidator {
     error NoOwnerProvided();
 
     function onInstall(bytes calldata data) external {
-        if (data.length == 0) revert NoOwnerProvided();
-        address owner = address(bytes20(data)); // encodePacked
-        smartAccountOwners[msg.sender] = owner;
+        require(data.length != 0,  NoOwnerProvided());
+        smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
     function onUninstall(bytes calldata) external {

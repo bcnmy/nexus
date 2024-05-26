@@ -68,25 +68,17 @@ contract ModuleWhitelistFactory is Stakeable {
         ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
 
         for (uint256 i = 0; i < validators.length; i++) {
-            if (!isWhitelisted(validators[i].module)) {
-                revert ModuleNotWhitelisted(validators[i].module);
-            }
+            require(isWhitelisted(validators[i].module), ModuleNotWhitelisted(validators[i].module));
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            if (!isWhitelisted(executors[i].module)) {
-                revert ModuleNotWhitelisted(executors[i].module);
-            }
+            require(isWhitelisted(executors[i].module), ModuleNotWhitelisted(executors[i].module));
         }
 
-        if (!isWhitelisted(hook.module)) {
-            revert ModuleNotWhitelisted(hook.module);
-        }
+        require(isWhitelisted(hook.module), ModuleNotWhitelisted(hook.module));
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            if (!isWhitelisted(fallbacks[i].module)) {
-                revert ModuleNotWhitelisted(fallbacks[i].module);
-            }
+            require(isWhitelisted(fallbacks[i].module), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
         bytes32 actualSalt;

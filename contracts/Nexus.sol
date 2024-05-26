@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -154,7 +154,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) external payable virtual onlyEntryPoint {
         bytes calldata callData = userOp.callData[4:];
         (bool success, ) = address(this).delegatecall(callData);
-        if (!success) revert ExecutionFailed();
+        require(success, ExecutionFailed());
     }
 
     /// @notice Installs a new module to the smart account.
@@ -167,25 +167,25 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
-        if (module == address(0)) revert ModuleAddressCanNotBeZero();
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
-        if (_isModuleInstalled(moduleTypeId, module, initData)) {
-            revert ModuleAlreadyInstalled(moduleTypeId, module);
-        }
-        emit ModuleInstalled(moduleTypeId, module);
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            _installValidator(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            _installExecutor(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            _installFallbackHandler(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            _installHook(module, initData);
-        } else {
-            revert InvalidModuleTypeId(moduleTypeId);
-        }
+function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
+    require(module != address(0), ModuleAddressCanNotBeZero());
+    require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
+    require(!_isModuleInstalled(moduleTypeId, module, initData), ModuleAlreadyInstalled(moduleTypeId, module));
+    
+    emit ModuleInstalled(moduleTypeId, module);
+    
+    if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+        _installValidator(module, initData);
+    } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+        _installExecutor(module, initData);
+    } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        _installFallbackHandler(module, initData);
+    } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+        _installHook(module, initData);
+    } else {
+        revert InvalidModuleTypeId(moduleTypeId);
     }
+}
 
     /// @notice Uninstalls a module from the smart account.
     /// @param moduleTypeId The type ID of the module to be uninstalled, matching the installation type:
@@ -196,26 +196,31 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
-        // Should be able to validate passed moduleTypeId agaisnt the provided module
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
-        if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
-            revert ModuleNotInstalled(moduleTypeId, module);
-        }
-        emit ModuleUninstalled(moduleTypeId, module);
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
+function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
+    require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
+    require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
+    
+    emit ModuleUninstalled(moduleTypeId, module);
+    
+    if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+        _uninstallValidator(module, deInitData);
+    } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+        _uninstallExecutor(module, deInitData);
+    } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        _uninstallFallbackHandler(module, deInitData);
+    } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+        _uninstallHook(module, deInitData);
     }
+}
 
-    function initializeAccount(bytes calldata initData) external payable virtual {
-        // checks if already initialized and reverts before setting the state to initialized
-        _initModuleManager();
-        (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
-        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
-        if (!success) revert NexusInitializationFailed();
-    }
+
+function initializeAccount(bytes calldata initData) external payable virtual {
+    _initModuleManager();
+    (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
+    (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+    require(success, NexusInitializationFailed());
+}
+
 
     /// @notice Validates a signature according to ERC-1271 standards.
     /// @param hash The hash of the data being validated.
@@ -223,13 +228,14 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @return The status code of the signature validation (`0x1626ba7e` if valid).
     /// bytes4(keccak256("isValidSignature(bytes32,bytes)") = 0x1626ba7e
     /// @dev Delegates the validation to a validator module specified within the signature data.
-    function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
-        // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
-        address validator = address(bytes20(data[0:20]));
-        if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
-        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
-    }
+function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
+    // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
+    address validator = address(bytes20(data[0:20]));
+    require(_isValidatorInstalled(validator), InvalidModule(validator));
+    (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
+    return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
+}
+
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
     /// @return implementation The address of the current contract implementation.

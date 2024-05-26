@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -36,7 +36,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
+        require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
         _;
     }
 
@@ -58,7 +58,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        if (handler == address(0)) revert MissingFallbackHandler(msg.sig);
+        require(handler != address(0), MissingFallbackHandler(msg.sig));
 
         if (calltype == CALLTYPE_STATIC) {
             assembly {
@@ -157,11 +157,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
 
         // Check if the account has at least one validator installed before proceeding
         // Having at least one validator is a requirement for the account to function properly
-        if (prev == address(0x01)) {
-            if (validators.getNext(validator) == address(0x01)) {
-                revert CannotRemoveLastValidator();
-            }
-        }
+        require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
+
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
     }
@@ -188,9 +185,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param data Initialization data to configure the hook upon installation.
     function _installHook(address hook, bytes calldata data) internal virtual {
         address currentHook = _getHook();
-        if (currentHook != address(0)) {
-            revert HookAlreadyInstalled(currentHook);
-        }
+        require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -216,7 +211,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         bytes4 selector = bytes4(params[0:4]);
         CallType calltype = CallType.wrap(bytes1(params[4]));
         bytes memory initData = params[5:];
-        if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
+        require(!_isFallbackHandlerInstalled(selector), FallbackAlreadyInstalledForSelector(selector));
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
         IFallback(handler).onInstall(initData);
     }
