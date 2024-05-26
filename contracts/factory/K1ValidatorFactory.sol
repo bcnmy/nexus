@@ -20,9 +20,6 @@ import { Stakeable } from "../common/Stakeable.sol";
 
 /// @title Nexus - K1ValidatorFactory for Nexus account
 contract K1ValidatorFactory is BootstrapUtil, Stakeable {
-    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
-    event AccountCreated(address indexed account, address indexed owner, uint256 indexed index);
-
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
@@ -34,6 +31,9 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
     /// @notice Stores the K1 Validator module address
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     Bootstrap public immutable BOOTSTRAPPER;
+
+    /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
+    event AccountCreated(address indexed account, address indexed owner, uint256 indexed index);
 
     /// @notice Constructor to set the immutable variables.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
@@ -64,7 +64,7 @@ contract K1ValidatorFactory is BootstrapUtil, Stakeable {
         // actualSalt = keccak256(abi.encodePacked(actualSalt, K1_VALIDATOR));
 
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
-        BootstrapConfig memory validator = _makeBootstrapConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
+        BootstrapConfig memory validator = makeBootstrapConfigSingle(K1_VALIDATOR, abi.encodePacked(eoaOwner));
         bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator);
 
         if (!alreadyDeployed) {

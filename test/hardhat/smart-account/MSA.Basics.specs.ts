@@ -105,10 +105,7 @@ describe("Nexus Basic Specs", function () {
         saDeploymentIndex,
       );
 
-      await factory.createAccount(
-        ownerAddress,
-        saDeploymentIndex,
-      );
+      await factory.createAccount(ownerAddress, saDeploymentIndex);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);

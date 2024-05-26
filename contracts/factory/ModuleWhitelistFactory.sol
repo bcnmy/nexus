@@ -16,34 +16,22 @@ import { LibClone } from "solady/src/utils/LibClone.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/Bootstrap.sol";
-
-library BytesLib {
-    function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory) {
-        require(data.length >= start + length, "BytesLib: Slice out of range");
-        bytes memory result = new bytes(length);
-
-        for (uint256 i = 0; i < length; i++) {
-            result[i] = data[start + i];
-        }
-
-        return result;
-    }
-}
+import { BytesLib } from "../lib/BytesLib.sol";
 
 /// @title Nexus - ModuleWhitelistFactory for Nexus account
 contract ModuleWhitelistFactory is Stakeable {
-    /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
-    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
-
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
 
-    /// @notice Thorwn when the module is not whitelisted
-    error ModuleNotWhitelisted(address module);
-
     /// @notice Stores the module addresses that are whitelisted.
     mapping(address => bool) public moduleWhitelist;
+
+    /// @notice Emitted when a new Smart Account is created, capturing initData and salt used to deploy the account.
+    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+
+    /// @notice Thorwn when the module is not whitelisted
+    error ModuleNotWhitelisted(address module);
 
     /// @notice Constructor to set the smart account implementation address.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
@@ -61,12 +49,6 @@ contract ModuleWhitelistFactory is Stakeable {
     /// @param module The address to be removed from the whitelist.
     function removeModuleFromWhitelist(address module) external onlyOwner {
         moduleWhitelist[module] = false;
-    }
-
-    /// @notice Checks if an address is whitelisted.
-    /// @param module The address to check.
-    function isWhitelisted(address module) public view returns (bool) {
-        return moduleWhitelist[module];
     }
 
     function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable) {
@@ -138,5 +120,11 @@ contract ModuleWhitelistFactory is Stakeable {
             actualSalt := keccak256(ptr, calldataLength)
         }
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
+    }
+
+    /// @notice Checks if an address is whitelisted.
+    /// @param module The address to check.
+    function isWhitelisted(address module) public view returns (bool) {
+        return moduleWhitelist[module];
     }
 }
