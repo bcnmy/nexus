@@ -83,6 +83,7 @@ jobs:
         run: yarn test
         env:
           ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
 
   coverage:
     needs: setup
@@ -110,6 +111,7 @@ jobs:
         run: yarn coverage:report
         env:
           ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
 
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.0.1

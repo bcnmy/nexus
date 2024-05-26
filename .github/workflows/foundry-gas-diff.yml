@@ -38,7 +38,7 @@ jobs:
           # due to non-deterministic fuzzing (but still use pseudo-random fuzzing seeds)
           FOUNDRY_FUZZ_SEED: 42
           ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
-          BASE_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
         continue-on-error: true
 
       - name: Compare gas reports
