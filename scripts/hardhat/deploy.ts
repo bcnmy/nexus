@@ -13,11 +13,13 @@ async function main() {
 
   console.log(`Nexus implementation deployed at: ${smartAccount.target}`);
 
-  const NexusAccountFactory = await ethers.getContractFactory("NexusAccountFactory");
+  const NexusAccountFactory = await ethers.getContractFactory(
+    "NexusAccountFactory",
+  );
 
   const accountFactory = await NexusAccountFactory.deploy(
     await smartAccount.getAddress(),
-    await factoryOwner.getAddress()
+    await factoryOwner.getAddress(),
   );
 
   await accountFactory.waitForDeployment();

@@ -59,7 +59,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     /// @notice Helper function to get the initialization data for account creation
     function getInitData(address validator, address owner) internal view returns (bytes memory) {
         BootstrapConfig[] memory validators = makeBootstrapConfig(validator, abi.encodePacked(owner));
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         return BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
     }
 }

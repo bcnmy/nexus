@@ -7,7 +7,7 @@ import "../utils/NexusTest_Base.t.sol";
 /// @title TestNexusERC721Integration
 /// @notice Tests Nexus smart account functionalities with ERC721 token transfers
 contract TestNexusERC721Integration is NexusTest_Base {
-    MockNFTprivate ERC721;
+    MockNFT ERC721;
     MockPaymaster private paymaster;
     Vm.Wallet private user;
     address payable private preComputedAddress;
@@ -27,7 +27,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
     function setUp() public {
         init();
         user = createAndFundWallet("user", 1 ether);
-        ERC721 = new NFT("Mock NFT", "MNFT");
+        ERC721 = new MockNFT("Mock NFT", "MNFT");
         paymaster = new MockPaymaster(address(ENTRYPOINT));
         ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
         vm.deal(address(paymaster), 100 ether);

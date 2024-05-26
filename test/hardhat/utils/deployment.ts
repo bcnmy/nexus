@@ -70,7 +70,7 @@ export async function getDeployedAccountFactory(
   implementationAddress: string,
   owner: string,
   k1Validator: string,
-  bootstrapper: string
+  bootstrapper: string,
   // Note: this could be converted to dto so that additional args can easily be passed
 ): Promise<K1ValidatorFactory> {
   const accounts: Signer[] = await ethers.getSigners();
@@ -78,7 +78,8 @@ export async function getDeployedAccountFactory(
     accounts.map((account) => account.getAddress()),
   );
 
-  const K1ValidatorFactory = await ethers.getContractFactory("K1ValidatorFactory");
+  const K1ValidatorFactory =
+    await ethers.getContractFactory("K1ValidatorFactory");
   const deterministicAccountFactory = await deployments.deploy(
     "K1ValidatorFactory",
     {
@@ -371,15 +372,9 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   );
 
   // deploy SA
-  await msaFactory.createAccount(
-    ownerAddress,
-    saDeploymentIndex,
-  );
+  await msaFactory.createAccount(ownerAddress, saDeploymentIndex);
 
-  await msaFactory.createAccount(
-    aliceAddress,
-    saDeploymentIndex,
-  );
+  await msaFactory.createAccount(aliceAddress, saDeploymentIndex);
 
   // Deposit ETH to the smart account
   await entryPoint.depositTo(accountAddress, { value: to18(1) });
@@ -458,10 +453,7 @@ export async function getDeployedSmartAccountWithValidator(
 
   await mockToken.mint(accountAddress, to18(100));
 
-  await accountFactory.createAccount(
-    ownerAddress,
-    deploymentIndex,
-  );
+  await accountFactory.createAccount(ownerAddress, deploymentIndex);
 
   const Nexus = await ethers.getContractFactory("Nexus");
 

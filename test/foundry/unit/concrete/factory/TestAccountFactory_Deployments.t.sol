@@ -21,7 +21,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     function test_DeployAccount_CreateAccount() public {
         // Prepare bootstrap configuration for validators
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -47,7 +47,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     /// @notice Tests that deploying an account returns the same address with the same arguments.
     function test_DeployAccount_CreateAccount_SameAddress() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -93,7 +93,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     /// @notice Tests that a deployed account is initialized and cannot be reinitialized.
     function test_DeployAccount_CannotReinitialize() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -115,7 +115,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     /// @notice Tests creating accounts with different indexes.
     function test_DeployAccount_DifferentIndexes() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -134,7 +134,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     /// @notice Tests creating accounts with an invalid validator module.
     function test_DeployAccount_InvalidValidatorModule() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -154,7 +154,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     /// @notice Tests creating accounts without enough gas.
     function test_RevertIf_DeployAccount_InsufficientGas() public {
         BootstrapConfig[] memory validators = makeBootstrapConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = _makeBootstrapConfig(address(0), "");
+        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
