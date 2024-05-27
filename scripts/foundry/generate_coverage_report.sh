@@ -13,10 +13,10 @@ lcov --version
 
 # Exclude test, mock, and node_modules folders
 EXCLUDE="*test* *mocks* *node_modules* *scripts* *lib*"
-lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info $EXCLUDE --output-file forge-pruned-lcov.info
+lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info $EXCLUDE --output-file coverage/foundry/forge-pruned-lcov.info
 
 # Generate HTML report if not running in CI
 if [ "$CI" != "true" ]; then
-  genhtml forge-pruned-lcov.info --branch-coverage --ignore-errors deprecated,inconsistent,corrupt --output-directory coverage/foundry
+  genhtml coverage/foundry/forge-pruned-lcov.info --branch-coverage --ignore-errors deprecated,inconsistent,corrupt --output-directory coverage/foundry
   open coverage/foundry/index.html
 fi
