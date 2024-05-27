@@ -116,7 +116,7 @@ jobs:
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.4.1
         with:
-          file: ./coverage/foundry/lcov.info
+          file: ./coverage/foundry/forge-pruned-lcov.info
           flags: foundry
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
