@@ -36,12 +36,12 @@ contract TestNexusERC721Integration is NexusTest_Base {
     }
 
     /// @notice Helper function to transfer ERC721 tokens simply
-    function transferERC721Simple() external {
+    function transferERC721Simple() internal {
         ERC721.transferFrom(address(this), recipient, tokenId);
     }
 
     /// @notice Helper function to handle operations for a deployed Nexus
-    function handleOpsForDeployedNexus() external {
+    function handleOpsForDeployedNexus() internal {
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
         Execution[] memory executions = prepareSingleExecution(
             address(ERC721),
@@ -53,7 +53,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
     }
 
     /// @notice Helper function to handle operations with paymaster
-    function handleOpsForPaymaster() external {
+    function handleOpsForPaymaster() internal {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         Execution[] memory executions = prepareSingleExecution(
@@ -85,7 +85,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
     }
 
     /// @notice Helper function to handle operations using deposit
-    function handleOpsForDeposit() external {
+    function handleOpsForDeposit() internal {
         uint256 depositAmount = 1 ether;
         ENTRYPOINT.depositTo{ value: depositAmount }(preComputedAddress);
 
@@ -116,13 +116,13 @@ contract TestNexusERC721Integration is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ERC721 transfer
     function test_Gas_ERC721_Simple_Transfer() public checkERC721Balance(recipient, tokenId) {
         ERC721.mint(address(this), tokenId);
-        measureGasAndEmitLog("ERC721::SimpleTransfer::Gas used for simple ERC721 transfer", this.transferERC721Simple);
+        measureGasAndEmitLog("ERC721::SimpleTransfer::Gas used for simple ERC721 transfer", transferERC721Simple);
     }
 
     /// @notice Tests sending ERC721 from an already deployed Nexus smart account
     function test_Gas_ERC721_DeployedNexus_Transfer() public checkERC721Balance(recipient, tokenId) {
         ERC721.mint(preComputedAddress, tokenId);
-        measureGasAndEmitLog("ERC721::DeployedNexusTransfer::Gas used for sending ERC721 from deployed Nexus", this.handleOpsForDeployedNexus);
+        measureGasAndEmitLog("ERC721::DeployedNexusTransfer::Gas used for sending ERC721 from deployed Nexus", handleOpsForDeployedNexus);
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using a paymaster
@@ -130,7 +130,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
         ERC721.mint(preComputedAddress, tokenId);
         measureGasAndEmitLog(
             "ERC721::DeployWithPaymasterTransfer::Gas used for deploying Nexus and sending ERC721 with paymaster",
-            this.handleOpsForPaymaster
+            handleOpsForPaymaster
         );
     }
 
@@ -139,7 +139,7 @@ contract TestNexusERC721Integration is NexusTest_Base {
         ERC721.mint(preComputedAddress, tokenId);
         measureGasAndEmitLog(
             "ERC721::DeployUsingDepositTransfer::Gas used for deploying Nexus and transferring ERC721 using deposit",
-            this.handleOpsForDeposit
+            handleOpsForDeposit
         );
     }
 }
