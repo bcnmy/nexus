@@ -345,6 +345,9 @@ describe("Nexus Basic Specs", function () {
       );
       expect(isModuleInstalled).to.be.true;
 
+      // 1. Convert foundry util to ts code (as below)
+      // 2. Or try this and communicate and seek help: https://pastebin.com/EVQxRH3n 
+
       const data = keccak256("0x1234")
 
       // Define constants as per the original Solidity function
