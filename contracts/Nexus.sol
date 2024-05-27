@@ -15,7 +15,6 @@ pragma solidity ^0.8.24;
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
@@ -47,11 +46,18 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
+    address private immutable SELF;
+
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @notice Initializes the smart account by setting up the module manager and state.
-    constructor() {
+    constructor(address anEntryPoint) {
+        SELF = address(this);
+        if (address(anEntryPoint) == address(0)) {
+            revert EntryPointCannotBeZero();
+        }
+        _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
     }
 
