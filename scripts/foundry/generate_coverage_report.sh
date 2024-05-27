@@ -11,6 +11,9 @@ fi
 
 lcov --version
 
+# Create the necessary directories if they do not exist
+mkdir -p coverage/foundry
+
 # Exclude test, mock, and node_modules folders
 EXCLUDE="*test* *mocks* *node_modules* *scripts* *lib*"
 lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info $EXCLUDE --output-file coverage/foundry/forge-pruned-lcov.info
