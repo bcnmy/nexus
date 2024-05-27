@@ -115,7 +115,7 @@ jobs:
         uses: codecov/codecov-action@v4.4.1
         with:
           directory: coverage/foundry
-          file: forge-pruned-lcov.info
+          file: coverage/foundry/forge-pruned-lcov.info
           flags: foundry
           fail_ci_if_error: true
           verbose: true
