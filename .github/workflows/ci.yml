@@ -1,6 +1,6 @@
 name: Unified CI Workflow
 
-on: pull_request
+on: [push, pull_request]
 
 permissions: write-all
 
@@ -167,9 +167,8 @@ jobs:
             const script = require('.github/scripts/comment')
             const header = '# Slither report'
             const body = process.env.REPORT.trim()
-            if (!body || body.length == 0) {
+            if (!body) {
               console.log("Slither report is empty. No comment will be posted.");
               return;
-            } else {
-              await script({ github, context, header, body })
             }
+            await script({ github, context, header, body })
