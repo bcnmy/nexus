@@ -75,7 +75,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
 
     /// @notice Validates the creation of a new account.
     /// @param _account The new account address.
-    function assertValidCreation(Nexus _account) internal {
+    function assertValidCreation(Nexus _account) internal view {
         string memory expected = "biconomy.nexus.0.0.1";
         assertEq(_account.accountId(), expected, "AccountConfig should return the expected account ID.");
         assertTrue(

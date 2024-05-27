@@ -449,6 +449,10 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         vm.expectRevert();
 
         // Execute batch operation with limited gas via MockExecutor
-        address(mockExecutor).call{ gas: 10000 }(abi.encodeWithSelector(mockExecutor.tryExecuteBatchViaAccount.selector, BOB_ACCOUNT, executions));
+        (bool res, ) = address(mockExecutor).call{ gas: 10000 }(
+            abi.encodeWithSelector(mockExecutor.tryExecuteBatchViaAccount.selector, BOB_ACCOUNT, executions)
+        );
+        vm.expectRevert();
+        assertEq(res, false, "Execution should fail due to insufficient gas");
     }
 }
