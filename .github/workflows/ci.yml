@@ -119,7 +119,6 @@ jobs:
           flags: foundry
           fail_ci_if_error: true
           verbose: true
-          root_dir: /home/runner/work/nexus/nexus
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -131,7 +130,6 @@ jobs:
           flags: hardhat
           fail_ci_if_error: true
           verbose: true
-          root_dir: /home/runner/work/nexus/nexus
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
