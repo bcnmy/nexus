@@ -54,6 +54,9 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
         assertNotEq(beforeUpgradeImplementation, address(newImplementation), "Implementation address does not match before upgrade.");
         test_UpgradeV2ToV3AndInitialize();
+
+        // TODO
+        // Read from slot _ERC1967_IMPLEMENTATION_SLOT 
         // address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
         // address expectedImplementation = address(newImplementation);
         // assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");

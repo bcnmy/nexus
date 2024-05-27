@@ -232,14 +232,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
 
-    /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
-    /// @return implementation The address of the current contract implementation.
-    function getImplementation() external view returns (address implementation) {
-        assembly {
-            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
-        }
-    }
-
     /// @notice Checks if a specific module type is supported by this smart account.
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
