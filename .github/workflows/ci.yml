@@ -118,6 +118,8 @@ jobs:
         with:
           file: ./coverage/foundry/forge-pruned-lcov.info
           flags: foundry
+          fail_ci_if_error: true
+          verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
 
@@ -126,6 +128,8 @@ jobs:
         with:
           file: ./coverage/lcov.info
           flags: hardhat
+          fail_ci_if_error: true
+          verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
