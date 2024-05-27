@@ -347,27 +347,51 @@ describe("Nexus Basic Specs", function () {
 
       const data = keccak256("0x1234")
 
-      // Define the EIP712 domain separator type hash
-      // const EIP712DomainTypeHash = ethers.keccak256(
-      //   ethers.toUtf8Bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
-      // );
+      // Define constants as per the original Solidity function
+      const DOMAIN_NAME = 'Nexus';
+      const DOMAIN_VERSION = '0.0.1';
+      const DOMAIN_TYPEHASH = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)';
+      const PARENT_TYPEHASH = 'PersonalSign(bytes prefixed)';
+      const ALICE_ACCOUNT = smartAccountAddress;
 
-      // // Define the hashed domain name and version
-      // const nameHash = ethers.keccak256(ethers.toUtf8Bytes("Nexus"));
-      // const versionHash = ethers.keccak256(ethers.toUtf8Bytes("0.0.1"));
+      const network = await ethers.provider.getNetwork();
+      const chainId = network.chainId;
 
-      // // Encode the domain separator
-      // const domainSeparator = ethers.keccak256(
-      //   solidityPacked(
-      //       ["bytes32", "bytes32", "bytes32", "uint256", "address"],
-      //       [EIP712DomainTypeHash, nameHash, versionHash, 1, await smartAccount.getAddress()]
-      //   )
-      // );
+      // Calculate the domain separator
+      const domainSeparator = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_TYPEHASH)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_VERSION)),
+              chainId,
+              ALICE_ACCOUNT
+          ]
+        )
+      );
 
-      const parentStructHash = solidityPacked(["bytes", "bytes"], [toBytes("PersonalSign(bytes prefixed)"), data])
-      const dataToSign = keccak256(solidityPacked(["bytes", "bytes", "bytes"], [toBytes("\x19\x01"), await smartAccount.DOMAIN_SEPARATOR(), parentStructHash]))
+      // Calculate the parent struct hash
+      const parentStructHash = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)),
+              data
+          ]
+       )
+      );
 
-      const signature = await smartAccountOwner.signMessage(dataToSign);
+      // Calculate the final hash
+      const resultHash = ethers.keccak256(
+      ethers.concat([
+          '0x1901',
+          domainSeparator,
+          parentStructHash
+      ])
+     );
+
+      const signature = await smartAccountOwner.signMessage(resultHash);
 
       const isValid = await smartAccount.isValidSignature(
         data,
