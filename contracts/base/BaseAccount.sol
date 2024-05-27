@@ -107,7 +107,7 @@ contract BaseAccount is IBaseAccount {
     /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return result The current balance held at the EntryPoint.
     function getDeposit() external view virtual returns (uint256 result) {
-        address entryPointAddress = _ENTRYPOINT; 
+        address entryPointAddress = _ENTRYPOINT;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, address()) // Store the `account` argument.
