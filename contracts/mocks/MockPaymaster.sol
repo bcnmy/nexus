@@ -10,10 +10,10 @@ contract MockPaymaster is BasePaymaster {
     constructor(address _entryPoint) BasePaymaster(IEntryPoint(_entryPoint)) {}
 
     function _validatePaymasterUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 maxCost
-    ) internal override returns (bytes memory context, uint256 validationData) {
+        PackedUserOperation calldata /** userOp */,
+        bytes32 /** userOpHash */,
+        uint256 /** maxCost */
+    ) internal view override returns (bytes memory context, uint256 validationData) {
         // Ensure this function is only called by the entry point
         require(msg.sender == address(entryPoint), "Sender not EntryPoint");
 

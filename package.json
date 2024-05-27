@@ -90,7 +90,7 @@
     "coverage:forge": "forge coverage",
     "coverage:hardhat": "yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
-    "coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage/foundry && mv lcov.info coverage/foundry && yarn run coverage:hardhat",
+    "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
     "docs": "yarn hardhat docgen",
     "check-storage": "yarn hardhat check",
     "deploy:hardhat": "yarn hardhat run --network localhost scripts/typescript/deploy.ts",
