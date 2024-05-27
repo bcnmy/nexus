@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Force redo coverage
-REDO_COVERAGE=true
-
 # Generate lcov.info
-forge coverage --ir-minimum --report lcov
+forge coverage --report lcov
 
 # Install lcov if not installed
 if ! command -v lcov &>/dev/null; then
