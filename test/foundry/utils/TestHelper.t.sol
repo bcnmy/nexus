@@ -466,7 +466,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
-    function measureGasAndEmitLog(string memory logName, function() external fn) internal {
+    function measureGasAndEmitLog(string memory logName, function() internal fn) internal {
         uint256 initialGas = gasleft();
         fn();
         uint256 gasUsed = initialGas - gasleft();
