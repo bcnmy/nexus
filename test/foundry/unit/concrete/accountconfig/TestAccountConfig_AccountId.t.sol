@@ -17,7 +17,7 @@ contract TestAccountConfig_AccountId is Test {
     }
 
     /// @notice Tests if the account ID returns the expected value
-    function test_WhenCheckingTheAccountID() external view givenTheAccountConfiguration {
+    function test_WhenCheckingTheAccountID() external givenTheAccountConfiguration {
         string memory expected = "biconomy.nexus.0.0.1";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }

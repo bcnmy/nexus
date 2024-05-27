@@ -13,7 +13,7 @@ contract TestERC4337Account_EntryPoint is NexusTest_Base {
     }
 
     /// @notice Tests if the correct EntryPoint address is returned for different accounts.
-    function test_EntryPointAddressIsCorrect() public view {
+    function test_EntryPointAddressIsCorrect() public {
         assertEq(BOB_ACCOUNT.entryPoint(), address(ENTRYPOINT), "Should return the correct EntryPoint address");
         assertEq(ALICE_ACCOUNT.entryPoint(), address(ENTRYPOINT), "Should return the correct EntryPoint address");
         assertEq(CHARLIE_ACCOUNT.entryPoint(), address(ENTRYPOINT), "Should return the correct EntryPoint address");

@@ -10,13 +10,13 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
     }
 
     /// @notice Tests that the proxiable UUID slot is correct
-    function test_proxiableUUIDSlot() public view {
+    function test_proxiableUUIDSlot() public {
         bytes32 slot = ACCOUNT_IMPLEMENTATION.proxiableUUID();
         assertEq(slot, 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc, "Proxiable UUID mismatch");
     }
 
     /// @notice Tests that the current implementation address is correct
-    function test_currentImplementationAddress() public view {
+    function test_currentImplementationAddress() public {
         address currentImplementation = BOB_ACCOUNT.getImplementation();
         assertEq(currentImplementation, address(ACCOUNT_IMPLEMENTATION), "Current implementation address mismatch");
     }

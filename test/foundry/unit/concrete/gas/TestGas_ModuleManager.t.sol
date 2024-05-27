@@ -249,7 +249,7 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         assertTrue(isInstalled, "Fallback Handler should be installed");
     }
 
-    function test_Gas_UninstallValidatorModule_CheckIsUninstalled() public view {
+    function test_Gas_UninstallValidatorModule_CheckIsUninstalled() public {
         uint256 initialGas = gasleft();
         bool isInstalled = BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), "");
         uint256 gasUsed = initialGas - gasleft();
@@ -257,7 +257,7 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         assertFalse(isInstalled, "Validator Module should be uninstalled");
     }
 
-    function test_Gas_UninstallExecutorModule_CheckIsUninstalled() public view {
+    function test_Gas_UninstallExecutorModule_CheckIsUninstalled() public {
         uint256 initialGas = gasleft();
         bool isInstalled = BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
         uint256 gasUsed = initialGas - gasleft();
@@ -284,7 +284,7 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         assertFalse(isInstalled, "Fallback Handler should be uninstalled");
     }
 
-    function test_Gas_isModuleInstalled_InvalidModuleType() public view {
+    function test_Gas_isModuleInstalled_InvalidModuleType() public {
         uint256 initialGas = gasleft();
         bool isInstalled = BOB_ACCOUNT.isModuleInstalled(99, address(mockValidator), "");
         uint256 gasUsed = initialGas - gasleft();
@@ -292,7 +292,7 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         assertFalse(isInstalled, "Invalid Module Type should not be installed");
     }
 
-    function test_Gas_isModuleInstalled_InvalidModuleAddress() public view {
+    function test_Gas_isModuleInstalled_InvalidModuleAddress() public {
         uint256 initialGas = gasleft();
         bool isInstalled = BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(0), "");
         uint256 gasUsed = initialGas - gasleft();

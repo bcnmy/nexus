@@ -99,7 +99,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     }
 
     /// @notice Prepares the initial state check before upgrade.
-    function checkInitialState() internal view {
+    function checkInitialState() internal {
         address initialEntryPoint = Nexus(payable(address(smartAccountV2))).entryPoint();
         assertEq(address(initialEntryPoint), ENTRYPOINT_ADDRESS, "Initial entry point mismatch.");
     }
@@ -143,7 +143,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     }
 
     /// @notice Verifies the state after upgrade and initialization.
-    function verifyUpgradeAndInitialization() internal view {
+    function verifyUpgradeAndInitialization() internal {
         address newEntryPoint = Nexus(payable(address(smartAccountV2))).entryPoint();
         assertEq(newEntryPoint, address(ENTRYPOINT_V_0_7), "Entry point should change after upgrade.");
         assertTrue(

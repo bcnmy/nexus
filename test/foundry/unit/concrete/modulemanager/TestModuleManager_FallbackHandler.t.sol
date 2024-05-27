@@ -213,7 +213,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
     /// @notice Tests getting the fallback handler by its function selector.
     /// @dev This test ensures that the correct fallback handler is returned for the given selector.
-    function test_GetFallbackHandlerBySelector() public view {
+    function test_GetFallbackHandlerBySelector() public {
         // Fetch the handler address for the provided selector
         (, address handlerAddress) = BOB_ACCOUNT.getFallbackHandlerBySelector(GENERIC_FALLBACK_SELECTOR);
 

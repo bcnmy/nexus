@@ -16,7 +16,7 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
     }
 
     /// @notice Tests the initial nonce value.
-    function test_NonceIsInitiallyZero() public view {
+    function test_NonceIsInitiallyZero() public {
         uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKeyFromAddress(address(VALIDATOR_MODULE)));
         assertEq(BOB_ACCOUNT.nonce(makeNonceKeyFromAddress(address(VALIDATOR_MODULE))), nonce, "Nonce in the account and EP should be the same");
     }

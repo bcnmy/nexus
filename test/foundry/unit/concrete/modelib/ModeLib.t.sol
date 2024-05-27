@@ -7,7 +7,7 @@ import "../../../../../contracts/lib/ModeLib.sol";
 contract ModeLibTest is Test {
     function setUp() public {}
 
-    function test_encodeDecodeSingle_Success() public view {
+    function test_encodeDecodeSingle_Success() public {
         CallType callType = CALLTYPE_SINGLE;
         ExecType execType = EXECTYPE_DEFAULT;
         ModeSelector modeSelector = MODE_DEFAULT;
@@ -20,7 +20,7 @@ contract ModeLibTest is Test {
         assertTrue(_mode == modeSelector);
     }
 
-    function test_encodeDecodeBatch_Success() public view {
+    function test_encodeDecodeBatch_Success() public {
         CallType callType = CALLTYPE_BATCH;
         ExecType execType = EXECTYPE_DEFAULT;
         ModeSelector modeSelector = MODE_DEFAULT;
