@@ -50,7 +50,7 @@ jobs:
           ignore: test-foundry/**/* # filter out gas reports from specific paths (test/ is included by default)
         id: gas_diff
         continue-on-error: true
-        
+
       - name: Add gas diff to sticky comment
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         uses: marocchino/sticky-pull-request-comment@v2.9.0
