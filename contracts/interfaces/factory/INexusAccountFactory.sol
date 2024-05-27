@@ -22,22 +22,17 @@ pragma solidity ^0.8.24;
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface IAccountFactory {
+interface INexusAccountFactory {
     /// @notice Emitted when a new Smart Account is created, capturing the account details and associated module configurations.
-    event AccountCreated(address indexed account, address indexed validationModule, bytes moduleInstallData);
+    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
 
     /// @dev Thrown when the implementation address is zero address.
     error ImplementationAddressCanNotBeZero();
 
     /// @notice Creates a new Smart Account with a specified validation module and initialization data.
     /// @dev Deploys a new Smart Account deterministically using EIP-1167 minimal proxy pattern and initializes it with the provided module and data.
-    /// @param validationModule The address of the module used for validation in the new Smart Account.
-    /// @param moduleInstallData Initialization data for configuring the module on the new Smart Account.
-    /// @param index An additional parameter that can be used to influence the creation process, often used as a nonce.
+    /// @param initData initialization data to be called on the new Smart Account.
+    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
     /// @return account The address of the newly created payable Smart Account.
-    function createAccount(
-        address validationModule,
-        bytes calldata moduleInstallData,
-        uint256 index
-    ) external payable returns (address payable account);
+    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable account);
 }

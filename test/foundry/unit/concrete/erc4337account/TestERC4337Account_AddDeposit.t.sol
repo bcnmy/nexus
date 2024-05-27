@@ -36,7 +36,6 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
 
     /// @notice Tests that adding a deposit with no value reverts.
     function test_RevertIf_AddDeposit_NoValue() public {
-        // REVIEW: Should we add zero value check to the addDeposit method?
         BOB_ACCOUNT.addDeposit();
     }
 

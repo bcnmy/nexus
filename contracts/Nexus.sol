@@ -210,15 +210,12 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else revert UnsupportedModuleType(moduleTypeId);
     }
 
-    /// @notice Initializes the smart account with a validator.
-    /// @param firstValidator The first validator to install upon initialization.
-    /// @param initData Initialization data for setting up the validator.
-    /// @dev This function sets the foundation for the smart account's operational logic and security.
-    /// @notice Implementation details may be adjusted based on factory requirements.
-    function initialize(address firstValidator, bytes calldata initData) external payable virtual {
+    function initializeAccount(bytes calldata initData) external payable virtual {
         // checks if already initialized and reverts before setting the state to initialized
         _initModuleManager();
-        _installValidator(firstValidator, initData);
+        (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
+        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        if (!success) revert NexusInitializationFailed();
     }
 
     /// @notice Validates a signature according to ERC-1271 standards.

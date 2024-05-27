@@ -13,7 +13,7 @@ import {
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AccountFactory,
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockValidator,
@@ -40,7 +40,7 @@ import {
 import { Hex, hashTypedData, toBytes } from "viem";
 
 describe("Nexus Basic Specs", function () {
-  let factory: AccountFactory;
+  let factory: K1ValidatorFactory;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
@@ -85,13 +85,12 @@ describe("Nexus Basic Specs", function () {
     ); // Example data, customize as needed
 
     // Read the expected account address
-    const expectedAccountAddress = await factory.getCounterFactualAddress(
-      moduleAddress, // validator address
-      installData,
+    const expectedAccountAddress = await factory.computeAccountAddress(
+      accountOwnerAddress,
       saDeploymentIndex,
     );
 
-    await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
   });
 
   describe("Contract Deployment", function () {
@@ -104,17 +103,12 @@ describe("Nexus Basic Specs", function () {
       ); // Example data, customize as needed
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
-        moduleAddress, // validator address
-        installData,
+      const expectedAccountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 
-      await factory.createAccount(
-        moduleAddress,
-        installData,
-        saDeploymentIndex,
-      );
+      await factory.createAccount(ownerAddress, saDeploymentIndex);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -430,9 +424,8 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
-        moduleAddress,
-        moduleInitData,
+      const accountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -471,9 +464,8 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
-        moduleAddress,
-        moduleInitData,
+      const accountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 
