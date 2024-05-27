@@ -170,5 +170,6 @@ jobs:
             if (!body || body.length == 0) {
               console.log("Slither report is empty. No comment will be posted.");
               return;
+            } else {
+              await script({ github, context, header, body })
             }
-            await script({ github, context, header, body })
