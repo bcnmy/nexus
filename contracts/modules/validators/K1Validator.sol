@@ -38,7 +38,7 @@ contract K1Validator is IValidator {
     error NoOwnerProvided();
 
     function onInstall(bytes calldata data) external {
-        require(data.length != 0,  NoOwnerProvided());
+        require(data.length != 0, NoOwnerProvided());
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
