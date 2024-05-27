@@ -2,10 +2,7 @@ name: Unified CI Workflow
 
 on: [push, pull_request]
 
-permissions:
-  actions: write
-  contents: write
-  pull-requests: write
+permissions: write-all
 
 jobs:
   setup:
@@ -117,20 +114,24 @@ jobs:
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.4.1
         with:
-          file: ./coverage/foundry/forge-pruned-lcov.info
+          directory: coverage/foundry
+          file: forge-pruned-lcov.info
           flags: foundry
           fail_ci_if_error: true
           verbose: true
+          root_dir: /home/runner/work/nexus/nexus
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} 
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Hardhat Coverage Report to Codecov
         uses: codecov/codecov-action@v4.4.1
         with:
-          file: ./coverage/lcov.info
+          directory: coverage
+          file: lcov.info
           flags: hardhat
           fail_ci_if_error: true
           verbose: true
+          root_dir: /home/runner/work/nexus/nexus
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
