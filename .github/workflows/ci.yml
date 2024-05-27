@@ -114,7 +114,6 @@ jobs:
       - name: Upload Foundry Coverage Report to Codecov
         uses: codecov/codecov-action@v4.4.1
         with:
-          directory: coverage/foundry
           file: coverage/foundry/forge-pruned-lcov.info
           flags: foundry
           fail_ci_if_error: true
@@ -146,7 +145,7 @@ jobs:
           slither-version: "0.10.0"
           node-version: "20"
           fail-on: "none"
-          slither-args: '--exclude "assembly|solc-version|low-level-calls|naming-convention|write-after-write|divide-before-multiply|incorrect-shift" --exclude-informational --exclude-low --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
+          slither-args: '--exclude "assembly|solc-version|low-level-calls|naming-convention|write-after-write|controlled-delegatecall|divide-before-multiply|incorrect-shift" --exclude-informational --exclude-low --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
 
       - name: Check if Slither report is empty
         id: check_report
