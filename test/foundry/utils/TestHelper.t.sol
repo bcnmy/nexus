@@ -254,19 +254,20 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     /// @param nonce The nonce
     /// @return userOp The built user operation
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
-        return
-            PackedUserOperation({
+            return PackedUserOperation({
                 sender: sender,
                 nonce: nonce,
                 initCode: "",
                 callData: "",
-                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                preVerificationGas: 3e6,
-                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // verification and call gas limit
+                preVerificationGas: 3e5, // Adjusted preVerificationGas
+                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // maxFeePerGas and maxPriorityFeePerGas
                 paymasterAndData: "",
                 signature: ""
             });
     }
+
+    
 
     /// @notice Signs a message and packs r, s, v into bytes
     /// @param wallet The wallet to sign the message
@@ -434,16 +435,6 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         return executions;
     }
 
-    /// @notice Handles a user operation and measures gas usage
-    /// @param userOps The user operations to handle
-    /// @param refundReceiver The address to receive the gas refund
-    /// @return gasUsed The amount of gas used
-    function handleUserOpAndMeasureGas(PackedUserOperation[] memory userOps, address refundReceiver) internal returns (uint256 gasUsed) {
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
-        gasUsed = gasStart - gasleft();
-    }
-
     /// @notice Helper function to execute a single operation.
     function executeSingle(
         Vm.Wallet memory user,
@@ -466,10 +457,80 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
-    function measureGasAndEmitLog(string memory logName, function() external fn) internal {
+    // function measureGasAndEmitLog(string memory logName, function() external fn) internal {
+    //     uint256 initialGas = gasleft();
+    //     fn();
+    //     uint256 gasUsed = initialGas - gasleft();
+    //     emit log_named_uint(logName, gasUsed);
+    // }
+
+    /// @notice Calculates the gas cost of the calldata
+    /// @param data The calldata
+    /// @return calldataGas The gas cost of the calldata
+    function calculateCalldataCost(bytes memory data) internal pure returns (uint256 calldataGas) {
+        for (uint256 i = 0; i < data.length; i++) {
+            if (uint8(data[i]) == 0) {
+                calldataGas += 4;
+            } else {
+                calldataGas += 16;
+            }
+        }
+    }
+
+    /// @notice Helper function to measure and log gas for simple EOA calls
+    /// @param description The description for the log
+    /// @param target The target contract address
+    /// @param value The value to be sent with the call
+    /// @param callData The calldata for the call
+    function measureAndLogGasEOA(string memory description, address target, uint256 value, bytes memory callData) internal {
+        uint256 calldataCost = 0;
+        for (uint256 i = 0; i < callData.length; i++) {
+            if (uint8(callData[i]) == 0) {
+                calldataCost += 4;
+            } else {
+                calldataCost += 16;
+            }
+        }
+
+        uint256 baseGas = 21000;
+
         uint256 initialGas = gasleft();
-        fn();
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint(logName, gasUsed);
+        (bool res, ) = target.call{ value: value }(callData);
+        uint256 gasUsed = initialGas - gasleft() + baseGas + calldataCost;
+        assertTrue(res);
+        emit log_named_uint(description, gasUsed);
+    }
+
+    /// @notice Helper function to calculate calldata cost and log gas usage
+    /// @param description The description for the log
+    /// @param userOps The user operations to be executed
+    function measureAndLogGas(string memory description, PackedUserOperation[] memory userOps) internal {
+        bytes memory callData = abi.encodeWithSelector(ENTRYPOINT.handleOps.selector, userOps, payable(BUNDLER.addr));
+
+        uint256 calldataCost = 0;
+        for (uint256 i = 0; i < callData.length; i++) {
+            if (uint8(callData[i]) == 0) {
+                calldataCost += 4;
+            } else {
+                calldataCost += 16;
+            }
+        }
+
+        uint256 baseGas = 21000;
+
+        uint256 initialGas = gasleft();
+        ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
+        uint256 gasUsed = initialGas - gasleft() + baseGas + calldataCost;
+        emit log_named_uint(description, gasUsed);
+    }
+
+    /// @notice Handles a user operation and measures gas usage
+    /// @param userOps The user operations to handle
+    /// @param refundReceiver The address to receive the gas refund
+    /// @return gasUsed The amount of gas used
+    function handleUserOpAndMeasureGas(PackedUserOperation[] memory userOps, address refundReceiver) internal returns (uint256 gasUsed) {
+        uint256 gasStart = gasleft();
+        ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
+        gasUsed = gasStart - gasleft();
     }
 }
