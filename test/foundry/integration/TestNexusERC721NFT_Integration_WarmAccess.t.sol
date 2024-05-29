@@ -152,41 +152,34 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
     }
 
     /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using a paymaster
-function test_Gas_ERC721NFT_DeployedNexus_Transfer_WithPaymaster_Warm()
-    public
-    checkERC721NFTBalanceWarm(recipient)
-    checkPaymasterBalance(address(paymaster))
-{
-    // Mint the NFT to the precomputed address
-    ERC721NFT.mint(preComputedAddress, tokenId);
+    function test_Gas_ERC721NFT_DeployedNexus_Transfer_WithPaymaster_Warm()
+        public
+        checkERC721NFTBalanceWarm(recipient)
+        checkPaymasterBalance(address(paymaster))
+    {
+        // Mint the NFT to the precomputed address
+        ERC721NFT.mint(preComputedAddress, tokenId);
 
-    // Deploy the Nexus account
-    Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
+        // Deploy the Nexus account
+        Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
 
-    // Prepare the execution for ERC721 token transfer
-    Execution[] memory executions = prepareSingleExecution(
-        address(ERC721NFT),
-        0,
-        abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
-    );
+        // Prepare the execution for ERC721 token transfer
+        Execution[] memory executions = prepareSingleExecution(
+            address(ERC721NFT),
+            0,
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+        );
 
-    // Build the PackedUserOperation array
-    PackedUserOperation[] memory userOps = buildPackedUserOperation(
-        user,
-        deployedNexus,
-        EXECTYPE_DEFAULT,
-        executions,
-        address(VALIDATOR_MODULE)
-    );
+        // Build the PackedUserOperation array
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-    // Generate and sign paymaster data
-    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+        // Generate and sign paymaster data
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
-    // Sign the user operation
-    userOps[0].signature = signUserOp(user, userOps[0]);
+        // Sign the user operation
+        userOps[0].signature = signUserOp(user, userOps[0]);
 
-    // Measure and log gas usage
-    measureAndLogGas("ERC721::transferFrom::Nexus::WithPaymaster::WarmAccess", userOps);
-}
-
+        // Measure and log gas usage
+        measureAndLogGas("ERC721::transferFrom::Nexus::WithPaymaster::WarmAccess", userOps);
+    }
 }
