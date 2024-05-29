@@ -98,4 +98,11 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
             defaultMaxPercentDelta
         );
     }
+
+    /// @notice Tests that the addDeposit function reverts if calling the wrong entryPoint.
+    function test_AddDeposit_RevertIf_WrongEntryPoint() public {
+        vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(VALIDATOR_MODULE).code);
+        vm.expectRevert();
+        BOB_ACCOUNT.addDeposit{ value: defaultDepositAmount }();
+    }
 }

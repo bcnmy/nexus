@@ -42,4 +42,15 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         test_currentImplementationAddress();
         test_upgradeImplementation();
     }
+
+    /// @notice Tests the entire upgrade process
+    function test_RevertIf_AccessUnauthorized_upgradeSmartAccount() public {
+        test_proxiableUUIDSlot();
+        test_currentImplementationAddress();
+
+        Nexus newSmartAccount = new Nexus();
+
+        vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
+        BOB_ACCOUNT.upgradeToAndCall(address(newSmartAccount), "");
+    }
 }

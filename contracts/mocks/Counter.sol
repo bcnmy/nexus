@@ -19,8 +19,4 @@ contract Counter {
     function revertOperation() public pure {
         revert("Counter: Revert operation");
     }
-
-    function test_() public pure {
-        // This function is used to ignore file in coverage report
-    }
 }

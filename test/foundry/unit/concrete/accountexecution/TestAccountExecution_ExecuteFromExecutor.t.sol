@@ -348,4 +348,107 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
             );
         }
     }
+
+    /// @notice Tests a batch execution with one failing operation.
+    function test_TryExecuteBatch_SingleFailure() public {
+        // Verify initial state
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch execution with one failing operation
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+        // Expect the TryExecuteUnsuccessful event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+
+        // Execute batch operation via MockExecutor
+        mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);
+
+        // Verify the counter state
+        assertEq(counter.getNumber(), 1, "Counter should have been incremented once");
+    }
+
+    /// @notice Tests a batch execution with one failing operation using prank.
+    function test_TryExecuteBatch_SingleFailure_WithPrank() public {
+        // Verify initial state
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch execution with one failing operation
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+        // Expect the TryExecuteUnsuccessful event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+
+        // Prank and execute batch operation via BOB_ACCOUNT
+        prank(address(mockExecutor));
+        BOB_ACCOUNT.executeFromExecutor(ModeLib.encodeTryBatch(), ExecLib.encodeBatch(executions));
+
+        // Verify the counter state
+        assertEq(counter.getNumber(), 1, "Counter should have been incremented once");
+    }
+
+    /// @notice Tests a batch execution with multiple failing operations.
+    function test_TryExecuteBatch_MultipleFailures() public {
+        // Verify initial state
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch execution with multiple failing operations
+        Execution[] memory executions = new Execution[](3);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+        executions[2] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        // Expect the TryExecuteUnsuccessful event to be emitted for each failure
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(0, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+
+        // Execute batch operation via MockExecutor
+        mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);
+
+        // Verify the counter state
+        assertEq(counter.getNumber(), 1, "Counter should have been incremented once");
+    }
+
+    /// @notice Tests a batch execution with empty call data.
+    function test_TryExecuteBatch_EmptyCallData() public {
+        // Verify initial state
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch execution with empty call data
+        Execution[] memory executions = new Execution[](1);
+        executions[0] = Execution(address(counter), 0, "");
+
+        // Expect the TryExecuteUnsuccessful event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(0, "");
+
+        // Execute batch operation via MockExecutor
+        mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);
+
+        // Verify the counter state remains unchanged
+        assertEq(counter.getNumber(), 0, "Counter should remain unchanged");
+    }
+
+    /// @notice Tests a batch execution with insufficient gas.
+    function test_TryExecuteBatch_InsufficientGas() public {
+        // Verify initial state
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch execution with insufficient gas
+        Execution[] memory executions = new Execution[](1);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        // Expect revert due to insufficient gas
+        vm.expectRevert();
+
+        // Execute batch operation with limited gas via MockExecutor
+        address(mockExecutor).call{ gas: 1000 }(abi.encodeWithSelector(mockExecutor.tryExecuteBatchViaAccount.selector, BOB_ACCOUNT, executions));
+    }
 }

@@ -167,10 +167,4 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         op.maxPriorityFeePerGas = 3e6;
         op.paymasterAndData = "";
     }
-
-    /// @notice Retrieves the Arbitrum RPC URL from the environment variable or defaults to the hardcoded URL
-    function getArbitrumRpcUrl() internal view returns (string memory) {
-        string memory rpcUrl = vm.envOr("ARBITRUM_RPC_URL", DEFAULT_ARBITRUM_RPC_URL);
-        return rpcUrl;
-    }
 }

@@ -176,4 +176,42 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 aliceBalanceAfter = token.balanceOf(address(ALICE_ACCOUNT));
         assertEq(aliceBalanceAfter, aliceBalanceBefore + transferAmount, "Alice should receive tokens via transferFrom");
     }
+    function test_RevertIf_BatchExecutionWithUnsupportedExecType() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        // Using an unsupported execution type
+        ExecType unsupportedExecType = ExecType.wrap(bytes1(0xab)); // Example unsupported execution type
+        CallType callType = CALLTYPE_BATCH;
+
+        // Determine mode and calldata based on execType and executions length
+        ExecutionMode mode = ModeLib.encodeCustom(callType, unsupportedExecType);
+        bytes memory executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
+
+        // Initialize the userOps array with one operation
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+
+        // Build the UserOperation
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0].callData = executionCalldata;
+
+        // Sign the operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessage(BOB, userOpHash);
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(UnsupportedExecType.selector, unsupportedExecType);
+
+        // Expect the UserOperationRevertReason event due to unsupported exec type
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported exec type revert");
+    }
 }

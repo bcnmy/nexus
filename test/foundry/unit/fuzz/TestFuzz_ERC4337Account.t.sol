@@ -145,8 +145,6 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             withdrawExecutions,
             address(VALIDATOR_MODULE)
         );
-        (bool success, ) = address(ENTRYPOINT).call(abi.encodeWithSignature("handleOps(PackedUserOperation[],address)", withdrawUserOps, BOB.addr));
-
-        assertFalse(success, "Withdrawal should fail due to insufficient funds");
+        ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
     }
 }

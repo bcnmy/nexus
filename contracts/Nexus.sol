@@ -207,7 +207,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
-        else revert UnsupportedModuleType(moduleTypeId);
     }
 
     function initializeAccount(bytes calldata initData) external payable virtual {
@@ -339,17 +338,17 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///
     /// Glossary:
     ///
-    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
+    /// - `APP_DOMAIN_SEPARATOR`: The domain separator of the `hash`.
     ///   Provided by the front end. Intended to be the domain separator of the contract
     ///   that will call `isValidSignature` on this account.
     ///
-    /// - `DOMAIN_SEP_A`: The domain separator of this account.
+    /// - `ACCOUNT_DOMAIN_SEPARATOR`: The domain separator of this account.
     ///   See: `EIP712._domainSeparator()`.
     /// __________________________________________________________________________________________
     ///
     /// For the `TypedDataSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///     keccak256(\x19\x01 ‖ APP_DOMAIN_SEPARATOR ‖
     ///         hashStruct(TypedDataSign({
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
@@ -365,15 +364,15 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// The order of the fields is important: `contents` comes before `name`.
     ///
     /// The signature will be `r ‖ s ‖ v ‖
-    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    ///     APP_DOMAIN_SEPARATOR ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
     /// where `contents` is the bytes32 struct hash of the original struct.
     ///
-    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
+    /// The `APP_DOMAIN_SEPARATOR` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
     /// For the `PersonalSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///     keccak256(\x19\x01 ‖ ACCOUNT_DOMAIN_SEPARATOR ‖
     ///         hashStruct(PersonalSign({
     ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
     ///                 base10(bytes(someString).length) ‖ someString))
@@ -392,7 +391,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///
     /// Their nomenclature may differ from ours, although the high-level idea is similar.
     ///
-    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// Of course, if you have control over the codebase of the wallet client(s) too,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
@@ -427,7 +426,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             } {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
-                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                calldatacopy(0x20, o, 0x40) // Copy the `APP_DOMAIN_SEPARATOR` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
                 // or if the appended data is invalid (length too long, or empty contents type).
@@ -464,11 +463,11 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
                 calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
                 mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 // The "\x19\x01" prefix is already at 0x00.
-                // `DOMAIN_SEP_B` is already at 0x20.
+                // `APP_DOMAIN_SEPARATOR` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
                 hash := keccak256(0x1e, add(0x42, and(1, d)))
-                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                result := 1 // Use `result` to temporarily denote if we will use `APP_DOMAIN_SEPARATOR`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
             }
@@ -512,8 +511,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            if (additionalContext.length < 4) return false;
+            return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }
 
