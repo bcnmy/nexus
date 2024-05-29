@@ -104,7 +104,6 @@
     "lint:fix": "yarn run lint:sol-fix && yarn run lint:ts-fix",
     "check-branch-name": "node scripts/git-hooks/checkBranchNames.js",
     "generate-and-push-gas-report": "yarn run gas-report && git add gas_report.md && git commit -m 'Update gas report' || echo 'No changes to gas report'"
-
   },
   "husky": {
     "hooks": {
