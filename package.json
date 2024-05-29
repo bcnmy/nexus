@@ -107,8 +107,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run lint-fix",
-      "pre-push": "yarn run check-branch-name && yarn run generate-and-push-gas-report",
+      "pre-push": "yarn run check-branch-name && yarn run lint-fix && yarn run generate-and-push-gas-report",
       "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
   }
