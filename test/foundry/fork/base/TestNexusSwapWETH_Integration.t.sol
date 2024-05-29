@@ -3,13 +3,12 @@ pragma solidity ^0.8.26;
 
 import "./BaseSettings.t.sol";
 import "../../utils/Imports.sol";
-import "../../utils/NexusTest_Base.t.sol";
-import "../../shared/interfaces/IUniswapV2Router02.t.sol";
 import "../../shared/interfaces/IERC20.t.sol";
+import "../../shared/interfaces/IUniswapV2Router02.t.sol";
 
-/// @title TestNexusSwapWETHIntegration
+/// @title TestNexusSwapWETH_Integration
 /// @notice Tests Nexus smart account functionalities with Uniswap V2 swaps using WETH
-contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
+contract TestNexusSwapWETH_Integration is BaseSettings {
     address payable private preComputedAddress;
     IUniswapV2Router02 public uniswapV2Router;
     MockPaymaster private paymaster;
@@ -25,9 +24,10 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
     /// @param account The account to check the balance for
     modifier checkERC20Balance(address account) {
         uint256 initialBalance = usdc.balanceOf(account);
+        assertEq(initialBalance, 0, "Account balance is not zero");
         _;
         uint256 finalBalance = usdc.balanceOf(account);
-        assert(finalBalance > 0);
+        assertGt(finalBalance, 0, "Account balance is zero");
     }
 
     /// @notice Sets up the initial state for the tests
@@ -35,6 +35,7 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         // Fork the Base network
         uint256 baseFork = vm.createFork(getBaseRpcUrl());
         vm.selectFork(baseFork);
+        vm.rollFork(BLOCK_NUMBER);
         init();
 
         user = createAndFundWallet("user", 50 ether);
@@ -51,8 +52,9 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         require(success, "WETH deposit failed");
 
         // Initialize Nexus
-        paymaster = new MockPaymaster(address(ENTRYPOINT));
+        paymaster = new MockPaymaster(address(ENTRYPOINT), BUNDLER_ADDRESS);
         ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
+        paymaster.addStake{ value: 2 ether }(10 days);
 
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
@@ -71,10 +73,19 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         path[0] = address(weth);
         path[1] = address(usdc);
 
-        uint256 initialGas = gasleft();
-        uniswapV2Router.swapExactTokensForTokens(SWAP_AMOUNT, 0, path, swapper, block.timestamp);
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::swapExactTokensForTokens::Gas used for swapping WETH for USDC (EOA)", gasUsed);
+        measureAndLogGasEOA(
+            "UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A",
+            address(uniswapV2Router),
+            0,
+            abi.encodeWithSignature(
+                "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+                SWAP_AMOUNT,
+                0,
+                path,
+                swapper,
+                block.timestamp
+            )
+        );
         vm.stopPrank();
     }
 
@@ -101,15 +112,12 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
-
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::swapExactTokensForTokens::Gas used for swapping WETH for USDC (Deployed Nexus)", gasUsed);
+        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping WETH for USDC with Paymaster
-    function test_Gas_Swap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) {
+    function test_Gas_Swap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) checkPaymasterBalance(address(paymaster)) {
+        // Approve WETH transfer for precomputed address
         vm.startPrank(preComputedAddress);
         weth.approve(address(uniswapV2Router), SWAP_AMOUNT);
         vm.stopPrank();
@@ -138,18 +146,11 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Including paymaster address and additional data
-        userOps[0].paymasterAndData = abi.encodePacked(
-            address(paymaster),
-            uint128(3e6), // verification gas limit
-            uint128(3e6) // postOp gas limit
-        );
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, BUNDLER_ADDRESS);
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::swapExactTokensForTokens::Gas used for deploying Nexus and swapping WETH for USDC with Paymaster", gasUsed);
+        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping WETH for USDC using deposit
@@ -189,10 +190,7 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, BUNDLER_ADDRESS);
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::swapExactTokensForTokens::Gas used for deploying Nexus and swapping WETH for USDC using deposit", gasUsed);
+        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
 
     /// @notice Tests gas consumption for batch approval and swapping WETH for USDC using deployed Nexus account
@@ -215,15 +213,15 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
-
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::batchApproveAndSwap::Gas used for batch approval and swapping WETH for USDC (Deployed Nexus)", gasUsed);
+        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC with Paymaster
-    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) {
+    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster()
+        public
+        checkERC20Balance(preComputedAddress)
+        checkPaymasterBalance(address(paymaster))
+    {
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(address(weth), 0, abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), SWAP_AMOUNT));
         executions[1] = Execution(
@@ -250,18 +248,11 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Including paymaster address and additional data
-        userOps[0].paymasterAndData = abi.encodePacked(
-            address(paymaster),
-            uint128(3e6), // verification gas limit
-            uint128(3e6) // postOp gas limit
-        );
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, BUNDLER_ADDRESS);
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::batchApproveAndSwap::Gas used for batch approval and swapping WETH for USDC with Paymaster", gasUsed);
+        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC using deposit
@@ -298,11 +289,93 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        uint256 initialGas = gasleft();
-        ENTRYPOINT.handleOps(userOps, BUNDLER_ADDRESS);
-        uint256 gasUsed = initialGas - gasleft();
-        emit log_named_uint("UniswapV2::batchApproveAndSwap::Gas used for batch approval and swapping WETH for USDC using deposit", gasUsed);
+        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
+
+    /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap using WETH
+    function test_Gas_Swap_DeployNexusWithPreFundedETH() public checkERC20Balance(preComputedAddress) {
+        // Send ETH directly to the precomputed address
+        vm.deal(preComputedAddress, 1 ether);
+        assertEq(address(preComputedAddress).balance, 1 ether, "ETH not sent to precomputed address");
+
+        // Create initCode for deploying the Nexus account
+        bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
+
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution(address(weth), 0, abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), SWAP_AMOUNT));
+        executions[1] = Execution(
+            address(uniswapV2Router),
+            0,
+            abi.encodeWithSignature(
+                "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+                SWAP_AMOUNT,
+                0,
+                getPathForWETHtoUSDC(),
+                preComputedAddress,
+                block.timestamp
+            )
+        );
+
+        // Build user operation with initCode and callData
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            user,
+            Nexus(preComputedAddress),
+            EXECTYPE_DEFAULT,
+            executions,
+            address(VALIDATOR_MODULE)
+        );
+        userOps[0].initCode = initCode;
+        // Sign the user operation
+        userOps[0].signature = signUserOp(user, userOps[0]);
+
+        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
+    }
+
+    /// @notice Tests gas consumption for swapping WETH for USDC using a deployed Nexus account with Paymaster
+function test_Gas_Swap_DeployedNexus_SwapWethForTokens_WithPaymaster()
+    public
+    checkERC20Balance(preComputedAddress)
+    checkPaymasterBalance(address(paymaster))
+{
+    // Approve WETH transfer for precomputed address
+    vm.startPrank(preComputedAddress);
+    weth.approve(address(uniswapV2Router), SWAP_AMOUNT);
+    vm.stopPrank();
+
+    Execution[] memory executions = prepareSingleExecution(
+        address(uniswapV2Router),
+        0,
+        abi.encodeWithSignature(
+            "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+            SWAP_AMOUNT,
+            0,
+            getPathForWETHtoUSDC(),
+            preComputedAddress,
+            block.timestamp
+        )
+    );
+
+    // Deploy the Nexus account
+    Nexus deployedNexus = deployNexus(user, 10 ether, address(VALIDATOR_MODULE));
+
+    // Build the PackedUserOperation array
+    PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        user,
+        deployedNexus,
+        EXECTYPE_DEFAULT,
+        executions,
+        address(VALIDATOR_MODULE)
+    );
+
+    // Generate and sign paymaster data
+    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+
+    // Sign the user operation
+    userOps[0].signature = signUserOp(user, userOps[0]);
+
+    measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
+}
+
 
     /// @notice Helper function to get the path for WETH to USDC swap
     /// @return path The array containing the swap path
@@ -311,12 +384,5 @@ contract TestNexusSwapWETHIntegration is NexusTest_Base, BaseSettings {
         path[0] = address(WETH_ADDRESS);
         path[1] = USDC_ADDRESS;
         return path;
-    }
-
-    /// @notice Retrieves the Base RPC URL from the environment variable or defaults to the hardcoded URL
-    /// @return rpcUrl The Base RPC URL
-    function getBaseRpcUrl() internal view returns (string memory) {
-        string memory rpcUrl = vm.envOr("BASE_RPC_URL", DEFAULT_BASE_RPC_URL);
-        return rpcUrl;
     }
 }

@@ -62,10 +62,6 @@ contract MockExecutor is IExecutor {
 
     function getModuleTypes() external view returns (EncodedModuleTypes) {}
 
-    function test_() public pure {
-        // This function is used to ignore file in coverage report
-    }
-
     function isInitialized(address) external pure override returns (bool) {
         return false;
     }

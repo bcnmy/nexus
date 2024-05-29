@@ -31,7 +31,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
 
     /// @notice Tests successful static call through the fallback handler.
     function test_FallbackHandlerStaticCall_Success() public {
-        bytes4 selector = mockFallbackHandler.staticFunction.selector;
+        bytes4 selector = mockFallbackHandler.successFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_STATIC);
         installFallbackHandler(customData);
 
@@ -41,12 +41,12 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
 
         // Decode and verify the return data
         bytes32 result = abi.decode(returnData, (bytes32));
-        assertEq(result, keccak256("STATIC_CALL"));
+assertEq(result, keccak256("SUCCESS"));
     }
 
     /// @notice Tests successful single call through the fallback handler.
     function test_FallbackHandlerSingleCall_Success() public {
-        bytes4 selector = mockFallbackHandler.singleFunction.selector;
+        bytes4 selector = mockFallbackHandler.successFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
         installFallbackHandler(customData);
 
@@ -56,7 +56,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
 
         // Decode and verify the return data
         bytes32 result = abi.decode(returnData, (bytes32));
-        assertEq(result, keccak256("SINGLE_CALL"));
+        assertEq(result, keccak256("SUCCESS"));
     }
 
     /// @notice Tests state change through the fallback handler using a single call.
@@ -128,7 +128,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
 
     /// @notice Tests single call through the fallback handler that reverts.
     function test_FallbackHandlerSingleCall_Revert() public {
-        bytes4 selector = mockFallbackHandler.revertingSingleFunction.selector;
+        bytes4 selector = mockFallbackHandler.revertingFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_SINGLE);
         installFallbackHandler(customData);
 
@@ -137,13 +137,13 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         assertFalse(success, "Single call through fallback that reverts should fail");
 
         // Decode and verify the revert reason
-        bytes memory revertReason = abi.encodeWithSignature("Error(string)", "Single call revert reason");
+        bytes memory revertReason = abi.encodeWithSignature("Error(string)", "REVERT");
         assertEq(revertReason, returnData, "Incorrect revert reason");
     }
 
     /// @notice Tests static call through the fallback handler that reverts.
     function test_FallbackHandlerStaticCall_Revert() public {
-        bytes4 selector = mockFallbackHandler.revertingStaticFunction.selector;
+        bytes4 selector = mockFallbackHandler.revertingFunction.selector;
         bytes memory customData = abi.encodePacked(selector, CALLTYPE_STATIC);
         installFallbackHandler(customData);
 
@@ -152,7 +152,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         assertFalse(success, "Static call through fallback that reverts should fail");
 
         // Decode and verify the revert reason
-        bytes memory revertReason = abi.encodeWithSignature("Error(string)", "Static call revert reason");
+        bytes memory revertReason = abi.encodeWithSignature("Error(string)", "REVERT");
         assertEq(revertReason, returnData, "Incorrect revert reason");
     }
 
