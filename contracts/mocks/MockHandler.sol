@@ -47,12 +47,6 @@ contract MockHandler is IFallback {
         revert("REVERT");
     }
 
-    function gasIntensiveFunction() external {
-        while (true) {
-            count++;
-        }
-    }
-
     function getState() external view returns (uint256) {
         return count;
     }
