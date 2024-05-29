@@ -25,22 +25,22 @@
 |   ERC721 | transferFrom | Smart Account | False | False | 🔥 WarmAccess | 345947 | ERC721::transferFrom::Setup And Call::Using Pre-Funded Ether::WarmAccess: 345947 |
 |   ERC721 | transferFrom | Smart Account | False | False | 🔥 WarmAccess | 297843 | ERC721::transferFrom::Setup And Call::UsingDeposit::WarmAccess: 297843 |
 |   ERC721 | transferFrom | Smart Account | False | True | 🔥 WarmAccess | 314652 | ERC721::transferFrom::Setup And Call::WithPaymaster::WarmAccess: 314652 |
-|   ETH | call | EOA | False | False | 🔥 WarmAccess | 28201 | ETH::call::EOA::Simple::WarmAccess: 28201 |
-|   ETH | send | EOA | False | False | 🔥 WarmAccess | 28201 | ETH::send::EOA::Simple::WarmAccess: 28201 |
-|   ETH | transfer | EOA | False | False | 🔥 WarmAccess | 28073 | ETH::transfer::EOA::Simple::WarmAccess: 28073 |
 |   ETH | call | EOA | False | False | 🧊 ColdAccess | 53201 | ETH::call::EOA::Simple::ColdAccess: 53201 |
 |   ETH | send | EOA | False | False | 🧊 ColdAccess | 53201 | ETH::send::EOA::Simple::ColdAccess: 53201 |
 |   ETH | transfer | EOA | False | False | 🧊 ColdAccess | 53073 | ETH::transfer::EOA::Simple::ColdAccess: 53073 |
-|   ETH | transfer | Smart Account | True | False | 🔥 WarmAccess | 77604 | ETH::transfer::Nexus::Deployed::WarmAccess: 77604 |
-|   ETH | transfer | Smart Account | True | True | 🔥 WarmAccess | 94089 | ETH::transfer::Nexus::WithPaymaster::WarmAccess: 94089 |
+|   ETH | call | EOA | False | False | 🔥 WarmAccess | 28201 | ETH::call::EOA::Simple::WarmAccess: 28201 |
+|   ETH | send | EOA | False | False | 🔥 WarmAccess | 28201 | ETH::send::EOA::Simple::WarmAccess: 28201 |
+|   ETH | transfer | EOA | False | False | 🔥 WarmAccess | 28073 | ETH::transfer::EOA::Simple::WarmAccess: 28073 |
 |   ETH | transfer | Smart Account | True | False | 🧊 ColdAccess | 102604 | ETH::transfer::Nexus::Deployed::ColdAccess: 102604 |
 |   ETH | transfer | Smart Account | True | True | 🧊 ColdAccess | 119089 | ETH::transfer::Nexus::WithPaymaster::ColdAccess: 119089 |
-|   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 345181 | ETH::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess: 345181 |
-|   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 297076 | ETH::transfer::Setup And Call::UsingDeposit::WarmAccess: 297076 |
-|   ETH | transfer | Smart Account | False | True | 🔥 WarmAccess | 313864 | ETH::transfer::Setup And Call::WithPaymaster::WarmAccess: 313864 |
+|   ETH | transfer | Smart Account | True | False | 🔥 WarmAccess | 77604 | ETH::transfer::Nexus::Deployed::WarmAccess: 77604 |
+|   ETH | transfer | Smart Account | True | True | 🔥 WarmAccess | 94089 | ETH::transfer::Nexus::WithPaymaster::WarmAccess: 94089 |
 |   ETH | transfer | Smart Account | False | False | 🧊 ColdAccess | 370181 | ETH::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess: 370181 |
 |   ETH | transfer | Smart Account | False | False | 🧊 ColdAccess | 322076 | ETH::transfer::Setup And Call::UsingDeposit::ColdAccess: 322076 |
 |   ETH | transfer | Smart Account | False | True | 🧊 ColdAccess | 338864 | ETH::transfer::Setup And Call::WithPaymaster::ColdAccess: 338864 |
+|   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 345181 | ETH::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess: 345181 |
+|   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 297076 | ETH::transfer::Setup And Call::UsingDeposit::WarmAccess: 297076 |
+|   ETH | transfer | Smart Account | False | True | 🔥 WarmAccess | 313864 | ETH::transfer::Setup And Call::WithPaymaster::WarmAccess: 313864 |
 |   UniswapV2 | swapExactETHForTokens | EOA | False | False | N/A | 149263 | UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A: 149263 |
 |   UniswapV2 | swapExactTokensForTokens | EOA | False | False | N/A | 118252 | UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A: 118252 |
 |   UniswapV2 | swapExactETHForTokens | Smart Account | True | False | N/A | 199230 | UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A: 199230 |
