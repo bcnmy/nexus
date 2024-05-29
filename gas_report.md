@@ -41,18 +41,18 @@
 |   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 345181 | ETH::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess: 345181 |
 |   ETH | transfer | Smart Account | False | False | 🔥 WarmAccess | 297076 | ETH::transfer::Setup And Call::UsingDeposit::WarmAccess: 297076 |
 |   ETH | transfer | Smart Account | False | True | 🔥 WarmAccess | 313864 | ETH::transfer::Setup And Call::WithPaymaster::WarmAccess: 313864 |
-|   UniswapV2 | swapExactTokensForTokens | EOA | False | False | N/A | 118252 | UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A: 118252 |
 |   UniswapV2 | swapExactETHForTokens | EOA | False | False | N/A | 149263 | UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A: 149263 |
+|   UniswapV2 | swapExactTokensForTokens | EOA | False | False | N/A | 118252 | UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A: 118252 |
+|   UniswapV2 | swapExactETHForTokens | Smart Account | True | False | N/A | 199230 | UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A: 199230 |
+|   UniswapV2 | swapExactETHForTokens | Smart Account | True | True | N/A | 215793 | UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A: 215793 |
 |   UniswapV2 | approve+swapExactTokensForTokens | Smart Account | True | False | N/A | 200205 | UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A: 200205 |
 |   UniswapV2 | swapExactTokensForTokens | Smart Account | True | False | N/A | 168209 | UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A: 168209 |
 |   UniswapV2 | swapExactTokensForTokens | Smart Account | True | True | N/A | 184784 | UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A: 184784 |
-|   UniswapV2 | swapExactETHForTokens | Smart Account | True | False | N/A | 199230 | UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A: 199230 |
-|   UniswapV2 | swapExactETHForTokens | Smart Account | True | True | N/A | 215793 | UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A: 215793 |
+|   UniswapV2 | swapExactETHForTokens | Smart Account | False | False | N/A | 418733 | UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A: 418733 |
+|   UniswapV2 | swapExactETHForTokens | Smart Account | False | True | N/A | 435614 | UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A: 435614 |
+|   UniswapV2 | swapExactETHForTokens | Smart Account | False | False | N/A | 466838 | UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A: 466838 |
 |   UniswapV2 | approve+swapExactTokensForTokens | Smart Account | False | False | N/A | 419709 | UniswapV2::approve+swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A: 419709 |
 |   UniswapV2 | approve+swapExactTokensForTokens | Smart Account | False | True | N/A | 436780 | UniswapV2::approve+swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A: 436780 |
 |   UniswapV2 | swapExactTokensForTokens | Smart Account | False | False | N/A | 387700 | UniswapV2::swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A: 387700 |
 |   UniswapV2 | swapExactTokensForTokens | Smart Account | False | True | N/A | 404582 | UniswapV2::swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A: 404582 |
 |   UniswapV2 | approve+swapExactTokensForTokens | Smart Account | False | False | N/A | 467815 | UniswapV2::approve+swapExactTokensForTokens::Setup And Call::Using Pre-Funded Ether::N/A: 467815 |
-|   UniswapV2 | swapExactETHForTokens | Smart Account | False | False | N/A | 418733 | UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A: 418733 |
-|   UniswapV2 | swapExactETHForTokens | Smart Account | False | True | N/A | 435614 | UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A: 435614 |
-|   UniswapV2 | swapExactETHForTokens | Smart Account | False | False | N/A | 466838 | UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A: 466838 |
