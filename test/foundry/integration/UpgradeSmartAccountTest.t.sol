@@ -17,10 +17,9 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
 
     /// @notice Tests that the current implementation address is correct
     function test_currentImplementationAddress() public {
-        // todo
-        // read from slot _ERC1967_IMPLEMENTATION_SLOT instead or add fallback with selector
-        // address currentImplementation = BOB_ACCOUNT.getImplementation();
-        // assertEq(currentImplementation, address(ACCOUNT_IMPLEMENTATION), "Current implementation address mismatch");
+        bytes32 _ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        address currentImplementation = address(uint160(uint256(vm.load(address(BOB_ACCOUNT), _ERC1967_IMPLEMENTATION_SLOT)))); 
+        assertEq(currentImplementation, address(ACCOUNT_IMPLEMENTATION), "Current implementation address mismatch");
     }
 
     /// @notice Tests the upgrade of the smart account implementation
@@ -34,12 +33,9 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-
-        // todo
-        // would break
-        // read from slot _ERC1967_IMPLEMENTATION_SLOT instead or add fallback with selector
-        // address newImplementation = BOB_ACCOUNT.getImplementation();
-        // assertEq(newImplementation, address(newSmartAccount), "New implementation address mismatch");
+         bytes32 _ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        address newImplementation = address(uint160(uint256(vm.load(address(BOB_ACCOUNT), _ERC1967_IMPLEMENTATION_SLOT)))); 
+        assertEq(newImplementation, address(newSmartAccount), "New implementation address mismatch");
     }
 
     /// @notice Tests the entire upgrade process
