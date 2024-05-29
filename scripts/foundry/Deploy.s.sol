@@ -7,11 +7,8 @@ import { BaseScript } from "./Base.s.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract Deploy is BaseScript {
+    address private constant _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     function run() public broadcast returns (Nexus smartAccount) {
-        smartAccount = new Nexus();
-    }
-
-    function test() public pure returns (uint256) {
-        return 0;
+        smartAccount = new Nexus(_ENTRYPOINT);
     }
 }

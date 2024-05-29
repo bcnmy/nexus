@@ -186,4 +186,45 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         // Asserting the counter did not increment
         assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported call type revert");
     }
+
+    function test_RevertIf_SingleExecutionWithUnsupportedExecType() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        // Using an unsupported execution type
+        ExecType unsupportedExecType = ExecType.wrap(bytes1(0xab)); // Example unsupported execution type
+        CallType callType = CALLTYPE_SINGLE;
+
+        // Determine mode and calldata based on execType and executions length
+        ExecutionMode mode = ModeLib.encodeCustom(callType, unsupportedExecType);
+        bytes memory executionCalldata = abi.encodeCall(
+            Nexus.execute,
+            (mode, ExecLib.encodeSingle(execution[0].target, execution[0].value, execution[0].callData))
+        );
+
+        // Initialize the userOps array with one operation
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+
+        // Build the UserOperation
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0].callData = executionCalldata;
+
+        // Sign the operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessage(BOB, userOpHash);
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(UnsupportedExecType.selector, unsupportedExecType);
+
+        // Expect the UserOperationRevertReason event due to unsupported exec type
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported exec type revert");
+    }
 }

@@ -20,7 +20,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     }
 
     bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
-    bytes32 internal constant DOMAIN_SEP_B = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
+    bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     /// @notice Initializes the testing environment.
     function setUp() public {
@@ -48,14 +48,14 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
 
         unchecked {
             uint256 vs = uint256(t.s) | (uint256(t.v - 27) << 255);
-            signature = abi.encodePacked(t.r, vs, DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
+            signature = abi.encodePacked(t.r, vs, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
             assertEq(
                 ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature)),
                 bytes4(0x1626ba7e)
@@ -69,7 +69,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0xFFFFFFFF));
     }
@@ -90,14 +90,14 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                 accountDomainStructFields(account)
             )
         );
-        return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEP_B, parentStructHash));
+        return keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, parentStructHash));
     }
 
     /// @notice Generates a contents hash.
     /// @param contents The contents hash.
     /// @return The EIP-712 hash.
     function toContentsHash(bytes32 contents) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(hex"1901", DOMAIN_SEP_B, contents));
+        return keccak256(abi.encodePacked(hex"1901", APP_DOMAIN_SEPARATOR, contents));
     }
 
     /// @notice Generates an ERC-1271 hash for personal sign.

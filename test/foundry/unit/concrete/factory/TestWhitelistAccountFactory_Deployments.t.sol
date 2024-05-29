@@ -12,7 +12,6 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
     ModuleWhitelistFactory public whitelistFactory;
     bytes4 public constant GENERIC_FALLBACK_SELECTOR = 0xcb5baf0f;
 
-
     /// @notice Sets up the testing environment.
     function setUp() public {
         super.setupTestEnvironment();
@@ -53,22 +52,21 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
 
-        assertEq(Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), true, "Validator should be installed");
-        assertEq(Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""), true, "Executor should be installed");
+        assertEq(
+            Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            true,
+            "Validator should be installed"
+        );
+        assertEq(
+            Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""),
+            true,
+            "Executor should be installed"
+        );
         assertEq(Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), true, "Hook should be installed");
-        assertEq(Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), abi.encode(GENERIC_FALLBACK_SELECTOR)), true, "Fallback should be installed for selector");
+        assertEq(
+            Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), abi.encode(GENERIC_FALLBACK_SELECTOR)),
+            true,
+            "Fallback should be installed for selector"
+        );
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -225,11 +225,8 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param fallbackHandler The address of the fallback handler to uninstall.
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
-        bytes4 selector = bytes4(data[0:4]);
-        bytes memory deInitData = data[4:];
-        if (!_isFallbackHandlerInstalled(selector)) revert FallbackNotInstalledForSelector(selector);
-        _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
-        IFallback(fallbackHandler).onUninstall(deInitData);
+        _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
+        IFallback(fallbackHandler).onUninstall(data[4:]);
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
