@@ -1,4 +1,0 @@
-AccountValidateUserOpInvariantTest
-└── given an initialized test environment with a user account
-    └── when executing a user operation
-        └── it should assert nonce consistency invariant

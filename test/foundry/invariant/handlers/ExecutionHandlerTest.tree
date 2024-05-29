@@ -1,8 +1,0 @@
-ExecutionHandlerTest
-└── given a Nexus account and signer
-    ├── when executing a deposit operation
-    │   └── it should assert deposit amount invariant after increment
-    ├── when attempting a failing operation
-    │   └── it should assert proper error handling and state consistency invariant
-    └── when handling a bounded deposit operation
-        └── it should assert cumulative deposit correctness invariant

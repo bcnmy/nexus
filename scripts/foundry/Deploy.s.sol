@@ -11,8 +11,4 @@ contract Deploy is BaseScript {
     function run() public broadcast returns (Nexus smartAccount) {
         smartAccount = new Nexus(_ENTRYPOINT);
     }
-
-    function test() public pure returns (uint256) {
-        return 0;
-    }
 }
