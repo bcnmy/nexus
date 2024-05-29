@@ -27,6 +27,7 @@ import {
   UNUSED,
   installModule,
 } from "../utils/erc7579Utils";
+import { toBytes } from "viem";
 
 describe("Nexus Module Management Tests", () => {
   let deployedMSA: Nexus;
@@ -611,6 +612,14 @@ describe("Nexus Module Management Tests", () => {
       );
 
       expect(isInstalledAfter, "Module should be installed after").to.be.true;
+    });
+
+    it("Should correctly install a fallback handler module on the smart account", async () => {
+      const exampleSender = await deployedMSA.getAddress();
+      const exampleValue = 12345;
+      const exampleData = toBytes("0x12345678");
+
+      await expect(mockFallbackHandler.onGenericFallback(exampleSender, exampleValue, exampleData)).to.emit(mockFallbackHandler, "GenericFallbackCalled").withArgs(exampleSender, exampleValue, exampleData);
     });
 
     it("Should correctly uninstall a previously installed fallback handler module by using the execution module", async () => {

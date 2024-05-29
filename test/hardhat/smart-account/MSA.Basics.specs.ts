@@ -55,6 +55,8 @@ describe("Nexus Basic Specs", function () {
   let bundlerAddress: AddressLike;
   let counter: Counter;
   let validatorModule: MockValidator;
+  let deployer: Signer;
+  let aliceOwner: Signer;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsAndSAFixture);
@@ -66,6 +68,8 @@ describe("Nexus Basic Specs", function () {
     counter = setup.counter;
     validatorModule = setup.mockValidator;
     smartAccountOwner = setup.accountOwner;
+    deployer = setup.deployer;
+    aliceOwner = setup.aliceAccountOwner;
 
     entryPointAddress = await entryPoint.getAddress();
     smartAccountAddress = await smartAccount.getAddress();
@@ -351,36 +355,18 @@ describe("Nexus Basic Specs", function () {
       );
       expect(isModuleInstalled).to.be.true;
 
-      const data = keccak256("0x1234")
-
-      // Define the EIP712 domain separator type hash
-      // const EIP712DomainTypeHash = ethers.keccak256(
-      //   ethers.toUtf8Bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
-      // );
-
-      // // Define the hashed domain name and version
-      // const nameHash = ethers.keccak256(ethers.toUtf8Bytes("Nexus"));
-      // const versionHash = ethers.keccak256(ethers.toUtf8Bytes("0.0.1"));
-
-      // // Encode the domain separator
-      // const domainSeparator = ethers.keccak256(
-      //   solidityPacked(
-      //       ["bytes32", "bytes32", "bytes32", "uint256", "address"],
-      //       [EIP712DomainTypeHash, nameHash, versionHash, 1, await smartAccount.getAddress()]
-      //   )
-      // );
-
-      const parentStructHash = solidityPacked(["bytes", "bytes"], [toBytes("PersonalSign(bytes prefixed)"), data])
-      const dataToSign = keccak256(solidityPacked(["bytes", "bytes", "bytes"], [toBytes("\x19\x01"), await smartAccount.DOMAIN_SEPARATOR(), parentStructHash]))
-
-      const signature = await smartAccountOwner.signMessage(dataToSign);
+      const isOwner = await validatorModule.isOwner(smartAccountAddress, await smartAccountOwner.getAddress());
+      expect(isOwner).to.be.true;
+      
+      const signature = await smartAccountOwner.signMessage("1234");
+      const messageHash = hashMessage("1234");
+      const data = solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature]);
 
       const isValid = await smartAccount.isValidSignature(
-        data,
+        messageHash,
         solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature])
       );
       
-      console.log("isValid: ", isValid);
       expect(isValid).to.equal("0x1626ba7e");
     });
   });
