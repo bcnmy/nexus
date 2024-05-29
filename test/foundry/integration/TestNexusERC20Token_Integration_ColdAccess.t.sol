@@ -158,42 +158,35 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
     }
 
     /// @notice Tests gas consumption for transferring ERC20 tokens from an already deployed Nexus smart account using a paymaster
-function test_Gas_ERC20Token_DeployedNexus_Transfer_WithPaymaster_Cold()
-    public
-    checkERC20TokenBalanceCold(recipient, amount)
-    checkPaymasterBalance(address(paymaster))
-{
-    // Ensure the paymaster has a sufficient deposit
-    assertGe(ENTRYPOINT.balanceOf(address(paymaster)), 1 ether, "Insufficient paymaster deposit");
+    function test_Gas_ERC20Token_DeployedNexus_Transfer_WithPaymaster_Cold()
+        public
+        checkERC20TokenBalanceCold(recipient, amount)
+        checkPaymasterBalance(address(paymaster))
+    {
+        // Ensure the paymaster has a sufficient deposit
+        assertGe(ENTRYPOINT.balanceOf(address(paymaster)), 1 ether, "Insufficient paymaster deposit");
 
-    // Deploy Nexus account
-    Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
-    ERC20Token.transfer(address(deployedNexus), amount);
+        // Deploy Nexus account
+        Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
+        ERC20Token.transfer(address(deployedNexus), amount);
 
-    // Prepare the execution for ERC20 token transfer
-    Execution[] memory executions = prepareSingleExecution(
-        address(ERC20Token),
-        0,
-        abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-    );
+        // Prepare the execution for ERC20 token transfer
+        Execution[] memory executions = prepareSingleExecution(
+            address(ERC20Token),
+            0,
+            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+        );
 
-    // Build the PackedUserOperation array
-    PackedUserOperation[] memory userOps = buildPackedUserOperation(
-        user,
-        deployedNexus,
-        EXECTYPE_DEFAULT,
-        executions,
-        address(VALIDATOR_MODULE)
-    );
+        // Build the PackedUserOperation array
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-    // Generate and sign paymaster data
-    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+        // Generate and sign paymaster data
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
-    // Sign the user operation
-    userOps[0].signature = signUserOp(user, userOps[0]);
+        // Sign the user operation
+        userOps[0].signature = signUserOp(user, userOps[0]);
 
-    // Measure and log gas usage
-    measureAndLogGas("ERC20::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
-}
-
+        // Measure and log gas usage
+        measureAndLogGas("ERC20::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
+    }
 }
