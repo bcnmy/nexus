@@ -4,7 +4,7 @@ const { exec } = require("child_process");
 
 // Define the log file and the output markdown file
 const LOG_FILE = "gas.log";
-const OUTPUT_FILE = "gas_report.md";
+const OUTPUT_FILE = "GAS_REPORT.md";
 
 // Function to execute the `forge test` command
 function runForgeTest() {
@@ -111,6 +111,19 @@ async function generateReport() {
   });
 
   console.log(`📊 Gas report generated and saved to ${OUTPUT_FILE}`);
+
+  // Run prettier to format the generated markdown file
+  return new Promise((resolve, reject) => {
+    console.log("✨ Running prettier to format the gas report...");
+    exec(`npx prettier --write ${OUTPUT_FILE}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`❌ Prettier error: ${error}`);
+        reject(`prettier error: ${error}`);
+      }
+      console.log("✅ Prettier formatting completed.");
+      resolve(stdout ? stdout : stderr);
+    });
+  });
 }
 
 // Function to clean up temporary files
@@ -121,5 +134,7 @@ function cleanUp() {
   });
 }
 
-// Run the function to generate the report and then clean up
-generateReport().then(cleanUp).catch(console.error);
+// Run the function to generate the report, format it with prettier, and then clean up
+generateReport()
+  .then(cleanUp)
+  .catch(console.error);
