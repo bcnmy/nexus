@@ -207,6 +207,48 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
     }
 
+    /// @notice Tests gas consumption for swapping ETH for USDC using a deployed Nexus account with Paymaster
+function test_Gas_Swap_DeployedNexus_SwapEthForTokens_WithPaymaster()
+    public
+    checkERC20Balance(preComputedAddress, SWAP_AMOUNT)
+    checkPaymasterBalance(address(paymaster))
+{
+    // Prepare the swap execution details
+    Execution[] memory executions = prepareSingleExecution(
+        address(uniswapV2Router), // Uniswap V2 Router address
+        SWAP_AMOUNT, // Amount of ETH to swap
+        abi.encodeWithSignature(
+            "swapExactETHForTokens(uint256,address[],address,uint256)", // Function signature
+            0, // Minimum amount of tokens to receive (set to 0 for simplicity)
+            getPathForETHtoUSDC(), // Path for the swap (ETH to USDC)
+            preComputedAddress, // Recipient of the USDC
+            block.timestamp // Deadline for the swap
+        )
+    );
+
+    // Deploy the Nexus account
+    Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
+
+    // Build the PackedUserOperation array
+    PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        user, // Wallet initiating the operation
+        deployedNexus, // Deployed Nexus account
+        EXECTYPE_DEFAULT, // Execution type
+        executions, // Execution details
+        address(VALIDATOR_MODULE) // Validator module address
+    );
+
+    // Generate and sign paymaster data
+    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+
+    // Sign the entire user operation with the user's wallet
+    userOps[0].signature = signUserOp(user, userOps[0]);
+
+    // Measure and log gas usage for the operation
+    measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
+}
+
+
     /// @notice Helper function to get the path for ETH to USDC swap
     /// @return path The array containing the swap path
     function getPathForETHtoUSDC() internal pure returns (address[] memory) {
