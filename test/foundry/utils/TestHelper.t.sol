@@ -93,7 +93,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         ENTRYPOINT = new EntryPoint();
         vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
-        ACCOUNT_IMPLEMENTATION = new Nexus();
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
