@@ -1,9 +1,7 @@
-import { NumberLike } from "@nomicfoundation/hardhat-network-helpers/dist/src/types";
 import {
   AddressLike,
   BigNumberish,
   BytesLike,
-  HDNodeWallet,
   ParamType,
   Signer,
 } from "ethers";
@@ -16,15 +14,15 @@ import {
   K1Validator,
   Nexus,
   MockExecutor,
-  IValidator,
-  IExecutor,
   MockHook,
   MockHandler,
+  Bootstrap,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
+  bootstrap: Bootstrap;
   smartAccountImplementation: Nexus;
   msaFactory: K1ValidatorFactory;
   mockValidator: MockValidator;

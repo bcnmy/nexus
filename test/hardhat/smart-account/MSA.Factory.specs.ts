@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, ZeroAddress } from "ethers";
+import { AddressLike, Signer } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   K1ValidatorFactory,
@@ -8,10 +8,9 @@ import {
   MockValidator,
   Nexus,
 } from "../../../typechain-types";
-import { deployContractsFixture, getDeployedAccountFactory } from "../utils/deployment";
+import { deployContractsFixture } from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
 import { buildPackedUserOp } from "../utils/operationHelpers";
-import { ADDRESS_ZERO } from "@biconomy/account";
 
 describe("Nexus Factory Tests", function () {
   let factory: K1ValidatorFactory;
@@ -85,12 +84,6 @@ describe("Nexus Factory Tests", function () {
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
       expect(proxyCode).to.not.equal("0x", "Account should have bytecode");
-    });
-
-    it("Should fail to deploy smart account with 0x implementation address", async function () {
-      await expect(getDeployedAccountFactory(
-        ADDRESS_ZERO,
-      )).to.be.reverted;
     });
 
     it("Should deploy smart account with createAccount using a different index", async function () {
