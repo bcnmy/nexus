@@ -35,38 +35,22 @@ contract MockHandler is IFallback {
         return false;
     }
 
-    function staticFunction() external pure returns (bytes32) {
-        return keccak256("STATIC_CALL");
-    }
-
     function stateChangingFunction() external {
         count++;
     }
 
-    function singleFunction() external pure returns (bytes32) {
-        return keccak256("SINGLE_CALL");
+    function successFunction() external pure returns (bytes32) {
+        return keccak256("SUCCESS");
     }
 
-    function batchFunction() external pure returns (bytes32) {
-        return keccak256("BATCH_CALL");
-    }
-
-    function revertingStaticFunction() external pure {
-        require(false, "Static call revert reason");
-    }
-
-    function revertingSingleFunction() external pure {
-        require(false, "Single call revert reason");
+    function revertingFunction() external pure {
+        revert("REVERT");
     }
 
     function gasIntensiveFunction() external {
         while (true) {
             count++;
         }
-    }
-
-    function dynamicFunction() external pure returns (bytes32) {
-        return keccak256("DYNAMIC_CALL");
     }
 
     function getState() external view returns (uint256) {
