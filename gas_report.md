@@ -1,18 +1,18 @@
 # Gas Report
 | **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Full Log** |
 |:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:-------------:|
-|   ERC20 | transfer | EOA | False | False | 🧊 ColdAccess | 49921 | ERC20::transfer::EOA::Simple::ColdAccess: 49921 |
 |   ERC20 | transfer | EOA | False | False | 🔥 WarmAccess | 25221 | ERC20::transfer::EOA::Simple::WarmAccess: 25221 |
-|   ERC20 | transfer | Smart Account | True | False | 🧊 ColdAccess | 94755 | ERC20::transfer::Nexus::Deployed::ColdAccess: 94755 |
-|   ERC20 | transfer | Smart Account | True | True | 🧊 ColdAccess | 111250 | ERC20::transfer::Nexus::WithPaymaster::ColdAccess: 111250 |
+|   ERC20 | transfer | EOA | False | False | 🧊 ColdAccess | 49921 | ERC20::transfer::EOA::Simple::ColdAccess: 49921 |
 |   ERC20 | transfer | Smart Account | True | False | 🔥 WarmAccess | 74855 | ERC20::transfer::Nexus::Deployed::WarmAccess: 74855 |
 |   ERC20 | transfer | Smart Account | True | True | 🔥 WarmAccess | 91351 | ERC20::transfer::Nexus::WithPaymaster::WarmAccess: 91351 |
-|   ERC20 | transfer | Smart Account | False | False | 🧊 ColdAccess | 367144 | ERC20::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess: 367144 |
-|   ERC20 | transfer | Smart Account | False | False | 🧊 ColdAccess | 319039 | ERC20::transfer::Setup And Call::UsingDeposit::ColdAccess: 319039 |
-|   ERC20 | transfer | Smart Account | False | True | 🧊 ColdAccess | 335849 | ERC20::transfer::Setup And Call::WithPaymaster::ColdAccess: 335849 |
+|   ERC20 | transfer | Smart Account | True | False | 🧊 ColdAccess | 94755 | ERC20::transfer::Nexus::Deployed::ColdAccess: 94755 |
+|   ERC20 | transfer | Smart Account | True | True | 🧊 ColdAccess | 111250 | ERC20::transfer::Nexus::WithPaymaster::ColdAccess: 111250 |
 |   ERC20 | transfer | Smart Account | False | False | 🔥 WarmAccess | 347244 | ERC20::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess: 347244 |
 |   ERC20 | transfer | Smart Account | False | False | 🔥 WarmAccess | 299140 | ERC20::transfer::Setup And Call::UsingDeposit::WarmAccess: 299140 |
 |   ERC20 | transfer | Smart Account | False | True | 🔥 WarmAccess | 315950 | ERC20::transfer::Setup And Call::WithPaymaster::WarmAccess: 315950 |
+|   ERC20 | transfer | Smart Account | False | False | 🧊 ColdAccess | 367144 | ERC20::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess: 367144 |
+|   ERC20 | transfer | Smart Account | False | False | 🧊 ColdAccess | 319039 | ERC20::transfer::Setup And Call::UsingDeposit::ColdAccess: 319039 |
+|   ERC20 | transfer | Smart Account | False | True | 🧊 ColdAccess | 335849 | ERC20::transfer::Setup And Call::WithPaymaster::ColdAccess: 335849 |
 |   ERC721 | transferFrom | EOA | False | False | 🔥 WarmAccess | 28583 | ERC721::transferFrom::EOA::Simple::WarmAccess: 28583 |
 |   ERC721 | transferFrom | EOA | False | False | 🧊 ColdAccess | 48483 | ERC721::transferFrom::EOA::Simple::ColdAccess: 48483 |
 |   ERC721 | transferFrom | Smart Account | True | False | 🔥 WarmAccess | 78342 | ERC721::transferFrom::Nexus::Deployed::WarmAccess: 78342 |
