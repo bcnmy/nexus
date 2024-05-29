@@ -87,6 +87,7 @@
     "test:gas:forge": "forge test --gas-report",
     "test:gas:hardhat": "REPORT_GAS=true hardhat test",
     "test:gas": "yarn test:gas:hardhat && yarn test:gas:forge",
+    "gas-report": "node scripts/foundry/generateGasReport.js",
     "coverage:forge": "forge coverage",
     "coverage:hardhat": "yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
@@ -101,13 +102,15 @@
     "lint:ts-fix": "yarn prettier --write 'test/**/*.ts' 'scripts/**/*.ts'",
     "lint": "yarn run lint:sol && yarn run lint:ts",
     "lint:fix": "yarn run lint:sol-fix && yarn run lint:ts-fix",
-    "check-branch-name": "node scripts/git-hooks/checkBranchNames.js"
+    "check-branch-name": "node scripts/git-hooks/checkBranchNames.js",
+    "generate-and-push-gas-report": "yarn run gas-report && git add gas_report.md && git commit -m 'Update gas report' || echo 'No changes to gas report'"
+
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run check-branch-name && npm run lint-fix",
-      "pre-push": "npm run check-branch-name",
-      "post-checkout": "npm run check-branch-name && yarn install && forge install"
+      "pre-commit": "yarn run check-branch-name && yarn run lint-fix",
+      "pre-push": "yarn run check-branch-name && yarn run generate-and-push-gas-report",
+      "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
   }
 }
