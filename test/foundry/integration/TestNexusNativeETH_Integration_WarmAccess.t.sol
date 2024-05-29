@@ -158,4 +158,36 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
 
         measureAndLogGas("ETH::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess", userOps);
     }
+
+    /// @notice Tests gas consumption for transferring ETH from an already deployed Nexus smart account using a paymaster
+function test_Gas_NativeETH_DeployedNexus_Transfer_WithPaymaster_Warm()
+    public
+    checkETHBalanceWarm(recipient, transferAmount)
+    checkPaymasterBalance(address(paymaster))
+{
+    // Deploy the Nexus account
+    Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
+
+    // Prepare the execution for ETH transfer
+    Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
+
+    // Build the PackedUserOperation array
+    PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        user,
+        deployedNexus,
+        EXECTYPE_DEFAULT,
+        executions,
+        address(VALIDATOR_MODULE)
+    );
+
+    // Generate and sign paymaster data
+    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+
+    // Sign the user operation
+    userOps[0].signature = signUserOp(user, userOps[0]);
+
+    // Measure and log gas usage
+    measureAndLogGas("ETH::transfer::Nexus::WithPaymaster::WarmAccess", userOps);
+}
+
 }
