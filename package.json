@@ -89,7 +89,7 @@
     "test:gas": "yarn test:gas:hardhat && yarn test:gas:forge",
     "gas-report": "node scripts/foundry/generateGasReport.js",
     "coverage:forge": "forge coverage",
-    "coverage:hardhat": "yarn hardhat coverage",
+    "coverage:hardhat": "yarn hardhat coverage --ir-minimum",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
     "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
     "docs": "yarn hardhat docgen",
