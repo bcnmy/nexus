@@ -196,6 +196,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull origin ${{ github.event.pull_request.head.ref }} --rebase
           git add gas_report.md
           git commit -m "Update gas report" || echo "No changes to gas report"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
