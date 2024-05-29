@@ -13,7 +13,7 @@ import {
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AccountFactory,
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockValidator,
@@ -40,7 +40,7 @@ import {
 import { Hex, hashTypedData, toBytes } from "viem";
 
 describe("Nexus Basic Specs", function () {
-  let factory: AccountFactory;
+  let factory: K1ValidatorFactory;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
@@ -89,13 +89,12 @@ describe("Nexus Basic Specs", function () {
     ); // Example data, customize as needed
 
     // Read the expected account address
-    const expectedAccountAddress = await factory.getCounterFactualAddress(
-      moduleAddress, // validator address
-      installData,
+    const expectedAccountAddress = await factory.computeAccountAddress(
+      accountOwnerAddress,
       saDeploymentIndex,
     );
 
-    await factory.createAccount(moduleAddress, installData, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
   });
 
   describe("Contract Deployment", function () {
@@ -108,17 +107,12 @@ describe("Nexus Basic Specs", function () {
       ); // Example data, customize as needed
 
       // Read the expected account address
-      const expectedAccountAddress = await factory.getCounterFactualAddress(
-        moduleAddress, // validator address
-        installData,
+      const expectedAccountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 
-      await factory.createAccount(
-        moduleAddress,
-        installData,
-        saDeploymentIndex,
-      );
+      await factory.createAccount(ownerAddress, saDeploymentIndex);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -355,12 +349,56 @@ describe("Nexus Basic Specs", function () {
       );
       expect(isModuleInstalled).to.be.true;
 
-      const isOwner = await validatorModule.isOwner(smartAccountAddress, await smartAccountOwner.getAddress());
-      expect(isOwner).to.be.true;
-      
-      const signature = await smartAccountOwner.signMessage("1234");
+      // 1. Convert foundry util to ts code (as below)
+      // 2. Or try this and communicate and seek help: https://pastebin.com/EVQxRH3n 
+
+      const data = keccak256("0x1234")
+
+      // Define constants as per the original Solidity function
+      const DOMAIN_NAME = 'Nexus';
+      const DOMAIN_VERSION = '0.0.1';
+      const DOMAIN_TYPEHASH = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)';
+      const PARENT_TYPEHASH = 'PersonalSign(bytes prefixed)';
+      const ALICE_ACCOUNT = smartAccountAddress;
       const messageHash = hashMessage("1234");
-      const data = solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature]);
+      const network = await ethers.provider.getNetwork();
+      const chainId = network.chainId;
+
+      // Calculate the domain separator
+      const domainSeparator = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_TYPEHASH)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_VERSION)),
+              chainId,
+              ALICE_ACCOUNT
+          ]
+        )
+      );
+
+      // Calculate the parent struct hash
+      const parentStructHash = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)),
+              data
+          ]
+       )
+      );
+
+      // Calculate the final hash
+      const resultHash = ethers.keccak256(
+      ethers.concat([
+          '0x1901',
+          domainSeparator,
+          parentStructHash
+      ])
+     );
+
+      const signature = await smartAccountOwner.signMessage(resultHash);
 
       const isValid = await smartAccount.isValidSignature(
         messageHash,
@@ -416,9 +454,8 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
-        moduleAddress,
-        moduleInitData,
+      const accountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 
@@ -457,9 +494,8 @@ describe("Nexus Basic Specs", function () {
       // Module initialization data, encoded
       const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.getCounterFactualAddress(
-        moduleAddress,
-        moduleInitData,
+      const accountAddress = await factory.computeAccountAddress(
+        ownerAddress,
         saDeploymentIndex,
       );
 

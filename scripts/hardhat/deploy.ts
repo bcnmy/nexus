@@ -5,19 +5,26 @@ async function main() {
 
   const smartAccount = await Nexus.deploy();
 
+  const signers = await ethers.getSigners();
+
+  const factoryOwner = signers[0];
+
   await smartAccount.waitForDeployment();
 
   console.log(`Nexus implementation deployed at: ${smartAccount.target}`);
 
-  const AccountFactory = await ethers.getContractFactory("AccountFactory");
+  const NexusAccountFactory = await ethers.getContractFactory(
+    "NexusAccountFactory",
+  );
 
-  const accountFactory = await AccountFactory.deploy(
+  const accountFactory = await NexusAccountFactory.deploy(
     await smartAccount.getAddress(),
+    await factoryOwner.getAddress(),
   );
 
   await accountFactory.waitForDeployment();
 
-  console.log(`AccountFactory deployed at: ${accountFactory.target}`);
+  console.log(`NexusAccountFactory deployed at: ${accountFactory.target}`);
 
   const K1Validator = await ethers.getContractFactory("K1Validator");
 
