@@ -74,7 +74,7 @@
   ],
   "private": true,
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "clean:forge": "forge clean",
     "clean:hardhat": "yarn hardhat clean",
     "clean": "yarn run clean:forge && yarn run clean:hardhat && rm -rf cache docs coverage storageLayout coverage.json",
