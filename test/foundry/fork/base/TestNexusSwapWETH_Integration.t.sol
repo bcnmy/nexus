@@ -54,6 +54,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         // Initialize Nexus
         paymaster = new MockPaymaster(address(ENTRYPOINT), BUNDLER_ADDRESS);
         ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
+        paymaster.addStake{ value: 2 ether }(10 days);
 
         vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
@@ -115,7 +116,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Tests deploying Nexus and swapping WETH for USDC with Paymaster
-    function test_Gas_Swap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) {
+    function test_Gas_Swap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) checkPaymasterBalance(address(paymaster)) {
         // Approve WETH transfer for precomputed address
         vm.startPrank(preComputedAddress);
         weth.approve(address(uniswapV2Router), SWAP_AMOUNT);
@@ -145,11 +146,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Including paymaster address and additional data
-        userOps[0].paymasterAndData = abi.encodePacked(
-            address(paymaster),
-            uint128(3e6), // verification gas limit
-            uint128(3e6) // postOp gas limit
-        );
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
@@ -220,7 +217,11 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC with Paymaster
-    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) {
+    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster()
+        public
+        checkERC20Balance(preComputedAddress)
+        checkPaymasterBalance(address(paymaster))
+    {
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(address(weth), 0, abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), SWAP_AMOUNT));
         executions[1] = Execution(
@@ -247,11 +248,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Including paymaster address and additional data
-        userOps[0].paymasterAndData = abi.encodePacked(
-            address(paymaster),
-            uint128(3e6), // verification gas limit
-            uint128(3e6) // postOp gas limit
-        );
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 

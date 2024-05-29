@@ -47,10 +47,12 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         vm.deal(swapper, 100 ether);
 
         // Initialize Nexus
+        startPrank(swapper);
         paymaster = new MockPaymaster(address(ENTRYPOINT), BUNDLER_ADDRESS);
-        ENTRYPOINT.depositTo{ value: 10 ether }(address(paymaster));
-
-        vm.deal(address(paymaster), 100 ether);
+        ENTRYPOINT.depositTo{ value: 2 ether }(address(paymaster));
+        paymaster.addStake{ value: 2 ether }(10 days);
+        stopPrank();
+        // vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
 
         vm.deal(preComputedAddress, 100 ether);
@@ -93,93 +95,46 @@ contract TestNexusSwapETH_Integration is BaseSettings {
 
         measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
-/// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
-function test_Gas_Swap_DeployAndSwap_WithPaymasterkkkkk() public checkERC20Balance(preComputedAddress, SWAP_AMOUNT) {
- 
- 
-    uint128 verificationGasLimit = 300_000;
-    uint128 callGasLimit = 500_000;
-    uint128 preVerificationGas = 70_000;
-    uint128 maxFeePerGas = 3e5;
-    uint128 maxPriorityFeePerGas = 3e5;
-    uint128 paymasterVerificationGasLimit = 200000;
-    uint128 paymasterPostOpGasLimit = 100000;
- 
-    Execution[] memory executions = prepareSingleExecution(
-        address(uniswapV2Router),
-        SWAP_AMOUNT,
-        abi.encodeWithSignature(
-            "swapExactETHForTokens(uint256,address[],address,uint256)",
-            0,
-            getPathForETHtoUSDC(),
-            preComputedAddress,
-            block.timestamp
-        )
-    );
 
-    PackedUserOperation[] memory userOps = buildPackedUserOperation(
-        user,
-        Nexus(preComputedAddress),
-        EXECTYPE_DEFAULT,
-        executions,
-        address(VALIDATOR_MODULE)
-    );
+    /// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
+    /// @dev Verifies that the paymaster has sufficient deposit, prepares and executes the swap, and logs gas usage.
+    function test_Gas_Swap_DeployAndSwap_WithPaymaster()
+        public
+        checkERC20Balance(preComputedAddress, SWAP_AMOUNT)
+        checkPaymasterBalance(address(paymaster))
+    {
+        // Prepare the swap execution details
+        Execution[] memory executions = prepareSingleExecution(
+            address(uniswapV2Router), // Uniswap V2 Router address
+            SWAP_AMOUNT, // Amount of ETH to swap
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)", // Function signature
+                0, // Minimum amount of tokens to receive (set to 0 for simplicity)
+                getPathForETHtoUSDC(), // Path for the swap (ETH to USDC)
+                preComputedAddress, // Recipient of the USDC
+                block.timestamp // Deadline for the swap
+            )
+        );
 
-    userOps[0].accountGasLimits = bytes32(abi.encodePacked(verificationGasLimit, callGasLimit));
-    userOps[0].preVerificationGas = preVerificationGas;
-    userOps[0].gasFees = bytes32(abi.encodePacked(maxFeePerGas, maxPriorityFeePerGas));
+        // Build the PackedUserOperation array
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            user, // Wallet initiating the operation
+            Nexus(preComputedAddress), // Nexus account precomputed address
+            EXECTYPE_DEFAULT, // Execution type
+            executions, // Execution details
+            address(VALIDATOR_MODULE) // Validator module address
+        );
+        userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE)); // Set initCode for the operation
 
-    userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
+        // Generate and sign paymaster data
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
+        // Sign the entire user operation with the user's wallet
+        userOps[0].signature = signUserOp(user, userOps[0]);
 
-    // Include validity timestamps
-    uint48 validUntil = uint48(block.timestamp + 1 days);
-    uint48 validAfter = uint48(block.timestamp);
-
-    // Ensure paymasterAndData is populated correctly
-    userOps[0].paymasterAndData = abi.encodePacked(
-        address(paymaster),
-        uint128(paymasterVerificationGasLimit),
-        uint128(paymasterPostOpGasLimit)
-    );
-
-
-    // Construct gas limits and fees
-    userOps[0].preVerificationGas = preVerificationGas;
-    userOps[0].accountGasLimits = bytes32(abi.encodePacked(verificationGasLimit, callGasLimit));
-    userOps[0].gasFees = bytes32(abi.encodePacked(maxFeePerGas, maxPriorityFeePerGas));
-
-    // Get the hash that needs to be signed off-chain
-    bytes32 paymasterHash = paymaster.getHash(userOps[0], validUntil, validAfter);
-
-    // Sign the hash using the verifying signer (BUNDLER here)
-    bytes memory paymasterSignature = signMessage(BUNDLER, paymasterHash);
-
-    // Construct paymasterAndData with the signature
-    userOps[0].paymasterAndData = abi.encodePacked(
-        address(paymaster),
-        validUntil,
-        validAfter,
-        paymasterSignature
-    );
-
-    // Log gas values for debugging
-    emit log_named_uint("preVerificationGas", userOps[0].preVerificationGas);
-    emit log_named_uint("verificationGasLimit", uint128(bytes16(userOps[0].accountGasLimits)));
-    emit log_named_uint("callGasLimit", uint128(bytes16(userOps[0].accountGasLimits << 128)));
-    emit log_named_uint("maxFeePerGas", uint128(bytes16(userOps[0].gasFees)));
-    emit log_named_uint("maxPriorityFeePerGas", uint128(bytes16(userOps[0].gasFees << 128)));
-
-    // Sign the user operation itself
-    userOps[0].signature = signUserOp(user, userOps[0]);
-
-    // Additional debug information
-    emit log_named_bytes("initCode", userOps[0].initCode);
-    emit log_named_bytes("paymasterAndData", userOps[0].paymasterAndData);
-    emit log_named_bytes("signature", userOps[0].signature);
-
-    measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
-}
+        // Measure and log gas usage for the operation
+        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
+    }
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC using deposit
     function test_Gas_Swap_DeployAndSwap_UsingDeposit() public checkERC20Balance(preComputedAddress, SWAP_AMOUNT) {

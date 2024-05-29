@@ -59,7 +59,11 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using a paymaster with cold access
-    function test_Gas_ERC721NFT_DeployWithPaymaster_Transfer_Cold() public checkERC721NFTBalanceCold(recipient) {
+    function test_Gas_ERC721NFT_DeployWithPaymaster_Transfer_Cold()
+        public
+        checkERC721NFTBalanceCold(recipient)
+        checkPaymasterBalance(address(paymaster))
+    {
         ERC721NFT.mint(preComputedAddress, tokenId);
 
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -76,7 +80,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
             address(VALIDATOR_MODULE)
         );
         userOps[0].initCode = initCode;
-        userOps[0].paymasterAndData = abi.encodePacked(address(paymaster), uint128(3e6), uint128(3e6));
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         measureAndLogGas("ERC721::transferFrom::Setup And Call::WithPaymaster::ColdAccess", userOps);

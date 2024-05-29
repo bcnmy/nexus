@@ -66,7 +66,11 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
     }
 
     /// @notice Tests deploying Nexus and transferring ERC20 tokens using a paymaster with warm access
-    function test_Gas_ERC20Token_DeployWithPaymaster_Transfer_Warm() public checkERC20TokenBalanceWarm(recipient, amount) {
+    function test_Gas_ERC20Token_DeployWithPaymaster_Transfer_Warm()
+        public
+        checkERC20TokenBalanceWarm(recipient, amount)
+        checkPaymasterBalance(address(paymaster))
+    {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         Execution[] memory executions = prepareSingleExecution(
@@ -82,11 +86,7 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
         userOps[0].initCode = initCode;
 
         // Including paymaster address and additional data
-        userOps[0].paymasterAndData = abi.encodePacked(
-            address(paymaster),
-            uint128(3e6), // verification gas limit
-            uint128(3e6) // postOp gas limit
-        );
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
