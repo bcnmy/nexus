@@ -332,50 +332,43 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Tests gas consumption for swapping WETH for USDC using a deployed Nexus account with Paymaster
-function test_Gas_Swap_DeployedNexus_SwapWethForTokens_WithPaymaster()
-    public
-    checkERC20Balance(preComputedAddress)
-    checkPaymasterBalance(address(paymaster))
-{
-    // Approve WETH transfer for precomputed address
-    vm.startPrank(preComputedAddress);
-    weth.approve(address(uniswapV2Router), SWAP_AMOUNT);
-    vm.stopPrank();
+    function test_Gas_Swap_DeployedNexus_SwapWethForTokens_WithPaymaster()
+        public
+        checkERC20Balance(preComputedAddress)
+        checkPaymasterBalance(address(paymaster))
+    {
+        // Approve WETH transfer for precomputed address
+        vm.startPrank(preComputedAddress);
+        weth.approve(address(uniswapV2Router), SWAP_AMOUNT);
+        vm.stopPrank();
 
-    Execution[] memory executions = prepareSingleExecution(
-        address(uniswapV2Router),
-        0,
-        abi.encodeWithSignature(
-            "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
-            SWAP_AMOUNT,
+        Execution[] memory executions = prepareSingleExecution(
+            address(uniswapV2Router),
             0,
-            getPathForWETHtoUSDC(),
-            preComputedAddress,
-            block.timestamp
-        )
-    );
+            abi.encodeWithSignature(
+                "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+                SWAP_AMOUNT,
+                0,
+                getPathForWETHtoUSDC(),
+                preComputedAddress,
+                block.timestamp
+            )
+        );
 
-    // Deploy the Nexus account
-    Nexus deployedNexus = deployNexus(user, 10 ether, address(VALIDATOR_MODULE));
+        // Deploy the Nexus account
+        Nexus deployedNexus = deployNexus(user, 10 ether, address(VALIDATOR_MODULE));
 
-    // Build the PackedUserOperation array
-    PackedUserOperation[] memory userOps = buildPackedUserOperation(
-        user,
-        deployedNexus,
-        EXECTYPE_DEFAULT,
-        executions,
-        address(VALIDATOR_MODULE)
-    );
+        // Build the PackedUserOperation array
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-    // Generate and sign paymaster data
-    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+        // Generate and sign paymaster data
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
-    // Sign the user operation
-    userOps[0].signature = signUserOp(user, userOps[0]);
+        // Sign the user operation
+        userOps[0].signature = signUserOp(user, userOps[0]);
 
-    measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
-}
-
+        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
+    }
 
     /// @notice Helper function to get the path for WETH to USDC swap
     /// @return path The array containing the swap path
