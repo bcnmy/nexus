@@ -74,6 +74,39 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         assertEq(ret, bytes4(0xFFFFFFFF));
     }
 
+    /// @notice Tests the validation of a signature that involves ERC-6492 unwrapping.
+    function test_isValidSignature_ERC6492Unwrapping() public {
+        // Prepare the original data
+        bytes32 originalHash = keccak256(abi.encodePacked("testERC6492Unwrapping"));
+
+        // Sign the message using ALICE's private key
+        bytes memory originalSignature = signMessage(ALICE, originalHash);
+
+        // Wrap the original signature using the ERC6492 format
+        bytes memory wrappedSignature = erc6492Wrap(originalSignature);
+
+        // Construct the complete signature with the validator address
+        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), wrappedSignature);
+
+        // Call isValidSignature and check the result
+        bytes4 result = ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+    }
+
+    /// @notice Tests the validation of a signature that does not involve ERC-6492 unwrapping.
+    function test_isValidSignature_NoERC6492Unwrapping() public {
+        // Prepare the original data
+        bytes32 originalHash = keccak256(abi.encodePacked("testNoERC6492Unwrapping"));
+
+        // Sign the message using ALICE's private key
+        bytes memory originalSignature = signMessage(ALICE, originalHash);
+
+        // Construct the complete signature with the validator address
+        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), originalSignature);
+
+        // Call isValidSignature and check the result
+        bytes4 result = ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+    }
+
     /// @notice Generates an ERC-1271 hash for the given contents and account.
     /// @param contents The contents hash.
     /// @param account The account address.
