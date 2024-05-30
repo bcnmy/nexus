@@ -16,10 +16,11 @@ import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
-import { Bootstrap } from "../../../contracts/utils/Bootstrap.sol";
+import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
+import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
-import { BootstrapUtil, BootstrapConfig } from "../../../contracts/utils/BootstrapUtil.sol";
+import { BootstrapUtil } from "../../../contracts/utils/BootstrapUtil.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     // -----------------------------------------
@@ -36,7 +37,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     address internal BOB_ADDRESS;
     address internal ALICE_ADDRESS;
     address internal CHARLIE_ADDRESS;
-    address internal BUNDLER_ADDRESS;
+    address payable internal BUNDLER_ADDRESS;
 
     Nexus internal BOB_ACCOUNT;
     Nexus internal ALICE_ACCOUNT;
@@ -72,10 +73,19 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
 
     function setupPredefinedWallets() internal {
         DEPLOYER = createAndFundWallet("DEPLOYER", 1000 ether);
+
         BOB = createAndFundWallet("BOB", 1000 ether);
+        BOB_ADDRESS = BOB.addr;
+
         ALICE = createAndFundWallet("ALICE", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
+
+        ALICE_ADDRESS = ALICE.addr;
+        CHARLIE_ADDRESS = CHARLIE.addr;
+
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
+        BUNDLER_ADDRESS = payable(BUNDLER.addr);
+
         FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
     }
 
@@ -83,7 +93,7 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         ENTRYPOINT = new EntryPoint();
         vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
         ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
-        ACCOUNT_IMPLEMENTATION = new Nexus();
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
@@ -251,9 +261,9 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
                 nonce: nonce,
                 initCode: "",
                 callData: "",
-                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
-                preVerificationGas: 3e6,
-                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))),
+                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // verification and call gas limit
+                preVerificationGas: 3e5, // Adjusted preVerificationGas
+                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // maxFeePerGas and maxPriorityFeePerGas
                 paymasterAndData: "",
                 signature: ""
             });
@@ -425,16 +435,6 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
         return executions;
     }
 
-    /// @notice Handles a user operation and measures gas usage
-    /// @param userOps The user operations to handle
-    /// @param refundReceiver The address to receive the gas refund
-    /// @return gasUsed The amount of gas used
-    function handleUserOpAndMeasureGas(PackedUserOperation[] memory userOps, address refundReceiver) internal returns (uint256 gasUsed) {
-        uint256 gasStart = gasleft();
-        ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
-        gasUsed = gasStart - gasleft();
-    }
-
     /// @notice Helper function to execute a single operation.
     function executeSingle(
         Vm.Wallet memory user,
@@ -455,5 +455,128 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     function executeBatch(Vm.Wallet memory user, Nexus userAccount, Execution[] memory executions, ExecType execType) internal {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
+    }
+
+    // function measureGasAndEmitLog(string memory logName, function() external fn) internal {
+    //     uint256 initialGas = gasleft();
+    //     fn();
+    //     uint256 gasUsed = initialGas - gasleft();
+    //     emit log_named_uint(logName, gasUsed);
+    // }
+
+    /// @notice Calculates the gas cost of the calldata
+    /// @param data The calldata
+    /// @return calldataGas The gas cost of the calldata
+    function calculateCalldataCost(bytes memory data) internal pure returns (uint256 calldataGas) {
+        for (uint256 i = 0; i < data.length; i++) {
+            if (uint8(data[i]) == 0) {
+                calldataGas += 4;
+            } else {
+                calldataGas += 16;
+            }
+        }
+    }
+
+    /// @notice Helper function to measure and log gas for simple EOA calls
+    /// @param description The description for the log
+    /// @param target The target contract address
+    /// @param value The value to be sent with the call
+    /// @param callData The calldata for the call
+    function measureAndLogGasEOA(string memory description, address target, uint256 value, bytes memory callData) internal {
+        uint256 calldataCost = 0;
+        for (uint256 i = 0; i < callData.length; i++) {
+            if (uint8(callData[i]) == 0) {
+                calldataCost += 4;
+            } else {
+                calldataCost += 16;
+            }
+        }
+
+        uint256 baseGas = 21000;
+
+        uint256 initialGas = gasleft();
+        (bool res, ) = target.call{ value: value }(callData);
+        uint256 gasUsed = initialGas - gasleft() + baseGas + calldataCost;
+        assertTrue(res);
+        emit log_named_uint(description, gasUsed);
+    }
+
+    /// @notice Helper function to calculate calldata cost and log gas usage
+    /// @param description The description for the log
+    /// @param userOps The user operations to be executed
+    function measureAndLogGas(string memory description, PackedUserOperation[] memory userOps) internal {
+        bytes memory callData = abi.encodeWithSelector(ENTRYPOINT.handleOps.selector, userOps, payable(BUNDLER.addr));
+
+        uint256 calldataCost = 0;
+        for (uint256 i = 0; i < callData.length; i++) {
+            if (uint8(callData[i]) == 0) {
+                calldataCost += 4;
+            } else {
+                calldataCost += 16;
+            }
+        }
+
+        uint256 baseGas = 21000;
+
+        uint256 initialGas = gasleft();
+        ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
+        uint256 gasUsed = initialGas - gasleft() + baseGas + calldataCost;
+        emit log_named_uint(description, gasUsed);
+    }
+
+    /// @notice Handles a user operation and measures gas usage
+    /// @param userOps The user operations to handle
+    /// @param refundReceiver The address to receive the gas refund
+    /// @return gasUsed The amount of gas used
+    function handleUserOpAndMeasureGas(PackedUserOperation[] memory userOps, address refundReceiver) internal returns (uint256 gasUsed) {
+        uint256 gasStart = gasleft();
+        ENTRYPOINT.handleOps(userOps, payable(refundReceiver));
+        gasUsed = gasStart - gasleft();
+    }
+
+    /// @notice Generates and signs the paymaster data for a user operation.
+    /// @dev This function prepares the `paymasterAndData` field for a `PackedUserOperation` with the correct signature.
+    /// @param userOp The user operation to be signed.
+    /// @param signer The wallet that will sign the paymaster hash.
+    /// @param paymaster The paymaster contract.
+    /// @return Updated `PackedUserOperation` with `paymasterAndData` field correctly set.
+    function generateAndSignPaymasterData(
+        PackedUserOperation memory userOp,
+        Vm.Wallet memory signer,
+        MockPaymaster paymaster
+    ) internal view returns (bytes memory) {
+        // Validity timestamps
+        uint48 validUntil = uint48(block.timestamp + 1 days);
+        uint48 validAfter = uint48(block.timestamp);
+
+        // Initial paymaster data with zero signature
+        bytes memory initialPmData = abi.encodePacked(
+            address(paymaster),
+            uint128(3e6), // Verification gas limit
+            uint128(0), // Post-operation gas limit
+            abi.encode(validUntil, validAfter),
+            new bytes(65) // Zero signature
+        );
+
+        // Update user operation with initial paymaster data
+        userOp.paymasterAndData = initialPmData;
+
+        // Generate hash to be signed
+        bytes32 paymasterHash = paymaster.getHash(userOp, validUntil, validAfter);
+
+        // Sign the hash
+        bytes memory paymasterSignature = signMessage(signer, paymasterHash);
+        require(paymasterSignature.length == 65, "Invalid Paymaster Signature length");
+
+        // Final paymaster data with the actual signature
+        bytes memory finalPmData = abi.encodePacked(
+            address(paymaster),
+            uint128(3e6), // Verification gas limit
+            uint128(0), // Post-operation gas limit
+            abi.encode(validUntil, validAfter),
+            paymasterSignature
+        );
+
+        return finalPmData;
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.24;
 
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
@@ -61,10 +61,6 @@ contract MockExecutor is IExecutor {
     }
 
     function getModuleTypes() external view returns (EncodedModuleTypes) {}
-
-    function test_() public pure {
-        // This function is used to ignore file in coverage report
-    }
 
     function isInitialized(address) external pure override returns (bool) {
         return false;

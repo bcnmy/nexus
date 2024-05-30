@@ -37,7 +37,7 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "../utils/erc7579Utils";
-import { Hex, hashTypedData, toBytes } from "viem";
+import { Hex, hashTypedData } from "viem";
 
 describe("Nexus Basic Specs", function () {
   let factory: K1ValidatorFactory;
@@ -126,7 +126,19 @@ describe("Nexus Basic Specs", function () {
     });
 
     it("Should get implementation address of smart account", async () => {
-      const saImplementation = await smartAccount.getImplementation();
+      const slot =
+        "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+      // Get the provider (default to Hardhat's local network)
+      const provider = ethers.provider;
+      // Make the eth_getStorageAt RPC call
+      const storageValue = await provider.send("eth_getStorageAt", [
+        smartAccountAddress,
+        slot,
+        "latest",
+      ]);
+      // Convert the storage value to an address
+      const saImplementation = ethers.getAddress(toHex(BigInt(storageValue)));
+      console.log("Implementation Address: ", saImplementation);
       expect(saImplementation).to.not.equal(ZeroAddress);
     });
 

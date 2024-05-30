@@ -20,6 +20,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
 
     /// @notice Sets up the initial test environment and forks the Arbitrum mainnet.
     function setUp() public {
+        address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
         uint mainnetFork = vm.createFork(getArbitrumRpcUrl());
         vm.selectFork(mainnetFork);
         vm.rollFork(209480000);
@@ -27,7 +28,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        newImplementation = new Nexus();
+        newImplementation = new Nexus(_ENTRYPOINT);
         // /!\ The private key is for testing purposes only and should not be used in production.
         signerPrivateKey = 0x2924d554c046e633f658427df4d0e7726487b1322bd16caaf24a53099f1cda85;
         signer = vm.createWallet(signerPrivateKey);
@@ -54,9 +55,10 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
         assertNotEq(beforeUpgradeImplementation, address(newImplementation), "Implementation address does not match before upgrade.");
         test_UpgradeV2ToV3AndInitialize();
-        // address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
-        // address expectedImplementation = address(newImplementation);
-        // assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
+        bytes32 SLOT = bytes32(uint256(uint160(SMART_ACCOUNT_V2_ADDRESS)));
+        address afterUpgradeImplementation = address(uint160(uint256(vm.load(SMART_ACCOUNT_V2_ADDRESS, SLOT)))); 
+        address expectedImplementation = address(newImplementation);
+        assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
     }
 
     /// @notice Tests USDC transfer functionality after the upgrade.
@@ -166,11 +168,5 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         op.maxFeePerGas = 3e6;
         op.maxPriorityFeePerGas = 3e6;
         op.paymasterAndData = "";
-    }
-
-    /// @notice Retrieves the Arbitrum RPC URL from the environment variable or defaults to the hardcoded URL
-    function getArbitrumRpcUrl() internal view returns (string memory) {
-        string memory rpcUrl = vm.envOr("ARBITRUM_RPC_URL", DEFAULT_ARBITRUM_RPC_URL);
-        return rpcUrl;
     }
 }

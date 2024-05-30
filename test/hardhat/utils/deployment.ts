@@ -304,6 +304,7 @@ export async function getDeployedNexusImplementation(): Promise<Nexus> {
   const Nexus = await ethers.getContractFactory("Nexus");
   const deterministicNexusImpl = await deployments.deploy("Nexus", {
     from: addresses[0],
+    args: [ENTRY_POINT_V7],
     deterministicDeployment: true,
   });
 
