@@ -120,7 +120,7 @@ describe("Nexus Basic Specs", function () {
     });
 
     it("Should get implementation address of smart account", async () => {
-      const slot =
+      /*const slot =
         "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
       // Get the provider (default to Hardhat's local network)
       const provider = ethers.provider;
@@ -131,7 +131,8 @@ describe("Nexus Basic Specs", function () {
         "latest",
       ]);
       // Convert the storage value to an address
-      const saImplementation = ethers.getAddress(toHex(BigInt(storageValue)));
+      const saImplementation = ethers.getAddress(toHex(BigInt(storageValue)));*/
+      const saImplementation = await smartAccount.getImplementation();
       console.log("Implementation Address: ", saImplementation);
       expect(saImplementation).to.not.equal(ZeroAddress);
     });
