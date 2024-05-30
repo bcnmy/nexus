@@ -41,7 +41,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
 
         // Decode and verify the return data
         bytes32 result = abi.decode(returnData, (bytes32));
-assertEq(result, keccak256("SUCCESS"));
+        assertEq(result, keccak256("SUCCESS"));
     }
 
     /// @notice Tests successful single call through the fallback handler.
