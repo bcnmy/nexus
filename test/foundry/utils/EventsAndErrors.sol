@@ -52,4 +52,7 @@ contract EventsAndErrors {
 
     // Fallback Errors
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
+
+    // Ownable Errors
+    error Unauthorized();
 }
