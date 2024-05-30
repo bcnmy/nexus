@@ -17,6 +17,11 @@ import {
   MockHook,
   MockHandler,
   Stakeable,
+  BiconomyMetaFactory,
+  NexusAccountFactory,
+  Bootstrap,
+  BootstrapUtil,
+  ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -53,6 +58,11 @@ export interface DeploymentFixtureWithSA {
   accounts: Signer[];
   addresses: string[];
   stakeable: Stakeable;
+  metaFactory: BiconomyMetaFactory;
+  nexusFactory: NexusAccountFactory;
+  bootstrap: Bootstrap;
+  bootstrapUtil: BootstrapUtil;
+  moduleWhitelistFactory: ModuleWhitelistFactory
 }
 
 // TODO: check for need of making these optional
