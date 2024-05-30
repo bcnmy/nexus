@@ -37,7 +37,7 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "../utils/erc7579Utils";
-import { Hex, hashTypedData } from "viem";
+import { Hex, hashTypedData, toHex } from "viem";
 
 describe("Nexus Basic Specs", function () {
   let factory: K1ValidatorFactory;
