@@ -19,6 +19,7 @@ contract EventsAndErrors {
     // General Errors
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
+    error EntryPointCannotBeZero();
     error ExecutionFailed();
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
