@@ -447,7 +447,6 @@ describe("Nexus Basic Specs", function () {
       const initCode = await getInitCode(
         ownerAddress,
         factoryAddress,
-        moduleAddress, // validatorAddress
         saDeploymentIndex,
       );
 
@@ -488,7 +487,6 @@ describe("Nexus Basic Specs", function () {
       const initCode = await getInitCode(
         ownerAddress,
         factoryAddress,
-        moduleAddress,
         saDeploymentIndex,
       );
       // Module initialization data, encoded

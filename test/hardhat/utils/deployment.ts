@@ -12,6 +12,7 @@ import {
   K1Validator,
   Nexus,
   Bootstrap,
+  Stakeable,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -246,6 +247,26 @@ export async function getDeployedNexusImplementation(): Promise<Nexus> {
 }
 
 /**
+ * Deploys the (Nexus) Smart Account implementation contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed SA implementation contract instance.
+ */
+export async function getDeployedStakeable(): Promise<Stakeable> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const Stakeable = await ethers.getContractFactory("Stakeable");
+  const deterministicInstance = await deployments.deploy("Stakeable", {
+    args: [addresses[0]], 
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return Stakeable.attach(deterministicInstance.address) as Stakeable
+}
+
+/**
  * Deploys the smart contract infrastructure required for testing.
  * This includes the all the required contracts for tests to run.
  *
@@ -350,6 +371,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const counter = await deployContract<Counter>("Counter", deployer);
 
+  const stakeable = await getDeployedStakeable();
+
   // Get the addresses of the deployed contracts
   const ownerAddress = await owner.getAddress();
   const aliceAddress = await alice.getAddress();
@@ -401,6 +424,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     mockToken,
     accounts,
     addresses,
+    stakeable
   };
 }
 
@@ -436,7 +460,6 @@ export async function getDeployedSmartAccountWithValidator(
 ): Promise<Nexus> {
   const ownerAddress = await signer.getAddress();
   // Module initialization data, encoded
-  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   const accountAddress = await accountFactory.computeAccountAddress(
     ownerAddress,

@@ -16,6 +16,7 @@ import {
   MockExecutor,
   MockHook,
   MockHandler,
+  Stakeable,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -51,6 +52,7 @@ export interface DeploymentFixtureWithSA {
   mockToken: MockToken;
   accounts: Signer[];
   addresses: string[];
+  stakeable: Stakeable;
 }
 
 // TODO: check for need of making these optional
