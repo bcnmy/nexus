@@ -16,13 +16,11 @@ import {
   MockExecutor,
   MockHook,
   MockHandler,
-  Bootstrap,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
-  bootstrap: Bootstrap;
   smartAccountImplementation: Nexus;
   msaFactory: K1ValidatorFactory;
   mockValidator: MockValidator;
@@ -36,9 +34,9 @@ export interface DeploymentFixture {
 export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  deployedMSA: Nexus;
-  aliceDeployedMSA: Nexus;
-  deployedMSAAddress: AddressLike;
+  deployedNexus: Nexus;
+  aliceDeployedNexus: Nexus;
+  deployedNexusAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
   msaFactory: K1ValidatorFactory;
@@ -99,7 +97,7 @@ export enum ModuleType {
 }
 
 export type ModuleParams = {
-  deployedMSA: Nexus;
+  deployedNexus: Nexus;
   entryPoint: EntryPoint;
   module: any;
   moduleType: ModuleType | number;

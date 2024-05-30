@@ -62,7 +62,7 @@ describe("Nexus Single Execution", () => {
     executorModule = setup.mockExecutor;
     smartAccountOwner = setup.accountOwner;
     alice = setup.aliceAccountOwner;
-    smartAccount = setup.deployedMSA;
+    smartAccount = setup.deployedNexus;
     counter = setup.counter;
     deployer = setup.deployer;
     mockToken = setup.mockToken;
@@ -439,7 +439,7 @@ describe("Nexus Single Execution", () => {
       const incrementNumber =
         counter.interface.encodeFunctionData("incrementNumber");
       await uninstallModule({
-        deployedMSA: smartAccount,
+        deployedNexus: smartAccount,
         entryPoint,
         module: executorModule,
         validatorModule: validatorModule,
@@ -501,7 +501,7 @@ describe("Nexus Single Execution", () => {
         counter.interface.encodeFunctionData("incrementNumber");
       const prevAddress = "0x0000000000000000000000000000000000000001";
       await uninstallModule({
-        deployedMSA: smartAccount,
+        deployedNexus: smartAccount,
         entryPoint,
         module: executorModule,
         validatorModule: validatorModule,

@@ -61,7 +61,7 @@ describe("Nexus Basic Specs", function () {
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    smartAccount = setup.deployedMSA;
+    smartAccount = setup.deployedNexus;
     factory = setup.msaFactory;
     accounts = setup.accounts;
     addresses = setup.addresses;

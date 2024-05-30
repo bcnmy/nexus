@@ -18,7 +18,7 @@ import {
 } from "../utils/operationHelpers";
 
 describe("K1Validator module tests", () => {
-  let deployedMSA: Nexus;
+  let deployedNexus: Nexus;
   let k1Validator: K1Validator;
   let owner: Signer;
   let ownerAddress: AddressLike;
@@ -32,7 +32,7 @@ describe("K1Validator module tests", () => {
 
   before(async function () {
     ({
-      deployedMSA,
+      deployedNexus,
       ecdsaValidator: k1Validator,
       mockExecutor,
       accountOwner,
@@ -50,7 +50,7 @@ describe("K1Validator module tests", () => {
 
     // Install K1Validator module
     await installModule({
-      deployedMSA,
+      deployedNexus,
       entryPoint,
       module: k1Validator,
       validatorModule: mockValidator,
@@ -63,7 +63,7 @@ describe("K1Validator module tests", () => {
   describe("K1Validtor tests", () => {
     it("should check if validator is installed", async () => {
       expect(
-        await deployedMSA.isModuleInstalled(
+        await deployedNexus.isModuleInstalled(
           ModuleType.Validation,
           k1ModuleAddress,
           ethers.hexlify("0x"),
@@ -88,13 +88,13 @@ describe("K1Validator module tests", () => {
 
     it("should check if module is initialized", async () => {
       const isInitialized = await k1Validator.isInitialized(
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
       );
       expect(isInitialized).to.equal(true);
     });
 
     it("should validateUserOp", async () => {
-      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+      const isModuleInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
         ethers.hexlify("0x"),
@@ -112,7 +112,7 @@ describe("K1Validator module tests", () => {
 
       // Build the userOp with the generated callData.
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData,
       });
       userOp.callData = callData;
@@ -137,7 +137,7 @@ describe("K1Validator module tests", () => {
     });
 
     it("should validateUserOp using an already prefixed personal sign", async () => {
-      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+      const isModuleInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
         ethers.hexlify("0x"),
@@ -155,7 +155,7 @@ describe("K1Validator module tests", () => {
 
       // Build the userOp with the generated callData.
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData,
       });
       userOp.callData = callData;
@@ -187,7 +187,7 @@ describe("K1Validator module tests", () => {
     });
 
     it("should fail on invalid user op", async () => {
-      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+      const isModuleInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
         ethers.hexlify("0x"),
@@ -205,7 +205,7 @@ describe("K1Validator module tests", () => {
 
       // Build the userOp with the generated callData.
       let userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData,
       });
       userOp.callData = callData;
@@ -236,7 +236,7 @@ describe("K1Validator module tests", () => {
     });
 
     it("should sign with eth_sign", async () => {
-      const isModuleInstalled = await deployedMSA.isModuleInstalled(
+      const isModuleInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         k1ModuleAddress,
         ethers.hexlify("0x"),
@@ -254,7 +254,7 @@ describe("K1Validator module tests", () => {
 
       // Build the userOp with the generated callData.
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData,
       });
       userOp.callData = callData;
@@ -276,7 +276,7 @@ describe("K1Validator module tests", () => {
 
     it("Should check signature using isValidSignatureWithSender", async () => {
       const message = "Some Message";
-      // const isValid = await k1Validator.isValidSignatureWithSender(await deployedMSA.getAddress(), , );
+      // const isValid = await k1Validator.isValidSignatureWithSender(await deployedNexus.getAddress(), , );
       // 0x1626ba7e - valid
       // 0xffffffff - invalid
     });

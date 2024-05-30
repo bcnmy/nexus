@@ -30,7 +30,7 @@ import {
 import { toBytes } from "viem";
 
 describe("Nexus Module Management Tests", () => {
-  let deployedMSA: Nexus;
+  let deployedNexus: Nexus;
   let mockValidator: MockValidator;
   let ecdsaValidator: K1Validator;
   let owner: Signer;
@@ -49,7 +49,7 @@ describe("Nexus Module Management Tests", () => {
 
   before(async function () {
     ({
-      deployedMSA,
+      deployedNexus,
       mockValidator,
       mockExecutor,
       accountOwner,
@@ -75,7 +75,7 @@ describe("Nexus Module Management Tests", () => {
 
   describe("Basic Module Management Tests", () => {
     it("Should correctly get installed validators", async () => {
-      const validators = await deployedMSA.getValidatorsPaginated(
+      const validators = await deployedNexus.getValidatorsPaginated(
         "0x0000000000000000000000000000000000000001",
         100,
       );
@@ -84,13 +84,13 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should correctly get installed executors", async () => {
-      let executors = await deployedMSA.getExecutorsPaginated(
+      let executors = await deployedNexus.getExecutorsPaginated(
         "0x0000000000000000000000000000000000000001",
         100,
       );
       expect(executors[0].length).to.be.equal(0);
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         validatorModule: mockValidator,
@@ -98,7 +98,7 @@ describe("Nexus Module Management Tests", () => {
         accountOwner,
         bundler,
       });
-      executors = await deployedMSA.getExecutorsPaginated(
+      executors = await deployedNexus.getExecutorsPaginated(
         "0x0000000000000000000000000000000000000001",
         100,
       );
@@ -109,7 +109,7 @@ describe("Nexus Module Management Tests", () => {
     it("Should throw if module type id is not valid", async () => {
       const invalidModuleType = 100;
       const response = await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         validatorModule: mockValidator,
@@ -124,13 +124,13 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should correctly get active hook", async () => {
-      const activeHook = await deployedMSA.getActiveHook();
+      const activeHook = await deployedNexus.getActiveHook();
       expect(activeHook).to.be.equal(ZeroAddress);
     });
 
     it("Should correctly get active fallback handler", async () => {
       const activeFallbackHandler =
-        await deployedMSA.getFallbackHandlerBySelector(
+        await deployedNexus.getFallbackHandlerBySelector(
           GENERIC_FALLBACK_SELECTOR,
         );
       // no fallback handler installed
@@ -141,7 +141,7 @@ describe("Nexus Module Management Tests", () => {
   describe("Validator Module Tests", () => {
     
     it("Should not be able to install wrong validator type", async () => {
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
           ModuleType.Validation,
@@ -151,17 +151,17 @@ describe("Nexus Module Management Tests", () => {
       );
       await expect(
         mockExecutor.executeViaAccount(
-          await deployedMSA.getAddress(),
-          await deployedMSA.getAddress(),
+          await deployedNexus.getAddress(),
+          await deployedNexus.getAddress(),
           0n,
           functionCalldata,
         ),
-      ).to.be.revertedWithCustomError(deployedMSA, "MismatchModuleTypeId");
+      ).to.be.revertedWithCustomError(deployedNexus, "MismatchModuleTypeId");
     });
 
     it("Should not be able to uninstall last validator   module", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Validation,
@@ -175,19 +175,19 @@ describe("Nexus Module Management Tests", () => {
 
       await expect(
         mockExecutor.executeViaAccount(
-          await deployedMSA.getAddress(),
-          await deployedMSA.getAddress(),
+          await deployedNexus.getAddress(),
+          await deployedNexus.getAddress(),
           0n,
           functionCalldata,
         ),
       ).to.be.revertedWithCustomError(
-        deployedMSA,
+        deployedNexus,
         "CannotRemoveLastValidator()",
       );
     });
 
     it("Should revert with AccountAccessUnauthorized", async () => {
-      const installModuleData = deployedMSA.interface.encodeFunctionData(
+      const installModuleData = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
           ModuleType.Validation,
@@ -198,10 +198,10 @@ describe("Nexus Module Management Tests", () => {
 
       const executionCalldata = ethers.solidityPacked(
         ["address", "uint256", "bytes"],
-        [await deployedMSA.getAddress(), "0", installModuleData],
+        [await deployedNexus.getAddress(), "0", installModuleData],
       );
 
-      await expect(deployedMSA.execute(ethers.concat([
+      await expect(deployedNexus.execute(ethers.concat([
         CALLTYPE_SINGLE,
         EXECTYPE_DEFAULT,
         MODE_DEFAULT,
@@ -216,7 +216,7 @@ describe("Nexus Module Management Tests", () => {
       // Current test this should be expected to be true as it's default enabled module
 
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         validatorModule: mockValidator,
@@ -225,7 +225,7 @@ describe("Nexus Module Management Tests", () => {
         bundler,
       });
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Execution,
         await mockExecutor.getAddress(),
         ethers.hexlify("0x"),
@@ -235,7 +235,7 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should revert with AccountAccessUnauthorized", async () => {
-      const installModuleData = deployedMSA.interface.encodeFunctionData(
+      const installModuleData = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Execution,
@@ -246,10 +246,10 @@ describe("Nexus Module Management Tests", () => {
 
       const executionCalldata = ethers.solidityPacked(
         ["address", "uint256", "bytes"],
-        [await deployedMSA.getAddress(), "0", installModuleData],
+        [await deployedNexus.getAddress(), "0", installModuleData],
       );
 
-      await expect(deployedMSA.execute(ethers.concat([
+      await expect(deployedNexus.execute(ethers.concat([
         CALLTYPE_SINGLE,
         EXECTYPE_DEFAULT,
         MODE_DEFAULT,
@@ -261,7 +261,7 @@ describe("Nexus Module Management Tests", () => {
     it("Should not be able to uninstall a module which is not installed", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
       const randomAddress = await ethers.Wallet.createRandom().getAddress();
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Execution,
@@ -275,8 +275,8 @@ describe("Nexus Module Management Tests", () => {
 
       await expect(
         mockExecutor.executeViaAccount(
-          await deployedMSA.getAddress(),
-          await deployedMSA.getAddress(),
+          await deployedNexus.getAddress(),
+          await deployedNexus.getAddress(),
           0n,
           functionCalldata,
         ),
@@ -285,7 +285,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should correctly uninstall a previously installed execution module by using the execution module itself", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Execution,
@@ -298,13 +298,13 @@ describe("Nexus Module Management Tests", () => {
       );
 
       await mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         functionCalldata,
       );
 
-      const isInstalled = await deployedMSA.isModuleInstalled(
+      const isInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Execution,
         await mockExecutor.getAddress(),
         ethers.hexlify("0x"),
@@ -315,7 +315,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should correctly uninstall a previously installed execution module via entryPoint", async () => {
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         moduleType: ModuleType.Execution,
@@ -324,7 +324,7 @@ describe("Nexus Module Management Tests", () => {
         bundler,
       });
 
-      const isInstalledBefore = await deployedMSA.isModuleInstalled(
+      const isInstalledBefore = await deployedNexus.isModuleInstalled(
         ModuleType.Execution,
         await mockExecutor.getAddress(),
         ethers.hexlify("0x"),
@@ -336,7 +336,7 @@ describe("Nexus Module Management Tests", () => {
 
       const uninstallModuleData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
-        targetContract: deployedMSA,
+        targetContract: deployedNexus,
         functionName: "uninstallModule",
         args: [
           ModuleType.Execution,
@@ -349,7 +349,7 @@ describe("Nexus Module Management Tests", () => {
       });
 
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData: uninstallModuleData,
       });
 
@@ -366,12 +366,12 @@ describe("Nexus Module Management Tests", () => {
       userOp.signature = signature;
 
       const balance = await ethers.provider.getBalance(
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
       );
 
       await entryPoint.handleOps([userOp], await bundler.getAddress());
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Execution,
         await mockExecutor.getAddress(),
         ethers.hexlify("0x"),
@@ -384,7 +384,7 @@ describe("Nexus Module Management Tests", () => {
   describe("Hook Module Tests", () => {
     it("Should correctly install a hook module on the smart account", async () => {
       expect(
-        await deployedMSA.isModuleInstalled(
+        await deployedNexus.isModuleInstalled(
           ModuleType.Hooks,
           hookModuleAddress,
           ethers.hexlify("0x"),
@@ -392,7 +392,7 @@ describe("Nexus Module Management Tests", () => {
       ).to.be.false;
 
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockHook,
         validatorModule: mockValidator,
@@ -401,13 +401,13 @@ describe("Nexus Module Management Tests", () => {
         bundler,
       });
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Hooks,
         hookModuleAddress,
         ethers.hexlify("0x"),
       );
 
-      const activeHook = await deployedMSA.getActiveHook();
+      const activeHook = await deployedNexus.getActiveHook();
 
       expect(activeHook).to.equal(await mockHook.getAddress());
       expect(isInstalledAfter).to.be.true;
@@ -415,7 +415,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should throw ModuleAlreadyInstalled if trying to install the same hook again.", async () => {
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         moduleType: ModuleType.Execution,
@@ -425,14 +425,14 @@ describe("Nexus Module Management Tests", () => {
       });
 
       expect(
-        await deployedMSA.isModuleInstalled(
+        await deployedNexus.isModuleInstalled(
           ModuleType.Execution,
           await mockExecutor.getAddress(),
           ethers.hexlify("0x"),
         ),
       ).to.be.true;
       
-      const installHookData = deployedMSA.interface.encodeFunctionData(
+      const installHookData = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
           ModuleType.Hooks,
@@ -442,23 +442,23 @@ describe("Nexus Module Management Tests", () => {
       );
       
       await expect (mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         installHookData,
-      )).to.be.revertedWithCustomError(deployedMSA, "ModuleAlreadyInstalled");
+      )).to.be.revertedWithCustomError(deployedNexus, "ModuleAlreadyInstalled");
     });
 
     it("Should throw HookAlreadyInstalled if trying to install two different hooks", async () => {
       expect(
-        await deployedMSA.isModuleInstalled(
+        await deployedNexus.isModuleInstalled(
           ModuleType.Hooks,
           hookModuleAddress,
           ethers.hexlify("0x"),
         ),
       ).to.be.true;
 
-      const installSecondHook = deployedMSA.interface.encodeFunctionData(
+      const installSecondHook = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
           ModuleType.Hooks,
@@ -468,17 +468,17 @@ describe("Nexus Module Management Tests", () => {
       );
       
       await expect (mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         installSecondHook,
-      )).to.be.revertedWithCustomError(deployedMSA, "HookAlreadyInstalled");
+      )).to.be.revertedWithCustomError(deployedNexus, "HookAlreadyInstalled");
     });
 
     it("Should correctly uninstall a previously installed hook module by using the execution module", async () => {
       let prevAddress = "0x0000000000000000000000000000000000000001";
 
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Hooks,
@@ -492,7 +492,7 @@ describe("Nexus Module Management Tests", () => {
 
       // Need to install the executor module back on the smart account
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockExecutor,
         moduleType: ModuleType.Execution,
@@ -502,13 +502,13 @@ describe("Nexus Module Management Tests", () => {
       });
 
       await mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         functionCalldata,
       );
 
-      const isInstalled = await deployedMSA.isModuleInstalled(
+      const isInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Hooks,
         hookModuleAddress,
         ethers.hexlify("0x"),
@@ -519,7 +519,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should correctly uninstall a previously installed hook module via entryPoint", async () => {
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockHook,
         moduleType: ModuleType.Hooks,
@@ -528,7 +528,7 @@ describe("Nexus Module Management Tests", () => {
         bundler,
       });
 
-      const isInstalledBefore = await deployedMSA.isModuleInstalled(
+      const isInstalledBefore = await deployedNexus.isModuleInstalled(
         ModuleType.Hooks,
         hookModuleAddress,
         ethers.hexlify("0x"),
@@ -541,7 +541,7 @@ describe("Nexus Module Management Tests", () => {
 
       const uninstallModuleData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
-        targetContract: deployedMSA,
+        targetContract: deployedNexus,
         functionName: "uninstallModule",
         args: [
           ModuleType.Hooks,
@@ -554,7 +554,7 @@ describe("Nexus Module Management Tests", () => {
       });
 
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData: uninstallModuleData,
       });
 
@@ -572,7 +572,7 @@ describe("Nexus Module Management Tests", () => {
 
       await entryPoint.handleOps([userOp], await bundler.getAddress());
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Hooks,
         hookModuleAddress,
         ethers.hexlify("0x"),
@@ -586,7 +586,7 @@ describe("Nexus Module Management Tests", () => {
   describe("Fallback Handler Module Tests", () => {
     it("Should correctly install a fallback handler module on the smart account", async () => {
       expect(
-        await deployedMSA.isModuleInstalled(
+        await deployedNexus.isModuleInstalled(
           ModuleType.Fallback,
           mockFallbackHandlerAddress,
           encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
@@ -595,7 +595,7 @@ describe("Nexus Module Management Tests", () => {
       ).to.be.false;
 
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockFallbackHandler,
         validatorModule: mockValidator,
@@ -605,7 +605,7 @@ describe("Nexus Module Management Tests", () => {
         data: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       });
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Fallback,
         mockFallbackHandlerAddress,
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
@@ -615,7 +615,7 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should correctly install a fallback handler module on the smart account", async () => {
-      const exampleSender = await deployedMSA.getAddress();
+      const exampleSender = await deployedNexus.getAddress();
       const exampleValue = 12345;
       const exampleData = toBytes("0x12345678");
 
@@ -623,7 +623,7 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should correctly uninstall a previously installed fallback handler module by using the execution module", async () => {
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Fallback,
@@ -633,13 +633,13 @@ describe("Nexus Module Management Tests", () => {
       );
 
       await mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         functionCalldata,
       );
 
-      const isInstalled = await deployedMSA.isModuleInstalled(
+      const isInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Fallback,
         mockFallbackHandlerAddress,
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
@@ -650,7 +650,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should correctly uninstall a previously installed validation module", async () => {
 
-      const installModuleFuncCalldata = deployedMSA.interface.encodeFunctionData(
+      const installModuleFuncCalldata = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
           ModuleType.Validation,
@@ -660,13 +660,13 @@ describe("Nexus Module Management Tests", () => {
       );
      
       await mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         installModuleFuncCalldata,
       );
 
-      const isInstalledFirst = await deployedMSA.isModuleInstalled(
+      const isInstalledFirst = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         await ecdsaValidator.getAddress(),
         encodeData(
@@ -679,7 +679,7 @@ describe("Nexus Module Management Tests", () => {
       expect(isInstalledFirst).to.be.true;
 
       let prevAddress = "0x0000000000000000000000000000000000000001";
-      const functionCalldata = deployedMSA.interface.encodeFunctionData(
+      const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "uninstallModule",
         [
           ModuleType.Validation,
@@ -692,13 +692,13 @@ describe("Nexus Module Management Tests", () => {
       );
 
       await mockExecutor.executeViaAccount(
-        await deployedMSA.getAddress(),
-        await deployedMSA.getAddress(),
+        await deployedNexus.getAddress(),
+        await deployedNexus.getAddress(),
         0n,
         functionCalldata,
       );
 
-      const isInstalled = await deployedMSA.isModuleInstalled(
+      const isInstalled = await deployedNexus.isModuleInstalled(
         ModuleType.Validation,
         await ecdsaValidator.getAddress(),
         encodeData(
@@ -712,7 +712,7 @@ describe("Nexus Module Management Tests", () => {
 
     it("Should correctly uninstall a previously installed fallback handler module via entryPoint", async () => {
       await installModule({
-        deployedMSA,
+        deployedNexus,
         entryPoint,
         module: mockFallbackHandler,
         moduleType: ModuleType.Fallback,
@@ -722,7 +722,7 @@ describe("Nexus Module Management Tests", () => {
         data: encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       });
 
-      const isInstalledBefore = await deployedMSA.isModuleInstalled(
+      const isInstalledBefore = await deployedNexus.isModuleInstalled(
         ModuleType.Fallback,
         mockFallbackHandlerAddress,
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
@@ -733,7 +733,7 @@ describe("Nexus Module Management Tests", () => {
 
       const uninstallModuleData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
-        targetContract: deployedMSA,
+        targetContract: deployedNexus,
         functionName: "uninstallModule",
         args: [
           ModuleType.Fallback,
@@ -743,7 +743,7 @@ describe("Nexus Module Management Tests", () => {
       });
 
       const userOp = buildPackedUserOp({
-        sender: await deployedMSA.getAddress(),
+        sender: await deployedNexus.getAddress(),
         callData: uninstallModuleData,
       });
 
@@ -761,7 +761,7 @@ describe("Nexus Module Management Tests", () => {
 
       await entryPoint.handleOps([userOp], await bundler.getAddress());
 
-      const isInstalledAfter = await deployedMSA.isModuleInstalled(
+      const isInstalledAfter = await deployedNexus.isModuleInstalled(
         ModuleType.Fallback,
         mockFallbackHandlerAddress,
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),

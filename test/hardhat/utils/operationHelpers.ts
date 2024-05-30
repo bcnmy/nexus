@@ -6,7 +6,6 @@ import {
   AddressLike,
   BytesLike,
   BigNumberish,
-  hexlify,
   toBeHex,
 } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
@@ -189,12 +188,10 @@ export async function fillSignAndPack(
 export async function getInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
-  validatorAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
   const K1ValidatorFactory =
     await ethers.getContractFactory("K1ValidatorFactory");
-  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   // Encode the createAccount function call with the provided parameters
   const factoryDeploymentData = K1ValidatorFactory.interface
