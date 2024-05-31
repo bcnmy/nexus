@@ -34,7 +34,7 @@ jobs:
         run: yarn install
 
       - name: Run gas report script
-        run: node generateGasReport.js
+        run: node scripts/foundry/generateGasReport.js
 
       - name: Upload gas report artifact
         uses: actions/upload-artifact@v4
@@ -65,7 +65,7 @@ jobs:
 
       - name: Compare gas reports
         run: |
-          node compareGasReports.js previous_gas_report/GAS_REPORT.md current_gas_report/GAS_REPORT.md > gas_report_diff.md
+          node scripts/foundry/compareGasReports.js previous_gas_report/GAS_REPORT.md current_gas_report/GAS_REPORT.md > gas_report_diff.md
         id: compare-gas-reports
 
       - name: Upload gas report comparison
@@ -80,6 +80,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           header: Gas Report Comparison
           message: |
+            ## Gas Report Comparison
             ```diff
             ${{ steps.compare-gas-reports.outputs.gas_report_diff }}
             ```
