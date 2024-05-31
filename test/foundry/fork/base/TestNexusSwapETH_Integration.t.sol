@@ -66,7 +66,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         path[1] = address(usdc);
 
         measureAndLogGasEOA(
-            "UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A",
+            "41::UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A",
             address(uniswapV2Router),
             SWAP_AMOUNT,
             abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, path, swapper, block.timestamp)
@@ -93,7 +93,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
+        measureAndLogGas("42::UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
@@ -133,7 +133,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         // Measure and log gas usage for the operation
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
+        measureAndLogGas("43::UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC using deposit
@@ -167,7 +167,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A", userOps);
+        measureAndLogGas("44::UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap
@@ -204,7 +204,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
+        measureAndLogGas("45::UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
     }
 
     /// @notice Tests gas consumption for swapping ETH for USDC using a deployed Nexus account with Paymaster
@@ -245,7 +245,7 @@ function test_Gas_Swap_DeployedNexus_SwapEthForTokens_WithPaymaster()
     userOps[0].signature = signUserOp(user, userOps[0]);
 
     // Measure and log gas usage for the operation
-    measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
+    measureAndLogGas("46::UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
 }
 
 
