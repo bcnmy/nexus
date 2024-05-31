@@ -299,7 +299,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
-    /// @notice Updates two slots 1. 1967 slot and 2. address() slot in case if it's upgraded earlier from Biconomy V2 account.
+    /// @notice Updates two slots 1. ERC1967 slot and 
+    /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
+    /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
     function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
