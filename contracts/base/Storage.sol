@@ -25,7 +25,20 @@ import { IStorage } from "../interfaces/base/IStorage.sol";
 contract Storage is IStorage {
     /// @custom:storage-location erc7201:biconomy.storage.Nexus
     /// ERC-7201 namespaced via `keccak256(abi.encode(uint256(keccak256(bytes("biconomy.storage.Nexus"))) - 1)) & ~bytes32(uint256(0xff));`
-    bytes32 private constant _STORAGE_LOCATION = 0x0bb70095b32b9671358306b0339b4c06e7cbd8cb82505941fba30d1eb5b82f00;
+    bytes32 internal constant _STORAGE_LOCATION = 0x0bb70095b32b9671358306b0339b4c06e7cbd8cb82505941fba30d1eb5b82f00;
+
+    /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
+    ///      cross-account-replay layer.
+    ///
+    ///      The original hash must either be:
+    ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
+    ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
+    bytes32 internal constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
+
+    address internal immutable _SELF;
+
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @dev Utilizes ERC-7201's namespaced storage pattern for isolated storage access. This method computes
     /// the storage slot based on a predetermined location, ensuring collision-resistant storage for contract states.
