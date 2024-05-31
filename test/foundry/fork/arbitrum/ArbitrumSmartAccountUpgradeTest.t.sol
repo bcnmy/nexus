@@ -55,9 +55,10 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
         assertNotEq(beforeUpgradeImplementation, address(newImplementation), "Implementation address does not match before upgrade.");
         test_UpgradeV2ToV3AndInitialize();
-        // address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
-        // address expectedImplementation = address(newImplementation);
-        // assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
+        bytes32 SLOT = bytes32(uint256(uint160(SMART_ACCOUNT_V2_ADDRESS)));
+        address afterUpgradeImplementation = address(uint160(uint256(vm.load(SMART_ACCOUNT_V2_ADDRESS, SLOT)))); 
+        address expectedImplementation = address(newImplementation);
+        assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
     }
 
     /// @notice Tests USDC transfer functionality after the upgrade.
