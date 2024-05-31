@@ -19,7 +19,7 @@ import { Bootstrap, BootstrapConfig } from "../utils/Bootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 
 /// @title Nexus - K1ValidatorFactory for Nexus account
-contract K1ValidatorFactory is BootstrapUtil, Stakeable {
+contract K1ValidatorFactory is Stakeable, BootstrapUtil {
     /// @notice Stores the implementation contract address used to create new Nexus instances.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
     address public immutable ACCOUNT_IMPLEMENTATION;
