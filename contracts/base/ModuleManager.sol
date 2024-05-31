@@ -31,7 +31,7 @@ import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManager
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
+contract ModuleManager is IModuleManagerEventsAndErrors, Receiver, Storage {
     using SentinelListLib for SentinelListLib.SentinelList;
 
     /// @notice Ensures the message sender is a registered executor module.
