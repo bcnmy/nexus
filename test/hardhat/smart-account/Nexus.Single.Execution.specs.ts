@@ -56,7 +56,7 @@ describe("Nexus Single Execution", () => {
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    factory = setup.msaFactory;
+    factory = setup.nexusK1Factory;
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
@@ -164,21 +164,30 @@ describe("Nexus Single Execution", () => {
     });
 
     it("Should revert with AccountAccessUnauthorized, execute", async () => {
-      const functionCallData = counter.interface.encodeFunctionData("incrementNumber");
+      const functionCallData =
+        counter.interface.encodeFunctionData("incrementNumber");
 
       const executionCalldata = ethers.solidityPacked(
         ["address", "uint256", "bytes"],
         [await counter.getAddress(), "0", functionCallData],
       );
 
-      // expect this function call to revert 
-      await expect(smartAccount.execute(ethers.concat([
-        CALLTYPE_SINGLE,
-        EXECTYPE_DEFAULT,
-        MODE_DEFAULT,
-        UNUSED,
-        MODE_PAYLOAD,
-      ]), executionCalldata)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+      // expect this function call to revert
+      await expect(
+        smartAccount.execute(
+          ethers.concat([
+            CALLTYPE_SINGLE,
+            EXECTYPE_DEFAULT,
+            MODE_DEFAULT,
+            UNUSED,
+            MODE_PAYLOAD,
+          ]),
+          executionCalldata,
+        ),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
     });
 
     it("Should revert with AccountAccessUnauthorized, executeUserOp", async function () {
@@ -194,8 +203,10 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const validatorModuleAddress = await validatorModule.getAddress()
-      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
+      const validatorModuleAddress = await validatorModule.getAddress();
+      const nonce = await smartAccount.nonce(
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
 
       userOp.nonce = nonce;
 
@@ -207,9 +218,13 @@ describe("Nexus Single Execution", () => {
 
       userOp.signature = signature;
 
-      await expect(smartAccount.executeUserOp(userOp, userOpHash)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+      await expect(
+        smartAccount.executeUserOp(userOp, userOpHash),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
     });
-
 
     it("Should execute an empty transaction through handleOps", async () => {
       const isOwner = await validatorModule.isOwner(

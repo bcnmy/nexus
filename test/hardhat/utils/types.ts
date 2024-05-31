@@ -28,7 +28,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  msaFactory: K1ValidatorFactory;
+  nexusFactory: K1ValidatorFactory;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
   counter: Counter;
@@ -45,7 +45,7 @@ export interface DeploymentFixtureWithSA {
   deployedNexusAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  msaFactory: K1ValidatorFactory;
+  nexusK1Factory: K1ValidatorFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
@@ -62,7 +62,7 @@ export interface DeploymentFixtureWithSA {
   nexusFactory: NexusAccountFactory;
   bootstrap: Bootstrap;
   bootstrapUtil: BootstrapUtil;
-  moduleWhitelistFactory: ModuleWhitelistFactory
+  moduleWhitelistFactory: ModuleWhitelistFactory;
 }
 
 // TODO: check for need of making these optional

@@ -139,7 +139,6 @@ describe("Nexus Module Management Tests", () => {
   });
 
   describe("Validator Module Tests", () => {
-    
     it("Should not be able to install wrong validator type", async () => {
       const functionCalldata = deployedNexus.interface.encodeFunctionData(
         "installModule",
@@ -201,13 +200,18 @@ describe("Nexus Module Management Tests", () => {
         [await deployedNexus.getAddress(), "0", installModuleData],
       );
 
-      await expect(deployedNexus.execute(ethers.concat([
-        CALLTYPE_SINGLE,
-        EXECTYPE_DEFAULT,
-        MODE_DEFAULT,
-        UNUSED,
-        MODE_PAYLOAD,
-      ]), executionCalldata)).to.be.reverted
+      await expect(
+        deployedNexus.execute(
+          ethers.concat([
+            CALLTYPE_SINGLE,
+            EXECTYPE_DEFAULT,
+            MODE_DEFAULT,
+            UNUSED,
+            MODE_PAYLOAD,
+          ]),
+          executionCalldata,
+        ),
+      ).to.be.reverted;
     });
   });
 
@@ -249,13 +253,18 @@ describe("Nexus Module Management Tests", () => {
         [await deployedNexus.getAddress(), "0", installModuleData],
       );
 
-      await expect(deployedNexus.execute(ethers.concat([
-        CALLTYPE_SINGLE,
-        EXECTYPE_DEFAULT,
-        MODE_DEFAULT,
-        UNUSED,
-        MODE_PAYLOAD,
-      ]), executionCalldata)).to.be.reverted
+      await expect(
+        deployedNexus.execute(
+          ethers.concat([
+            CALLTYPE_SINGLE,
+            EXECTYPE_DEFAULT,
+            MODE_DEFAULT,
+            UNUSED,
+            MODE_PAYLOAD,
+          ]),
+          executionCalldata,
+        ),
+      ).to.be.reverted;
     });
 
     it("Should not be able to uninstall a module which is not installed", async () => {
@@ -431,7 +440,7 @@ describe("Nexus Module Management Tests", () => {
           ethers.hexlify("0x"),
         ),
       ).to.be.true;
-      
+
       const installHookData = deployedNexus.interface.encodeFunctionData(
         "installModule",
         [
@@ -440,13 +449,15 @@ describe("Nexus Module Management Tests", () => {
           ethers.hexlify(await accountOwner.getAddress()),
         ],
       );
-      
-      await expect (mockExecutor.executeViaAccount(
-        await deployedNexus.getAddress(),
-        await deployedNexus.getAddress(),
-        0n,
-        installHookData,
-      )).to.be.revertedWithCustomError(deployedNexus, "ModuleAlreadyInstalled");
+
+      await expect(
+        mockExecutor.executeViaAccount(
+          await deployedNexus.getAddress(),
+          await deployedNexus.getAddress(),
+          0n,
+          installHookData,
+        ),
+      ).to.be.revertedWithCustomError(deployedNexus, "ModuleAlreadyInstalled");
     });
 
     it("Should throw HookAlreadyInstalled if trying to install two different hooks", async () => {
@@ -466,13 +477,15 @@ describe("Nexus Module Management Tests", () => {
           ethers.hexlify(await accountOwner.getAddress()),
         ],
       );
-      
-      await expect (mockExecutor.executeViaAccount(
-        await deployedNexus.getAddress(),
-        await deployedNexus.getAddress(),
-        0n,
-        installSecondHook,
-      )).to.be.revertedWithCustomError(deployedNexus, "HookAlreadyInstalled");
+
+      await expect(
+        mockExecutor.executeViaAccount(
+          await deployedNexus.getAddress(),
+          await deployedNexus.getAddress(),
+          0n,
+          installSecondHook,
+        ),
+      ).to.be.revertedWithCustomError(deployedNexus, "HookAlreadyInstalled");
     });
 
     it("Should correctly uninstall a previously installed hook module by using the execution module", async () => {
@@ -619,7 +632,15 @@ describe("Nexus Module Management Tests", () => {
       const exampleValue = 12345;
       const exampleData = toBytes("0x12345678");
 
-      await expect(mockFallbackHandler.onGenericFallback(exampleSender, exampleValue, exampleData)).to.emit(mockFallbackHandler, "GenericFallbackCalled").withArgs(exampleSender, exampleValue, exampleData);
+      await expect(
+        mockFallbackHandler.onGenericFallback(
+          exampleSender,
+          exampleValue,
+          exampleData,
+        ),
+      )
+        .to.emit(mockFallbackHandler, "GenericFallbackCalled")
+        .withArgs(exampleSender, exampleValue, exampleData);
     });
 
     it("Should correctly uninstall a previously installed fallback handler module by using the execution module", async () => {
@@ -649,16 +670,13 @@ describe("Nexus Module Management Tests", () => {
     });
 
     it("Should correctly uninstall a previously installed validation module", async () => {
-
-      const installModuleFuncCalldata = deployedNexus.interface.encodeFunctionData(
-        "installModule",
-        [
+      const installModuleFuncCalldata =
+        deployedNexus.interface.encodeFunctionData("installModule", [
           ModuleType.Validation,
           await ecdsaValidator.getAddress(),
           ethers.hexlify(await accountOwner.getAddress()),
-        ],
-      );
-     
+        ]);
+
       await mockExecutor.executeViaAccount(
         await deployedNexus.getAddress(),
         await deployedNexus.getAddress(),
@@ -671,7 +689,10 @@ describe("Nexus Module Management Tests", () => {
         await ecdsaValidator.getAddress(),
         encodeData(
           ["address", "bytes"],
-          [await mockValidator.getAddress(), ethers.hexlify(ethers.toUtf8Bytes(""))],
+          [
+            await mockValidator.getAddress(),
+            ethers.hexlify(ethers.toUtf8Bytes("")),
+          ],
         ),
       );
 

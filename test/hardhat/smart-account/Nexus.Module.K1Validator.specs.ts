@@ -21,7 +21,6 @@ describe("K1Validator module tests", () => {
   let deployedNexus: Nexus;
   let k1Validator: K1Validator;
   let owner: Signer;
-  let ownerAddress: AddressLike;
   let mockValidator: MockValidator;
   let k1ModuleAddress: AddressLike;
   let mockExecutor: MockExecutor;
@@ -41,7 +40,6 @@ describe("K1Validator module tests", () => {
       counter,
     } = await deployContractsAndSAFixture());
     owner = ethers.Wallet.createRandom();
-    ownerAddress = await owner.getAddress();
     k1ModuleAddress = await k1Validator.getAddress();
     mockExecutor = mockExecutor;
     accountOwner = accountOwner;
@@ -181,7 +179,10 @@ describe("K1Validator module tests", () => {
       // Compute the keccak256 hash
       const personalSignHash = ethers.keccak256(concatBuffer);
 
-      const isValid = await k1Validator.validateUserOp(userOp, personalSignHash);
+      const isValid = await k1Validator.validateUserOp(
+        userOp,
+        personalSignHash,
+      );
       // 0 - valid, 1 - invalid
       expect(isValid).to.equal(0n);
     });

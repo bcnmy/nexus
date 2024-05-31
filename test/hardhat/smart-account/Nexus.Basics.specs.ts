@@ -62,7 +62,7 @@ describe("Nexus Basic Specs", function () {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
     smartAccount = setup.deployedNexus;
-    factory = setup.msaFactory;
+    factory = setup.nexusK1Factory;
     accounts = setup.accounts;
     addresses = setup.addresses;
     counter = setup.counter;
@@ -143,7 +143,9 @@ describe("Nexus Basic Specs", function () {
     });
 
     it("Should get smart account nonce", async () => {
-      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(moduleAddress.toString(), 24));
+      const nonce = await smartAccount.nonce(
+        ethers.zeroPadBytes(moduleAddress.toString(), 24),
+      );
       expect(nonce).to.be.greaterThanOrEqual(0);
     });
 
@@ -166,36 +168,35 @@ describe("Nexus Basic Specs", function () {
     it("Should get hashed typed data", async () => {
       const hash = hashTypedData({
         domain: {
-          name: 'Nexus',
-          version: '1',
+          name: "Nexus",
+          version: "1",
           chainId: 1,
-          verifyingContract: smartAccountAddress as Hex, 
-        
+          verifyingContract: smartAccountAddress as Hex,
         },
-        types: { 
+        types: {
           Person: [
-            { name: 'name', type: 'string' },
-            { name: 'wallet', type: 'address' },
+            { name: "name", type: "string" },
+            { name: "wallet", type: "address" },
           ],
           Mail: [
-            { name: 'from', type: 'Person' },
-            { name: 'to', type: 'Person' },
-            { name: 'contents', type: 'string' },
+            { name: "from", type: "Person" },
+            { name: "to", type: "Person" },
+            { name: "contents", type: "string" },
           ],
         },
-        primaryType: 'Mail',
+        primaryType: "Mail",
         message: {
           from: {
-            name: 'Cow',
-            wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+            name: "Cow",
+            wallet: "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
           },
           to: {
-            name: 'Bob',
-            wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+            name: "Bob",
+            wallet: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
           },
-          contents: 'Hello, Bob!',
+          contents: "Hello, Bob!",
         },
-      })
+      });
       const hashedTypedData = await smartAccount.hashTypedData(hash);
       expect(hashedTypedData).to.not.be.undefined;
     });
@@ -362,7 +363,7 @@ describe("Nexus Basic Specs", function () {
     //   expect(isModuleInstalled).to.be.true;
 
     //   // 1. Convert foundry util to ts code (as below)
-    //   // 2. Or try this and communicate and seek help: https://pastebin.com/EVQxRH3n 
+    //   // 2. Or try this and communicate and seek help: https://pastebin.com/EVQxRH3n
 
     //   const data = keccak256("0x1234")
 
@@ -416,7 +417,7 @@ describe("Nexus Basic Specs", function () {
     //     messageHash,
     //     solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature])
     //   );
-      
+
     //   expect(isValid).to.equal("0x1626ba7e");
     // });
   });
@@ -435,8 +436,10 @@ describe("Nexus Basic Specs", function () {
       });
       userOp.callData = callData;
 
-      const validatorModuleAddress = await validatorModule.getAddress()
-      const nonce = await smartAccount.nonce(ethers.zeroPadBytes(validatorModuleAddress.toString(), 24));
+      const validatorModuleAddress = await validatorModule.getAddress();
+      const nonce = await smartAccount.nonce(
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
 
       userOp.nonce = nonce;
 
@@ -448,7 +451,12 @@ describe("Nexus Basic Specs", function () {
 
       userOp.signature = signature;
 
-      await expect(smartAccount.validateUserOp(userOp, userOpHash, 0n)).to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+      await expect(
+        smartAccount.validateUserOp(userOp, userOpHash, 0n),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
     });
   });
 

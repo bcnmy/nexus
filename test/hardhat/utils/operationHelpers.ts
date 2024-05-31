@@ -1,13 +1,7 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import {
-  Signer,
-  AddressLike,
-  BytesLike,
-  BigNumberish,
-  toBeHex,
-} from "ethers";
+import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
