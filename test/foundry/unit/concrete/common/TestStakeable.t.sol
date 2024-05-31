@@ -30,7 +30,7 @@ contract TestStakeable is NexusTest_Base {
         uint256 amount = 1 ether;
 
         // Add stake
-        stakeable.addStake{value: amount}(address(entryPoint), 1000);
+        stakeable.addStake{ value: amount }(address(entryPoint), 1000);
 
         // Get updated stake info
         IStakeManager.DepositInfo memory updatedInfo = entryPoint.getDepositInfo(address(stakeable));
@@ -43,14 +43,14 @@ contract TestStakeable is NexusTest_Base {
     /// @notice Tests that addStake fails when called by a non-owner
     function test_AddStake_RevertIf_NotOwner() public {
         vm.expectRevert(Unauthorized.selector);
-        stakeable.addStake{value: 1 ether}(address(entryPoint), 100);
+        stakeable.addStake{ value: 1 ether }(address(entryPoint), 100);
     }
 
     /// @notice Tests that addStake fails with an invalid EntryPoint address
     function test_AddStake_RevertIf_InvalidEPAddress() public {
         vm.startPrank(owner);
         vm.expectRevert("Invalid EP address");
-        stakeable.addStake{value: 1 ether}(address(0), 100);
+        stakeable.addStake{ value: 1 ether }(address(0), 100);
         vm.stopPrank();
     }
 
@@ -59,7 +59,7 @@ contract TestStakeable is NexusTest_Base {
         vm.startPrank(owner);
 
         // Add stake first to unlock it later
-        stakeable.addStake{value: 1 ether}(address(entryPoint), 100);
+        stakeable.addStake{ value: 1 ether }(address(entryPoint), 100);
 
         // Unlock the stake
         stakeable.unlockStake(address(entryPoint));
@@ -90,7 +90,7 @@ contract TestStakeable is NexusTest_Base {
         address payable withdrawAddress = payable(address(0x456));
 
         // Add stake first to withdraw it later
-        stakeable.addStake{value: 1 ether}(address(entryPoint), 100);
+        stakeable.addStake{ value: 1 ether }(address(entryPoint), 100);
 
         // Unlock and wait for the unstake delay
         stakeable.unlockStake(address(entryPoint));
