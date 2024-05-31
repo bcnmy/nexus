@@ -213,31 +213,37 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
-        // Extracting the function selector from the parameters
+        // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
-        // Extracting the call type from the parameters
+        // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
 
-        // Extracting the initialization data from the parameters
+        // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
 
-        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3)
-        // These selectors are forbidden as they can lead to security vulnerabilities
-        // and unexpected behavior during fallback handler installation.
+        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3).
+        // These selectors are explicitly forbidden to prevent security vulnerabilities.
+        // Allowing these selectors would enable unauthorized users to uninstall and reinstall critical modules.
+        // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
+        // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
+        // cannot be manipulated to disrupt the expected behavior and security of the account.
         if (selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3)) {
             revert FallbackSelectorForbidden();
         }
 
-        // Revert if a fallback handler is already installed for the given selector
+        // Revert if a fallback handler is already installed for the given selector.
+        // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.
         if (_isFallbackHandlerInstalled(selector)) {
             revert FallbackAlreadyInstalledForSelector(selector);
         }
 
-        // Store the fallback handler and its call type in the account storage
+        // Store the fallback handler and its call type in the account storage.
+        // This maps the function selector to the specified fallback handler and call type.
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
 
-        // Invoke the `onInstall` function of the fallback handler with the provided initialization data
+        // Invoke the `onInstall` function of the fallback handler with the provided initialization data.
+        // This step allows the fallback handler to perform any necessary setup or initialization.
         IFallback(handler).onInstall(initData);
     }
 
