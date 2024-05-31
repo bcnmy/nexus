@@ -7,7 +7,11 @@ function compareGasReports(prevFile, currFile) {
     const prevLines = prevData.split('\n');
     const currLines = currData.split('\n');
 
-    const diffLines = ['# Gas Report Comparison', '| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |', '|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:------------------:|'];
+    const diffLines = [
+        '# Gas Report Comparison',
+        '| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |',
+        '|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:------------------:|'
+    ];
 
     const prevResults = parseGasReport(prevLines);
     const currResults = parseGasReport(currLines);
