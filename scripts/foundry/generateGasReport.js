@@ -2,12 +2,10 @@ const fs = require('fs');
 const readline = require('readline');
 const { exec } = require('child_process');
 
-// Define the log file, the output markdown file, and the previous report file
 const LOG_FILE = 'gas.log';
 const OUTPUT_FILE = 'GAS_REPORT.md';
-const PREVIOUS_REPORT_FILE = 'gas_report.json';
+const PREVIOUS_REPORT_FILE = 'previous_gas_report.json';
 
-// Function to execute the `forge test` command
 function runForgeTest() {
     return new Promise((resolve, reject) => {
         console.log('🚀 Running forge tests, this may take a few minutes...');
@@ -22,7 +20,6 @@ function runForgeTest() {
     });
 }
 
-// Function to parse the log file and generate the report
 async function generateReport() {
     await runForgeTest();
 
@@ -82,7 +79,6 @@ async function generateReport() {
         }
     }
 
-    // Load the previous report if it exists
     let previousResults = [];
     if (fs.existsSync(PREVIOUS_REPORT_FILE)) {
         const previousData = fs.readFileSync(PREVIOUS_REPORT_FILE, 'utf8');
@@ -90,10 +86,8 @@ async function generateReport() {
     }
 
     console.log('🔄 Sorting results...');
-    // Sort by NUMBER
     results.sort((a, b) => a.NUMBER - b.NUMBER);
 
-    // Calculate the difference in gas usage
     results.forEach(result => {
         const previousResult = previousResults.find(prev => prev.NUMBER === result.NUMBER);
         if (previousResult) {
@@ -106,7 +100,6 @@ async function generateReport() {
     });
 
     console.log('🖋️ Writing report...');
-    // Write the report
     const outputStream = fs.createWriteStream(OUTPUT_FILE);
     outputStream.write("# Gas Report\n");
     outputStream.write("| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |\n");
@@ -117,13 +110,10 @@ async function generateReport() {
         outputStream.write(`| ${result.PROTOCOL} | ${result.ACTION_FUNCTION} | ${result.ACCOUNT_TYPE} | ${result.IS_DEPLOYED} | ${result.WITH_PAYMASTER} | ${result.RECEIVER_ACCESS} | ${result.GAS_USED} | ${gasDiffDisplay} |\n`);
     });
 
-    // Save the current results as the previous results for next time
     fs.writeFileSync(PREVIOUS_REPORT_FILE, JSON.stringify(results, null, 2));
-
     console.log(`📊 Gas report generated and saved to ${OUTPUT_FILE}`);
 }
 
-// Function to clean up temporary files
 function cleanUp() {
     fs.unlink(LOG_FILE, (err) => {
         if (err) console.error(`❌ Error deleting ${LOG_FILE}: ${err}`);
@@ -131,7 +121,6 @@ function cleanUp() {
     });
 }
 
-// Run the function to generate the report and then clean up
 generateReport()
     .then(cleanUp)
     .catch(console.error);
