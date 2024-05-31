@@ -52,10 +52,12 @@ jobs:
           fetch-depth: 0
 
       - name: Download previous gas report
+        id: download-previous
         uses: actions/download-artifact@v4
         with:
           name: gas-report-${{ github.event.pull_request.base.sha }}
           path: previous_gas_report
+        continue-on-error: true
 
       - name: Download current gas report
         uses: actions/download-artifact@v4
@@ -64,17 +66,24 @@ jobs:
           path: current_gas_report
 
       - name: Compare gas reports
+        if: steps.download-previous.outcome == 'success'
         run: |
           node scripts/foundry/compareGasReports.js previous_gas_report/GAS_REPORT.md current_gas_report/GAS_REPORT.md > gas_report_diff.md
         id: compare-gas-reports
 
+      - name: Handle no previous report
+        if: steps.download-previous.outcome != 'success'
+        run: echo "No previous gas report found. Skipping comparison."
+
       - name: Upload gas report comparison
+        if: steps.compare-gas-reports.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: gas-report-comparison-${{ github.sha }}
           path: gas_report_diff.md
 
       - name: Create pull request comment
+        if: steps.compare-gas-reports.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
