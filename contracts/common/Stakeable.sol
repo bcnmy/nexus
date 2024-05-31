@@ -19,7 +19,7 @@ import { IStakeable } from "../interfaces/common/IStakeable.sol";
 
 /// @title Stakeable Entity
 /// @notice Provides functionality to stake, unlock, and withdraw Ether on an EntryPoint.
-contract Stakeable is Ownable, IStakeable {
+contract Stakeable is IStakeable, Ownable {
     constructor(address newOwner) {
         _setOwner(newOwner);
     }
