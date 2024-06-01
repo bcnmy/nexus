@@ -36,12 +36,19 @@ jobs:
       - name: Run gas report script
         run: node scripts/foundry/generateGasReport.js
 
+      - name: Check gas report file exists
+        run: |
+          if [ ! -f GAS_REPORT.md ]; then
+            echo "GAS_REPORT.md does not exist."
+            exit 1
+          fi
+
       - name: Upload gas report artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: gas-report-${{ github.sha }}
           path: GAS_REPORT.md
+          if-no-files-found: warn
 
   compare-gas-report:
     runs-on: ubuntu-latest
