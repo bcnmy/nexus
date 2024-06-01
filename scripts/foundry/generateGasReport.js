@@ -7,10 +7,7 @@ const OUTPUT_FILE = 'GAS_REPORT.md';
 const CURRENT_REPORT_FILE = '.github/gas_report.json';
 
 const REPORT_FILES = [
-  'gas_report.json',
-  'previous_gas_report.json',
   '.github/gas_report.json',
-  '.github/previous_gas_report.json'
 ];
 
 function execPromise(command) {
