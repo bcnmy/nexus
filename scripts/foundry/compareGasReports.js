@@ -52,7 +52,7 @@ function parseGasReport(lines) {
                     WITH_PAYMASTER: parts[5],
                     RECEIVER_ACCESS: parts[6],
                     GAS_USED: parseInt(parts[7], 10),
-                    NUMBER: parseInt(parts[7], 10) // Adjusted the assignment to ensure it has a unique identifier
+                    NUMBER: parseInt(parts[7], 10)
                 });
             }
         }
