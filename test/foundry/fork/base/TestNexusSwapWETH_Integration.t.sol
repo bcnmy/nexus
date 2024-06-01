@@ -74,7 +74,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         path[1] = address(usdc);
 
         measureAndLogGasEOA(
-            "UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A",
+            "47::UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A",
             address(uniswapV2Router),
             0,
             abi.encodeWithSignature(
@@ -112,7 +112,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
-        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
+        measureAndLogGas("48::UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping WETH for USDC with Paymaster
@@ -150,7 +150,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
+        measureAndLogGas("49::UniswapV2::swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping WETH for USDC using deposit
@@ -190,7 +190,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
+        measureAndLogGas("50::UniswapV2::swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
 
     /// @notice Tests gas consumption for batch approval and swapping WETH for USDC using deployed Nexus account
@@ -213,7 +213,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
-        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
+        measureAndLogGas("51::UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC with Paymaster
@@ -252,7 +252,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
+        measureAndLogGas("52::UniswapV2::approve+swapExactTokensForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC using deposit
@@ -289,7 +289,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
+        measureAndLogGas("53::UniswapV2::approve+swapExactTokensForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap using WETH
@@ -328,7 +328,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::approve+swapExactTokensForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
+        measureAndLogGas("54::UniswapV2::approve+swapExactTokensForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
     }
 
     /// @notice Tests gas consumption for swapping WETH for USDC using a deployed Nexus account with Paymaster
@@ -373,7 +373,7 @@ function test_Gas_Swap_DeployedNexus_SwapWethForTokens_WithPaymaster()
     // Sign the user operation
     userOps[0].signature = signUserOp(user, userOps[0]);
 
-    measureAndLogGas("UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
+    measureAndLogGas("55::UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
 }
 
 
