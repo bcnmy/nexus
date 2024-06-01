@@ -17,6 +17,7 @@ contract EventsAndErrors {
 
     // Define all errors
     // General Errors
+    error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
     error ExecutionFailed();
