@@ -39,14 +39,14 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ETH transfer
     function test_Gas_NativeETH_SimpleTransfer_UsingTransfer() public checkETHBalanceCold(recipient, transferAmount) {
         prank(BOB.addr);
-        measureAndLogGasEOA("ETH::transfer::EOA::Simple::ColdAccess", recipient, transferAmount, "");
+        measureAndLogGasEOA("25::ETH::transfer::EOA::Simple::ColdAccess", recipient, transferAmount, "");
     }
 
     /// @notice Tests gas consumption for a simple ETH transfer using call
     function test_Gas_NativeETH_SimpleTransfer_UsingCall() public checkETHBalanceCold(recipient, transferAmount) {
         prank(BOB.addr);
         measureAndLogGasEOA(
-            "ETH::call::EOA::Simple::ColdAccess",
+            "27::ETH::call::EOA::Simple::ColdAccess",
             recipient,
             transferAmount,
             abi.encodeWithSignature("call{ value: transferAmount }('')")
@@ -56,7 +56,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ETH transfer using send
     function test_Gas_NativeETH_SimpleTransfer_UsingSend() public checkETHBalanceCold(recipient, transferAmount) {
         prank(BOB.addr);
-        measureAndLogGasEOA("ETH::send::EOA::Simple::ColdAccess", recipient, transferAmount, abi.encodeWithSignature("send(transferAmount)"));
+        measureAndLogGasEOA("29::ETH::send::EOA::Simple::ColdAccess", recipient, transferAmount, abi.encodeWithSignature("send(transferAmount)"));
     }
 
     /// @notice Tests sending ETH from an already deployed Nexus smart account
@@ -68,7 +68,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-        measureAndLogGas("ETH::transfer::Nexus::Deployed::ColdAccess", userOps);
+        measureAndLogGas("31::ETH::transfer::Nexus::Deployed::ColdAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ETH using a paymaster
@@ -96,7 +96,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ETH::transfer::Setup And Call::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("33::ETH::transfer::Setup And Call::WithPaymaster::ColdAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ETH using deposited funds without a paymaster
@@ -128,7 +128,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ETH::transfer::Setup And Call::UsingDeposit::ColdAccess", userOps);
+        measureAndLogGas("35::ETH::transfer::Setup And Call::UsingDeposit::ColdAccess", userOps);
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with cold access
@@ -155,7 +155,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ETH::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
+        measureAndLogGas("37::ETH::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
     }
 
     /// @notice Tests gas consumption for transferring ETH from an already deployed Nexus smart account using a paymaster
@@ -180,6 +180,6 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         // Measure and log gas usage
-        measureAndLogGas("ETH::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("39::ETH::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
     }
 }

@@ -2,11 +2,10 @@ const fs = require('fs');
 const readline = require('readline');
 const { exec } = require('child_process');
 
-// Define the log file and the output markdown file
 const LOG_FILE = 'gas.log';
-const OUTPUT_FILE = 'gas_report.md';
+const OUTPUT_FILE = 'GAS_REPORT.md';
+const PREVIOUS_REPORT_FILE = 'previous_gas_report.json';
 
-// Function to execute the `forge test` command
 function runForgeTest() {
     return new Promise((resolve, reject) => {
         console.log('🚀 Running forge tests, this may take a few minutes...');
@@ -21,7 +20,6 @@ function runForgeTest() {
     });
 }
 
-// Function to parse the log file and generate the report
 async function generateReport() {
     await runForgeTest();
 
@@ -35,11 +33,15 @@ async function generateReport() {
 
     console.log('📄 Parsing log file, please wait...');
     for await (const line of rl) {
-        console.log(line);
         if (line.includes('::')) {
             const parts = line.split('::');
-            const PROTOCOL = parts[0];
-            const ACTION_FUNCTION = parts[1];
+            const number = parseInt(parts[0], 10);
+            const PROTOCOL = parts[1];
+            const ACTION_FUNCTION = parts[2];
+            const GAS_INFO = parts[parts.length - 1];
+            const ACCESS_TYPE = GAS_INFO.split(': ')[0];
+            const GAS_USED = parseInt(GAS_INFO.split(': ')[1], 10);
+
             let ACCOUNT_TYPE;
             let IS_DEPLOYED;
             if (line.includes('EOA')) {
@@ -55,10 +57,6 @@ async function generateReport() {
 
             const WITH_PAYMASTER = line.includes('WithPaymaster') ? 'True' : 'False';
 
-            const GAS_INFO = parts[4];
-            const ACCESS_TYPE = GAS_INFO.split(': ')[0];
-            const GAS_USED = GAS_INFO.split(': ')[1];
-
             let RECEIVER_ACCESS;
             if (ACCESS_TYPE === 'ColdAccess') {
                 RECEIVER_ACCESS = '🧊 ColdAccess';
@@ -69,45 +67,53 @@ async function generateReport() {
             }
 
             results.push({
+                NUMBER: number,
                 PROTOCOL,
                 ACTION_FUNCTION,
                 ACCOUNT_TYPE,
                 IS_DEPLOYED,
                 WITH_PAYMASTER,
                 RECEIVER_ACCESS,
-                GAS_USED,
-                FULL_LOG: line.trim()
+                GAS_USED
             });
         }
     }
 
+    let previousResults = [];
+    if (fs.existsSync(PREVIOUS_REPORT_FILE)) {
+        const previousData = fs.readFileSync(PREVIOUS_REPORT_FILE, 'utf8');
+        previousResults = JSON.parse(previousData);
+    }
+
     console.log('🔄 Sorting results...');
-    // Custom sort: Group by protocol alphabetically, then by EOA first, Smart Account with Is Deployed=True next, then the rest
-    results.sort((a, b) => {
-        if (a.PROTOCOL < b.PROTOCOL) return -1;
-        if (a.PROTOCOL > b.PROTOCOL) return 1;
-        if (a.ACCOUNT_TYPE === 'EOA' && b.ACCOUNT_TYPE !== 'EOA') return -1;
-        if (a.ACCOUNT_TYPE !== 'EOA' && b.ACCOUNT_TYPE === 'EOA') return 1;
-        if (a.IS_DEPLOYED === 'True' && b.IS_DEPLOYED !== 'True') return -1;
-        if (a.IS_DEPLOYED !== 'True' && b.IS_DEPLOYED === 'True') return 1;
-        return 0;
+    results.sort((a, b) => a.NUMBER - b.NUMBER);
+
+    results.forEach(result => {
+        const previousResult = previousResults.find(prev => prev.NUMBER === result.NUMBER);
+        if (previousResult) {
+            result.GAS_DIFF = result.GAS_USED - previousResult.GAS_USED;
+            result.GAS_DIFF_EMOJI = result.GAS_DIFF > 0 ? '🥵' : (result.GAS_DIFF < 0 ? '🥳' : '');
+        } else {
+            result.GAS_DIFF = 0;
+            result.GAS_DIFF_EMOJI = '';
+        }
     });
 
     console.log('🖋️ Writing report...');
-    // Write the report
     const outputStream = fs.createWriteStream(OUTPUT_FILE);
     outputStream.write("# Gas Report\n");
-    outputStream.write("| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Full Log** |\n");
-    outputStream.write("|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:-------------:|\n");
+    outputStream.write("| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |\n");
+    outputStream.write("|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:------------------:|\n");
 
     results.forEach(result => {
-        outputStream.write(`| ${result.PROTOCOL} | ${result.ACTION_FUNCTION} | ${result.ACCOUNT_TYPE} | ${result.IS_DEPLOYED} | ${result.WITH_PAYMASTER} | ${result.RECEIVER_ACCESS} | ${result.GAS_USED} | ${result.FULL_LOG} |\n`);
+        const gasDiffDisplay = result.GAS_DIFF_EMOJI ? `${result.GAS_DIFF_EMOJI} ${result.GAS_DIFF}` : result.GAS_DIFF;
+        outputStream.write(`| ${result.PROTOCOL} | ${result.ACTION_FUNCTION} | ${result.ACCOUNT_TYPE} | ${result.IS_DEPLOYED} | ${result.WITH_PAYMASTER} | ${result.RECEIVER_ACCESS} | ${result.GAS_USED} | ${gasDiffDisplay} |\n`);
     });
 
+    fs.writeFileSync(PREVIOUS_REPORT_FILE, JSON.stringify(results, null, 2));
     console.log(`📊 Gas report generated and saved to ${OUTPUT_FILE}`);
 }
 
-// Function to clean up temporary files
 function cleanUp() {
     fs.unlink(LOG_FILE, (err) => {
         if (err) console.error(`❌ Error deleting ${LOG_FILE}: ${err}`);
@@ -115,7 +121,6 @@ function cleanUp() {
     });
 }
 
-// Run the function to generate the report and then clean up
 generateReport()
     .then(cleanUp)
     .catch(console.error);
