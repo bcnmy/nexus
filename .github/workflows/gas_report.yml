@@ -6,8 +6,6 @@ on:
       - dev
       - main
 
-permissions: write-all
-
 jobs:
   generate-gas-report:
     runs-on: ubuntu-latest
@@ -39,6 +37,7 @@ jobs:
         run: node scripts/foundry/generateGasReport.js
 
       - name: Upload gas report artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: gas-report-${{ github.sha }}
