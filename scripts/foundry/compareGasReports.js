@@ -1,6 +1,11 @@
 const fs = require('fs');
 
 function compareGasReports(prevFile, currFile) {
+    if (!fs.existsSync(prevFile)) {
+        console.error('No previous gas report found.');
+        return 'No previous gas report found. Skipping comparison.';
+    }
+
     const prevData = fs.readFileSync(prevFile, 'utf8');
     const currData = fs.readFileSync(currFile, 'utf8');
 
