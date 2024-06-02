@@ -33,6 +33,12 @@ interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
 
     /// @notice Throws if zero address has been provided as Entry Point address
     error EntryPointCannotBeZero();
+ 
+    /// @notice Throws if the implementation address is invalid
+    error InvalidImplementationAddress();
+
+    /// @notice Throws if the implementation is not a contract
+    error ImplementationIsNotAContract();
 
     /// @notice Initializes the smart account with a validator and custom data.
     /// @dev This method sets up the account for operation, linking it with a validator and initializing it with specific data.
