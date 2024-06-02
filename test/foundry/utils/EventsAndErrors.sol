@@ -21,6 +21,7 @@ contract EventsAndErrors {
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
+    error EntryPointCannotBeZero();
     error ExecutionFailed();
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
@@ -53,4 +54,7 @@ contract EventsAndErrors {
 
     // Fallback Errors
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
+
+    // Ownable Errors
+    error Unauthorized();
 }

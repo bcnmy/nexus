@@ -35,11 +35,11 @@ import "../../../contracts/interfaces/INexus.sol";
 // Contract implementations
 import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/NexusAccountFactory.sol";
+import "./../../../contracts/modules/validators/K1Validator.sol";
 
 // Mock contracts for testing
 import "../../../contracts/mocks/Counter.sol";
 import { MockInvalidModule } from "./../../../contracts/mocks/MockInvalidModule.sol";
-
 import { MockPaymaster } from "../../../contracts/mocks/MockPaymaster.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";

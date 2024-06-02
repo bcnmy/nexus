@@ -28,7 +28,7 @@ fi
 
 # Generate HTML report if not running in CI
 if [ "$CI" != "true" ]; then
-  genhtml coverage/foundry/forge-pruned-lcov.info --branch-coverage --ignore-errors deprecated,inconsistent,corrupt --output-directory coverage/foundry
+  genhtml coverage/foundry/forge-pruned-lcov.info --ignore-errors deprecated,inconsistent,corrupt --output-directory coverage/foundry
   open coverage/foundry/index.html
 fi
 

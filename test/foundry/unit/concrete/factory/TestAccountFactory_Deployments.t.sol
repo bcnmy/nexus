@@ -164,4 +164,15 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         // Should revert if there is not enough gas
         FACTORY.createAccount{ gas: 1000 }(_initData, salt);
     }
+
+    /// @notice Tests that the Nexus contract constructor reverts if the entry point address is zero.
+    function test_Constructor_RevertIf_EntryPointIsZero() public {
+        address zeroAddress = address(0);
+
+        // Expect the contract deployment to revert with the correct error message
+        vm.expectRevert(EntryPointCannotBeZero.selector);
+
+        // Try deploying the Nexus contract with an entry point address of zero
+        new Nexus(zeroAddress);
+    }
 }
