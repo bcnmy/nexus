@@ -32,8 +32,8 @@ interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
     error NexusInitializationFailed();
 
     /// @notice Throws if zero address has been provided as Entry Point address
-    error EntryPointCannotBeZero();
- 
+    error EntryPointCanNotBeZero();
+
     /// @notice Throws if the implementation address is invalid
     error InvalidImplementationAddress();
 
