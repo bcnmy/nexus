@@ -106,8 +106,8 @@ contract TestStakeable is NexusTest_Base {
 
     /// @notice Tests the deployment of the Stakeable contract
     function test_DeployStakeable() public {
-        Stakeable stakeable = new Stakeable(owner);
-        assertEq(stakeable.owner(), owner, "Owner should be set correctly");
+        Stakeable _stakeable = new Stakeable(owner);
+        assertEq(_stakeable.owner(), owner, "Owner should be set correctly");
     }
 
     /// @notice Tests that withdrawStake fails when called by a non-owner
