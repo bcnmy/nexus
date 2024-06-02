@@ -55,7 +55,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     constructor(address anEntryPoint) {
         _SELF = address(this);
         if (address(anEntryPoint) == address(0)) {
-            revert EntryPointCannotBeZero();
+            revert EntryPointCanNotBeZero();
         }
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
@@ -244,9 +244,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         assembly {
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
-        if(implementation == address(0)) {
+        if (implementation == address(0)) {
             assembly {
-            implementation := sload(address())
+                implementation := sload(address())
             }
         }
     }
@@ -299,18 +299,18 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
-    /// @notice Updates two slots 1. ERC1967 slot and 
+    /// @notice Updates two slots 1. ERC1967 slot and
     /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
     function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
-        if(newImplementation == address(0)) revert InvalidImplementationAddress();
+        if (newImplementation == address(0)) revert InvalidImplementationAddress();
         bool res;
         assembly {
             res := gt(extcodesize(newImplementation), 0)
         }
-        if(res == false) revert InvalidImplementationAddress();
+        if (res == false) revert InvalidImplementationAddress();
         // update the address() storage slot as well.
         assembly {
             sstore(address(), newImplementation)
