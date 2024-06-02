@@ -17,6 +17,7 @@ contract EventsAndErrors {
 
     // Define all errors
     // General Errors
+    error MissingFallbackHandler(bytes4 sig);
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
