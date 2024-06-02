@@ -16,7 +16,7 @@ import { Stakeable } from "../common/Stakeable.sol";
 
 // can stake
 // can whitelist factories
-// deployAccount with chosen factory and required data for that facotry
+// deployAccount with chosen factory and required data for that factory
 
 /// @title Nexus - BiconomyMetaFactory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
@@ -53,7 +53,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @dev factoryData is posted on the factory using factory.call(factoryData)
     ///      instead of calling a specific method always to allow more freedom.
     ///      factory should know how to decode this factoryData
-    /// @notice These factories could possibly enshrine specific module/s to avoid arbitary execution and prevent griefing.
+    /// @notice These factories could possibly enshrine specific module/s to avoid arbitrary execution and prevent griefing.
     /// @notice Another benefit of this pattern is that the factory can be upgraded without changing this contract.
     /// @param factory The address of the factory to be used for deployment.
     /// @param factoryData The encoded data for the method to be called on the Factory.

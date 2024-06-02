@@ -21,6 +21,7 @@ import {
 import { ethers } from "hardhat";
 import {
   CALLTYPE_SINGLE,
+  EXECTYPE_DEFAULT,
   EXECTYPE_TRY,
   MODE_DEFAULT,
   MODE_PAYLOAD,
@@ -55,13 +56,13 @@ describe("Nexus Single Execution", () => {
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    factory = setup.msaFactory;
+    factory = setup.nexusK1Factory;
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
     smartAccountOwner = setup.accountOwner;
     alice = setup.aliceAccountOwner;
-    smartAccount = setup.deployedMSA;
+    smartAccount = setup.deployedNexus;
     counter = setup.counter;
     deployer = setup.deployer;
     mockToken = setup.mockToken;
@@ -160,6 +161,69 @@ describe("Nexus Single Execution", () => {
       await entryPoint.handleOps([userOp], bundlerAddress);
 
       expect(await counter.getNumber()).to.equal(1);
+    });
+
+    it("Should revert with AccountAccessUnauthorized, execute", async () => {
+      const functionCallData =
+        counter.interface.encodeFunctionData("incrementNumber");
+
+      const executionCalldata = ethers.solidityPacked(
+        ["address", "uint256", "bytes"],
+        [await counter.getAddress(), "0", functionCallData],
+      );
+
+      // expect this function call to revert
+      await expect(
+        smartAccount.execute(
+          ethers.concat([
+            CALLTYPE_SINGLE,
+            EXECTYPE_DEFAULT,
+            MODE_DEFAULT,
+            UNUSED,
+            MODE_PAYLOAD,
+          ]),
+          executionCalldata,
+        ),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+
+    it("Should revert with AccountAccessUnauthorized, executeUserOp", async function () {
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const userOp = buildPackedUserOp({
+        sender: await smartAccount.getAddress(),
+        callData,
+      });
+      userOp.callData = callData;
+
+      const validatorModuleAddress = await validatorModule.getAddress();
+      const nonce = await smartAccount.nonce(
+        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      );
+
+      userOp.nonce = nonce;
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+
+      userOp.signature = signature;
+
+      await expect(
+        smartAccount.executeUserOp(userOp, userOpHash),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
     });
 
     it("Should execute an empty transaction through handleOps", async () => {
@@ -390,7 +454,7 @@ describe("Nexus Single Execution", () => {
       const incrementNumber =
         counter.interface.encodeFunctionData("incrementNumber");
       await uninstallModule({
-        deployedMSA: smartAccount,
+        deployedNexus: smartAccount,
         entryPoint,
         module: executorModule,
         validatorModule: validatorModule,
@@ -452,7 +516,7 @@ describe("Nexus Single Execution", () => {
         counter.interface.encodeFunctionData("incrementNumber");
       const prevAddress = "0x0000000000000000000000000000000000000001";
       await uninstallModule({
-        deployedMSA: smartAccount,
+        deployedNexus: smartAccount,
         entryPoint,
         module: executorModule,
         validatorModule: validatorModule,

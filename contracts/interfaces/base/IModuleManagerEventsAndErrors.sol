@@ -69,4 +69,7 @@ interface IModuleManagerEventsAndErrors {
 
     /// @dev Thrown when no fallback handler is available for a given selector.
     error MissingFallbackHandler(bytes4 selector);
+
+    /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
+    error FallbackSelectorForbidden();
 }

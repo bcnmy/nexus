@@ -17,6 +17,8 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
 
     /// @notice Tests that the current implementation address is correct
     function test_currentImplementationAddress() public {
+        // bytes32 _ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        // address currentImplementation = address(uint160(uint256(vm.load(address(BOB_ACCOUNT), _ERC1967_IMPLEMENTATION_SLOT)))); 
         address currentImplementation = BOB_ACCOUNT.getImplementation();
         assertEq(currentImplementation, address(ACCOUNT_IMPLEMENTATION), "Current implementation address mismatch");
     }
@@ -32,10 +34,76 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-
+        // bytes32 _ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+        // address newImplementation = address(uint160(uint256(vm.load(address(BOB_ACCOUNT), _ERC1967_IMPLEMENTATION_SLOT)))); 
         address newImplementation = BOB_ACCOUNT.getImplementation();
         assertEq(newImplementation, address(newSmartAccount), "New implementation address mismatch");
     }
+
+    /// @notice Tests the upgrade of the smart account implementation with invalid call data
+    function test_upgradeImplementation_invalidCallData() public {
+        address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(newSmartAccount), bytes(hex"1234"));
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSelector(MissingFallbackHandler.selector, bytes4(hex"1234"));
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// @notice Tests the upgrade of the smart account implementation with an invalid address
+    function test_upgradeImplementation_InvalidAddress() public {
+        /// @note "" means empty calldata. this will just update the implementation but not setup the account.
+        bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(0), "");
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidImplementationAddress()");
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// @notice Tests the upgrade of the smart account implementation with an invalid address
+    function test_upgradeImplementation_InvalidAddress_NotAContract() public {
+        /// @note "" means empty calldata. this will just update the implementation but not setup the account.
+        bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, BOB.addr, "");
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidImplementationAddress()");
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// Could add...
+    /// Access control on upgrades
+    /// send setup data instead of empty data
 
     /// @notice Tests the entire upgrade process
     function test_upgradeSmartAccount() public {

@@ -1,4 +1,5 @@
-import { EXECTYPE_TRY, installModule } from "./../utils/erc7579Utils";
+import { K1Validator } from "./../../../typechain-types/contracts/modules/validators/K1Validator";
+import { EXECTYPE_TRY, installModule } from "../utils/erc7579Utils";
 import { ExecutionMethod, Executions } from "../utils/types";
 import { expect } from "chai";
 
@@ -58,14 +59,14 @@ describe("Nexus Batch Execution", () => {
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    factory = setup.msaFactory;
+    factory = setup.nexusK1Factory;
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;
     smartAccountOwner = setup.accountOwner;
-    smartAccount = setup.deployedMSA;
+    smartAccount = setup.deployedNexus;
     smartAccountAliceOwner = setup.aliceAccountOwner;
-    aliceSmartAccount = setup.aliceDeployedMSA;
+    aliceSmartAccount = setup.aliceDeployedNexus;
     counter = setup.counter;
     deployer = setup.deployer;
     mockToken = setup.mockToken;
@@ -91,7 +92,7 @@ describe("Nexus Batch Execution", () => {
     expect(isOwner).to.be.true;
 
     await installModule({
-      deployedMSA: smartAccount,
+      deployedNexus: smartAccount,
       entryPoint,
       module: executorModule,
       moduleType: ModuleType.Execution,
@@ -352,7 +353,7 @@ describe("Nexus Batch Execution", () => {
 
       // First install the executor module on Alice's smart account
       await installModule({
-        deployedMSA: aliceSmartAccount,
+        deployedNexus: aliceSmartAccount,
         entryPoint,
         module: executorModule,
         validatorModule: validatorModule,

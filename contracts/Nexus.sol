@@ -238,10 +238,16 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
+    /// @notice Checks the 1967 implementation slot, if not found then checks the slot defined by address (Biconomy V2 smart account)
     /// @return implementation The address of the current contract implementation.
     function getImplementation() external view returns (address implementation) {
         assembly {
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+        }
+        if(implementation == address(0)) {
+            assembly {
+            implementation := sload(address())
+            }
         }
     }
 
@@ -293,9 +299,22 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
+    /// @notice Updates two slots 1. ERC1967 slot and 
+    /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
+    /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
+        if(newImplementation == address(0)) revert InvalidImplementationAddress();
+        bool res;
+        assembly {
+            res := gt(extcodesize(newImplementation), 0)
+        }
+        if(res == false) revert InvalidImplementationAddress();
+        // update the address() storage slot as well.
+        assembly {
+            sstore(address(), newImplementation)
+        }
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
