@@ -18,7 +18,7 @@ export const GENERIC_FALLBACK_SELECTOR = "0xcb5baf0f";
 
 export const installModule = async (args: ModuleParams) => {
   const {
-    deployedMSA,
+    deployedNexus,
     entryPoint,
     module,
     validatorModule,
@@ -29,7 +29,7 @@ export const installModule = async (args: ModuleParams) => {
   } = args;
   const installModuleData = await generateUseropCallData({
     executionMethod: ExecutionMethod.Execute,
-    targetContract: deployedMSA,
+    targetContract: deployedNexus,
     functionName: "installModule",
     args: [
       moduleType,
@@ -39,7 +39,7 @@ export const installModule = async (args: ModuleParams) => {
   });
 
   const userOp = buildPackedUserOp({
-    sender: await deployedMSA.getAddress(),
+    sender: await deployedNexus.getAddress(),
     callData: installModuleData,
   });
 
@@ -58,7 +58,7 @@ export const installModule = async (args: ModuleParams) => {
 
 export const uninstallModule = async (args: ModuleParams) => {
   const {
-    deployedMSA,
+    deployedNexus,
     entryPoint,
     module,
     validatorModule,
@@ -69,7 +69,7 @@ export const uninstallModule = async (args: ModuleParams) => {
   } = args;
   const uninstallModuleData = await generateUseropCallData({
     executionMethod: ExecutionMethod.Execute,
-    targetContract: deployedMSA,
+    targetContract: deployedNexus,
     functionName: "uninstallModule",
     args: [
       moduleType,
@@ -79,7 +79,7 @@ export const uninstallModule = async (args: ModuleParams) => {
   });
 
   const userOp = buildPackedUserOp({
-    sender: await deployedMSA.getAddress(),
+    sender: await deployedNexus.getAddress(),
     callData: uninstallModuleData,
   });
 
