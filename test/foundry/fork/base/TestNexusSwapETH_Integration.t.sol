@@ -244,10 +244,9 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         // Sign the entire user operation with the user's wallet
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-    // Measure and log gas usage for the operation
-    measureAndLogGas("46::UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
-}
-
+        // Measure and log gas usage for the operation
+        measureAndLogGas("46::UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
+    }
 
     /// @notice Helper function to get the path for ETH to USDC swap
     /// @return path The array containing the swap path
