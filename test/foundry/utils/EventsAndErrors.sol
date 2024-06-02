@@ -21,7 +21,7 @@ contract EventsAndErrors {
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
-    error EntryPointCannotBeZero();
+    error EntryPointCanNotBeZero();
     error ExecutionFailed();
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
@@ -29,6 +29,12 @@ contract EventsAndErrors {
     error UnsupportedModuleType(uint256 moduleTypeId);
     error UnsupportedCallType(CallType callType);
     error UnsupportedExecType(ExecType execType);
+
+    error ImplementationAddressCanNotBeZero();
+    error ModuleNotWhitelisted(address module);
+    error ZeroAddressNotAllowed();
+    error FactoryNotWhitelisted();
+    error InvalidFactoryAddress();
 
     // Operation Errors
     error FailedOp(uint256 opIndex, string reason);

@@ -37,6 +37,7 @@ import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/NexusAccountFactory.sol";
 import "./../../../contracts/modules/validators/K1Validator.sol";
 
+import "../../../contracts/common/Stakeable.sol";
 // Mock contracts for testing
 import "../../../contracts/mocks/Counter.sol";
 import { MockInvalidModule } from "./../../../contracts/mocks/MockInvalidModule.sol";
@@ -45,6 +46,10 @@ import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
+
+import "./../../../contracts/factory/K1ValidatorFactory.sol";
+import "./../../../contracts/utils/Bootstrap.sol";
+import "./../../../contracts/lib/BootstrapLib.sol";
 
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
