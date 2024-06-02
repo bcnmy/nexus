@@ -38,7 +38,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
     function test_Gas_ERC721NFT_Simple_Transfer_Cold() public checkERC721NFTBalanceCold(recipient) {
         ERC721NFT.mint(address(this), tokenId);
         measureAndLogGasEOA(
-            "ERC721::transferFrom::EOA::Simple::ColdAccess",
+            "13::ERC721::transferFrom::EOA::Simple::ColdAccess",
             address(ERC721NFT),
             0,
             abi.encodeWithSignature("transferFrom(address,address,uint256)", address(this), recipient, tokenId)
@@ -55,7 +55,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
             abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
-        measureAndLogGas("ERC721::transferFrom::Nexus::Deployed::ColdAccess", userOps);
+        measureAndLogGas("15::ERC721::transferFrom::Nexus::Deployed::ColdAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using a paymaster with cold access
@@ -83,7 +83,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ERC721::transferFrom::Setup And Call::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("17::ERC721::transferFrom::Setup And Call::WithPaymaster::ColdAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using deposited funds without a paymaster with cold access
@@ -114,7 +114,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
         userOps[0].initCode = initCode;
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ERC721::transferFrom::Setup And Call::UsingDeposit::ColdAccess", userOps);
+        measureAndLogGas("19::ERC721::transferFrom::Setup And Call::UsingDeposit::ColdAccess", userOps);
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with cold access
@@ -146,7 +146,7 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ERC721::transferFrom::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
+        measureAndLogGas("21::ERC721::transferFrom::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
     }
 
     /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using a paymaster
@@ -178,6 +178,6 @@ contract TestNexusERC721NFT_Integration_ColdAccess is NexusTest_Base {
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         // Measure and log gas usage
-        measureAndLogGas("ERC721::transferFrom::Nexus::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("23::ERC721::transferFrom::Nexus::WithPaymaster::ColdAccess", userOps);
     }
 }
