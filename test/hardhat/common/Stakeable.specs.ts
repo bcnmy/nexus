@@ -67,19 +67,19 @@ describe("Stakeable tests", function () {
     it("Should fail to add stake to an incorrect entrypoint address", async function () {
       await expect(
         stakeable.addStake(zeroAddress, 0, { value: parseEther("1") }),
-      ).to.be.revertedWith("Invalid EP address");
+      ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 
     it("Should fail to unlock stake from an incorrect entrypoint address", async function () {
-      await expect(stakeable.unlockStake(zeroAddress)).to.be.revertedWith(
-        "Invalid EP address",
-      );
+      await expect(
+        stakeable.unlockStake(zeroAddress),
+      ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 
     it("Should fail to withdraw stake from an incorrect entrypoint address", async function () {
       await expect(
         stakeable.withdrawStake(zeroAddress, ownerAddress),
-      ).to.be.revertedWith("Invalid EP address");
+      ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 
     it("Should correctly unlock and withdraw", async function () {
