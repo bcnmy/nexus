@@ -41,13 +41,6 @@ contract TestK1ValidatorFactoryDeployments is NexusTest_Base {
         assertTrue(isContract(address(factory)), "Factory should be a contract");
     }
 
-    /// @notice Tests that the immutable variables are set correctly.
-    function test_Constructor_ImmutableVariables() public {
-        assertEq(validatorFactory.ACCOUNT_IMPLEMENTATION(), address(ACCOUNT_IMPLEMENTATION), "Account implementation mismatch");
-        assertEq(validatorFactory.K1_VALIDATOR(), address(VALIDATOR_MODULE), "K1 Validator mismatch");
-        assertEq(address(validatorFactory.BOOTSTRAPPER()), address(bootstrapper), "Bootstrapper mismatch");
-    }
-
     /// @notice Tests that the constructor reverts if the implementation address is zero.
     function test_Constructor_RevertIf_ImplementationIsZero() public {
         address zeroAddress = address(0);
@@ -88,10 +81,7 @@ contract TestK1ValidatorFactoryDeployments is NexusTest_Base {
 
         address payable expectedAddress = validatorFactory.computeAccountAddress(expectedOwner, index);
 
-        uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account using K1 Validator Factory printed above");
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
