@@ -65,7 +65,6 @@ export interface DeploymentFixtureWithSA {
   moduleWhitelistFactory: ModuleWhitelistFactory;
 }
 
-// TODO: check for need of making these optional
 export interface UserOperation {
   sender: AddressLike; // Or string
   nonce?: BigNumberish;
