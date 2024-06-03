@@ -51,12 +51,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
-    /// @notice Initializes the smart account by setting up the module manager and state.
+    /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
         _SELF = address(this);
-        if (address(anEntryPoint) == address(0)) {
-            revert EntryPointCanNotBeZero();
-        }
+        require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
     }
@@ -163,7 +161,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             // Perform the call to the target contract with the decoded data.
             (success, innerCallRet) = target.call(data);
             // Ensure the call was successful.
-            require(success, "inner call failed");
+            require(success, InnerCallFailed());
         }
 
         // Emit the Executed event with the user operation and inner call return data.
@@ -315,12 +313,12 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
     function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
-        if (newImplementation == address(0)) revert InvalidImplementationAddress();
+        require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {
             res := gt(extcodesize(newImplementation), 0)
         }
-        if (res == false) revert InvalidImplementationAddress();
+        require(res, InvalidImplementationAddress());
         // update the address() storage slot as well.
         assembly {
             sstore(address(), newImplementation)
