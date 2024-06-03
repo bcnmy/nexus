@@ -1,0 +1,9 @@
+TestFuzz_AccountFactory_Deployment
+├── when setting up the testing environment
+│   └── it should initialize the required contracts and wallets
+├── when creating an account with random initialization data
+│   └── it should deploy the account correctly
+├── when creating an account with a large index
+│   └── it should deploy the account correctly for a large index
+└── when repeatedly creating an account with the same initialization data
+    └── it should deploy the account correctly and consistently

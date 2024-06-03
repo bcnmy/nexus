@@ -1,8 +1,8 @@
 TestERC4337Account_OnlyEntryPoint
-└── given the ERC4337 account with onlyEntryPoint modifier
-    ├── when executing a user operation from EntryPoint
+└── given the testing environment is initialized
+    ├── when validating a user operation from the EntryPoint
     │   └── it should pass validation
-    ├── when executing a user operation from a non-EntryPoint address
+    ├── when validating a user operation from a non-EntryPoint address
     │   └── it should fail validation
-    └── when validating a user operation with invalid signature
+    └── when validating a user operation with an invalid signature
         └── it should fail validation

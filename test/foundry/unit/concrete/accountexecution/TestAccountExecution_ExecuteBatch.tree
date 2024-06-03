@@ -1,16 +1,18 @@
 TestAccountExecution_ExecuteBatch
-└── given the Nexus account execution
-    ├── when executing a batch operation
-    │   └── it should execute successfully and increment the counter
-    ├── when executing a batch operation with one action that reverts
-    │   └── it should revert and the counter should remain unchanged
-    ├── when executing an empty batch operation
-    │   └── it should execute successfully with no changes
-    ├── when executing a batch operation with value transfers
-    │   └── it should transfer the correct amount of ETH to the receiver
-    ├── when executing a batch operation with token transfers
-    │   └── it should transfer the correct amount of tokens to the recipients
-    ├── when executing a batch operation with separate approval and transfer
-    │   └── it should approve and transfer the tokens correctly
-    └── when executing a combined approval and transfer operation
-        └── it should approve and transfer the tokens in a single operation
+└── given the testing environment is initialized
+    ├── when executing a batch successfully
+    │   └── it should increment the counter correctly
+    ├── when a batch execution reverts if one action reverts
+    │   └── it should remain unchanged
+    ├── when executing a batch with empty operations
+    │   └── it should remain unchanged
+    ├── when executing a batch with value transfers
+    │   └── it should transfer the correct amount of ETH
+    ├── when executing a batch with token transfers
+    │   └── it should transfer tokens correctly
+    ├── when executing a batch with separate approval and transfer operations
+    │   └── it should update balances and allowances correctly
+    ├── when executing a batch with combined approval and transfer operations
+    │   └── it should update balances and allowances correctly
+    └── when a batch execution reverts with unsupported exec type
+        └── it should remain unchanged

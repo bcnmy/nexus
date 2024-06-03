@@ -1,4 +1,4 @@
 TestERC4337Account_EntryPoint
-└── given the ERC4337 account with an EntryPoint
+└── given the testing environment is initialized
     └── when checking the EntryPoint address
         └── it should return the correct EntryPoint address for different accounts

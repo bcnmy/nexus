@@ -1,8 +1,4 @@
-TestERC4337Account_Nonce
-└── given the ERC4337 account with nonce functionality
-    ├── when checking the initial nonce
-    │   └── it should be zero
-    ├── when performing a successful operation
-    │   └── it should increment the nonce
-    └── when performing a failed operation
-        └── it should increment the nonce
+TestERC4337Account_GetDeposit
+└── given the testing environment is initialized
+    ├── when adding a deposit
+    │   └── it should increase the deposit amount

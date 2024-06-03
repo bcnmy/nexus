@@ -6,9 +6,9 @@ import "../../../../../contracts/factory/K1ValidatorFactory.sol";
 import "../../../../../contracts/utils/Bootstrap.sol";
 import "../../../../../contracts/interfaces/INexus.sol";
 
-/// @title TestK1ValidatorFactoryDeployments
+/// @title TestK1ValidatorFactory_Deployments
 /// @notice Tests for deploying accounts using the K1ValidatorFactory and various methods.
-contract TestK1ValidatorFactoryDeployments is NexusTest_Base {
+contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
     K1ValidatorFactory public validatorFactory;

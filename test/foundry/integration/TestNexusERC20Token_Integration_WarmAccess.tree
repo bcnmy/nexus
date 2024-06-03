@@ -1,0 +1,15 @@
+TestNexusERC20Token_Integration_WarmAccess
+├── when setting up the initial state for the tests
+│   └── it should initialize variables and set up the state
+├── when testing gas consumption for a simple ERC20 token transfer
+│   └── it should measure gas for a simple transfer with warm access
+├── when testing ERC20 token transfer from an already deployed Nexus account
+│   └── it should measure gas for a deployed Nexus transfer with warm access
+├── when testing deploying Nexus and transferring ERC20 tokens using a paymaster
+│   └── it should measure gas for deploy and transfer with a paymaster and warm access
+├── when testing deploying Nexus and transferring ERC20 tokens using deposited funds without a paymaster
+│   └── it should measure gas for deploy and transfer using deposit with warm access
+├── when testing sending ETH to the Nexus account before deployment and then deploy
+│   └── it should measure gas for pre-funded deploy and transfer with warm access
+└── when testing ERC20 token transfer from an already deployed Nexus account using a paymaster
+    └── it should measure gas for deployed Nexus transfer with paymaster and warm access

@@ -1,0 +1,10 @@
+TestAccountExecution_ExecuteUserOp
+└── given the testing environment is initialized
+    ├── when executing a user operation successfully
+    │   └── it should increment the counter
+    ├── when executing a user operation with zero address
+    │   └── it should remain unchanged
+    ├── when executing a user operation with empty calldata
+    │   └── it should remain unchanged
+    └── when executing a user operation with an invalid signature
+        └── it should revert

@@ -1,0 +1,24 @@
+TestStakeable
+└── given the testing environment is initialized
+    ├── when adding stake successfully
+    │   └── it should increase the stake amount and set unstake delay
+    ├── when adding stake as a non-owner
+    │   └── it should revert
+    ├── when adding stake with an invalid EntryPoint address
+    │   └── it should revert
+    ├── when unlocking stake successfully
+    │   └── it should unlock the stake
+    ├── when unlocking stake as a non-owner
+    │   └── it should revert
+    ├── when unlocking stake with an invalid EntryPoint address
+    │   └── it should revert
+    ├── when withdrawing stake successfully
+    │   └── it should withdraw the stake
+    ├── when withdrawing stake as a non-owner
+    │   └── it should revert
+    ├── when withdrawing stake with an invalid EntryPoint address
+    │   └── it should revert
+    ├── when deploying the Stakeable contract
+    │   └── it should set the correct owner
+    └── when getting deposit information
+        └── it should return the correct deposit info

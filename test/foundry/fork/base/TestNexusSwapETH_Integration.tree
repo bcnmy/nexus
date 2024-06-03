@@ -1,0 +1,15 @@
+TestNexusSwapETH_Integration (Base network fork with Uniswap V2)
+├── when setting up the initial state for the tests
+│   └── it should initialize variables and set up the state on the Base network
+├── when testing gas consumption for swapping ETH for USDC using an EOA
+│   └── it should measure gas for EOA swap ETH to USDC on Uniswap V2
+├── when testing gas consumption for swapping ETH for USDC using a deployed Nexus account
+│   └── it should measure gas for deployed Nexus swap ETH to USDC on Uniswap V2
+├── when deploying Nexus and swapping ETH for USDC with Paymaster
+│   └── it should measure gas for deploy and swap with Paymaster on Uniswap V2
+├── when deploying Nexus and swapping ETH for USDC using deposit
+│   └── it should measure gas for deploy and swap using deposit on Uniswap V2
+├── when sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap
+│   └── it should measure gas for pre-funded deploy and swap ETH to USDC on Uniswap V2
+└── when swapping ETH for USDC using a deployed Nexus account with Paymaster
+    └── it should measure gas for deployed Nexus swap ETH to USDC with Paymaster on Uniswap V2

@@ -1,0 +1,11 @@
+TestGas_NexusAccountFactory
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when testing gas usage for deploying a new account
+│   └── it should measure the gas used correctly
+├── when testing gas usage for deploying a new account with different parameters
+│   └── it should measure the gas used correctly
+├── when testing gas usage for deploying multiple accounts
+│   └── it should measure the gas used correctly
+└── when testing gas usage for deploying an account and verifying module installation
+    └── it should measure the gas used correctly
