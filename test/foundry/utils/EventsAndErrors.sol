@@ -37,6 +37,10 @@ contract EventsAndErrors {
     error ZeroAddressNotAllowed();
     error FactoryNotWhitelisted();
     error InvalidFactoryAddress();
+    error InvalidEntryPointAddress();
+    error InnerCallFailed();
+    error CallToDeployWithFactoryFailed();
+
 
     // ==========================
     // Operation Errors
