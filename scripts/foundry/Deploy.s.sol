@@ -11,4 +11,8 @@ contract Deploy is BaseScript {
     function run() public broadcast returns (Nexus smartAccount) {
         smartAccount = new Nexus(_ENTRYPOINT);
     }
+
+    function test() public {
+        // This is a test function to exclude this script from the coverage report.
+    }
 }
