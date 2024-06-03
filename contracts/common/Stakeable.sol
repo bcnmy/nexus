@@ -25,10 +25,9 @@ import { IStakeable } from "../interfaces/common/IStakeable.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract Stakeable is Ownable, IStakeable {
-
     /// @notice Error thrown when an invalid EntryPoint address is provided.
     error InvalidEntryPointAddress();
-    
+
     constructor(address newOwner) {
         _setOwner(newOwner);
     }

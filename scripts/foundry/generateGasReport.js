@@ -40,14 +40,18 @@ function runForgeTest() {
 async function checkoutDevBranchAndGetReport() {
   try {
     console.log(`🔄 Checking out ${CURRENT_REPORT_FILE} from dev branch...`);
-    await execPromise(`git fetch origin dev && git checkout origin/dev -- ${CURRENT_REPORT_FILE}`);
+    await execPromise(
+      `git fetch origin dev && git checkout origin/dev -- ${CURRENT_REPORT_FILE}`,
+    );
     if (fs.existsSync(CURRENT_REPORT_FILE)) {
       console.log(`✅ Fetched ${CURRENT_REPORT_FILE} from dev branch.`);
       fs.renameSync(CURRENT_REPORT_FILE, DEV_REPORT_FILE);
       return DEV_REPORT_FILE;
     }
   } catch (error) {
-    console.error(`❌ Could not fetch ${CURRENT_REPORT_FILE} from dev branch: ${error.message}`);
+    console.error(
+      `❌ Could not fetch ${CURRENT_REPORT_FILE} from dev branch: ${error.message}`,
+    );
   }
   return null;
 }
@@ -135,7 +139,7 @@ async function compareReports() {
       const gasDiff =
         diff > 0 ? `🥵 +${diff}` : diff < 0 ? `🥳 -${Math.abs(diff)}` : "0";
       diffLines.push(
-        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`,
       );
       diffResults.push({
         ...curr,
@@ -146,12 +150,12 @@ async function compareReports() {
       if (diff !== 0) {
         hasDiff = true;
         console.log(
-          `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`
+          `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`,
         );
       }
     } else {
       diffLines.push(
-        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | N/A |`
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | N/A |`,
       );
       diffResults.push({
         ...curr,

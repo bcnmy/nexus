@@ -61,5 +61,4 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when an inner call fails.
     error InnerCallFailed();
-
 }
