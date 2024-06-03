@@ -4,9 +4,8 @@ const { exec } = require("child_process");
 
 const LOG_FILE = "gas.log";
 const OUTPUT_FILE = "GAS_REPORT.md";
-const PREVIOUS_REPORT_FILE = ".github/previous_gas_report.json";
-const CURRENT_REPORT_FILE = ".github/current_gas_report.json";
-const REPORT_FILES = [".github/gas_report.json"];
+const CURRENT_REPORT_FILE = ".github/gas_report.json";
+const DEV_REPORT_FILE = ".github/previous_gas_report.json"; // Temporary file for previous report
 
 /**
  * Execute a shell command and return it as a Promise.
@@ -35,34 +34,20 @@ function runForgeTest() {
 }
 
 /**
- * Backup the current gas report file.
- * @returns {Promise<void>}
- */
-async function backupCurrentGasReport() {
-  if (fs.existsSync(REPORT_FILES[0])) {
-    fs.copyFileSync(REPORT_FILES[0], CURRENT_REPORT_FILE);
-    console.log(`✅ Current gas report backed up to ${CURRENT_REPORT_FILE}.`);
-  }
-}
-
-/**
  * Checkout the gas report file from the dev branch.
  * @returns {Promise<string|null>} - Promise resolving to the file path or null if not found
  */
 async function checkoutDevBranchAndGetReport() {
-  for (const file of REPORT_FILES) {
-    try {
-      console.log(`🔄 Checking out ${file} from dev branch...`);
-      await execPromise(`git fetch origin dev && git checkout origin/dev -- ${file}`);
-      if (fs.existsSync(file)) {
-        console.log(`✅ Fetched ${file} from dev branch.`);
-        fs.renameSync(file, PREVIOUS_REPORT_FILE);
-        console.log(`✅ Previous gas report saved to ${PREVIOUS_REPORT_FILE}.`);
-        return PREVIOUS_REPORT_FILE;
-      }
-    } catch (error) {
-      console.error(`❌ Could not fetch ${file} from dev branch.`);
+  try {
+    console.log(`🔄 Checking out ${CURRENT_REPORT_FILE} from dev branch...`);
+    await execPromise(`git fetch origin dev && git checkout origin/dev -- ${CURRENT_REPORT_FILE}`);
+    if (fs.existsSync(CURRENT_REPORT_FILE)) {
+      console.log(`✅ Fetched ${CURRENT_REPORT_FILE} from dev branch.`);
+      fs.renameSync(CURRENT_REPORT_FILE, DEV_REPORT_FILE);
+      return DEV_REPORT_FILE;
     }
+  } catch (error) {
+    console.error(`❌ Could not fetch ${CURRENT_REPORT_FILE} from dev branch: ${error.message}`);
   }
   return null;
 }
@@ -85,30 +70,29 @@ async function generateReport() {
 
   for await (const line of rl) {
     if (line.includes("::")) {
-      const [number, PROTOCOL, ACTION_FUNCTION, , , GAS_INFO] =
-        line.split("::");
-      const ACCESS_TYPE = GAS_INFO.split(": ")[0];
-      const GAS_USED = parseInt(GAS_INFO.split(": ")[1], 10);
+      const [number, protocol, actionFunction, , , gasInfo] = line.split("::");
+      const accessType = gasInfo.split(": ")[0];
+      const gasUsed = parseInt(gasInfo.split(": ")[1], 10);
 
-      const ACCOUNT_TYPE = line.includes("EOA") ? "EOA" : "Smart Account";
-      const IS_DEPLOYED = line.includes("Nexus") ? "True" : "False";
-      const WITH_PAYMASTER = line.includes("WithPaymaster") ? "True" : "False";
-      const RECEIVER_ACCESS =
-        ACCESS_TYPE === "ColdAccess"
+      const accountType = line.includes("EOA") ? "EOA" : "Smart Account";
+      const isDeployed = line.includes("Nexus") ? "True" : "False";
+      const withPaymaster = line.includes("WithPaymaster") ? "True" : "False";
+      const receiverAccess =
+        accessType === "ColdAccess"
           ? "🧊 ColdAccess"
-          : ACCESS_TYPE === "WarmAccess"
+          : accessType === "WarmAccess"
           ? "🔥 WarmAccess"
           : "N/A";
 
       results.push({
         NUMBER: parseInt(number, 10),
-        PROTOCOL,
-        ACTION_FUNCTION,
-        ACCOUNT_TYPE,
-        IS_DEPLOYED,
-        WITH_PAYMASTER,
-        RECEIVER_ACCESS,
-        GAS_USED,
+        PROTOCOL: protocol.trim(),
+        ACTION_FUNCTION: actionFunction.trim(),
+        ACCOUNT_TYPE: accountType,
+        IS_DEPLOYED: isDeployed,
+        WITH_PAYMASTER: withPaymaster,
+        RECEIVER_ACCESS: receiverAccess,
+        GAS_USED: gasUsed,
       });
     }
   }
@@ -116,8 +100,6 @@ async function generateReport() {
   console.log("🔄 Sorting results...");
   results.sort((a, b) => a.NUMBER - b.NUMBER);
 
-  fs.writeFileSync(CURRENT_REPORT_FILE, JSON.stringify(results, null, 2));
-  console.log(`📊 Current gas report generated and saved to ${CURRENT_REPORT_FILE}`);
   return results;
 }
 
@@ -135,7 +117,7 @@ async function compareReports() {
 
   const prevData = fs.readFileSync(previousReportFile, "utf8");
   const prevResults = JSON.parse(prevData);
-  const currResults = JSON.parse(fs.readFileSync(CURRENT_REPORT_FILE, "utf8"));
+  const currResults = await generateReport();
 
   const diffLines = [
     "# Gas Report Comparison",
@@ -143,6 +125,7 @@ async function compareReports() {
     "|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:------------------:|",
   ];
 
+  const diffResults = [];
   let hasDiff = false;
 
   currResults.forEach((curr) => {
@@ -154,21 +137,37 @@ async function compareReports() {
       diffLines.push(
         `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`
       );
+      diffResults.push({
+        ...curr,
+        GAS_DIFFERENCE: gasDiff,
+      });
+
+      // Debugging logs
       if (diff !== 0) {
         hasDiff = true;
         console.log(
           `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`
         );
       }
+    } else {
+      diffLines.push(
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | N/A |`
+      );
+      diffResults.push({
+        ...curr,
+        GAS_DIFFERENCE: "N/A",
+      });
     }
   });
 
   if (!hasDiff) {
-    diffLines.push("| No differences found in gas usage. |");
     console.log("📉 No differences found.");
   } else {
     console.log("📈 Differences found and reported.");
   }
+
+  fs.writeFileSync(CURRENT_REPORT_FILE, JSON.stringify(diffResults, null, 2));
+  console.log(`📊 Gas report with differences saved to ${CURRENT_REPORT_FILE}`);
 
   fs.writeFileSync(OUTPUT_FILE, diffLines.join("\n"));
   console.log("📊 Gas report comparison generated and saved to GAS_REPORT.md");
@@ -184,16 +183,19 @@ async function compareReports() {
     else console.log(`🗑️ ${LOG_FILE} deleted successfully.`);
   });
 
-  fs.unlink(PREVIOUS_REPORT_FILE, (err) => {
-    if (err) console.error(`❌ Error deleting ${PREVIOUS_REPORT_FILE}: ${err}`);
-    else console.log(`🗑️ ${PREVIOUS_REPORT_FILE} deleted successfully.`);
+  // Remove the temporary previous gas report file
+  fs.unlink(DEV_REPORT_FILE, (err) => {
+    if (err) console.error(`❌ Error deleting ${DEV_REPORT_FILE}: ${err}`);
+    else console.log(`🗑️ ${DEV_REPORT_FILE} deleted successfully.`);
   });
 }
 
 async function main() {
-  await backupCurrentGasReport();
-  await generateReport();
-  await compareReports();
+  try {
+    await compareReports();
+  } catch (error) {
+    console.error(`❌ Error: ${error.message}`);
+  }
 }
 
-main().catch(console.error);
+main();
