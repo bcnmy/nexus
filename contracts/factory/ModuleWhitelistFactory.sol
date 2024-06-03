@@ -40,17 +40,13 @@ contract ModuleWhitelistFactory is AbstractNexusFactory {
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_) AbstractNexusFactory(implementation_, owner_) {
-        if (owner_ == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(owner_ != address(0), ZeroAddressNotAllowed());
     }
 
     /// @notice Adds an address to the module whitelist.
     /// @param module The address to be whitelisted.
     function addModuleToWhitelist(address module) external onlyOwner {
-        if (module == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(module != address(0), ZeroAddressNotAllowed());
         moduleWhitelist[module] = true;
     }
 
