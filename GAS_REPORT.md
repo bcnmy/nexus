@@ -30,7 +30,7 @@
 |     ETH      |             transfer             |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27882     |      🥳 -191       |
 |     ETH      |               call               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52946     |      🥳 -255       |
 |     ETH      |               call               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27946     |      🥳 -255       |
-|     ETH      |               send               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52946     |      🥳 -255       |
+|     ETH      |               send               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52955     |      🥳 -246       |
 |     ETH      |               send               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27946     |      🥳 -255       |
 |     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    99766     |      🥳 -2862      |
 |     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    74766     |      🥳 -2862      |
