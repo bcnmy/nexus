@@ -154,14 +154,36 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         }
     }
 
-    /// @notice Executes a user operation via delegatecall to use the contract's context.
-    /// @param userOp The user operation to execute.
-    /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) external payable virtual onlyEntryPoint {
-        bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
-        if (!success) revert ExecutionFailed();
+
+        
+
+
+/// @notice Executes a user operation via delegatecall using the contract's context.
+/// @param userOp The user operation to execute, containing all necessary transaction details.
+/// @param - The hash of the userOp.
+/// @dev This function is designed to be called only through the EntryPoint contract to ensure security and proper execution context.
+/// The function decodes the calldata from the user operation, skipping the first four bytes (function selector), and performs a call to the target contract.
+function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
+    // Extract the inner call data from the user operation, skipping the first 4 bytes (function selector).
+    bytes calldata innerCall = userOp.callData[4:];
+    bytes memory innerCallRet;
+
+    // Check if there is any call data to execute.
+    if (innerCall.length > 0) {
+        // Decode the target address and the call data from the inner call data.
+        (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
+        bool success;
+        // Perform the delegate call to the target contract with the decoded call data.
+        (success, innerCallRet) = target.call(data);
+        // Ensure the delegate call was successful, otherwise revert.
+        require(success, "inner call failed");
     }
+
+    // Emit the Executed event with the user operation and the return data from the inner call.
+    emit Executed(userOp, innerCallRet);
+}
+
+
 
     /// @notice Installs a new module to the smart account.
     /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
