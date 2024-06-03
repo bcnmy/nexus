@@ -153,7 +153,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
         // Extract inner call data from user operation, skipping the first 4 bytes.
         bytes calldata innerCall = userOp.callData[4:];
-        bytes memory innerCallRet;
+        bytes memory innerCallRet = "";
 
         // Check and execute the inner call if data exists.
         if (innerCall.length > 0) {
