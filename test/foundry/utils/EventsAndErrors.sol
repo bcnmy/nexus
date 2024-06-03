@@ -41,7 +41,6 @@ contract EventsAndErrors {
     error InnerCallFailed();
     error CallToDeployWithFactoryFailed();
 
-
     // ==========================
     // Operation Errors
     // ==========================

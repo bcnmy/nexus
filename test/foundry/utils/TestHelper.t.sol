@@ -457,7 +457,6 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
-
     /// @notice Calculates the gas cost of the calldata
     /// @param data The calldata
     /// @return calldataGas The gas cost of the calldata
