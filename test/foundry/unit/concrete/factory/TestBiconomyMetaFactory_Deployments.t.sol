@@ -63,10 +63,7 @@ contract TestBiconomyMetaFactory_Deployments is NexusTest_Base {
 
         bytes memory factoryData = abi.encodeWithSelector(K1ValidatorFactory.createAccount.selector, user.addr, 1);
 
-        uint256 gasBefore = gasleft();
         address payable createdAccount = metaFactory.deployWithFactory{ value: 1 ether }(mockFactory, factoryData);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account using whitelisted factory printed above");
 
         // Validate that the account was deployed correctly
         assertTrue(createdAccount != address(0), "Created account address should not be zero");

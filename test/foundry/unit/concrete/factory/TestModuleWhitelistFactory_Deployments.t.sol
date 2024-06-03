@@ -82,10 +82,7 @@ contract TestModuleWhitelistFactoryDeployments is NexusTest_Base {
 
         address payable expectedAddress = whitelistFactory.computeAccountAddress(_initData, salt);
 
-        uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = whitelistFactory.createAccount{ value: 1 ether }(_initData, salt);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account using module whitelist factory printed above");
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");

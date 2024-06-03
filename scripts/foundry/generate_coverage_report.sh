@@ -18,6 +18,9 @@ mkdir -p coverage/foundry
 EXCLUDE="*test* *mocks* *node_modules* *scripts* *lib*"
 lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info $EXCLUDE --output-file coverage/foundry/forge-pruned-lcov.info
 
+# Remove the original lcov.info file and coverage.json
+rm lcov.info && rm coverage.json
+
 # Check if the coverage file is created
 if [ -f coverage/foundry/forge-pruned-lcov.info ]; then
   echo "Foundry coverage report generated successfully."

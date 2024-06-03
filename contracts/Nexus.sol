@@ -154,14 +154,31 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         }
     }
 
-    /// @notice Executes a user operation via delegatecall to use the contract's context.
-    /// @param userOp The user operation to execute.
-    /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) external payable virtual onlyEntryPoint {
-        bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
-        if (!success) revert ExecutionFailed();
+/// @notice Executes a user operation via a call using the contract's context.
+/// @param userOp The user operation to execute, containing transaction details.
+/// @param - Hash of the user operation.
+/// @dev Only callable by the EntryPoint contract. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
+function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
+    // Extract inner call data from user operation, skipping the first 4 bytes.
+    bytes calldata innerCall = userOp.callData[4:];
+    bytes memory innerCallRet;
+
+    // Check and execute the inner call if data exists.
+    if (innerCall.length > 0) {
+        // Decode target address and call data from inner call.
+        (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
+        bool success;
+        // Perform the call to the target contract with the decoded data.
+        (success, innerCallRet) = target.call(data);
+        // Ensure the call was successful.
+        require(success, "inner call failed");
     }
+
+    // Emit the Executed event with the user operation and inner call return data.
+    emit Executed(userOp, innerCallRet);
+}
+
+
 
     /// @notice Installs a new module to the smart account.
     /// @param moduleTypeId The type identifier of the module being installed, which determines its role:

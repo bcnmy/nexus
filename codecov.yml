@@ -1,0 +1,27 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    after_n_builds: 1
+
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+    patch:
+      default:
+        target: 80%
+  ignore:
+    - "scripts/*"
+    - "test/*"
+
+comment:
+  layout: "header, diff, files, footer"
+
+flags:
+  foundry:
+    paths:
+      - contracts/
+  hardhat:
+    paths:
+      - contracts/

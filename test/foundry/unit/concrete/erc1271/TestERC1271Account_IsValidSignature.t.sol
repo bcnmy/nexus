@@ -89,7 +89,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), wrappedSignature);
 
         // Call isValidSignature and check the result
-        bytes4 result = ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+        ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
     }
 
     /// @notice Tests the validation of a signature that does not involve ERC-6492 unwrapping.
@@ -104,7 +104,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), originalSignature);
 
         // Call isValidSignature and check the result
-        bytes4 result = ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+        ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
     }
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.

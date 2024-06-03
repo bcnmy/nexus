@@ -35,10 +35,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
-        uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account using meta factory + generic factory printed above");
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
@@ -102,10 +99,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
-        uint256 gasBefore = gasleft();
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account directly using generic factory printed above");
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
         vm.expectRevert(LinkedList_AlreadyInitialized.selector);
@@ -204,10 +198,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
-        uint256 gasBefore = gasleft();
         address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
-        console2.logUint(gasBefore - gasleft());
-        console2.log("Gas used to deploy account using meta factory + generic factory printed above");
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
