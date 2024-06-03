@@ -19,6 +19,11 @@ import { IStakeable } from "../interfaces/common/IStakeable.sol";
 
 /// @title Stakeable Entity
 /// @notice Provides functionality to stake, unlock, and withdraw Ether on an EntryPoint.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract Stakeable is Ownable, IStakeable {
     constructor(address newOwner) {
         _setOwner(newOwner);

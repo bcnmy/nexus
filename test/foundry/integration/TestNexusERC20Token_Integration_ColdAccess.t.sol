@@ -40,7 +40,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ERC20 token transfer with cold access
     function test_Gas_ERC20Token_Simple_Transfer_Cold() public checkERC20TokenBalanceCold(recipient, amount) {
         measureAndLogGasEOA(
-            "ERC20::transfer::EOA::Simple::ColdAccess",
+            "1::ERC20::transfer::EOA::Simple::ColdAccess",
             address(ERC20Token),
             0,
             abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
@@ -61,7 +61,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-        measureAndLogGas("ERC20::transfer::Nexus::Deployed::ColdAccess", userOps);
+        measureAndLogGas("3::ERC20::transfer::Nexus::Deployed::ColdAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ERC20 tokens using a paymaster with cold access
@@ -89,7 +89,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
 
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ERC20::transfer::Setup And Call::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("5::ERC20::transfer::Setup And Call::WithPaymaster::ColdAccess", userOps);
     }
 
     /// @notice Test deploying Nexus and transferring ERC20 tokens using deposited funds without a paymaster with cold access
@@ -123,7 +123,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
-        measureAndLogGas("ERC20::transfer::Setup And Call::UsingDeposit::ColdAccess", userOps);
+        measureAndLogGas("7::ERC20::transfer::Setup And Call::UsingDeposit::ColdAccess", userOps);
     }
 
     /// @notice Test sending ETH to the Nexus account before deployment and then deploy
@@ -154,7 +154,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("ERC20::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
+        measureAndLogGas("9::ERC20::transfer::Setup And Call::Using Pre-Funded Ether::ColdAccess", userOps);
     }
 
     /// @notice Tests gas consumption for transferring ERC20 tokens from an already deployed Nexus smart account using a paymaster
@@ -187,6 +187,6 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         // Measure and log gas usage
-        measureAndLogGas("ERC20::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
+        measureAndLogGas("11::ERC20::transfer::Nexus::WithPaymaster::ColdAccess", userOps);
     }
 }

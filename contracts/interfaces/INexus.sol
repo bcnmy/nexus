@@ -28,12 +28,6 @@ import { INexusEventsAndErrors } from "./INexusEventsAndErrors.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
-    /// @notice Emitted when Factory fails to initialise the account with posted bootstrap data.
-    error NexusInitializationFailed();
-
-    /// @notice Throws if zero address has been provided as Entry Point address
-    error EntryPointCannotBeZero();
-
     /// @notice Initializes the smart account with a validator and custom data.
     /// @dev This method sets up the account for operation, linking it with a validator and initializing it with specific data.
     /// Can be called directly or via a factory.

@@ -1,10 +1,10 @@
 TestAccountConfig_SupportsExecutionMode
-└── given the account configuration
+└── given the account configuration is set
     ├── when initializing the testing environment
-    │   └── it should set up the account configuration with BOB_ACCOUNT
-    ├── when testing if batch execution mode is supported
-    │   └── it should support batch execution mode
-    ├── when testing if single execution mode is supported
-    │   └── it should support single execution mode
-    └── when testing an unsupported execution mode
-        └── it should not support the unsupported execution mode
+    │   └── it should set up the Nexus contract
+    ├── when checking support for batch execution mode
+    │   └── it should confirm support for batch execution mode
+    ├── when checking support for single execution mode
+    │   └── it should confirm support for single execution mode
+    └── when checking support for an unsupported execution mode
+        └── it should confirm lack of support for the unsupported execution mode

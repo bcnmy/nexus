@@ -1,0 +1,11 @@
+TestFuzz_ExecuteFromExecutor
+├── when setting up the testing environment
+│   └── it should initialize the required contracts and wallets
+├── when executing a single operation from the executor with fuzzing
+│   └── it should execute the operation correctly
+├── when incrementing the counter multiple times with fuzzing
+│   └── it should increment the counter correctly
+├── when executing multiple increment and decrement operations
+│   └── it should handle the operations correctly
+└── when transferring tokens via the executor with fuzzing
+    └── it should transfer the tokens correctly

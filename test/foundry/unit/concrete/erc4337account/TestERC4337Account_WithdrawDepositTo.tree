@@ -1,0 +1,18 @@
+TestERC4337Account_WithdrawDepositTo
+└── given the testing environment is initialized
+    ├── when withdrawing deposit to a specified address
+    │   └── it should succeed
+    ├── when withdrawing deposit to an authorized address from the EntryPoint
+    │   └── it should succeed
+    ├── when withdrawing deposit from the account itself
+    │   └── it should succeed
+    ├── when withdrawing deposit from an unauthorized address
+    │   └── it should fail
+    ├── when withdrawing deposit to a contract address
+    │   └── it should fail
+    ├── when withdrawing deposit exceeding the available amount
+    │   └── it should fail
+    ├── when withdrawing deposit with zero amount
+    │   └── it should succeed
+    └── when withdrawing deposit with insufficient gas
+        └── it should fail

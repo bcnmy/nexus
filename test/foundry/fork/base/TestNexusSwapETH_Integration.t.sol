@@ -66,7 +66,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         path[1] = address(usdc);
 
         measureAndLogGasEOA(
-            "UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A",
+            "41::UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A",
             address(uniswapV2Router),
             SWAP_AMOUNT,
             abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, path, swapper, block.timestamp)
@@ -93,7 +93,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
+        measureAndLogGas("42::UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
@@ -133,7 +133,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         userOps[0].signature = signUserOp(user, userOps[0]);
 
         // Measure and log gas usage for the operation
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
+        measureAndLogGas("43::UniswapV2::swapExactETHForTokens::Setup And Call::WithPaymaster::N/A", userOps);
     }
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC using deposit
@@ -167,7 +167,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A", userOps);
+        measureAndLogGas("44::UniswapV2::swapExactETHForTokens::Setup And Call::UsingDeposit::N/A", userOps);
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap
@@ -204,50 +204,49 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-        measureAndLogGas("UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
+        measureAndLogGas("45::UniswapV2::swapExactETHForTokens::Setup And Call::Using Pre-Funded Ether::N/A", userOps);
     }
 
     /// @notice Tests gas consumption for swapping ETH for USDC using a deployed Nexus account with Paymaster
-function test_Gas_Swap_DeployedNexus_SwapEthForTokens_WithPaymaster()
-    public
-    checkERC20Balance(preComputedAddress, SWAP_AMOUNT)
-    checkPaymasterBalance(address(paymaster))
-{
-    // Prepare the swap execution details
-    Execution[] memory executions = prepareSingleExecution(
-        address(uniswapV2Router), // Uniswap V2 Router address
-        SWAP_AMOUNT, // Amount of ETH to swap
-        abi.encodeWithSignature(
-            "swapExactETHForTokens(uint256,address[],address,uint256)", // Function signature
-            0, // Minimum amount of tokens to receive (set to 0 for simplicity)
-            getPathForETHtoUSDC(), // Path for the swap (ETH to USDC)
-            preComputedAddress, // Recipient of the USDC
-            block.timestamp // Deadline for the swap
-        )
-    );
+    function test_Gas_Swap_DeployedNexus_SwapEthForTokens_WithPaymaster()
+        public
+        checkERC20Balance(preComputedAddress, SWAP_AMOUNT)
+        checkPaymasterBalance(address(paymaster))
+    {
+        // Prepare the swap execution details
+        Execution[] memory executions = prepareSingleExecution(
+            address(uniswapV2Router), // Uniswap V2 Router address
+            SWAP_AMOUNT, // Amount of ETH to swap
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)", // Function signature
+                0, // Minimum amount of tokens to receive (set to 0 for simplicity)
+                getPathForETHtoUSDC(), // Path for the swap (ETH to USDC)
+                preComputedAddress, // Recipient of the USDC
+                block.timestamp // Deadline for the swap
+            )
+        );
 
-    // Deploy the Nexus account
-    Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
+        // Deploy the Nexus account
+        Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
 
-    // Build the PackedUserOperation array
-    PackedUserOperation[] memory userOps = buildPackedUserOperation(
-        user, // Wallet initiating the operation
-        deployedNexus, // Deployed Nexus account
-        EXECTYPE_DEFAULT, // Execution type
-        executions, // Execution details
-        address(VALIDATOR_MODULE) // Validator module address
-    );
+        // Build the PackedUserOperation array
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            user, // Wallet initiating the operation
+            deployedNexus, // Deployed Nexus account
+            EXECTYPE_DEFAULT, // Execution type
+            executions, // Execution details
+            address(VALIDATOR_MODULE) // Validator module address
+        );
 
-    // Generate and sign paymaster data
-    userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
+        // Generate and sign paymaster data
+        userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
 
-    // Sign the entire user operation with the user's wallet
-    userOps[0].signature = signUserOp(user, userOps[0]);
+        // Sign the entire user operation with the user's wallet
+        userOps[0].signature = signUserOp(user, userOps[0]);
 
-    // Measure and log gas usage for the operation
-    measureAndLogGas("UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
-}
-
+        // Measure and log gas usage for the operation
+        measureAndLogGas("46::UniswapV2::swapExactETHForTokens::Nexus::WithPaymaster::N/A", userOps);
+    }
 
     /// @notice Helper function to get the path for ETH to USDC swap
     /// @return path The array containing the swap path

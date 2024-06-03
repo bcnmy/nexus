@@ -40,6 +40,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @notice Fuzz test for installing fallback handlers with random function selectors
     /// @param selector The random function selector
     function testFuzz_InstallFallbackHandler_WithRandomSelector(bytes4 selector) public {
+        vm.assume(selector != bytes4(0x6d61fe70) && selector != bytes4(0x8a91b0e3));
         // Prepare data with a random selector to test dynamic input handling
         bytes memory customData = abi.encode(selector);
         bytes memory callData = abi.encodeWithSelector(

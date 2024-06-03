@@ -1,30 +1,23 @@
 ArbitrumSmartAccountUpgradeTest
-└── given the upgrade process from Biconomy Smart Account V2 to Nexus
-    ├── when setting up the initial test environment
-    │   └── it should initialize all required components
-    ├── when testing the upgrade from Smart Account V2 to Nexus
-    │   ├── it should check the initial state
-    │   ├── it should fund the required accounts
-    │   ├── it should perform the upgrade and initialization
-    │   └── it should verify the upgrade and initialization
-    ├── when validating the account ID after the upgrade process
-    │   └── it should return the expected account ID
-    ├── when validating the account implementation address after the upgrade process
-    │   └── it should not match the address before the upgrade
-    ├── when testing USDC transfer functionality after the upgrade
-    │   ├── it should execute the transfer operation
-    │   └── it should ensure the recipient's balance is updated correctly
-    ├── when testing native ETH transfer functionality after the upgrade
-    │   ├── it should execute the transfer operation
-    │   └── it should ensure the recipient's balance is updated correctly
-    ├── when preparing the initial state check before upgrade
-    │   └── it should validate the initial entry point address
-    ├── when funding the required accounts for the upgrade process
-    │   └── it should ensure accounts have sufficient balance
-    ├── when performing the upgrade and initialization steps
-    │   └── it should execute the batch call correctly
-    ├── when verifying the state after upgrade and initialization
-    │   ├── it should check the new entry point address
-    │   └── it should confirm the validator module is installed
-    ├── when building a user operation for testing
-        └── it should construct the UserOperation correctly
+├── when setting up the initial state for the tests
+│   └── it should initialize variables, fork Arbitrum mainnet, and set up the state
+├── when testing the upgrade from Smart Account V2 to Nexus
+│   └── it should ensure initialization after the upgrade
+├── when validating the account ID after the upgrade process
+│   └── it should match the expected account ID after upgrade
+├── when validating the account implementation address
+│   └── it should match the expected implementation address after upgrade
+├── when testing USDC transfer functionality after the upgrade
+│   └── it should transfer USDC successfully post-upgrade
+├── when testing native ETH transfer functionality after the upgrade
+│   └── it should transfer ETH successfully post-upgrade
+├── when preparing the initial state check before upgrade
+│   └── it should verify the initial entry point
+├── when funding the required accounts for the upgrade process
+│   └── it should fund smart account and owner address
+├── when performing the upgrade and initialization steps
+│   └── it should execute the upgrade and initialization
+├── when verifying the state after upgrade and initialization
+│   └── it should validate the new entry point and module installation
+└── when building a user operation for testing
+    └── it should construct the user operation with the provided parameters

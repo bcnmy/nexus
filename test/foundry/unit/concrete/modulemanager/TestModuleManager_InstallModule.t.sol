@@ -13,8 +13,8 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         setUpModuleManagement_Base();
     }
 
-    /// @notice Tests the successful installation of a module
-    function test_installModule_Success() public {
+    /// @notice Tests successful installation of a module
+    function test_InstallModule_Success() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
@@ -24,8 +24,8 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    /// @notice Tests the successful installation of a module with 'Try' execution type
-    function test_installModule_TrySuccess() public {
+    /// @notice Tests successful installation of a module with 'Try' execution type
+    function test_InstallModule_TrySuccess() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
@@ -35,15 +35,15 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    /// @notice Tests the successful installation of a validator module
-    function test_installValidatorModule_Success() public {
+    /// @notice Tests successful installation of a validator module
+    function test_InstallValidatorModule_Success() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
 
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
     }
 
-    /// @notice Tests the successful installation of an executor module
-    function test_installExecutorModule_Success() public {
+    /// @notice Tests successful installation of an executor module
+    function test_InstallExecutorModule_Success() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         installModule(callData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), EXECTYPE_DEFAULT);
     }
@@ -51,7 +51,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
     /// @notice Tests reversion when trying to install an already installed module
     function test_RevertIf_ModuleAlreadyInstalled() public {
         // Setup: Install the module first
-        test_installModule_Success(); // Use the test case directly for setup
+        test_InstallModule_Success(); // Use the test case directly for setup
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should be installed initially");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed initially");
 
@@ -159,6 +159,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    /// @notice Tests reversion when trying to install an incompatible executor module
     function test_RevertIf_IncompatibleExecutorModule() public {
         MockValidator newMockValidator = new MockValidator();
         bytes memory callData = abi.encodeWithSelector(
@@ -219,7 +220,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
     }
 
     /// @notice Tests installing a fallback handler with custom data
-    function test_installFallbackHandler_WithCustomData() public {
+    function test_InstallFallbackHandler_WithCustomData() public {
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
         assertFalse(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
@@ -302,7 +303,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
     }
 
     /// @notice Tests successful installation of a hook module
-    function test_installHookModule_Success() public {
+    function test_InstallHookModule_Success() public {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockHook), ""), "Hook module should not be installed initially");
 
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
@@ -319,7 +320,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
     /// @notice Tests reversion when trying to reinstall an already installed hook module
     function test_RevertIf_ReinstallHookModule() public {
         // Install the hook module first
-        test_installHookModule_Success();
+        test_InstallHookModule_Success();
 
         // Attempt to reinstall
         bytes memory callDataReinstall = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
@@ -350,7 +351,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
-    /// @notice Tests reversion when trying to install a module with an invalid module type ID
+    /// @notice Tests reversion when trying to install a module with an invalid type ID
     function test_RevertIf_InvalidModuleWithInvalidTypeId() public {
         MockInvalidModule newMockInvalidModule = new MockInvalidModule();
         bytes memory callData = abi.encodeWithSelector(

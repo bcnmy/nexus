@@ -1,0 +1,21 @@
+TestFuzz_Execute
+├── when setting up the testing environment
+│   └── it should initialize the required contracts and wallets
+├── when executing a generic operation with fuzzing
+│   └── it should execute the operation correctly
+├── when executing a single default operation with fuzzing
+│   └── it should execute the operation correctly
+├── when executing a single try operation with fuzzing
+│   └── it should execute the operation correctly
+├── when executing a batch default operation with fuzzing
+│   └── it should execute the operations correctly
+├── when executing a batch try operation with fuzzing
+│   └── it should execute the operations correctly
+├── when incrementing a counter multiple times with fuzzing
+│   └── it should increment the counter correctly
+├── when decrementing a counter multiple times with fuzzing
+│   └── it should decrement the counter correctly
+├── when transferring tokens with fuzzing
+│   └── it should transfer the tokens correctly
+└── when performing complex token operations with multiple receivers
+    └── it should handle the token transfers correctly

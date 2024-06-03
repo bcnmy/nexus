@@ -2,26 +2,60 @@ const fs = require("fs");
 const readline = require("readline");
 const { exec } = require("child_process");
 
-// Define the log file and the output markdown file
 const LOG_FILE = "gas.log";
-const OUTPUT_FILE = "gas_report.md";
+const OUTPUT_FILE = "GAS_REPORT.md";
+const CURRENT_REPORT_FILE = ".github/gas_report.json";
+const DEV_REPORT_FILE = ".github/previous_gas_report.json"; // Temporary file for previous report
 
-// Function to execute the `forge test` command
-function runForgeTest() {
+/**
+ * Execute a shell command and return it as a Promise.
+ * @param {string} command - Command to execute
+ * @returns {Promise<string>} - Promise resolving to the command output
+ */
+function execPromise(command) {
   return new Promise((resolve, reject) => {
-    console.log("🚀 Running forge tests, this may take a few minutes...");
-    exec("forge test -vv --mt test_Gas > gas.log", (error, stdout, stderr) => {
+    exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.error(`❌ Exec error: ${error}`);
-        reject(`exec error: ${error}`);
+        reject(error);
+      } else {
+        resolve(stdout || stderr);
       }
-      console.log("✅ Forge tests completed.");
-      resolve(stdout ? stdout : stderr);
     });
   });
 }
 
-// Function to parse the log file and generate the report
+/**
+ * Run forge test and log results to a file.
+ * @returns {Promise<string>} - Promise resolving when the test completes
+ */
+function runForgeTest() {
+  console.log("🧪 Running forge tests, this may take a few minutes...");
+  return execPromise("forge test -vv --mt test_Gas > gas.log");
+}
+
+/**
+ * Checkout the gas report file from the dev branch.
+ * @returns {Promise<string|null>} - Promise resolving to the file path or null if not found
+ */
+async function checkoutDevBranchAndGetReport() {
+  try {
+    console.log(`🔄 Checking out ${CURRENT_REPORT_FILE} from dev branch...`);
+    await execPromise(`git fetch origin dev && git checkout origin/dev -- ${CURRENT_REPORT_FILE}`);
+    if (fs.existsSync(CURRENT_REPORT_FILE)) {
+      console.log(`✅ Fetched ${CURRENT_REPORT_FILE} from dev branch.`);
+      fs.renameSync(CURRENT_REPORT_FILE, DEV_REPORT_FILE);
+      return DEV_REPORT_FILE;
+    }
+  } catch (error) {
+    console.error(`❌ Could not fetch ${CURRENT_REPORT_FILE} from dev branch: ${error.message}`);
+  }
+  return null;
+}
+
+/**
+ * Generate gas report from the test log.
+ * @returns {Promise<Object[]>} - Promise resolving to the current gas report results
+ */
 async function generateReport() {
   await runForgeTest();
 
@@ -32,94 +66,136 @@ async function generateReport() {
   });
 
   const results = [];
-
   console.log("📄 Parsing log file, please wait...");
+
   for await (const line of rl) {
-    console.log(line);
     if (line.includes("::")) {
-      const parts = line.split("::");
-      const PROTOCOL = parts[0];
-      const ACTION_FUNCTION = parts[1];
-      let ACCOUNT_TYPE;
-      let IS_DEPLOYED;
-      if (line.includes("EOA")) {
-        ACCOUNT_TYPE = "EOA";
-        IS_DEPLOYED = "False";
-      } else if (line.includes("Nexus")) {
-        ACCOUNT_TYPE = "Smart Account";
-        IS_DEPLOYED = "True";
-      } else {
-        ACCOUNT_TYPE = "Smart Account";
-        IS_DEPLOYED = "False";
-      }
+      const [number, protocol, actionFunction, , , gasInfo] = line.split("::");
+      const accessType = gasInfo.split(": ")[0];
+      const gasUsed = parseInt(gasInfo.split(": ")[1], 10);
 
-      const WITH_PAYMASTER = line.includes("WithPaymaster") ? "True" : "False";
-
-      const GAS_INFO = parts[4];
-      const ACCESS_TYPE = GAS_INFO.split(": ")[0];
-      const GAS_USED = GAS_INFO.split(": ")[1];
-
-      let RECEIVER_ACCESS;
-      if (ACCESS_TYPE === "ColdAccess") {
-        RECEIVER_ACCESS = "🧊 ColdAccess";
-      } else if (ACCESS_TYPE === "WarmAccess") {
-        RECEIVER_ACCESS = "🔥 WarmAccess";
-      } else {
-        RECEIVER_ACCESS = "N/A";
-      }
+      const accountType = line.includes("EOA") ? "EOA" : "Smart Account";
+      const isDeployed = line.includes("Nexus") ? "True" : "False";
+      const withPaymaster = line.includes("WithPaymaster") ? "True" : "False";
+      const receiverAccess =
+        accessType === "ColdAccess"
+          ? "🧊 ColdAccess"
+          : accessType === "WarmAccess"
+          ? "🔥 WarmAccess"
+          : "N/A";
 
       results.push({
-        PROTOCOL,
-        ACTION_FUNCTION,
-        ACCOUNT_TYPE,
-        IS_DEPLOYED,
-        WITH_PAYMASTER,
-        RECEIVER_ACCESS,
-        GAS_USED,
-        FULL_LOG: line.trim(),
+        NUMBER: parseInt(number, 10),
+        PROTOCOL: protocol.trim(),
+        ACTION_FUNCTION: actionFunction.trim(),
+        ACCOUNT_TYPE: accountType,
+        IS_DEPLOYED: isDeployed,
+        WITH_PAYMASTER: withPaymaster,
+        RECEIVER_ACCESS: receiverAccess,
+        GAS_USED: gasUsed,
       });
     }
   }
 
   console.log("🔄 Sorting results...");
-  // Custom sort: Group by protocol alphabetically, then by EOA first, Smart Account with Is Deployed=True next, then the rest
-  results.sort((a, b) => {
-    if (a.PROTOCOL < b.PROTOCOL) return -1;
-    if (a.PROTOCOL > b.PROTOCOL) return 1;
-    if (a.ACCOUNT_TYPE === "EOA" && b.ACCOUNT_TYPE !== "EOA") return -1;
-    if (a.ACCOUNT_TYPE !== "EOA" && b.ACCOUNT_TYPE === "EOA") return 1;
-    if (a.IS_DEPLOYED === "True" && b.IS_DEPLOYED !== "True") return -1;
-    if (a.IS_DEPLOYED !== "True" && b.IS_DEPLOYED === "True") return 1;
-    return 0;
-  });
+  results.sort((a, b) => a.NUMBER - b.NUMBER);
 
-  console.log("🖋️ Writing report...");
-  // Write the report
-  const outputStream = fs.createWriteStream(OUTPUT_FILE);
-  outputStream.write("# Gas Report\n");
-  outputStream.write(
-    "| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Full Log** |\n",
-  );
-  outputStream.write(
-    "|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:-------------:|\n",
-  );
-
-  results.forEach((result) => {
-    outputStream.write(
-      `| ${result.PROTOCOL} | ${result.ACTION_FUNCTION} | ${result.ACCOUNT_TYPE} | ${result.IS_DEPLOYED} | ${result.WITH_PAYMASTER} | ${result.RECEIVER_ACCESS} | ${result.GAS_USED} | ${result.FULL_LOG} |\n`,
-    );
-  });
-
-  console.log(`📊 Gas report generated and saved to ${OUTPUT_FILE}`);
+  return results;
 }
 
-// Function to clean up temporary files
-function cleanUp() {
+/**
+ * Compare the current gas report with the previous report from the dev branch.
+ * @returns {Promise<void>} - Promise resolving when the comparison is complete
+ */
+async function compareReports() {
+  const previousReportFile = await checkoutDevBranchAndGetReport();
+
+  if (!previousReportFile) {
+    console.error("❌ No previous gas report found in dev branch.");
+    return;
+  }
+
+  const prevData = fs.readFileSync(previousReportFile, "utf8");
+  const prevResults = JSON.parse(prevData);
+  const currResults = await generateReport();
+
+  const diffLines = [
+    "# Gas Report Comparison",
+    "| **Protocol** | **Actions / Function** | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |",
+    "|:------------:|:---------------------:|:----------------:|:--------------:|:-------------------:|:-------------------:|:------------:|:------------------:|",
+  ];
+
+  const diffResults = [];
+  let hasDiff = false;
+
+  currResults.forEach((curr) => {
+    const prev = prevResults.find((prev) => prev.NUMBER === curr.NUMBER);
+    if (prev) {
+      const diff = curr.GAS_USED - prev.GAS_USED;
+      const gasDiff =
+        diff > 0 ? `🥵 +${diff}` : diff < 0 ? `🥳 -${Math.abs(diff)}` : "0";
+      diffLines.push(
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`
+      );
+      diffResults.push({
+        ...curr,
+        GAS_DIFFERENCE: gasDiff,
+      });
+
+      // Debugging logs
+      if (diff !== 0) {
+        hasDiff = true;
+        console.log(
+          `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`
+        );
+      }
+    } else {
+      diffLines.push(
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | N/A |`
+      );
+      diffResults.push({
+        ...curr,
+        GAS_DIFFERENCE: "N/A",
+      });
+    }
+  });
+
+  if (!hasDiff) {
+    console.log("📉 No differences found.");
+  } else {
+    console.log("📈 Differences found and reported.");
+  }
+
+  fs.writeFileSync(CURRENT_REPORT_FILE, JSON.stringify(diffResults, null, 2));
+  console.log(`📊 Gas report with differences saved to ${CURRENT_REPORT_FILE}`);
+
+  fs.writeFileSync(OUTPUT_FILE, diffLines.join("\n"));
+  console.log("📊 Gas report comparison generated and saved to GAS_REPORT.md");
+
+  // Format with Prettier
+  execPromise(`yarn prettier --write ${OUTPUT_FILE}`).then(() => {
+    console.log("✨ Prettier formatting completed for GAS_REPORT.md");
+  });
+
+  // Clean up
   fs.unlink(LOG_FILE, (err) => {
     if (err) console.error(`❌ Error deleting ${LOG_FILE}: ${err}`);
     else console.log(`🗑️ ${LOG_FILE} deleted successfully.`);
   });
+
+  // Remove the temporary previous gas report file
+  fs.unlink(DEV_REPORT_FILE, (err) => {
+    if (err) console.error(`❌ Error deleting ${DEV_REPORT_FILE}: ${err}`);
+    else console.log(`🗑️ ${DEV_REPORT_FILE} deleted successfully.`);
+  });
 }
 
-// Run the function to generate the report and then clean up
-generateReport().then(cleanUp).catch(console.error);
+async function main() {
+  try {
+    await compareReports();
+  } catch (error) {
+    console.error(`❌ Error: ${error.message}`);
+  }
+}
+
+main();

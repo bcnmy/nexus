@@ -220,4 +220,50 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Assert that the fetched handler address matches the expected handler module address
         assertEq(handlerAddress, address(HANDLER_MODULE), "getActiveHookHandlerBySelector returned incorrect handler address");
     }
+
+    /// @notice Tests reversion when attempting to install the forbidden onInstall selector as a fallback handler.
+    function test_RevertIf_InstallForbiddenOnInstallSelector() public {
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(bytes4(0x6d61fe70), CALLTYPE_SINGLE))); // onInstall selector
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        // Expect UserOperationRevertReason event due to forbidden selector
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("FallbackSelectorForbidden()");
+
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// @notice Tests reversion when attempting to install the forbidden onUninstall selector as a fallback handler.
+    function test_RevertIf_InstallForbiddenOnUninstallSelector() public {
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(bytes4(0x8a91b0e3), CALLTYPE_SINGLE))); // onUninstall selector
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        // Expect UserOperationRevertReason event due to forbidden selector
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("FallbackSelectorForbidden()");
+
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
+
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
 }

@@ -1,9 +1,7 @@
-import { NumberLike } from "@nomicfoundation/hardhat-network-helpers/dist/src/types";
 import {
   AddressLike,
   BigNumberish,
   BytesLike,
-  HDNodeWallet,
   ParamType,
   Signer,
 } from "ethers";
@@ -16,17 +14,21 @@ import {
   K1Validator,
   Nexus,
   MockExecutor,
-  IValidator,
-  IExecutor,
   MockHook,
   MockHandler,
+  Stakeable,
+  BiconomyMetaFactory,
+  NexusAccountFactory,
+  Bootstrap,
+  BootstrapLib,
+  ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  msaFactory: K1ValidatorFactory;
+  nexusFactory: K1ValidatorFactory;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
   counter: Counter;
@@ -38,25 +40,31 @@ export interface DeploymentFixture {
 export interface DeploymentFixtureWithSA {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  deployedMSA: Nexus;
-  aliceDeployedMSA: Nexus;
-  deployedMSAAddress: AddressLike;
+  deployedNexus: Nexus;
+  aliceDeployedNexus: Nexus;
+  deployedNexusAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  msaFactory: K1ValidatorFactory;
+  nexusK1Factory: K1ValidatorFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   mockExecutor: MockExecutor;
   mockHook: MockHook;
+  mockHook2: MockHook;
   mockFallbackHandler: MockHandler;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
   accounts: Signer[];
   addresses: string[];
+  stakeable: Stakeable;
+  metaFactory: BiconomyMetaFactory;
+  nexusFactory: NexusAccountFactory;
+  bootstrap: Bootstrap;
+  BootstrapLib: BootstrapLib;
+  moduleWhitelistFactory: ModuleWhitelistFactory;
 }
 
-// TODO: check for need of making these optional
 export interface UserOperation {
   sender: AddressLike; // Or string
   nonce?: BigNumberish;
@@ -100,7 +108,7 @@ export enum ModuleType {
 }
 
 export type ModuleParams = {
-  deployedMSA: Nexus;
+  deployedNexus: Nexus;
   entryPoint: EntryPoint;
   module: any;
   moduleType: ModuleType | number;

@@ -1,0 +1,24 @@
+TestNexus_FallbackFunction
+└── given the testing environment is initialized
+    ├── when setting the fallback handler
+    │   └── it should install the fallback handler correctly
+    ├── when making a static call through the fallback handler
+    │   └── it should succeed
+    ├── when making a single call through the fallback handler
+    │   └── it should succeed
+    ├── when changing state through the fallback handler using a single call
+    │   └── it should change the state correctly
+    ├── when changing state through the fallback handler using a static call
+    │   └── it should fail
+    ├── when making a call with an invalid call type through the fallback handler
+    │   └── it should fail
+    ├── when making a call to a missing fallback handler
+    │   └── it should fail
+    ├── when making a call with an invalid function selector through the fallback handler
+    │   └── it should fail
+    ├── when making a call with insufficient gas through the fallback handler
+    │   └── it should fail
+    ├── when making a single call that reverts through the fallback handler
+    │   └── it should fail and provide the correct revert reason
+    └── when making a static call that reverts through the fallback handler
+        └── it should fail and provide the correct revert reason

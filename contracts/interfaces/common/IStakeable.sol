@@ -15,6 +15,11 @@ pragma solidity ^0.8.26;
 /// @title Stakeable Entity Interface
 /// @notice Interface for staking, unlocking, and withdrawing Ether on an EntryPoint.
 /// @dev Defines functions for managing stakes on an EntryPoint.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface IStakeable {
     /// @notice Stakes a certain amount of Ether on an EntryPoint.
     /// @dev The contract should have enough Ether to cover the stake.

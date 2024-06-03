@@ -55,7 +55,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     constructor(address anEntryPoint) {
         _SELF = address(this);
         if (address(anEntryPoint) == address(0)) {
-            revert EntryPointCannotBeZero();
+            revert EntryPointCanNotBeZero();
         }
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
@@ -116,15 +116,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        onlyExecutorModule
-        withHook
-        returns (
-            bytes[] memory returnData // TODO returnData is not used
-        )
-    {
+    ) external payable onlyExecutorModule withHook returns (bytes[] memory returnData) {
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
@@ -154,13 +146,28 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         }
     }
 
-    /// @notice Executes a user operation via delegatecall to use the contract's context.
-    /// @param userOp The user operation to execute.
-    /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) external payable virtual onlyEntryPoint {
-        bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
-        require(success, ExecutionFailed());
+    /// @notice Executes a user operation via a call using the contract's context.
+    /// @param userOp The user operation to execute, containing transaction details.
+    /// @param - Hash of the user operation.
+    /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
+        // Extract inner call data from user operation, skipping the first 4 bytes.
+        bytes calldata innerCall = userOp.callData[4:];
+        bytes memory innerCallRet = "";
+
+        // Check and execute the inner call if data exists.
+        if (innerCall.length > 0) {
+            // Decode target address and call data from inner call.
+            (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
+            bool success;
+            // Perform the call to the target contract with the decoded data.
+            (success, innerCallRet) = target.call(data);
+            // Ensure the call was successful.
+            require(success, "inner call failed");
+        }
+
+        // Emit the Executed event with the user operation and inner call return data.
+        emit Executed(userOp, innerCallRet);
     }
 
     /// @notice Installs a new module to the smart account.
@@ -241,10 +248,16 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
+    /// @notice Checks the 1967 implementation slot, if not found then checks the slot defined by address (Biconomy V2 smart account)
     /// @return implementation The address of the current contract implementation.
     function getImplementation() external view returns (address implementation) {
         assembly {
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+        }
+        if (implementation == address(0)) {
+            assembly {
+                implementation := sload(address())
+            }
         }
     }
 
@@ -296,9 +309,22 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
+    /// @notice Updates two slots 1. ERC1967 slot and
+    /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
+    /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
+        if (newImplementation == address(0)) revert InvalidImplementationAddress();
+        bool res;
+        assembly {
+            res := gt(extcodesize(newImplementation), 0)
+        }
+        if (res == false) revert InvalidImplementationAddress();
+        // update the address() storage slot as well.
+        assembly {
+            sstore(address(), newImplementation)
+        }
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 

@@ -1,4 +1,5 @@
 TestERC4337Account_PayPrefund
-└── given the ERC4337 account with validateUserOp function
-    └── when paying prefund with sufficient funds
-        └── it should handle the prefund payment correctly
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when testing prefund payment handling with sufficient funds
+│   └── it should handle prefund payment correctly

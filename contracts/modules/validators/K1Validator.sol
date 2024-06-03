@@ -30,54 +30,77 @@ import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "..
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
+/// @title Nexus - K1Validator
+/// @notice Validates user operation signatures for smart accounts.
+/// @dev This is a simple validator using SignatureCheckerLib for testing purposes. Not for production use.
 contract K1Validator is IValidator {
     using SignatureCheckerLib for address;
 
-    mapping(address sa => address owner) public smartAccountOwners;
+    /// @notice Mapping of smart account addresses to their respective owner addresses
+    mapping(address => address) public smartAccountOwners;
 
+    /// @notice Error to indicate that no owner was provided during installation
     error NoOwnerProvided();
 
+    /// @notice Called upon module installation to set the owner of the smart account
+    /// @param data Encoded address of the owner
     function onInstall(bytes calldata data) external {
         require(data.length != 0, NoOwnerProvided());
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
+    /// @notice Called upon module uninstallation to remove the owner of the smart account
     function onUninstall(bytes calldata) external {
         delete smartAccountOwners[msg.sender];
     }
 
+    /// @notice Checks if the smart account is initialized with an owner
+    /// @param smartAccount The address of the smart account
+    /// @return True if the smart account has an owner, false otherwise
     function isInitialized(address smartAccount) external view returns (bool) {
         return smartAccountOwners[smartAccount] != address(0);
     }
 
+    /// @notice Validates a user operation by checking the signature against the owner's address
+    /// @param userOp The user operation to validate
+    /// @param userOpHash The hash of the user operation
+    /// @return The validation result (0 for success, 1 for failure)
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
         address owner = smartAccountOwners[userOp.sender];
-        if (owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)) {
-            return VALIDATION_SUCCESS;
-        }
-        if (owner.isValidSignatureNow(userOpHash, userOp.signature)) {
+        if (
+            owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
+            owner.isValidSignatureNow(userOpHash, userOp.signature)
+        ) {
             return VALIDATION_SUCCESS;
         }
         return VALIDATION_FAILED;
     }
 
+    /// @notice Validates a signature with the sender's address
+    /// @param hash The hash of the data to validate
+    /// @param data The signature data
+    /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-        // SHOULD PREPARE REPLAY RESISTANT HASH BY APPENDING MSG.SENDER
-        // SEE:
-        // https://github.com/bcnmy/scw-contracts/blob/develop/contracts/smart-account/modules/EcdsaOwnershipRegistryModule.sol#L122
-        // OR USE EIP-712
+        // Validate the signature using SignatureCheckerLib
         return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
+    /// @notice Returns the name of the module
+    /// @return The name of the module
     function name() external pure returns (string memory) {
         return "K1Validator";
     }
 
+    /// @notice Returns the version of the module
+    /// @return The version of the module
     function version() external pure returns (string memory) {
         return "0.0.1";
     }
 
+    /// @notice Checks if the module is of the specified type
+    /// @param typeID The type ID to check
+    /// @return True if the module is of the specified type, false otherwise
     function isModuleType(uint256 typeID) external pure returns (bool) {
         return typeID == MODULE_TYPE_VALIDATOR;
     }

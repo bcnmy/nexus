@@ -1,0 +1,19 @@
+TestGas_ExecutionHelper
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when testing gas usage for single execution
+│   └── it should measure the gas used correctly
+├── when testing gas usage for try single execution
+│   └── it should measure the gas used correctly
+├── when testing gas usage for batch execution
+│   └── it should measure the gas used correctly
+├── when testing gas usage for try batch execution
+│   └── it should measure the gas used correctly
+├── when testing gas usage for single execution from executor
+│   └── it should measure the gas used correctly
+├── when testing gas usage for try single execution from executor
+│   └── it should measure the gas used correctly
+├── when testing gas usage for batch execution from executor
+│   └── it should measure the gas used correctly
+└── when testing gas usage for try batch execution from executor
+    └── it should measure the gas used correctly

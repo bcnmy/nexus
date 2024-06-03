@@ -12,10 +12,14 @@ import {
   K1Validator,
   Nexus,
   Bootstrap,
+  Stakeable,
+  BiconomyMetaFactory,
+  NexusAccountFactory,
+  BootstrapLib,
+  ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
-import { DeployResult } from "hardhat-deploy/dist/types";
 
 export const ENTRY_POINT_V7 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 
@@ -44,8 +48,6 @@ export async function deployContract<T>(
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
 async function getDeployedEntrypoint() {
-  const [deployer] = await ethers.getSigners();
-
   // Deploy the contract normally to get its bytecode
   const Contract = await ethers.getContractFactory("EntryPoint");
   const contract = await Contract.deploy();
@@ -66,7 +68,7 @@ async function getDeployedEntrypoint() {
  * Deploys the K1ValidatorFactory contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed EntryPoint contract instance.
  */
-export async function getDeployedAccountFactory(
+export async function getDeployedAccountK1Factory(
   implementationAddress: string,
   owner: string,
   k1Validator: string,
@@ -78,14 +80,30 @@ export async function getDeployedAccountFactory(
     accounts.map((account) => account.getAddress()),
   );
 
-  const K1ValidatorFactory =
-    await ethers.getContractFactory("K1ValidatorFactory");
+  // Deploy the BootstrapLib library
+  const BootstrapLibFactory = await ethers.getContractFactory("BootstrapLib");
+  const BootstrapLib = await BootstrapLibFactory.deploy();
+  BootstrapLib.waitForDeployment();
+
+  // Get the contract factory for K1ValidatorFactory with linked library
+  const K1ValidatorFactory = await ethers.getContractFactory(
+    "K1ValidatorFactory",
+    {
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
+    },
+  );
+
   const deterministicAccountFactory = await deployments.deploy(
     "K1ValidatorFactory",
     {
       from: addresses[0],
       deterministicDeployment: true,
-      args: [owner, implementationAddress, k1Validator, bootstrapper],
+      args: [implementationAddress, owner, k1Validator, bootstrapper],
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
     },
   );
 
@@ -210,6 +228,85 @@ export async function getDeployedMockHandler(): Promise<MockHandler> {
 }
 
 /**
+ * Deploys the BiconomyMetaFactory contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed BiconomyMetaFactory contract instance.
+ */
+export async function getDeployedMetaFactory(): Promise<BiconomyMetaFactory> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const MetaFactory = await ethers.getContractFactory("BiconomyMetaFactory");
+  const deterministicMetaFactory = await deployments.deploy(
+    "BiconomyMetaFactory",
+    {
+      from: addresses[0],
+      deterministicDeployment: true,
+      args: [addresses[0]],
+    },
+  );
+
+  return MetaFactory.attach(
+    deterministicMetaFactory.address,
+  ) as BiconomyMetaFactory;
+}
+
+/**
+ * Deploys the NexusAccountFactory contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed NexusAccountFactory contract instance.
+ */
+export async function getDeployedNexusAccountFactory(): Promise<NexusAccountFactory> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+  const smartAccountImplementation = await getDeployedNexusImplementation();
+  const NexusAccountFactory = await ethers.getContractFactory(
+    "NexusAccountFactory",
+  );
+  const deterministicNexusAccountFactory = await deployments.deploy(
+    "NexusAccountFactory",
+    {
+      from: addresses[0],
+      deterministicDeployment: true,
+      args: [await smartAccountImplementation.getAddress(), addresses[0]],
+    },
+  );
+
+  return NexusAccountFactory.attach(
+    deterministicNexusAccountFactory.address,
+  ) as NexusAccountFactory;
+}
+
+/**
+ * Deploys the ModuleWhitelistFactory contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed ModuleWhitelistFactory contract instance.
+ */
+export async function getDeployedModuleWhitelistFactory(): Promise<ModuleWhitelistFactory> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+  const smartAccountImplementation = await getDeployedNexusImplementation();
+  const ModuleWhitelistFactory = await ethers.getContractFactory(
+    "ModuleWhitelistFactory",
+  );
+  const deterministicModuleWhitelistFactory = await deployments.deploy(
+    "ModuleWhitelistFactory",
+    {
+      from: addresses[0],
+      deterministicDeployment: true,
+      args: [await smartAccountImplementation.getAddress(), addresses[0]],
+    },
+  );
+
+  return ModuleWhitelistFactory.attach(
+    deterministicModuleWhitelistFactory.address,
+  ) as ModuleWhitelistFactory;
+}
+
+/**
  * Deploys the ECDSA K1Validator contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed ECDSA K1Validator contract instance.
  */
@@ -229,23 +326,43 @@ export async function getDeployedK1Validator(): Promise<K1Validator> {
 }
 
 /**
- * Deploys the (MSA) Smart Account implementation contract with a deterministic deployment.
+ * Deploys the (Nexus) Smart Account implementation contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed SA implementation contract instance.
  */
-export async function getDeployedMSAImplementation(): Promise<Nexus> {
+export async function getDeployedNexusImplementation(): Promise<Nexus> {
   const accounts: Signer[] = await ethers.getSigners();
   const addresses = await Promise.all(
     accounts.map((account) => account.getAddress()),
   );
 
   const Nexus = await ethers.getContractFactory("Nexus");
-  const deterministicMSAImpl = await deployments.deploy("Nexus", {
+  const deterministicNexusImpl = await deployments.deploy("Nexus", {
     from: addresses[0],
     args: [ENTRY_POINT_V7],
     deterministicDeployment: true,
   });
 
-  return Nexus.attach(deterministicMSAImpl.address) as Nexus;
+  return Nexus.attach(deterministicNexusImpl.address) as Nexus;
+}
+
+/**
+ * Deploys the (Nexus) Smart Account implementation contract with a deterministic deployment.
+ * @returns A promise that resolves to the deployed SA implementation contract instance.
+ */
+export async function getDeployedStakeable(): Promise<Stakeable> {
+  const accounts: Signer[] = await ethers.getSigners();
+  const addresses = await Promise.all(
+    accounts.map((account) => account.getAddress()),
+  );
+
+  const Stakeable = await ethers.getContractFactory("Stakeable");
+  const deterministicInstance = await deployments.deploy("Stakeable", {
+    args: [addresses[0]],
+    from: addresses[0],
+    deterministicDeployment: true,
+  });
+
+  return Stakeable.attach(deterministicInstance.address) as Stakeable;
 }
 
 /**
@@ -265,7 +382,7 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const entryPoint = await getDeployedEntrypoint();
 
-  const smartAccountImplementation = await getDeployedMSAImplementation();
+  const smartAccountImplementation = await getDeployedNexusImplementation();
 
   const mockValidator = await deployContract<MockValidator>(
     "MockValidator",
@@ -274,7 +391,7 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
 
-  const msaFactory = await getDeployedAccountFactory(
+  const nexusFactory = await getDeployedAccountK1Factory(
     await smartAccountImplementation.getAddress(),
     factoryOwner,
     await mockValidator.getAddress(),
@@ -290,7 +407,7 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
   return {
     entryPoint,
     smartAccountImplementation,
-    msaFactory,
+    nexusFactory,
     mockValidator,
     ecdsaValidator,
     counter,
@@ -320,7 +437,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const entryPoint = await getDeployedEntrypoint();
 
-  const smartAccountImplementation = await getDeployedMSAImplementation();
+  const smartAccountImplementation = await getDeployedNexusImplementation();
 
   const mockValidator = await deployContract<MockValidator>(
     "MockValidator",
@@ -328,8 +445,12 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   );
 
   const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
+  const BootstrapLib = await deployContract<BootstrapLib>(
+    "BootstrapLib",
+    deployer,
+  );
 
-  const msaFactory = await getDeployedAccountFactory(
+  const nexusK1Factory = await getDeployedAccountK1Factory(
     await smartAccountImplementation.getAddress(),
     factoryOwner,
     await mockValidator.getAddress(),
@@ -337,6 +458,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   );
 
   const mockHook = await getDeployedMockHook();
+
+  const mockHook2 = await deployContract<MockHook>("MockHook", deployer);
 
   const mockFallbackHandler = await getDeployedMockHandler();
 
@@ -348,34 +471,32 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const counter = await deployContract<Counter>("Counter", deployer);
 
+  const stakeable = await getDeployedStakeable();
+
+  const metaFactory = await getDeployedMetaFactory();
+
+  const nexusFactory = await getDeployedNexusAccountFactory();
+
+  const moduleWhitelistFactory = await getDeployedModuleWhitelistFactory();
+
   // Get the addresses of the deployed contracts
-  const factoryAddress = await msaFactory.getAddress();
-  const mockValidatorAddress = await mockValidator.getAddress();
-  const K1ValidatorAddress = await ecdsaValidator.getAddress();
   const ownerAddress = await owner.getAddress();
   const aliceAddress = await alice.getAddress();
 
-  // Module initialization data, encoded
-  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
-  const aliceModuleInstallData = ethers.solidityPacked(
-    ["address"],
-    [aliceAddress],
-  );
-
-  const accountAddress = await msaFactory.computeAccountAddress(
+  const accountAddress = await nexusK1Factory.computeAccountAddress(
     ownerAddress,
     saDeploymentIndex,
   );
 
-  const aliceAccountAddress = await msaFactory.computeAccountAddress(
+  const aliceAccountAddress = await nexusK1Factory.computeAccountAddress(
     aliceAddress,
     saDeploymentIndex,
   );
 
   // deploy SA
-  await msaFactory.createAccount(ownerAddress, saDeploymentIndex);
+  await nexusK1Factory.createAccount(ownerAddress, saDeploymentIndex);
 
-  await msaFactory.createAccount(aliceAddress, saDeploymentIndex);
+  await nexusK1Factory.createAccount(aliceAddress, saDeploymentIndex);
 
   // Deposit ETH to the smart account
   await entryPoint.depositTo(accountAddress, { value: to18(1) });
@@ -386,32 +507,38 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   const Nexus = await ethers.getContractFactory("Nexus");
 
   // Attach the Nexus contract to the deployed address
-  const deployedMSA = Nexus.attach(accountAddress) as Nexus;
-  const aliceDeployedMSA = Nexus.attach(aliceAccountAddress) as Nexus;
+  const deployedNexus = Nexus.attach(accountAddress) as Nexus;
+  const aliceDeployedNexus = Nexus.attach(aliceAccountAddress) as Nexus;
 
   return {
     entryPoint,
     smartAccountImplementation,
-    deployedMSA,
-    aliceDeployedMSA,
-    deployedMSAAddress: accountAddress,
+    deployedNexus,
+    aliceDeployedNexus,
+    deployedNexusAddress: accountAddress,
     accountOwner: owner,
     aliceAccountOwner: alice,
     deployer: deployer,
-    msaFactory,
+    nexusK1Factory,
     mockValidator,
     mockExecutor,
     mockHook,
+    mockHook2,
     mockFallbackHandler,
     ecdsaValidator,
     counter,
     mockToken,
     accounts,
     addresses,
+    stakeable,
+    metaFactory,
+    nexusFactory,
+    bootstrap,
+    BootstrapLib,
+    moduleWhitelistFactory,
   };
 }
 
-// WIP
 // Purpose is to serve deployed SA address (directly via factory)
 // using already deployed addresses - EP, factory, implementation, validator/s (plus executors etc if factory supports more bootstrap config)
 export async function getSmartAccountWithValidator(
@@ -422,16 +549,12 @@ export async function getSmartAccountWithValidator(
   return null;
 }
 
-// WIP
-// TODO make this more dynamic, think of renaming
 // Currently factory requires single validator and onInstallData for it
 // but in future it could be array of validators and other kinds of modules as part of bootstrap config
 // Also, it could be more generic to support different kinds of validators
 // if onInstallData is provided, install given validator with given data (signer would become optional in this case)
 // otherwise assume K1Validator, extract owner address from signer and generate onInstallData
 // Note: it requires contracts to be passed as well because we need same instaces, entire setup object could be passed.
-// Review/Todo: make a DTO and make some params optional and have conditional paths
-// If I want to do something using same contracts, I have to write logic in tests before hook itself and use utils from operation helpers
 export async function getDeployedSmartAccountWithValidator(
   entryPoint: EntryPoint,
   mockToken: MockToken,
@@ -443,7 +566,6 @@ export async function getDeployedSmartAccountWithValidator(
 ): Promise<Nexus> {
   const ownerAddress = await signer.getAddress();
   // Module initialization data, encoded
-  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
 
   const accountAddress = await accountFactory.computeAccountAddress(
     ownerAddress,
@@ -459,7 +581,7 @@ export async function getDeployedSmartAccountWithValidator(
   const Nexus = await ethers.getContractFactory("Nexus");
 
   // Attach the Nexus contract to the deployed address
-  const deployedMSA = Nexus.attach(accountAddress) as Nexus;
+  const deployedNexus = Nexus.attach(accountAddress) as Nexus;
 
-  return deployedMSA;
+  return deployedNexus;
 }
