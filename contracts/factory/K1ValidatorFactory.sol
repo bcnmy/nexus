@@ -50,9 +50,7 @@ contract K1ValidatorFactory is Stakeable {
     /// @param k1Validator The address of the K1 Validator module to be used for all deployments.
     /// @param bootstrapper The address of the Bootstrapper module to be used for all deployments.
     constructor(address implementation, address factoryOwner, address k1Validator, Bootstrap bootstrapper) Stakeable(factoryOwner) {
-        if (implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(!(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0)), ZeroAddressNotAllowed());
         ACCOUNT_IMPLEMENTATION = implementation;
         K1_VALIDATOR = k1Validator;
         BOOTSTRAPPER = bootstrapper;
