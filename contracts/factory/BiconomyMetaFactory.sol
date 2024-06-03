@@ -20,6 +20,11 @@ import { Stakeable } from "../common/Stakeable.sol";
 ///      This contract serves as a 'Meta' factory to generate new Nexus instances using specific chosen and approved factories.
 /// @dev Can whitelist factories, deploy accounts with chosen factory and required data for that factory.
 ///      The factories could possibly enshrine specific modules to avoid arbitrary execution and prevent griefing.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BiconomyMetaFactory is Stakeable {
     /// @notice Stores the factory addresses that are whitelisted.
     mapping(address => bool) public factoryWhitelist;

@@ -15,7 +15,6 @@ pragma solidity ^0.8.24;
 import { CallType, ExecType } from "../lib/ModeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
-
 /// @title Nexus - INexus Events and Errors
 /// @notice Defines common errors for the Nexus smart account management interface.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
@@ -24,7 +23,6 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface INexusEventsAndErrors {
-
     /// @notice Emitted when a user operation is executed from `executeUserOp`
     /// @param userOp The user operation that was executed.
     /// @param innerCallRet The return data from the inner call execution.

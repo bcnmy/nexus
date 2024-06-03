@@ -12,11 +12,26 @@ pragma solidity ^0.8.24;
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
+/// @notice Magic value for ERC-1271 valid signature
 bytes4 constant ERC1271_MAGICVALUE = 0x1626ba7e;
+
+/// @notice Value indicating an invalid ERC-1271 signature
 bytes4 constant ERC1271_INVALID = 0xFFFFFFFF;
+
+/// @notice Value indicating successful validation
 uint256 constant VALIDATION_SUCCESS = 0;
+
+/// @notice Value indicating failed validation
 uint256 constant VALIDATION_FAILED = 1;
+
+/// @notice Module type identifier for validators
 uint256 constant MODULE_TYPE_VALIDATOR = 1;
+
+/// @notice Module type identifier for executors
 uint256 constant MODULE_TYPE_EXECUTOR = 2;
+
+/// @notice Module type identifier for fallback handlers
 uint256 constant MODULE_TYPE_FALLBACK = 3;
+
+/// @notice Module type identifier for hooks
 uint256 constant MODULE_TYPE_HOOK = 4;

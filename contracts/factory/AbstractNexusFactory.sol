@@ -17,6 +17,11 @@ import { IAbstractNexusFactory } from "../interfaces/factory/IAbstractNexusFacto
 
 /// @title AbstractNexusFactory
 /// @notice Provides common functionality for Nexus factories, enabling the creation and management of Modular Smart Accounts.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 abstract contract AbstractNexusFactory is Stakeable, IAbstractNexusFactory {
     /// @notice Address of the implementation contract used to create new Nexus instances.
     /// @dev This address is immutable and set upon deployment, ensuring the implementation cannot be changed.

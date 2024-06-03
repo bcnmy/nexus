@@ -17,11 +17,16 @@ import { AbstractNexusFactory } from "./AbstractNexusFactory.sol";
 
 /// @title Nexus Account Factory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract NexusAccountFactory is AbstractNexusFactory {
     /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     /// @param owner The address of the owner of the factory.
-    constructor(address implementation, address owner) AbstractNexusFactory(implementation, owner) {}
+    constructor(address implementation, address owner_) AbstractNexusFactory(implementation, owner_) {}
 
     /// @notice Creates a new Nexus account with the provided initialization data.
     /// @param initData Initialization data to be called on the new Smart Account.

@@ -14,6 +14,11 @@ pragma solidity ^0.8.24;
 
 /// @title Interface for Abstract Nexus Factory
 /// @notice Interface that provides the essential structure for Nexus factories.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface IAbstractNexusFactory {
     /// @notice Emitted when a new Smart Account is created.
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);

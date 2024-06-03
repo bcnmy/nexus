@@ -5,6 +5,11 @@ import { BootstrapConfig } from "../utils/Bootstrap.sol";
 
 /// @title Bootstrap Configuration Library
 /// @notice Provides utility functions to create and manage BootstrapConfig structures.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 library BootstrapLib {
     /// @notice Creates a single BootstrapConfig structure.
     /// @param module The address of the module.
