@@ -1,24 +1,28 @@
 TestERC4337Account_OnlyEntryPointOrSelf
-└── given the ERC4337 account with onlyEntryPointOrSelf modifier
-    ├── when executing user operations from EntryPoint
-    │   └── it should pass validation
-    ├── when executing user operations from a non-EntryPoint address
-    │   └── it should fail validation
-    ├── when installing a module from EntryPoint
-    │   └── it should pass validation
+└── given the testing environment is initialized
+    ├── when executing a user operation from the EntryPoint
+    │   └── it should succeed
+    ├── when executing a user operation from a non-EntryPoint address
+    │   └── it should fail
+    ├── when installing a module from an unauthorized address
+    │   └── it should fail
+    ├── when installing a module from the EntryPoint
+    │   └── it should succeed
     ├── when installing a module from the account itself
-    │   └── it should pass validation
+    │   └── it should succeed
     ├── when uninstalling a module from a non-EntryPoint or self address
-    │   └── it should fail validation
-    ├── when withdrawing deposit to an authorized address from EntryPoint
-    │   └── it should pass validation
-    ├── when withdrawing deposit from the account itself
-    │   └── it should pass validation
-    ├── when withdrawing deposit from an unauthorized address
-    │   └── it should fail validation
-    ├── when executing withdrawDepositTo via the executor module
-    │   └── it should pass validation
-    ├── when withdrawing deposit to an authorized address via user operations
-    │   └── it should pass validation
-    └── when installing a module from EntryPoint via user operations
-        └── it should pass validation
+    │   └── it should fail
+    ├── when withdrawing a deposit to an authorized address from the EntryPoint
+    │   └── it should succeed
+    ├── when withdrawing a deposit from the account itself
+    │   └── it should succeed
+    ├── when withdrawing a deposit from an unauthorized address
+    │   └── it should fail
+    ├── when withdrawing a deposit to a contract address
+    │   └── it should fail
+    ├── when withdrawing a deposit exceeding the available amount
+    │   └── it should fail
+    ├── when withdrawing a deposit with zero amount
+    │   └── it should succeed
+    └── when withdrawing a deposit with insufficient gas
+        └── it should fail

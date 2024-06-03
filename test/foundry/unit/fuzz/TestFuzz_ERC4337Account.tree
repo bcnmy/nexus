@@ -1,0 +1,15 @@
+TestFuzz_ERC4337Account
+├── when setting up the testing environment
+│   └── it should initialize the required contracts and wallets
+├── when adding a deposit with fuzzing
+│   └── it should update the deposit balance correctly
+├── when testing nonce behavior with fuzzing
+│   └── it should increment the nonce correctly for each operation
+├── when validating user operations with random nonces and signatures
+│   └── it should validate the operation properly
+├── when withdrawing deposits to a specific address with fuzzing
+│   └── it should reflect the withdrawal amount in the recipient's balance
+├── when validating user operations with invalid signatures
+│   └── it should fail the validation
+└── when withdrawing deposits with insufficient funds
+    └── it should handle the withdrawal attempt properly

@@ -1,20 +1,22 @@
 TestAccountExecution_ExecuteSingle
-└── given the Nexus account execution
-    ├── when executing a single operation
-    │   └── it should execute successfully and increment the counter
-    ├── when executing a single operation that reverts
-    │   └── it should revert and the counter should remain unchanged
-    ├── when executing a single operation with a zero address
-    │   └── it should revert and the counter should remain unchanged
-    ├── when executing a single operation with empty calldata
-    │   └── it should execute successfully with no changes
-    ├── when executing a value transfer in a single operation
-    │   └── it should transfer the correct amount of ETH to the receiver
-    ├── when executing a token transfer in a single operation
-    │   └── it should transfer the correct amount of tokens to the recipient
-    ├── when executing an approve and transferFrom operation
-    │   └── it should approve and transfer the tokens correctly
-    ├── when executing a single operation with an unsupported call type from the EntryPoint
-    │   └── it should revert and the counter should remain unchanged
-    └── when executing a single operation with an unsupported call type from the account
-        └── it should revert and the counter should remain unchanged
+└── given the testing environment is initialized
+    ├── when executing a single transaction successfully
+    │   └── it should increment the counter
+    ├── when a single execution reverts
+    │   └── it should remain unchanged
+    ├── when executing a single transaction with zero address
+    │   └── it should remain unchanged
+    ├── when executing a single transaction with empty calldata
+    │   └── it should remain unchanged
+    ├── when executing a value transfer in single execution
+    │   └── it should transfer ETH correctly
+    ├── when executing a token transfer in single execution
+    │   └── it should transfer tokens correctly
+    ├── when executing approve and transferFrom in single execution
+    │   └── it should update balances and allowances correctly
+    ├── when executing with unsupported call type from EntryPoint
+    │   └── it should revert
+    ├── when executing with unsupported call type from Account
+    │   └── it should revert
+    └── when executing with unsupported exec type
+        └── it should revert

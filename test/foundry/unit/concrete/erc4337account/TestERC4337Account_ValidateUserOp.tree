@@ -1,14 +1,14 @@
 TestERC4337Account_ValidateUserOp
-└── given the ERC4337 account with validateUserOp function
-    ├── when paying prefund with sufficient funds
-    │   └── it should handle the prefund payment correctly
-    ├── when performing a valid user operation
+└── given the testing environment is initialized
+    ├── when handling prefund payment with sufficient funds
+    │   └── it should succeed
+    ├── when validating a user operation
     │   └── it should pass validation
-    ├── when performing a user operation with an invalid signature
+    ├── when validating a user operation with an invalid signature
     │   └── it should fail validation
-    ├── when performing a user operation with an invalid signature format
+    ├── when validating a user operation with an invalid signature format
     │   └── it should fail validation
-    ├── when performing a user operation with insufficient funds
+    ├── when validating a user operation with insufficient funds
     │   └── it should fail validation
-    └── when performing a user operation with an invalid nonce
+    └── when validating a user operation with an invalid nonce
         └── it should fail validation

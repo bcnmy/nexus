@@ -1,8 +1,13 @@
 TestERC1271Account_IsValidSignature
-└── given initialized testing environment
-    ├── when validating a personal signature using mock validator
-    │   └── it should succeed for a valid personal signature
-    ├── when validating an EIP-712 signature using mock validator
-    │   └── it should succeed for a valid EIP-712 signature
-    └── when validating an EIP-712 signature with the wrong signer
-        └── it should fail for an invalid EIP-712 signature
+├── when initializing the testing environment
+│   └── it should set up the environment properly
+├── when validating a personal signature using the mock validator
+│   └── it should validate the personal signature successfully
+├── when validating an EIP-712 signature using the mock validator
+│   └── it should validate the EIP-712 signature successfully
+├── when validating an EIP-712 signature with a wrong signer using the mock validator
+│   └── it should fail to validate the EIP-712 signature
+├── when validating a signature with ERC-6492 unwrapping
+│   └── it should validate the signature successfully
+└── when validating a signature without ERC-6492 unwrapping
+    └── it should validate the signature successfully

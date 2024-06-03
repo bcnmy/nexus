@@ -539,7 +539,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   };
 }
 
-// WIP
 // Purpose is to serve deployed SA address (directly via factory)
 // using already deployed addresses - EP, factory, implementation, validator/s (plus executors etc if factory supports more bootstrap config)
 export async function getSmartAccountWithValidator(
@@ -550,16 +549,12 @@ export async function getSmartAccountWithValidator(
   return null;
 }
 
-// WIP
-// TODO make this more dynamic, think of renaming
 // Currently factory requires single validator and onInstallData for it
 // but in future it could be array of validators and other kinds of modules as part of bootstrap config
 // Also, it could be more generic to support different kinds of validators
 // if onInstallData is provided, install given validator with given data (signer would become optional in this case)
 // otherwise assume K1Validator, extract owner address from signer and generate onInstallData
 // Note: it requires contracts to be passed as well because we need same instaces, entire setup object could be passed.
-// Review/Todo: make a DTO and make some params optional and have conditional paths
-// If I want to do something using same contracts, I have to write logic in tests before hook itself and use utils from operation helpers
 export async function getDeployedSmartAccountWithValidator(
   entryPoint: EntryPoint,
   mockToken: MockToken,

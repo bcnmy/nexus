@@ -1,14 +1,14 @@
 TestAccountExecution_TryExecuteSingle
-└── given the Nexus account execution
-    ├── when attempting to execute a single operation
-    │   └── it should execute successfully and increment the counter
-    ├── when attempting to execute a single operation that fails
-    │   └── it should handle the failure and the counter should remain unchanged
-    ├── when attempting to execute an empty operation
-    │   └── it should execute successfully with no changes
-    ├── when attempting to execute a value transfer in a single operation
-    │   └── it should transfer the correct amount of ETH to the receiver
-    ├── when attempting to execute a token transfer in a single operation
-    │   └── it should transfer the correct amount of tokens to the recipient
-    └── when attempting to execute an approve and transferFrom operation
-        └── it should approve and transfer the tokens correctly
+└── given the testing environment is initialized
+    ├── when executing a single transaction successfully
+    │   └── it should increment the counter
+    ├── when a single execution fails
+    │   └── it should remain unchanged
+    ├── when executing an empty single transaction
+    │   └── it should remain unchanged
+    ├── when executing a value transfer in single execution
+    │   └── it should transfer ETH correctly
+    ├── when executing a token transfer in single execution
+    │   └── it should transfer tokens correctly
+    └── when executing approve and transferFrom in single execution
+        └── it should update balances and allowances correctly

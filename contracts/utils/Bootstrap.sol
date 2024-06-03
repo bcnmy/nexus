@@ -17,6 +17,11 @@ import { IModule } from "../interfaces/modules/IModule.sol";
 
 /// @title Bootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 struct BootstrapConfig {
     address module;
     bytes data;

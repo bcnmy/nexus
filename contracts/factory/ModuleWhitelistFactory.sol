@@ -20,6 +20,11 @@ import { AbstractNexusFactory } from "./AbstractNexusFactory.sol";
 
 /// @title ModuleWhitelistFactory
 /// @notice Factory for creating Nexus accounts with whitelisted modules. Ensures compliance with ERC-7579 and ERC-4337 standards.
+/// @author @livingrockrises | Biconomy | chirag@biconomy.io
+/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
+/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
+/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
+/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract ModuleWhitelistFactory is AbstractNexusFactory {
     /// @notice Mapping to store the addresses of whitelisted modules.
     mapping(address => bool) public moduleWhitelist;

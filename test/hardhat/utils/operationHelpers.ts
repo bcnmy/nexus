@@ -175,10 +175,6 @@ export async function fillSignAndPack(
  * @param saDeploymentIndex: number = 0,
  * @returns The full initialization code as a hex string.
  */
-// TODO:
-// Note: This currently assumes validator to be mock validator or K1 validation. In future specific install data could be passed along
-// or it could be full bootstrap data
-// depending on the nature of the factory below encoding would change
 export async function getInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
@@ -274,8 +270,6 @@ export function packGasValues(
  * @returns The execution call data as a string.
  */
 
-// TODO: need to take an argument for CallType and ExecType as well. if it's single or batch / revert or try
-// WIP
 // Should be able to accept array of Transaction (to, value, data) instead of targetcontract and function name
 // If array length is one (given executionMethod = execute or executeFromExecutor) then make executionCallData for singletx
 // handle preparing calldata for executeUserOp differently as it requires different parameters
@@ -384,8 +378,6 @@ export function findEventInLogs(
   throw new Error("No event found with the given name");
 }
 
-// TODO
-// for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
 
 export async function buildPackedUserOperation(

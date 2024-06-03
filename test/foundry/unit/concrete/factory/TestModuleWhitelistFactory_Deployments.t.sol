@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import "../../../utils/NexusTest_Base.t.sol";
 import "../../../../../contracts/factory/ModuleWhitelistFactory.sol";
 
-/// @title TestModuleWhitelistFactoryDeployments
+/// @title TestModuleWhitelistFactory_Deployments
 /// @notice Tests for deploying accounts using the ModuleWhitelistFactory and various methods.
-contract TestModuleWhitelistFactoryDeployments is NexusTest_Base {
+contract TestModuleWhitelistFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
     ModuleWhitelistFactory public whitelistFactory;

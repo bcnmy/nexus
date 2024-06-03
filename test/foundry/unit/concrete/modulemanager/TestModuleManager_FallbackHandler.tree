@@ -1,20 +1,25 @@
 TestModuleManager_FallbackHandler
-└── given the module manager with fallback handler functionality
-    ├── when setting up the environment and installing the fallback handler
-    │   └── it should install the fallback handler successfully
-    ├── when triggering the generic fallback handler
-    │   └── it should trigger the generic fallback handler successfully
-    ├── when handleOps triggers the generic fallback handler
-    │   └── it should trigger the fallback handler successfully
-    ├── when installing a fallback handler
-    │   └── it should install the fallback handler successfully
-    ├── when installing a fallback handler with an already used function selector
-    │   └── it should revert
-    ├── when uninstalling a fallback handler with a function selector not used
-    │   └── it should revert
-    ├── when uninstalling a fallback handler with a function selector not used by this handler
-    │   └── it should revert
-    ├── when uninstalling the fallback handler successfully
-    │   └── it should uninstall the fallback handler
-    └── when getting the fallback handler by its function selector
-        └── it should return the correct fallback handler
+├── when setting up the testing environment
+│   └── it should install the fallback handler
+├── when triggering the generic fallback handler
+│   └── it should emit the GenericFallbackCalled event
+├── when handleOps triggers the generic fallback handler
+│   └── it should emit the GenericFallbackCalled event
+├── when installing a fallback handler
+│   └── it should install the handler successfully
+├── when a function selector is already used by another handler
+│   └── it should revert with FallbackAlreadyInstalledForSelector error
+├── when uninstalling a fallback handler with a selector not used
+│   └── it should revert with ModuleNotInstalled error
+├── when uninstalling a fallback handler with a selector not used by this handler
+│   └── it should revert with ModuleNotInstalled error
+├── when uninstalling the fallback handler successfully
+│   └── it should uninstall the handler
+├── when uninstalling a non-installed fallback handler
+│   └── it should revert with ModuleNotInstalled error
+├── when getting the fallback handler by selector
+│   └── it should return the correct handler
+├── when installing forbidden onInstall selector as a fallback handler
+│   └── it should revert with FallbackSelectorForbidden error
+└── when installing forbidden onUninstall selector as a fallback handler
+    └── it should revert with FallbackSelectorForbidden error

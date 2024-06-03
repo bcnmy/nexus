@@ -1,0 +1,29 @@
+TestGas_ModuleManager
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when installing modules
+│   ├── it should measure the gas used for installing validator module
+│   ├── it should measure the gas used for installing executor module
+│   ├── it should measure the gas used for installing hook module
+│   └── it should measure the gas used for installing fallback handler
+├── when uninstalling modules
+│   ├── it should measure the gas used for uninstalling validator module
+│   ├── it should measure the gas used for uninstalling executor module
+│   ├── it should measure the gas used for uninstalling hook module
+│   └── it should measure the gas used for uninstalling fallback handler
+├── when checking if modules are installed
+│   ├── it should measure the gas used for checking validator module installation
+│   ├── it should measure the gas used for checking executor module installation
+│   ├── it should measure the gas used for checking hook module installation
+│   └── it should measure the gas used for checking fallback handler installation
+├── when checking if modules are uninstalled
+│   ├── it should measure the gas used for checking validator module uninstallation
+│   ├── it should measure the gas used for checking executor module uninstallation
+│   ├── it should measure the gas used for checking hook module uninstallation
+│   └── it should measure the gas used for checking fallback handler uninstallation
+├── when checking installation of invalid module type
+│   └── it should measure the gas used for checking invalid module type installation
+├── when checking installation of invalid module address
+│   └── it should measure the gas used for checking invalid module address installation
+└── when checking installation of generic fallback with no custom data
+    └── it should measure the gas used for checking generic fallback installation

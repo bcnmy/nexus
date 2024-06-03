@@ -1,0 +1,25 @@
+TestNexusAccountFactory_Deployments
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when testing the constructor
+│   └── it should revert if the implementation address is zero
+├── when deploying an account using the factory directly
+│   ├── it should create an account successfully
+│   └── it should return the same address with the same arguments
+├── when deploying an account using handleOps method
+│   ├── it should deploy successfully
+│   └── it should fail if the account already exists
+├── when reinitializing a deployed account
+│   └── it should revert
+├── when creating accounts with different indexes
+│   └── it should create accounts with different addresses
+├── when creating an account with an invalid validator module
+│   └── it should revert
+├── when deploying an account with insufficient gas
+│   └── it should revert
+├── when testing the constructor of the Nexus contract
+│   └── it should revert if the entry point address is zero
+├── when using BootstrapLib.createArrayConfig function for multiple modules
+│   └── it should deploy an account successfully
+└── when using initNexusScoped function in Bootstrap with a hook module
+    └── it should deploy an account with the hook module installed
