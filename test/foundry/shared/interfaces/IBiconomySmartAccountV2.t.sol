@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 interface IBiconomySmartAccountV2 {
     function updateImplementation(address _implementation) external;

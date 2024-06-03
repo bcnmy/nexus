@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -40,17 +40,13 @@ contract ModuleWhitelistFactory is AbstractNexusFactory {
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_) AbstractNexusFactory(implementation_, owner_) {
-        if (owner_ == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(owner_ != address(0), ZeroAddressNotAllowed());
     }
 
     /// @notice Adds an address to the module whitelist.
     /// @param module The address to be whitelisted.
     function addModuleToWhitelist(address module) external onlyOwner {
-        if (module == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(module != address(0), ZeroAddressNotAllowed());
         moduleWhitelist[module] = true;
     }
 
@@ -81,25 +77,17 @@ contract ModuleWhitelistFactory is AbstractNexusFactory {
 
         // Ensure all modules are whitelisted
         for (uint256 i = 0; i < validators.length; i++) {
-            if (!isModuleWhitelisted(validators[i].module)) {
-                revert ModuleNotWhitelisted(validators[i].module);
-            }
+            require(isModuleWhitelisted(validators[i].module), ModuleNotWhitelisted(validators[i].module));
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            if (!isModuleWhitelisted(executors[i].module)) {
-                revert ModuleNotWhitelisted(executors[i].module);
-            }
+            require(isModuleWhitelisted(executors[i].module), ModuleNotWhitelisted(executors[i].module));
         }
 
-        if (!isModuleWhitelisted(hook.module)) {
-            revert ModuleNotWhitelisted(hook.module);
-        }
+        require(isModuleWhitelisted(hook.module), ModuleNotWhitelisted(hook.module));
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            if (!isModuleWhitelisted(fallbacks[i].module)) {
-                revert ModuleNotWhitelisted(fallbacks[i].module);
-            }
+            require(isModuleWhitelisted(fallbacks[i].module), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
         // Compute the actual salt for deterministic deployment

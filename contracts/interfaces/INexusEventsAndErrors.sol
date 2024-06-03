@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -58,4 +58,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when the provided implementation address is not a contract.
     error ImplementationIsNotAContract();
+
+    /// @notice Error thrown when an inner call fails.
+    error InnerCallFailed();
 }

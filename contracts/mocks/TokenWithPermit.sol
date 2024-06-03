@@ -1,17 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.24;
-
-// ──────────────────────────────────────────────────────────────────────────────
-//     _   __    _  __
-//    / | / /__ | |/ /_  _______
-//   /  |/ / _ \|   / / / / ___/
-//  / /|  /  __/   / /_/ (__  )
-// /_/ |_/\___/_/|_\__,_/____/
-//
-// ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io/
-
+pragma solidity ^0.8.26;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /// @dev Interface of the ERC1271 standard signature validation method for

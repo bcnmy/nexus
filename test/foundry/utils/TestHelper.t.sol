@@ -457,13 +457,6 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
-    // function measureGasAndEmitLog(string memory logName, function() external fn) internal {
-    //     uint256 initialGas = gasleft();
-    //     fn();
-    //     uint256 gasUsed = initialGas - gasleft();
-    //     emit log_named_uint(logName, gasUsed);
-    // }
-
     /// @notice Calculates the gas cost of the calldata
     /// @param data The calldata
     /// @return calldataGas The gas cost of the calldata
