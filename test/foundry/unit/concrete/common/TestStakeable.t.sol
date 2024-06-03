@@ -49,7 +49,7 @@ contract TestStakeable is NexusTest_Base {
     /// @notice Tests that addStake fails with an invalid EntryPoint address
     function test_AddStake_RevertIf_InvalidEPAddress() public {
         vm.startPrank(owner);
-        vm.expectRevert("Invalid EP address");
+        vm.expectRevert(InvalidEntryPointAddress.selector);
         stakeable.addStake{ value: 1 ether }(address(0), 100);
         vm.stopPrank();
     }
@@ -78,7 +78,7 @@ contract TestStakeable is NexusTest_Base {
     /// @notice Tests that unlockStake fails with an invalid EntryPoint address
     function test_UnlockStake_RevertIf_InvalidEPAddress() public {
         vm.startPrank(owner);
-        vm.expectRevert("Invalid EP address");
+        vm.expectRevert(InvalidEntryPointAddress.selector);
         stakeable.unlockStake(address(0));
         vm.stopPrank();
     }
@@ -119,7 +119,7 @@ contract TestStakeable is NexusTest_Base {
     /// @notice Tests that withdrawStake fails with an invalid EntryPoint address
     function test_WithdrawStake_RevertIf_InvalidEPAddress() public {
         vm.startPrank(owner);
-        vm.expectRevert("Invalid EP address");
+        vm.expectRevert(InvalidEntryPointAddress.selector);
         stakeable.withdrawStake(address(0), payable(address(0x456)));
         vm.stopPrank();
     }
