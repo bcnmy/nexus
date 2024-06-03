@@ -11,10 +11,17 @@ coverage:
     patch:
       default:
         target: 80%
-
-ignore:
-  - "scripts/*"
-  - "test/*"
+  ignore:
+    - "scripts/*"
+    - "test/*"
 
 comment:
   layout: "header, diff, files, footer"
+
+flags:
+  foundry:
+    paths:
+      - contracts/
+  hardhat:
+    paths:
+      - contracts/
