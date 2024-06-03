@@ -81,17 +81,17 @@ contract ModuleWhitelistFactory is AbstractNexusFactory {
 
         // Ensure all modules are whitelisted
         for (uint256 i = 0; i < validators.length; i++) {
-            require(isWhitelisted(validators[i].module), ModuleNotWhitelisted(validators[i].module));
+            require(isModuleWhitelisted(validators[i].module), ModuleNotWhitelisted(validators[i].module));
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            require(isWhitelisted(executors[i].module), ModuleNotWhitelisted(executors[i].module));
+            require(isModuleWhitelisted(executors[i].module), ModuleNotWhitelisted(executors[i].module));
         }
 
-        require(isWhitelisted(hook.module), ModuleNotWhitelisted(hook.module));
+        require(isModuleWhitelisted(hook.module), ModuleNotWhitelisted(hook.module));
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            require(isWhitelisted(fallbacks[i].module), ModuleNotWhitelisted(fallbacks[i].module));
+            require(isModuleWhitelisted(fallbacks[i].module), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
         // Compute the actual salt for deterministic deployment
