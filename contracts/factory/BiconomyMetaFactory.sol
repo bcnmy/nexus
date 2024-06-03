@@ -38,20 +38,19 @@ contract BiconomyMetaFactory is Stakeable {
     /// @notice Error thrown when the owner address is zero.
     error ZeroAddressNotAllowed();
 
+    /// @notice Error thrown when the call to deploy with factory failed.
+    error CallToDeployWithFactoryFailed();
+
     /// @notice Constructor to set the owner of the contract.
     /// @param owner_ The address of the owner.
     constructor(address owner_) Stakeable(owner_) {
-        if (owner_ == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(owner_ != address(0), ZeroAddressNotAllowed());
     }
 
     /// @notice Adds an address to the factory whitelist.
     /// @param factory The address to be whitelisted.
     function addFactoryToWhitelist(address factory) external onlyOwner {
-        if (factory == address(0)) {
-            revert InvalidFactoryAddress();
-        }
+        require(factory != address(0), InvalidFactoryAddress());
         factoryWhitelist[factory] = true;
     }
 
@@ -77,7 +76,7 @@ contract BiconomyMetaFactory is Stakeable {
         (bool success, bytes memory returnData) = factory.call(factoryData);
 
         // Check if the call was successful
-        require(success, "Call to deployWithFactory failed");
+        require(success, CallToDeployWithFactoryFailed());
 
         // Decode the returned address
         assembly {
