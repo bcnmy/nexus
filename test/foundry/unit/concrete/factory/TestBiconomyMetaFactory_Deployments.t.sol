@@ -98,7 +98,7 @@ contract TestBiconomyMetaFactory_Deployments is NexusTest_Base {
         // Creating invalid factory data that will cause the call to fail
         bytes memory factoryData = abi.encodeWithSelector(bytes4(keccak256("nonExistentFunction()")));
 
-        vm.expectRevert("Call to deployWithFactory failed");
+        vm.expectRevert(CallToDeployWithFactoryFailed.selector);
         metaFactory.deployWithFactory{ value: 1 ether }(mockFactory, factoryData);
     }
 
