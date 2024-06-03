@@ -4,8 +4,8 @@ const { exec } = require("child_process");
 
 const LOG_FILE = "gas.log";
 const OUTPUT_FILE = "GAS_REPORT.md";
-const CURRENT_REPORT_FILE = ".github/gas_report.json";
-
+const PREVIOUS_REPORT_FILE = ".github/previous_gas_report.json";
+const CURRENT_REPORT_FILE = ".github/current_gas_report.json";
 const REPORT_FILES = [".github/gas_report.json"];
 
 /**
@@ -35,6 +35,17 @@ function runForgeTest() {
 }
 
 /**
+ * Backup the current gas report file.
+ * @returns {Promise<void>}
+ */
+async function backupCurrentGasReport() {
+  if (fs.existsSync(REPORT_FILES[0])) {
+    fs.copyFileSync(REPORT_FILES[0], CURRENT_REPORT_FILE);
+    console.log(`✅ Current gas report backed up to ${CURRENT_REPORT_FILE}.`);
+  }
+}
+
+/**
  * Checkout the gas report file from the dev branch.
  * @returns {Promise<string|null>} - Promise resolving to the file path or null if not found
  */
@@ -42,12 +53,12 @@ async function checkoutDevBranchAndGetReport() {
   for (const file of REPORT_FILES) {
     try {
       console.log(`🔄 Checking out ${file} from dev branch...`);
-      await execPromise(
-        `git fetch origin dev && git checkout origin/dev -- ${file}`,
-      );
+      await execPromise(`git fetch origin dev && git checkout origin/dev -- ${file}`);
       if (fs.existsSync(file)) {
         console.log(`✅ Fetched ${file} from dev branch.`);
-        return file;
+        fs.renameSync(file, PREVIOUS_REPORT_FILE);
+        console.log(`✅ Previous gas report saved to ${PREVIOUS_REPORT_FILE}.`);
+        return PREVIOUS_REPORT_FILE;
       }
     } catch (error) {
       console.error(`❌ Could not fetch ${file} from dev branch.`);
@@ -106,9 +117,7 @@ async function generateReport() {
   results.sort((a, b) => a.NUMBER - b.NUMBER);
 
   fs.writeFileSync(CURRENT_REPORT_FILE, JSON.stringify(results, null, 2));
-  console.log(
-    `📊 Current gas report generated and saved to ${CURRENT_REPORT_FILE}`,
-  );
+  console.log(`📊 Current gas report generated and saved to ${CURRENT_REPORT_FILE}`);
   return results;
 }
 
@@ -143,12 +152,12 @@ async function compareReports() {
       const gasDiff =
         diff > 0 ? `🥵 +${diff}` : diff < 0 ? `🥳 -${Math.abs(diff)}` : "0";
       diffLines.push(
-        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`,
+        `| ${curr.PROTOCOL} | ${curr.ACTION_FUNCTION} | ${curr.ACCOUNT_TYPE} | ${curr.IS_DEPLOYED} | ${curr.WITH_PAYMASTER} | ${curr.RECEIVER_ACCESS} | ${curr.GAS_USED} | ${gasDiff} |`
       );
       if (diff !== 0) {
         hasDiff = true;
         console.log(
-          `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`,
+          `🔍 ${curr.PROTOCOL} - ${curr.ACTION_FUNCTION} (${curr.ACCOUNT_TYPE}, Deployed: ${curr.IS_DEPLOYED}, Paymaster: ${curr.WITH_PAYMASTER}): ${prev.GAS_USED} -> ${curr.GAS_USED} (${gasDiff})`
         );
       }
     }
@@ -174,9 +183,15 @@ async function compareReports() {
     if (err) console.error(`❌ Error deleting ${LOG_FILE}: ${err}`);
     else console.log(`🗑️ ${LOG_FILE} deleted successfully.`);
   });
+
+  fs.unlink(PREVIOUS_REPORT_FILE, (err) => {
+    if (err) console.error(`❌ Error deleting ${PREVIOUS_REPORT_FILE}: ${err}`);
+    else console.log(`🗑️ ${PREVIOUS_REPORT_FILE} deleted successfully.`);
+  });
 }
 
 async function main() {
+  await backupCurrentGasReport();
   await generateReport();
   await compareReports();
 }
