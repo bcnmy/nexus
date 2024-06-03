@@ -15,7 +15,7 @@ import {
   Stakeable,
   BiconomyMetaFactory,
   NexusAccountFactory,
-  BootstrapUtil,
+  BootstrapLib,
   ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
@@ -80,14 +80,30 @@ export async function getDeployedAccountK1Factory(
     accounts.map((account) => account.getAddress()),
   );
 
-  const K1ValidatorFactory =
-    await ethers.getContractFactory("K1ValidatorFactory");
+  // Deploy the BootstrapLib library
+  const BootstrapLibFactory = await ethers.getContractFactory("BootstrapLib");
+  const BootstrapLib = await BootstrapLibFactory.deploy();
+  BootstrapLib.waitForDeployment();
+
+  // Get the contract factory for K1ValidatorFactory with linked library
+  const K1ValidatorFactory = await ethers.getContractFactory(
+    "K1ValidatorFactory",
+    {
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
+    },
+  );
+
   const deterministicAccountFactory = await deployments.deploy(
     "K1ValidatorFactory",
     {
       from: addresses[0],
       deterministicDeployment: true,
-      args: [owner, implementationAddress, k1Validator, bootstrapper],
+      args: [implementationAddress, owner, k1Validator, bootstrapper],
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
     },
   );
 
@@ -281,7 +297,7 @@ export async function getDeployedModuleWhitelistFactory(): Promise<ModuleWhiteli
     {
       from: addresses[0],
       deterministicDeployment: true,
-      args: [addresses[0], await smartAccountImplementation.getAddress()],
+      args: [await smartAccountImplementation.getAddress(), addresses[0]],
     },
   );
 
@@ -429,8 +445,8 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   );
 
   const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
-  const bootstrapUtil = await deployContract<BootstrapUtil>(
-    "BootstrapUtil",
+  const BootstrapLib = await deployContract<BootstrapLib>(
+    "BootstrapLib",
     deployer,
   );
 
@@ -518,7 +534,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     metaFactory,
     nexusFactory,
     bootstrap,
-    bootstrapUtil,
+    BootstrapLib,
     moduleWhitelistFactory,
   };
 }

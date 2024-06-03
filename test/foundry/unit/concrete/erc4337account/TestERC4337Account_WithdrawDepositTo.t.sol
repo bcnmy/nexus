@@ -26,9 +26,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceBefore = to.balance;
 
-        console.log("Deposit Before:", depositBefore);
-        console.log("Balance Before:", balanceBefore);
-
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({
@@ -41,9 +38,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceAfter = to.balance;
-
-        console.log("Deposit After:", depositAfter);
-        console.log("Balance After:", balanceAfter);
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
@@ -62,9 +56,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceBefore = to.balance;
 
-        console.log("Deposit Before:", depositBefore);
-        console.log("Balance Before:", balanceBefore);
-
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({
@@ -77,9 +68,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceAfter = to.balance;
-
-        console.log("Deposit After:", depositAfter);
-        console.log("Balance After:", balanceAfter);
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
@@ -98,9 +86,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceBefore = to.balance;
 
-        console.log("Deposit Before:", depositBefore);
-        console.log("Balance Before:", balanceBefore);
-
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({
@@ -113,9 +98,6 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
         uint256 balanceAfter = to.balance;
-
-        console.log("Deposit After:", depositAfter);
-        console.log("Balance After:", balanceAfter);
 
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in BOB's address balance");

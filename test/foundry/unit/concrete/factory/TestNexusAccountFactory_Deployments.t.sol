@@ -3,15 +3,15 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/NexusTest_Base.t.sol";
 
-/// @title TestAccountFactory_Deployments
-/// @notice Tests for deploying accounts using the AccountFactory and various methods.
-contract TestAccountFactory_Deployments is NexusTest_Base {
+/// @title TestNexusAccountFactory_Deployments
+/// @notice Tests for deploying accounts using the NexusAccountFactory.
+contract TestNexusAccountFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
 
     /// @notice Sets up the testing environment.
     function setUp() public {
-        init();
+        super.setupTestEnvironment();
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
@@ -39,6 +39,17 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
+    }
+
+    /// @notice Tests that the constructor reverts if the implementation address is zero.
+    function test_Constructor_RevertIf_ImplementationIsZero() public {
+        address zeroAddress = address(0);
+
+        // Expect the contract deployment to revert with the correct error message
+        vm.expectRevert(ImplementationAddressCanNotBeZero.selector);
+
+        // Try deploying the NexusAccountFactory with an implementation address of zero
+        new NexusAccountFactory(zeroAddress, address(this));
     }
 
     /// @notice Tests that deploying an account returns the same address with the same arguments.
@@ -159,7 +170,18 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         FACTORY.createAccount{ gas: 1000 }(_initData, salt);
     }
 
-    /// @notice Tests creating accounts with multiple modules and data using BootstrapLib.
+    /// @notice Tests that the Nexus contract constructor reverts if the entry point address is zero.
+    function test_Constructor_RevertIf_EntryPointIsZero() public {
+        address zeroAddress = address(0);
+
+        // Expect the contract deployment to revert with the correct error message
+        vm.expectRevert(EntryPointCanNotBeZero.selector);
+
+        // Try deploying the Nexus contract with an entry point address of zero
+        new Nexus(zeroAddress);
+    }
+
+    /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it to deploy an account.
     function test_createArrayConfig_MultipleModules_DeployAccount() public {
         address[] memory modules = new address[](2);
         bytes[] memory datas = new bytes[](2);
@@ -212,16 +234,5 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
             INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
             "Hook should be installed"
         );
-    }
-
-    /// @notice Tests that the Nexus contract constructor reverts if the entry point address is zero.
-    function test_Constructor_RevertIf_EntryPointIsZero() public {
-        address zeroAddress = address(0);
-
-        // Expect the contract deployment to revert with the correct error message
-        vm.expectRevert(EntryPointCanNotBeZero.selector);
-
-        // Try deploying the Nexus contract with an entry point address of zero
-        new Nexus(zeroAddress);
     }
 }

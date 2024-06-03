@@ -184,8 +184,19 @@ export async function getInitCode(
   factoryAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
-  const K1ValidatorFactory =
-    await ethers.getContractFactory("K1ValidatorFactory");
+  // Deploy the BootstrapLib library
+  const BootstrapLibFactory = await ethers.getContractFactory("BootstrapLib");
+  const BootstrapLib = await BootstrapLibFactory.deploy();
+  BootstrapLib.waitForDeployment();
+
+  const K1ValidatorFactory = await ethers.getContractFactory(
+    "K1ValidatorFactory",
+    {
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
+    },
+  );
 
   // Encode the createAccount function call with the provided parameters
   const factoryDeploymentData = K1ValidatorFactory.interface

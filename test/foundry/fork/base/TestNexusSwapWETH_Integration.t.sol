@@ -367,9 +367,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
 
-    measureAndLogGas("55::UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
-}
-
+        measureAndLogGas("55::UniswapV2::swapExactTokensForTokens::Nexus::WithPaymaster::N/A", userOps);
+    }
 
     /// @notice Helper function to get the path for WETH to USDC swap
     /// @return path The array containing the swap path

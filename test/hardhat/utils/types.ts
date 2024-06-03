@@ -20,7 +20,7 @@ import {
   BiconomyMetaFactory,
   NexusAccountFactory,
   Bootstrap,
-  BootstrapUtil,
+  BootstrapLib,
   ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
@@ -61,7 +61,7 @@ export interface DeploymentFixtureWithSA {
   metaFactory: BiconomyMetaFactory;
   nexusFactory: NexusAccountFactory;
   bootstrap: Bootstrap;
-  bootstrapUtil: BootstrapUtil;
+  BootstrapLib: BootstrapLib;
   moduleWhitelistFactory: ModuleWhitelistFactory;
 }
 

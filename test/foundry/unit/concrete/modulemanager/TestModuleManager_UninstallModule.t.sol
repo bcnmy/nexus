@@ -8,7 +8,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         setUpModuleManagement_Base();
     }
 
-    function test_InstallModule_Success() public {
+    /// @notice Tests successful installation of a module
+    function test_ModuleInstallation_Success() public {
         // Check if the module is not installed initially
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed initially");
 
@@ -28,7 +29,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-    function test_UninstallModule_Success() public {
+    /// @notice Tests successful uninstallation of a module
+    function test_ModuleUninstallation_Success() public {
         MockValidator newMockValidator = new MockValidator();
 
         // Install new mock validator module
@@ -72,7 +74,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""), "Module should be installed");
     }
 
-    function test_UninstallNewModule_Success() public {
+    /// @notice Tests successful uninstallation of a newly installed module
+    function test_NewModuleUninstallation_Success() public {
         MockValidator newMockValidator = new MockValidator();
 
         // Install new mock validator module
@@ -107,7 +110,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should be installed");
     }
 
-    function test_UninstallModule_Executor_Success() public {
+    /// @notice Tests successful uninstallation of an executor module
+    function test_ExecutorModuleUninstallation_Success() public {
         MockExecutor newMockExecutor = new MockExecutor();
 
         // Install new mock executor module
@@ -142,7 +146,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should be installed");
     }
 
-    function test_UninstallModule_Failure_LastValidator() public {
+    /// @notice Tests failure to uninstall the last validator module
+    function test_RevertIf_UninstallingLastValidator() public {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
 
         // Find the previous module for uninstallation
@@ -181,7 +186,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
-    function test_UninstallModule_IncorrectType() public {
+    /// @notice Tests uninstallation with incorrect module type
+    function test_RevertIf_IncorrectModuleTypeUninstallation() public {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
 
@@ -221,7 +227,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
-    function test_UninstallModule_NotInstalled() public {
+    /// @notice Tests uninstallation of a module that is not installed
+    function test_RevertIf_UninstallingNonExistentModule() public {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
 
@@ -268,7 +275,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
     }
 
-    function test_UninstallExecutorModule_Success() public {
+    /// @notice Tests successful uninstallation of the executor module
+    function test_SuccessfulUninstallationOfExecutorModule() public {
         MockExecutor newMockExecutor = new MockExecutor();
 
         // Verify the module is not installed initially
@@ -309,9 +317,10 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should not be installed");
     }
 
-    function test_UninstallModule_IncorrectPrevModuleData() public {
+    /// @notice Tests uninstallation with incorrect previous module data
+    function test_RevertIf_IncorrectPrevModuleData() public {
         // Setup: Install the module first
-        test_InstallModule_Success(); // Use the test case directly for setup
+        test_ModuleInstallation_Success(); // Use the test case directly for setup
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should be installed initially");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed initially");
 
@@ -352,7 +361,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
     }
 
-    function test_UninstallLastValidator_Reverted() public {
+    /// @notice Tests reverting when uninstalling the last validator
+    function test_RevertIf_UninstallingLastValidatorModule() public {
         bytes memory customData = abi.encode(GENERIC_FALLBACK_SELECTOR);
 
         assertTrue(
@@ -399,7 +409,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData), "Module should be installed");
     }
 
-    function test_UninstallFallbackHandler_Success() public {
+    /// @notice Tests successful uninstallation of the fallback handler module
+    function test_SuccessfulUninstallationOfFallbackHandler() public {
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 
         assertFalse(
@@ -444,7 +455,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         );
     }
 
-    function test_UninstallFallbackHandler_NotInstalled() public {
+    /// @notice Tests uninstallation of a fallback handler that is not installed
+    function test_RevertIf_UninstallingNonExistentFallbackHandler() public {
         // Uninstall
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 

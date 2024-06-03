@@ -20,9 +20,9 @@ import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
 import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
-import { BootstrapUtil } from "../../../contracts/utils/BootstrapUtil.sol";
+import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 
-contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
+contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -146,8 +146,8 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
         bytes memory moduleInstallData = abi.encodePacked(owner);
 
-        BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInstallData);
-        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, moduleInstallData);
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
@@ -165,8 +165,8 @@ contract TestHelper is CheatCodes, EventsAndErrors, BootstrapUtil {
     function buildInitCode(address ownerAddress, address validator) internal view returns (bytes memory initCode) {
         bytes memory moduleInitData = abi.encodePacked(ownerAddress);
 
-        BootstrapConfig[] memory validators = makeBootstrapConfig(validator, moduleInitData);
-        BootstrapConfig memory hook = makeBootstrapConfigSingle(address(0), "");
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, moduleInitData);
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
 
         bytes memory saDeploymentIndex = "0";
 

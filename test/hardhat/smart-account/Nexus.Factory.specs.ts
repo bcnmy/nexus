@@ -10,7 +10,7 @@ import {
   BiconomyMetaFactory,
   NexusAccountFactory,
   Bootstrap,
-  BootstrapUtil,
+  BootstrapLib,
   MockHook,
   ModuleWhitelistFactory,
   MockExecutor,
@@ -156,7 +156,7 @@ describe("Nexus Factory Tests", function () {
     let factory: NexusAccountFactory;
     let bootstrap: Bootstrap;
     let validatorModule: MockValidator;
-    let bootstrapUtil: BootstrapUtil;
+    let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
     let owner: Signer;
 
@@ -173,16 +173,16 @@ describe("Nexus Factory Tests", function () {
       factory = setup.nexusFactory;
       bootstrap = setup.bootstrap;
       validatorModule = setup.mockValidator;
-      bootstrapUtil = setup.bootstrapUtil;
+      BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
 
       ownerAddress = await owner.getAddress();
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
@@ -204,7 +204,7 @@ describe("Nexus Factory Tests", function () {
         await metaFactory.factoryWhitelist(await factory.getAddress()),
       ).to.equal(true);
       expect(
-        await metaFactory.isWhitelisted(await factory.getAddress()),
+        await metaFactory.isFactoryWhitelisted(await factory.getAddress()),
       ).to.equal(true);
     });
 
@@ -215,7 +215,7 @@ describe("Nexus Factory Tests", function () {
         await metaFactory.factoryWhitelist(await factory.getAddress()),
       ).to.equal(false);
       expect(
-        await metaFactory.isWhitelisted(await factory.getAddress()),
+        await metaFactory.isFactoryWhitelisted(await factory.getAddress()),
       ).to.equal(false);
     });
 
@@ -270,7 +270,7 @@ describe("Nexus Factory Tests", function () {
     let factory: NexusAccountFactory;
     let bootstrap: Bootstrap;
     let validatorModule: MockValidator;
-    let bootstrapUtil: BootstrapUtil;
+    let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
     let owner: Signer;
     let smartAccountImplementation: Nexus;
@@ -290,17 +290,17 @@ describe("Nexus Factory Tests", function () {
       factory = setup.nexusFactory;
       bootstrap = setup.bootstrap;
       validatorModule = setup.mockValidator;
-      bootstrapUtil = setup.bootstrapUtil;
+      BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
       smartAccountImplementation = setup.smartAccountImplementation;
 
       ownerAddress = await owner.getAddress();
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
@@ -365,7 +365,7 @@ describe("Nexus Factory Tests", function () {
     let bootstrap: Bootstrap;
     let validatorModule: MockValidator;
     let fallbackModule: MockHandler;
-    let bootstrapUtil: BootstrapUtil;
+    let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
     let owner: Signer;
     let mockExecutor: MockExecutor;
@@ -385,18 +385,18 @@ describe("Nexus Factory Tests", function () {
       factory = setup.nexusFactory;
       bootstrap = setup.bootstrap;
       validatorModule = setup.mockValidator;
-      bootstrapUtil = setup.bootstrapUtil;
+      BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
       fallbackModule = setup.mockFallbackHandler;
       mockExecutor = setup.mockExecutor;
 
       ownerAddress = await owner.getAddress();
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
@@ -447,19 +447,19 @@ describe("Nexus Factory Tests", function () {
         await fallbackModule.getAddress(),
       );
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
-      const executor = await bootstrapUtil.makeBootstrapConfigSingle(
+      const executor = await BootstrapLib.createSingleConfig(
         await mockExecutor.getAddress(),
         "0x",
       );
-      const fallback = await bootstrapUtil.makeBootstrapConfigSingle(
+      const fallback = await BootstrapLib.createSingleConfig(
         await fallbackModule.getAddress(),
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       );
@@ -507,19 +507,19 @@ describe("Nexus Factory Tests", function () {
         await fallbackModule.getAddress(),
       );
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
-      const executor = await bootstrapUtil.makeBootstrapConfigSingle(
+      const executor = await BootstrapLib.createSingleConfig(
         await mockExecutor.getAddress(),
         "0x",
       );
-      const fallback = await bootstrapUtil.makeBootstrapConfigSingle(
+      const fallback = await BootstrapLib.createSingleConfig(
         await fallbackModule.getAddress(),
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       );
@@ -564,19 +564,19 @@ describe("Nexus Factory Tests", function () {
         await fallbackModule.getAddress(),
       );
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
-      const executor = await bootstrapUtil.makeBootstrapConfigSingle(
+      const executor = await BootstrapLib.createSingleConfig(
         await mockExecutor.getAddress(),
         "0x",
       );
-      const fallback = await bootstrapUtil.makeBootstrapConfigSingle(
+      const fallback = await BootstrapLib.createSingleConfig(
         await fallbackModule.getAddress(),
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       );
@@ -621,19 +621,19 @@ describe("Nexus Factory Tests", function () {
         await fallbackModule.getAddress(),
       );
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
-      const executor = await bootstrapUtil.makeBootstrapConfigSingle(
+      const executor = await BootstrapLib.createSingleConfig(
         await mockExecutor.getAddress(),
         "0x",
       );
-      const fallback = await bootstrapUtil.makeBootstrapConfigSingle(
+      const fallback = await BootstrapLib.createSingleConfig(
         await fallbackModule.getAddress(),
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       );
@@ -678,19 +678,19 @@ describe("Nexus Factory Tests", function () {
         await mockExecutor.getAddress(),
       );
 
-      const validator = await bootstrapUtil.makeBootstrapConfigSingle(
+      const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
       );
-      const hook = await bootstrapUtil.makeBootstrapConfigSingle(
+      const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
         "0x",
       );
-      const executor = await bootstrapUtil.makeBootstrapConfigSingle(
+      const executor = await BootstrapLib.createSingleConfig(
         await mockExecutor.getAddress(),
         "0x",
       );
-      const fallback = await bootstrapUtil.makeBootstrapConfigSingle(
+      const fallback = await BootstrapLib.createSingleConfig(
         await fallbackModule.getAddress(),
         encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
       );

@@ -11,44 +11,24 @@ pragma solidity ^0.8.24;
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
-
 import { LibClone } from "solady/src/utils/LibClone.sol";
-import { Stakeable } from "../common/Stakeable.sol";
 import { INexus } from "../interfaces/INexus.sol";
-import { INexusAccountFactory } from "../interfaces/factory/INexusAccountFactory.sol";
+import { AbstractNexusFactory } from "./AbstractNexusFactory.sol";
 
-/// @title Nexus - AccountFactory
+/// @title Nexus Account Factory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
-/// @dev Utilizes the `StakeManager` for staking requirements and `LibClone` for creating deterministic proxy accounts.
-///       This contract serves as a factory to generate new Nexus instances with specific modules and initialization data.
-///       It combines functionality from Biconomy's implementation and external libraries to manage account deployments and initializations.
-/// @author @livingrockrises | Biconomy | chirag@biconomy.io
-/// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
-/// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
-/// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
-/// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract NexusAccountFactory is INexusAccountFactory, Stakeable {
-    /// @notice Stores the implementation contract address used to create new Nexus instances.
-    /// @dev This address is set once upon deployment and cannot be changed afterwards.
-    address public immutable ACCOUNT_IMPLEMENTATION;
-
-    // Review may not need stakeable here
-
-    /// @notice Constructor to set the smart account implementation address.
+contract NexusAccountFactory is AbstractNexusFactory {
+    /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
-    constructor(address implementation, address owner) Stakeable(owner) {
-        if (implementation == address(0)) {
-            revert ImplementationAddressCanNotBeZero();
-        }
-        ACCOUNT_IMPLEMENTATION = implementation;
-    }
+    /// @param owner The address of the owner of the factory.
+    constructor(address implementation, address owner) AbstractNexusFactory(implementation, owner) {}
 
-    /// @notice Creates a new Nexus with a specific validator and initialization data.
-    /// @param initData initialization data to be called on the new Smart Account.
-    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
-    /// @return The address of the newly created Nexus.
-    /// @dev Deploys a new Nexus using a deterministic address based on the input parameters.
-    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable) {
+    /// @notice Creates a new Nexus account with the provided initialization data.
+    /// @param initData Initialization data to be called on the new Smart Account.
+    /// @param salt Unique salt for the Smart Account creation.
+    /// @return The address of the newly created Nexus account.
+    function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
+        // Compute the actual salt for deterministic deployment
         bytes32 actualSalt;
         assembly {
             let ptr := mload(0x40)
@@ -58,6 +38,7 @@ contract NexusAccountFactory is INexusAccountFactory, Stakeable {
             actualSalt := keccak256(ptr, calldataLength)
         }
 
+        // Deploy the account using the deterministic address
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 
         if (!alreadyDeployed) {
@@ -68,14 +49,12 @@ contract NexusAccountFactory is INexusAccountFactory, Stakeable {
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param initData initialization data to be called on the new Smart Account.
-    /// @param salt unique salt for the Smart Account creation. enables multiple SA deployment for the same initData (modules, ownership info etc).
+    /// @param - Initialization data to be called on the new Smart Account.
+    /// @param - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    /// @dev This function allows for address calculation without deploying the Nexus.
-    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view returns (address payable expectedAddress) {
-        (initData, salt);
+    function computeAccountAddress(bytes calldata, bytes32) external view override returns (address payable expectedAddress) {
+        // Compute the actual salt for deterministic deployment
         bytes32 actualSalt;
-
         assembly {
             let ptr := mload(0x40)
             let calldataLength := sub(calldatasize(), 0x04)

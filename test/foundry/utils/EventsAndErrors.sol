@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 import { CallType, ExecType } from "../../../contracts/lib/ModeLib.sol";
 
 contract EventsAndErrors {
-    // Define all events
+    // ==========================
+    // Events
+    // ==========================
     event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
     event GenericFallbackCalled(address sender, uint256 value, bytes data);
     event Deposited(address indexed account, uint256 totalDeposit);
@@ -15,13 +17,14 @@ contract EventsAndErrors {
     event PostCheckCalled();
     event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
 
-    // Define all errors
+    // ==========================
     // General Errors
+    // ==========================
     error MissingFallbackHandler(bytes4 sig);
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
-    error EntryPointCannotBeZero();
+    error EntryPointCanNotBeZero();
     error ExecutionFailed();
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
@@ -29,18 +32,29 @@ contract EventsAndErrors {
     error UnsupportedModuleType(uint256 moduleTypeId);
     error UnsupportedCallType(CallType callType);
     error UnsupportedExecType(ExecType execType);
+    error ImplementationAddressCanNotBeZero();
+    error ModuleNotWhitelisted(address module);
+    error ZeroAddressNotAllowed();
+    error FactoryNotWhitelisted();
+    error InvalidFactoryAddress();
 
+    // ==========================
     // Operation Errors
+    // ==========================
     error FailedOp(uint256 opIndex, string reason);
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     error ERC1271InvalidSigner(address signer);
     error InvalidSignature();
 
+    // ==========================
     // Linked List Errors
+    // ==========================
     error LinkedList_AlreadyInitialized();
     error LinkedList_InvalidPage();
 
+    // ==========================
     // Module Errors
+    // ==========================
     error CannotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
@@ -48,13 +62,19 @@ contract EventsAndErrors {
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
     error ModuleAddressCanNotBeZero();
 
+    // ==========================
     // Hook Errors
+    // ==========================
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
 
+    // ==========================
     // Fallback Errors
+    // ==========================
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
 
+    // ==========================
     // Ownable Errors
+    // ==========================
     error Unauthorized();
 }
