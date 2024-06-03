@@ -223,15 +223,11 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
         // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
         // cannot be manipulated to disrupt the expected behavior and security of the account.
-        if (selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3)) {
-            revert FallbackSelectorForbidden();
-        }
+        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3)), FallbackSelectorForbidden());
 
         // Revert if a fallback handler is already installed for the given selector.
         // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.
-        if (_isFallbackHandlerInstalled(selector)) {
-            revert FallbackAlreadyInstalledForSelector(selector);
-        }
+        require(!_isFallbackHandlerInstalled(selector), FallbackAlreadyInstalledForSelector(selector));
 
         // Store the fallback handler and its call type in the account storage.
         // This maps the function selector to the specified fallback handler and call type.
