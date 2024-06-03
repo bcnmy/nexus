@@ -154,32 +154,27 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         }
     }
 
-
-        
-
-
-/// @notice Executes a user operation via delegatecall using the contract's context.
-/// @param userOp The user operation to execute, containing all necessary transaction details.
-/// @param - The hash of the userOp.
-/// @dev This function is designed to be called only through the EntryPoint contract to ensure security and proper execution context.
-/// The function decodes the calldata from the user operation, skipping the first four bytes (function selector), and performs a call to the target contract.
+/// @notice Executes a user operation via a call using the contract's context.
+/// @param userOp The user operation to execute, containing transaction details.
+/// @param - Hash of the user operation.
+/// @dev Only callable by the EntryPoint contract. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
 function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
-    // Extract the inner call data from the user operation, skipping the first 4 bytes (function selector).
+    // Extract inner call data from user operation, skipping the first 4 bytes.
     bytes calldata innerCall = userOp.callData[4:];
     bytes memory innerCallRet;
 
-    // Check if there is any call data to execute.
+    // Check and execute the inner call if data exists.
     if (innerCall.length > 0) {
-        // Decode the target address and the call data from the inner call data.
+        // Decode target address and call data from inner call.
         (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
         bool success;
-        // Perform the delegate call to the target contract with the decoded call data.
+        // Perform the call to the target contract with the decoded data.
         (success, innerCallRet) = target.call(data);
-        // Ensure the delegate call was successful, otherwise revert.
+        // Ensure the call was successful.
         require(success, "inner call failed");
     }
 
-    // Emit the Executed event with the user operation and the return data from the inner call.
+    // Emit the Executed event with the user operation and inner call return data.
     emit Executed(userOp, innerCallRet);
 }
 
