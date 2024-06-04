@@ -141,7 +141,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("Nexus"),
-                keccak256("0.0.1"),
+                keccak256("1.0.0-beta"),
                 block.chainid,
                 address(ALICE_ACCOUNT)
             )

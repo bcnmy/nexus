@@ -9,7 +9,7 @@ pragma solidity ^0.8.26;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { Ownable } from "solady/src/auth/Ownable.sol";

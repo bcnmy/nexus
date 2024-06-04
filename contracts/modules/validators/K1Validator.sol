@@ -9,7 +9,7 @@ pragma solidity ^0.8.26;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
@@ -95,7 +95,7 @@ contract K1Validator is IValidator {
     /// @notice Returns the version of the module
     /// @return The version of the module
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "1.0.0-beta";
     }
 
     /// @notice Checks if the module is of the specified type

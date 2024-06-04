@@ -75,7 +75,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes("Nexus")),
-                keccak256(bytes("0.0.1")),
+                keccak256(bytes("1.0.0-beta")),
                 block.chainid,
                 address(BOB_ACCOUNT)
             )

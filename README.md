@@ -2,7 +2,7 @@
 
 ![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/github/bcnmy/nexus?token=oyX38XKbO9&flag=hardhat&label=Hardhat%20Coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/github/bcnmy/nexus?token=oyX38XKbO9&flag=foundry&label=Foundry%20Coverage&logo=codecov)
 
-# ERC-7579 Modular Smart Account Base 🚀
+# Nexus - ERC-7579 Modular Smart Account Base 🚀
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bcnmy/nexus)
 
@@ -10,7 +10,7 @@ This repository serves as a comprehensive foundation for smart contract projects
 
 ## 📚 Table of Contents
 
-- [ERC-7579 Modular Smart Account Base 🚀](#erc-7579-modular-smart-account-base-)
+- [Nexus - ERC-7579 Modular Smart Account Base 🚀](#nexus---erc-7579-modular-smart-account-base-)
   - [📚 Table of Contents](#-table-of-contents)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)

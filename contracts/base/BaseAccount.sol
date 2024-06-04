@@ -9,7 +9,7 @@ pragma solidity ^0.8.26;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
@@ -25,7 +25,7 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.0.0.1";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0-beta";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
