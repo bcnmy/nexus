@@ -1,0 +1,4 @@
+TestERC4337Account_GetDeposit
+└── given the testing environment is initialized
+    ├── when adding a deposit
+    │   └── it should increase the deposit amount

@@ -1,0 +1,6 @@
+TestAccountConfig_AccountId
+└── given the account configuration is set
+    ├── when initializing the testing environment
+    │   └── it should set up the Nexus contract
+    └── when checking the account ID
+        └── it should return the expected account ID

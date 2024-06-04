@@ -1,0 +1,33 @@
+TestModuleManager_InstallModule
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when installing a module successfully
+│   └── it should install the module
+├── when installing a module with 'Try' execution type successfully
+│   └── it should install the module
+├── when installing a validator module successfully
+│   └── it should install the validator module
+├── when installing an executor module successfully
+│   └── it should install the executor module
+├── when reinstalling an already installed module
+│   └── it should revert with ModuleAlreadyInstalled error
+├── when installing a module with an invalid module type ID
+│   └── it should revert with MismatchModuleTypeId error
+├── when installing a module with an invalid module address
+│   └── it should revert with ModuleAddressCanNotBeZero error
+├── when installing an incompatible module as an executor
+│   └── it should revert with MismatchModuleTypeId error
+├── when installing an incompatible executor module
+│   └── it should revert with MismatchModuleTypeId error
+├── when installing an incompatible validator module
+│   └── it should revert with MismatchModuleTypeId error
+├── when installing a fallback handler with custom data
+│   └── it should install the handler
+├── when reinstalling an already installed fallback handler
+│   └── it should revert with ModuleAlreadyInstalled error
+├── when installing a hook module successfully
+│   └── it should install the hook module
+├── when reinstalling an already installed hook module
+│   └── it should revert with ModuleAlreadyInstalled error
+└── when installing a module with an invalid type ID
+    └── it should revert with InvalidModuleTypeId error

@@ -1,13 +1,17 @@
+import * as dotenv from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-storage-layout";
 import "@bonadocs/docgen";
 import "hardhat-deploy";
 
+dotenv.config();
+
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.26",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 1000000,
@@ -18,8 +22,8 @@ const config: HardhatUserConfig = {
     },
   },
   docgen: {
-    projectName: "Biconomy Modular Smart Account",
-    projectDescription: "ERC-7579 Modular Smart Account",
+    projectName: "Nexus",
+    projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",
   },
 };
 

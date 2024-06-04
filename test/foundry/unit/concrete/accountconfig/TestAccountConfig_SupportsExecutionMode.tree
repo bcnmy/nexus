@@ -1,0 +1,10 @@
+TestAccountConfig_SupportsExecutionMode
+└── given the account configuration is set
+    ├── when initializing the testing environment
+    │   └── it should set up the Nexus contract
+    ├── when checking support for batch execution mode
+    │   └── it should confirm support for batch execution mode
+    ├── when checking support for single execution mode
+    │   └── it should confirm support for single execution mode
+    └── when checking support for an unsupported execution mode
+        └── it should confirm lack of support for the unsupported execution mode

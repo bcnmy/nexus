@@ -1,0 +1,23 @@
+ArbitrumSmartAccountUpgradeTest
+├── when setting up the initial state for the tests
+│   └── it should initialize variables, fork Arbitrum mainnet, and set up the state
+├── when testing the upgrade from Smart Account V2 to Nexus
+│   └── it should ensure initialization after the upgrade
+├── when validating the account ID after the upgrade process
+│   └── it should match the expected account ID after upgrade
+├── when validating the account implementation address
+│   └── it should match the expected implementation address after upgrade
+├── when testing USDC transfer functionality after the upgrade
+│   └── it should transfer USDC successfully post-upgrade
+├── when testing native ETH transfer functionality after the upgrade
+│   └── it should transfer ETH successfully post-upgrade
+├── when preparing the initial state check before upgrade
+│   └── it should verify the initial entry point
+├── when funding the required accounts for the upgrade process
+│   └── it should fund smart account and owner address
+├── when performing the upgrade and initialization steps
+│   └── it should execute the upgrade and initialization
+├── when verifying the state after upgrade and initialization
+│   └── it should validate the new entry point and module installation
+└── when building a user operation for testing
+    └── it should construct the user operation with the provided parameters

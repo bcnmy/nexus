@@ -1,0 +1,8 @@
+TestERC4337Account_OnlyEntryPoint
+└── given the testing environment is initialized
+    ├── when validating a user operation from the EntryPoint
+    │   └── it should pass validation
+    ├── when validating a user operation from a non-EntryPoint address
+    │   └── it should fail validation
+    └── when validating a user operation with an invalid signature
+        └── it should fail validation

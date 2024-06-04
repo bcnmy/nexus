@@ -1,0 +1,28 @@
+TestERC4337Account_OnlyEntryPointOrSelf
+└── given the testing environment is initialized
+    ├── when executing a user operation from the EntryPoint
+    │   └── it should succeed
+    ├── when executing a user operation from a non-EntryPoint address
+    │   └── it should fail
+    ├── when installing a module from an unauthorized address
+    │   └── it should fail
+    ├── when installing a module from the EntryPoint
+    │   └── it should succeed
+    ├── when installing a module from the account itself
+    │   └── it should succeed
+    ├── when uninstalling a module from a non-EntryPoint or self address
+    │   └── it should fail
+    ├── when withdrawing a deposit to an authorized address from the EntryPoint
+    │   └── it should succeed
+    ├── when withdrawing a deposit from the account itself
+    │   └── it should succeed
+    ├── when withdrawing a deposit from an unauthorized address
+    │   └── it should fail
+    ├── when withdrawing a deposit to a contract address
+    │   └── it should fail
+    ├── when withdrawing a deposit exceeding the available amount
+    │   └── it should fail
+    ├── when withdrawing a deposit with zero amount
+    │   └── it should succeed
+    └── when withdrawing a deposit with insufficient gas
+        └── it should fail

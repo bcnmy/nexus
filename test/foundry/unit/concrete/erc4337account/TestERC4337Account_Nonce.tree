@@ -1,0 +1,8 @@
+TestERC4337Account_Nonce
+└── given the testing environment is initialized
+    ├── when checking the initial nonce value
+    │   └── it should be zero
+    ├── when performing a successful operation
+    │   └── it should increment the nonce
+    └── when performing a failed operation
+        └── it should increment the nonce

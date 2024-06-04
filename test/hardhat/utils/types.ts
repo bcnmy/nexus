@@ -1,25 +1,70 @@
-import { NumberLike } from "@nomicfoundation/hardhat-network-helpers/dist/src/types";
-import { AddressLike, BigNumberish, BytesLike, Signer } from "ethers";
 import {
-  AccountFactory,
+  AddressLike,
+  BigNumberish,
+  BytesLike,
+  ParamType,
+  Signer,
+} from "ethers";
+import {
+  K1ValidatorFactory,
   Counter,
   EntryPoint,
+  MockToken,
   MockValidator,
-  SmartAccount,
+  K1Validator,
+  Nexus,
+  MockExecutor,
+  MockHook,
+  MockHandler,
+  Stakeable,
+  BiconomyMetaFactory,
+  NexusAccountFactory,
+  Bootstrap,
+  BootstrapLib,
+  ModuleWhitelistFactory,
 } from "../../../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
-  smartAccount: SmartAccount;
-  factory: AccountFactory;
-  module: MockValidator;
+  smartAccountImplementation: Nexus;
+  nexusFactory: K1ValidatorFactory;
+  mockValidator: MockValidator;
+  ecdsaValidator: K1Validator;
   counter: Counter;
+  mockToken: MockToken;
   accounts: Signer[];
   addresses: string[];
 }
 
-// Todo
-// Review: check for need of making these optional
+export interface DeploymentFixtureWithSA {
+  entryPoint: EntryPoint;
+  smartAccountImplementation: Nexus;
+  deployedNexus: Nexus;
+  aliceDeployedNexus: Nexus;
+  deployedNexusAddress: AddressLike;
+  accountOwner: HardhatEthersSigner;
+  aliceAccountOwner: HardhatEthersSigner;
+  nexusK1Factory: K1ValidatorFactory;
+  deployer: Signer;
+  mockValidator: MockValidator;
+  mockExecutor: MockExecutor;
+  mockHook: MockHook;
+  mockHook2: MockHook;
+  mockFallbackHandler: MockHandler;
+  ecdsaValidator: K1Validator;
+  counter: Counter;
+  mockToken: MockToken;
+  accounts: Signer[];
+  addresses: string[];
+  stakeable: Stakeable;
+  metaFactory: BiconomyMetaFactory;
+  nexusFactory: NexusAccountFactory;
+  bootstrap: Bootstrap;
+  BootstrapLib: BootstrapLib;
+  moduleWhitelistFactory: ModuleWhitelistFactory;
+}
+
 export interface UserOperation {
   sender: AddressLike; // Or string
   nonce?: BigNumberish;
@@ -61,3 +106,26 @@ export enum ModuleType {
   Fallback = 3,
   Hooks = 4,
 }
+
+export type ModuleParams = {
+  deployedNexus: Nexus;
+  entryPoint: EntryPoint;
+  module: any;
+  moduleType: ModuleType | number;
+  validatorModule: MockValidator | K1Validator;
+  accountOwner: Signer;
+  bundler: Signer;
+  data?: BytesLike;
+};
+
+export const Executions = ParamType.from({
+  type: "tuple(address,uint256,bytes)[]",
+  baseType: "tuple",
+  name: "executions",
+  arrayLength: null,
+  components: [
+    { name: "target", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "callData", type: "bytes" },
+  ],
+});

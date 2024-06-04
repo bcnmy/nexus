@@ -1,0 +1,22 @@
+TestAccountExecution_ExecuteSingle
+└── given the testing environment is initialized
+    ├── when executing a single transaction successfully
+    │   └── it should increment the counter
+    ├── when a single execution reverts
+    │   └── it should remain unchanged
+    ├── when executing a single transaction with zero address
+    │   └── it should remain unchanged
+    ├── when executing a single transaction with empty calldata
+    │   └── it should remain unchanged
+    ├── when executing a value transfer in single execution
+    │   └── it should transfer ETH correctly
+    ├── when executing a token transfer in single execution
+    │   └── it should transfer tokens correctly
+    ├── when executing approve and transferFrom in single execution
+    │   └── it should update balances and allowances correctly
+    ├── when executing with unsupported call type from EntryPoint
+    │   └── it should revert
+    ├── when executing with unsupported call type from Account
+    │   └── it should revert
+    └── when executing with unsupported exec type
+        └── it should revert
