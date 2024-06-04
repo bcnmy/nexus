@@ -36,6 +36,7 @@ This repository serves as a comprehensive foundation for smart contract projects
 ## Getting Started
 
 To kickstart, follow these steps:
+To kickstart, follow these steps:
 
 ### Prerequisites
 

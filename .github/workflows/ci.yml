@@ -6,7 +6,10 @@ permissions: write-all
 
 jobs:
   setup:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     outputs:
       cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
@@ -47,6 +50,14 @@ jobs:
           path: |
             **/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
+          cache: true
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Lint sources
         run: yarn lint:sol
@@ -54,6 +65,7 @@ jobs:
   unit_test:
     name: Unit tests
     runs-on: ubuntu-latest
+    needs: setup
     needs: setup
     steps:
       - name: Checkout
@@ -69,6 +81,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1.2.0
         with:
           version: nightly
+          cache: true
           cache: true
 
       - name: Install foundry dependencies
