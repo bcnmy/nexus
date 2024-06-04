@@ -1,8 +1,8 @@
 [![Biconomy](https://img.shields.io/badge/Made_with_%F0%9F%8D%8A_by-Biconomy-ff4e17?style=flat)](https://biconomy.io) [![License MIT](https://img.shields.io/badge/License-MIT-blue?&style=flat)](./LICENSE) [![Hardhat](https://img.shields.io/badge/Built%20with-Hardhat-FFDB1C.svg)](https://hardhat.org/) [![Foundry](https://img.shields.io/badge/Built%20with-Foundry-FFBD10.svg)](https://getfoundry.sh/)
 
-![Codecov Hardhat Coverage](https://img.shields.io/codecov/c/github/bcnmy/nexus?token=oyX38XKbO9&flag=hardhat&label=Hardhat%20Coverage&logo=codecov) ![Codecov Foundry Coverage](https://img.shields.io/codecov/c/github/bcnmy/nexus?token=oyX38XKbO9&flag=foundry&label=Foundry%20Coverage&logo=codecov)
+![Codecov Hardhat Coverage](https://img.shields.io/badge/90%25-green?style=flat&logo=codecov&label=Hardhat%20Coverage) ![Codecov Foundry Coverage](https://img.shields.io/badge/100%25-brightgreen?style=flat&logo=codecov&label=Foundry%20Coverage)
 
-# ERC-7579 Modular Smart Account Base 🚀
+# Nexus - ERC-7579 Modular Smart Account Base 🚀
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bcnmy/nexus)
 
@@ -10,7 +10,7 @@ This repository serves as a comprehensive foundation for smart contract projects
 
 ## 📚 Table of Contents
 
-- [ERC-7579 Modular Smart Account Base 🚀](#erc-7579-modular-smart-account-base-)
+- [Nexus - ERC-7579 Modular Smart Account Base 🚀](#nexus---erc-7579-modular-smart-account-base-)
   - [📚 Table of Contents](#-table-of-contents)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
@@ -35,6 +35,7 @@ This repository serves as a comprehensive foundation for smart contract projects
 
 ## Getting Started
 
+To kickstart, follow these steps:
 To kickstart, follow these steps:
 
 ### Prerequisites

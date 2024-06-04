@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "../../../utils/NexusTest_Base.t.sol";
 
@@ -83,7 +83,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.0.0.1", "Not deployed properly");
+        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.1.0.0-beta", "Not deployed properly");
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
