@@ -22,17 +22,11 @@ import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "..
 
 /// @title Nexus - K1Validator
 /// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
-/// @dev It validates signatures using the SignatureCheckerLib, and should not be used in production environments.
-/// This contract exemplifies a module that checks if the user operation signature is valid according to ERC-1271 standards.
-/// For production-ready modules, please refer to the Biconomy Modules repository.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-/// @title Nexus - K1Validator
-/// @notice Validates user operation signatures for smart accounts.
-/// @dev This is a simple validator using SignatureCheckerLib for testing purposes. Not for production use.
 contract K1Validator is IValidator {
     using SignatureCheckerLib for address;
 

@@ -6,10 +6,7 @@ permissions: write-all
 
 jobs:
   setup:
-  setup:
     runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     outputs:
       cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
@@ -66,7 +63,6 @@ jobs:
     name: Unit tests
     runs-on: ubuntu-latest
     needs: setup
-    needs: setup
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.6
@@ -81,7 +77,6 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1.2.0
         with:
           version: nightly
-          cache: true
           cache: true
 
       - name: Install foundry dependencies
