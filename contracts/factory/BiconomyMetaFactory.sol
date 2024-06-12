@@ -60,10 +60,6 @@ contract BiconomyMetaFactory is Stakeable {
         factoryWhitelist[factory] = false;
     }
 
-    // Note: deploy using only one of the whitelisted factories
-    // these factories could possibly enshrine specific module/s
-    // factory should know how to decode this factoryData
-
     /// @notice Deploys a new Nexus with a specific factory and initialization data.
     /// @dev Uses factory.call(factoryData) to post the encoded data for the method to be called on the Factory.
     ///      These factories could enshrine specific modules to avoid arbitrary execution and prevent griefing.
