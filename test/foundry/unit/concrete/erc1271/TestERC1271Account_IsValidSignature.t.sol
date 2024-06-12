@@ -93,7 +93,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     }
 
     /// @notice Tests the validation of a signature that does not involve ERC-6492 unwrapping.
-    function test_isValidSignature_NoERC6492Unwrapping() public {
+    function test_isValidSignature_NoERC6492Unwrapping() public view {
         // Prepare the original data
         bytes32 originalHash = keccak256(abi.encodePacked("testNoERC6492Unwrapping"));
 
@@ -105,6 +105,13 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
 
         // Call isValidSignature and check the result
         ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+    }
+
+    function testSupportsNestedTypedDataSign() public view {
+        assertEq(
+            ALICE_ACCOUNT.supportsNestedTypedDataSign(),
+            bytes4(keccak256("supportsNestedTypedDataSign()"))
+        );
     }
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.
