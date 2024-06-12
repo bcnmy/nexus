@@ -348,7 +348,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
     /// Future extensions should return a different non-zero `result` to denote different behavior.
     /// This method intentionally returns bytes32 to allow freedom for future extensions.
-    function supportsNestedTypedDataSign() public view virtual returns (bytes32 result) {
+    function supportsNestedTypedDataSign() public pure virtual returns (bytes32 result) {
         result = bytes4(0xd620c85a);
     }
 
