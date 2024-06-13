@@ -342,6 +342,16 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return _eip712Hash(hash);
     }
 
+    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
+    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
+    /// denoting support for the default behavior, as implemented in
+    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
+    /// Future extensions should return a different non-zero `result` to denote different behavior.
+    /// This method intentionally returns bytes32 to allow freedom for future extensions.
+    function supportsNestedTypedDataSign() public pure virtual returns (bytes32 result) {
+        result = bytes4(0xd620c85a);
+    }
+
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
