@@ -45,8 +45,9 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @notice Tests the validation of an EIP-712 signature using the mock validator.
     function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
         TestTemps memory t;
-        t.contents = keccak256("123");
-        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        t.contents = keccak256("0x1234");
+        bytes32 dataToSign = toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT)));
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         if (random() % 4 == 0) signature = erc6492Wrap(signature);

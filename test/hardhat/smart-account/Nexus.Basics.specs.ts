@@ -321,29 +321,79 @@ describe("Nexus Basic Specs", function () {
       );
     });
 
-    it("Should revert with invalid validation module error", async function () {
-      const randomAddress = "0x4f86BA17A9e82A8EeAB1dA2064f49E58FA9b5Dc0";
+    // References
+    // https://pastebin.com/EVQxRH3n
+    // https://viem.sh/docs/accounts/signTypedData#message
+    // https://github.com/frangio/eip712-wrapper-for-eip1271/blob/master/src/eip1271-account.ts#L34
+    // https://github.com/wevm/viem/blob/main/src/actions/wallet/signMessage.ts
+    // https://github.com/ethers-io/ethers.js/blob/92761872198cf6c9334570da3d110bca2bafa641/src.ts/providers/provider-jsonrpc.ts#L435
+    it("Should check signature validity using smart account isValidSignature", async function () {
       const isModuleInstalled = await smartAccount.isModuleInstalled(
         ModuleType.Validation,
-        randomAddress,
-        ethers.hexlify("0x"),
+        await validatorModule.getAddress(),
+        ethers.hexlify("0x")
       );
-      expect(isModuleInstalled).to.be.false;
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
-      const data = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [await counter.getAddress(), "0", incrementNumber],
+      expect(isModuleInstalled).to.be.true;
+
+      // 1. Convert foundry util to ts code (as below)
+
+      const data = keccak256("0x1234")
+
+      // Define constants as per the original Solidity function
+      const DOMAIN_NAME = 'Nexus';
+      const DOMAIN_VERSION = '0.0.1';
+      const DOMAIN_TYPEHASH = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)';
+      const PARENT_TYPEHASH = 'PersonalSign(bytes prefixed)';
+      const ALICE_ACCOUNT = smartAccountAddress;
+      const network = await ethers.provider.getNetwork();
+      const chainId = network.chainId;
+
+      // Calculate the domain separator
+      const domainSeparator = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_TYPEHASH)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME)),
+              ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_VERSION)),
+              chainId,
+              ALICE_ACCOUNT
+          ]
+        )
       );
-      const callData = encodeData(["bytes"], [data]);
-      const functionCalldata = concat([
-        zeroPadBytes(randomAddress, 20), // Address needs to be 20 bytes, so pad it if necessary
-        callData,
-      ]);
-      await expect(
-        smartAccount.isValidSignature(hashMessage(callData), functionCalldata),
-      ).to.be.rejected;
+
+      // Calculate the parent struct hash
+      const parentStructHash = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['bytes32', 'bytes32'],
+          [
+              ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)),
+              data
+          ]
+       )
+      );
+
+      // Calculate the final hash
+      const resultHash = ethers.keccak256(
+      ethers.concat([
+          '0x1901',
+          domainSeparator,
+          parentStructHash
+      ])
+     );
+
+      console.log("being signed", ethers.hashMessage(ethers.getBytes(resultHash)));
+
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(resultHash));
+
+      const isValid = await smartAccount.isValidSignature(
+        data,
+        solidityPacked(["address", "bytes"], [await validatorModule.getAddress(), signature])
+      );
+
+      expect(isValid).to.equal("0x1626ba7e");
     });
+
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
