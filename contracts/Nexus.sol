@@ -20,6 +20,7 @@ import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
+import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
@@ -76,7 +77,13 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
+    )
+        external
+        virtual
+        payPrefund(missingAccountFunds)
+        onlyEntryPoint
+        returns (uint256 validationData)
+    {
         address validator;
         uint256 userOpnonce = userOp.nonce;
         assembly {
@@ -114,7 +121,14 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    ) external payable onlyExecutorModule withHook returns (bytes[] memory returnData) {
+    )
+        external
+        payable
+        onlyExecutorModule
+        withHook
+        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
+        returns (bytes[] memory returnData)
+    {
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
@@ -227,7 +241,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function initializeAccount(bytes calldata initData) external payable virtual {
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
-        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        (bool success,) = bootstrap.delegatecall(bootstrapCall);
         require(success, NexusInitializationFailed());
     }
 
@@ -306,6 +320,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         return _ACCOUNT_IMPLEMENTATION_ID;
     }
 
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external onlyEntryPointOrSelf {
+        _configureRegistry(newRegistry, attesters, threshold);
+    }
+
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
     /// @notice Updates two slots 1. ERC1967 slot and
     /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
@@ -345,7 +363,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
 
     /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
     ///
@@ -431,7 +449,12 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     function _erc1271HashForIsValidSignatureViaNestedEIP712(
         bytes32 hash,
         bytes calldata signature
-    ) internal view virtual returns (bytes32, bytes calldata) {
+    )
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
         assembly {
             // Unwraps the ERC6492 wrapper if it exists.
             // See: https://eips.ethereum.org/EIPS/eip-6492
@@ -452,11 +475,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             let m := mload(0x40) // Cache the free memory pointer.
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
-            for {
-
-            } 1 {
-
-            } {
+            for { } 1 { } {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `APP_DOMAIN_SEPARATOR` and contents struct hash.
@@ -476,15 +495,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
                 let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
                 d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
-                for {
-                    mstore(add(p, c), 40)
-                } 1 {
-                    p := add(p, 1)
-                } {
+                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
-                    if eq(40, b) {
-                        break
-                    }
+                    if eq(40, b) { break }
                     d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n")
@@ -542,13 +555,18 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param additionalContext Additional context for checking installation.
     /// @return True if the module is installed, false otherwise.
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            return _isValidatorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            return _isExecutorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             if (additionalContext.length < 4) return false;
             return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            return _isHookInstalled(module);
+        } else {
+            return false;
+        }
     }
 
     /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,
