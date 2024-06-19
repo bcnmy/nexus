@@ -341,7 +341,7 @@ describe("Nexus Basic Specs", function () {
 
       // Define constants as per the original Solidity function
       const DOMAIN_NAME = 'Nexus';
-      const DOMAIN_VERSION = '0.0.1';
+      const DOMAIN_VERSION = '1.0.0-beta';
       const DOMAIN_TYPEHASH = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)';
       const PARENT_TYPEHASH = 'PersonalSign(bytes prefixed)';
       const ALICE_ACCOUNT = smartAccountAddress;
