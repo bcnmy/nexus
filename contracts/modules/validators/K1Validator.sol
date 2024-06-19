@@ -19,6 +19,7 @@ import { PackedUserOperation } from "account-abstraction/contracts/interfaces/Pa
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title Nexus - K1Validator
 /// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
@@ -77,7 +78,13 @@ contract K1Validator is IValidator {
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
         // Validate the signature using SignatureCheckerLib
-        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)) {
+            return ERC1271_MAGICVALUE;
+        }
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), data)) {
+            return ERC1271_MAGICVALUE;
+        }
+        return ERC1271_INVALID;
     }
 
     /// @notice Returns the name of the module
