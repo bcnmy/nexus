@@ -34,10 +34,10 @@ abstract contract RegistryAdapter {
      * This will revert, if not succicient valid attestations are on the registry
      */
     function _checkRegistry(address module, uint256 moduleType) internal view {
-        IERC7484 registry = registry;
-        if (address(_registry) != address(0)) {
+        IERC7484 moduleRegistry = registry;
+        if (address(moduleRegistry) != address(0)) {
             // this will revert if attestations / threshold are not met
-            _registry.check(module, moduleType);
+            moduleRegistry.check(module, moduleType);
         }
     }
 }
