@@ -28,16 +28,16 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODU
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract RegistryFactory is AbstractNexusFactory {
+    IERC7484 public immutable REGISTRY;
+    address[] public attesters;
+    uint8 public threshold;
+
     /// @notice Error thrown when a non-whitelisted module is used.
     /// @param module The module address that is not whitelisted.
     error ModuleNotWhitelisted(address module);
 
     /// @notice Error thrown when a zero address is provided.
     error ZeroAddressNotAllowed();
-
-    IERC7484 public immutable REGISTRY;
-    address[] public attesters;
-    uint8 public threshold;
 
     /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
@@ -48,9 +48,7 @@ contract RegistryFactory is AbstractNexusFactory {
         IERC7484 registry_,
         address[] memory attesters_,
         uint8 threshold_
-    )
-        AbstractNexusFactory(implementation_, owner_)
-    {
+    ) AbstractNexusFactory(implementation_, owner_) {
         require(owner_ != address(0), ZeroAddressNotAllowed());
         REGISTRY = registry_;
         attesters = attesters_;
@@ -87,8 +85,14 @@ contract RegistryFactory is AbstractNexusFactory {
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
 
         // Decode the call data to extract the parameters passed to initNexus
-        (BootstrapConfig[] memory validators, BootstrapConfig[] memory executors, BootstrapConfig memory hook, BootstrapConfig[] memory fallbacks,,) =
-            abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address[], uint8));
+        (
+            BootstrapConfig[] memory validators,
+            BootstrapConfig[] memory executors,
+            BootstrapConfig memory hook,
+            BootstrapConfig[] memory fallbacks,
+            ,
+
+        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address[], uint8));
 
         // Ensure all modules are whitelisted
         for (uint256 i = 0; i < validators.length; i++) {

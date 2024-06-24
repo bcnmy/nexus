@@ -41,9 +41,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-    {
+    ) external {
         _installValidator(address(validator), data);
         _configureRegistry(registry, attesters, threshold);
     }
@@ -62,9 +60,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-    {
+    ) external {
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
@@ -100,9 +96,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-    {
+    ) external {
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
@@ -130,11 +124,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
+    ) external view returns (bytes memory init) {
         init = abi.encode(address(this), abi.encodeCall(this.initNexus, (validators, executors, hook, fallbacks, registry, attesters, threshold)));
     }
 
@@ -148,11 +138,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
+    ) external view returns (bytes memory init) {
         init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, (validators, hook, registry, attesters, threshold)));
     }
 
@@ -164,11 +150,7 @@ contract Bootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
+    ) external view returns (bytes memory init) {
         init = abi.encode(
             address(this),
             abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))

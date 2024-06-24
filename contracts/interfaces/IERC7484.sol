@@ -3,17 +3,6 @@ pragma solidity ^0.8.26;
 
 interface IERC7484 {
     event NewTrustedAttesters();
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*          Check with Registry internal attesters            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function check(address module) external view;
-
-    function checkForAccount(address smartAccount, address module) external view;
-
-    function check(address module, uint256 moduleType) external view;
-
-    function checkForAccount(address smartAccount, address module, uint256 moduleType) external view;
 
     /**
      * Allows Smart Accounts - the end users of the registry - to appoint
@@ -25,6 +14,17 @@ interface IERC7484 {
      * @param attesters The addresses of the attesters to be trusted.
      */
     function trustAttesters(uint8 threshold, address[] calldata attesters) external;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*          Check with Registry internal attesters            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function check(address module) external view;
+
+    function checkForAccount(address smartAccount, address module) external view;
+
+    function check(address module, uint256 moduleType) external view;
+
+    function checkForAccount(address smartAccount, address module, uint256 moduleType) external view;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              Check with external attester(s)               */

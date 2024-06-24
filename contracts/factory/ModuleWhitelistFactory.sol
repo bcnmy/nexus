@@ -68,8 +68,12 @@ contract ModuleWhitelistFactory is AbstractNexusFactory {
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
 
         // Decode the call data to extract the parameters passed to initNexus
-        (BootstrapConfig[] memory validators, BootstrapConfig[] memory executors, BootstrapConfig memory hook, BootstrapConfig[] memory fallbacks) =
-            abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
+        (
+            BootstrapConfig[] memory validators,
+            BootstrapConfig[] memory executors,
+            BootstrapConfig memory hook,
+            BootstrapConfig[] memory fallbacks
+        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[]));
 
         // Ensure all modules are whitelisted
         for (uint256 i = 0; i < validators.length; i++) {

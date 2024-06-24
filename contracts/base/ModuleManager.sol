@@ -302,11 +302,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address nextCursor)
-    {
+    ) private view returns (address[] memory array, address nextCursor) {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

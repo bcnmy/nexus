@@ -9,25 +9,13 @@ import { IERC7484 } from "../interfaces/IERC7484.sol";
  * attesters to trust
  */
 abstract contract RegistryAdapter {
-    event ERC7484RegistryConfigured(IERC7484 indexed registry);
+    IERC7484 public registry;
 
-    IERC7484 registry;
+    event ERC7484RegistryConfigured(IERC7484 indexed registry);
 
     modifier withRegistry(address module, uint256 moduleType) {
         _checkRegistry(module, moduleType);
         _;
-    }
-
-    /**
-     * Check on ERC7484 Registry, if suffcient attestations were made
-     * This will revert, if not succicient valid attestations are on the registry
-     */
-    function _checkRegistry(address module, uint256 moduleType) internal view {
-        IERC7484 _registry = registry;
-        if (address(_registry) != address(0)) {
-            // this will revert if attestations / threshold are not met
-            _registry.check(module, moduleType);
-        }
     }
 
     /**
@@ -39,5 +27,17 @@ abstract contract RegistryAdapter {
             newRegistry.trustAttesters(threshold, attesters);
         }
         emit ERC7484RegistryConfigured(newRegistry);
+    }
+
+    /**
+     * Check on ERC7484 Registry, if suffcient attestations were made
+     * This will revert, if not succicient valid attestations are on the registry
+     */
+    function _checkRegistry(address module, uint256 moduleType) internal view {
+        IERC7484 registry = registry;
+        if (address(_registry) != address(0)) {
+            // this will revert if attestations / threshold are not met
+            _registry.check(module, moduleType);
+        }
     }
 }

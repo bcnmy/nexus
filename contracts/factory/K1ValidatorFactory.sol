@@ -58,9 +58,7 @@ contract K1ValidatorFactory is Stakeable {
         address k1Validator,
         Bootstrap bootstrapper,
         IERC7484 registry
-    )
-        Stakeable(factoryOwner)
-    {
+    ) Stakeable(factoryOwner) {
         require(!(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0)), ZeroAddressNotAllowed());
         ACCOUNT_IMPLEMENTATION = implementation;
         K1_VALIDATOR = k1Validator;
@@ -77,11 +75,7 @@ contract K1ValidatorFactory is Stakeable {
         uint256 index,
         address[] calldata attesters,
         uint8 threshold
-    )
-        external
-        payable
-        returns (address payable)
-    {
+    ) external payable returns (address payable) {
         // Compute the actual salt for deterministic deployment
         bytes32 actualSalt;
         assembly {
