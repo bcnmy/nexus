@@ -37,6 +37,12 @@ contract K1Validator is IValidator {
     /// @notice Error to indicate that no owner was provided during installation
     error NoOwnerProvided();
 
+    /// @notice Error to indicate that the new owner cannot be the zero address
+    error ZeroAddressNotAllowed();
+
+    /// @notice Error to indicate unauthorized ownership transfer attempt
+    error Unauthorized();
+
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
     function onInstall(bytes calldata data) external {
