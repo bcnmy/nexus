@@ -55,6 +55,18 @@ contract K1Validator is IValidator {
         delete smartAccountOwners[msg.sender];
     }
 
+
+    /// @notice Transfers ownership of the validator to a new owner
+    /// @param newOwner The address of the new owner
+    function transferOwnership(address newOwner) external {
+        require(newOwner != address(0), ZeroAddressNotAllowed());
+
+        address currentOwner = smartAccountOwners[msg.sender];
+        require(currentOwner == msg.sender, Unauthorized());
+
+        smartAccountOwners[msg.sender] = newOwner;
+    }
+
     /// @notice Checks if the smart account is initialized with an owner
     /// @param smartAccount The address of the smart account
     /// @return True if the smart account has an owner, false otherwise
