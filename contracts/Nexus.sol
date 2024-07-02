@@ -59,7 +59,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// Validates a user operation against a specified validator, extracted from the operation's nonce.
     /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
     /// Other validation failures (e.g., nonce mismatch) should revert.
-    /// @param userOp The operation to validate, encapsulating all transaction details.
+    /// @param op The operation to validate, encapsulating all transaction details.
     /// @param userOpHash Hash of the operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
     /// This can be zero if covered by a paymaster or sufficient deposit exists.
@@ -75,7 +75,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator;
-        uint256 nonce = userOp.nonce;
+        uint256 nonce = op.nonce;
         assembly {
             validator := shr(96, nonce)
         }
@@ -535,7 +535,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             _installFallbackHandler(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
-        } else if (moduleType == MULTITYPE_MODULE) {
+        } else if (moduleTypeId == MULTITYPE_MODULE) {
             _multiTypeInstall(module, initData);            
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
