@@ -70,7 +70,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
     /// This method forwards the validation task to the extracted validator module address.
     function validateUserOp(
-        PackedUserOperation calldata userOp,
+        PackedUserOperation calldata op,
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
@@ -79,12 +79,36 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         assembly {
             validator := shr(96, nonce)
         }
-        // Check if validator is not enabled. If not, return VALIDATION_FAILED.
+        // parse nonce properly and get validationMode
 
-        if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
-
+        PackedUserOperation memory userOp = op;
+        /* 
+        if (validationMode == MODULE_ENABLE_MODE {
+            // enable the validator
+            bytes calldata userOpSignature = _enableMode(validator, op.signature);
+            userOp.signature = userOpSignature;
+        } else {
+            // Check if validator is not enabled. If not, return VALIDATION_FAILED.
+            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
+        }
+        */
+        
         // bubble up the return value of the validator module
         validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+    }
+
+    /*
+
+    function _enableMode(validator, op.signature) _internal returns(bytes calldata userOpSignature) {
+        
+        // parse everything including userOpSignature from op.signature
+        
+        if (!_isValidatorInstalled(validator)) {
+            //check everything and enable
+        } 
+        if validator has already been installed and mode enable mode was included into userOp by mistake, 
+        we can just proceed with validating the userOp after cleaning the moduleEnableData from the op.signature
+        
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
@@ -169,22 +193,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function also goes through hook checks via withHook modifier.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
-        if (module == address(0)) revert ModuleAddressCanNotBeZero();
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
-        if (_isModuleInstalled(moduleTypeId, module, initData)) {
-            revert ModuleAlreadyInstalled(moduleTypeId, module);
-        }
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            _installValidator(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            _installExecutor(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            _installFallbackHandler(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            _installHook(module, initData);
-        } else {
-            revert InvalidModuleTypeId(moduleTypeId);
-        }
+        _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
 
@@ -500,6 +509,33 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
         else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
         else revert UnsupportedExecType(execType);
+    }
+
+    /// @notice Installs a new module to the smart account.
+    /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
+    /// - 1 for Validator
+    /// - 2 for Executor
+    /// - 3 for Fallback
+    /// - 4 for Hook
+    /// @param module The address of the module to install.
+    /// @param initData Initialization data for the module.
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
+        if (module == address(0)) revert ModuleAddressCanNotBeZero();
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
+        if (_isModuleInstalled(moduleTypeId, module, initData)) {
+            revert ModuleAlreadyInstalled(moduleTypeId, module);
+        }
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            _installValidator(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            _installExecutor(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            _installFallbackHandler(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            _installHook(module, initData);
+        } else {
+            revert InvalidModuleTypeId(moduleTypeId);
+        }
     }
 
     /// @notice Checks if a module is installed on the smart account.
