@@ -40,14 +40,20 @@ contract K1Validator is IValidator {
     /// @notice Error to indicate that the new owner cannot be the zero address
     error ZeroAddressNotAllowed();
 
-    /// @notice Error to indicate unauthorized ownership transfer attempt
-    error Unauthorized();
+    /// @notice Error to indicate the module is already initialized
+    error ModuleAlreadyInitialized();
+
+    /// @notice Error to indicate that the new owner cannot be a contract address
+    error NewOwnerIsContract();
 
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
     function onInstall(bytes calldata data) external {
         require(data.length != 0, NoOwnerProvided());
-        smartAccountOwners[msg.sender] = address(bytes20(data));
+        require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
+        address newOwner = address(bytes20(data));
+        require(!_isContract(newOwner), NewOwnerIsContract());
+        smartAccountOwners[msg.sender] = newOwner;
     }
 
     /// @notice Called upon module uninstallation to remove the owner of the smart account
@@ -55,14 +61,11 @@ contract K1Validator is IValidator {
         delete smartAccountOwners[msg.sender];
     }
 
-
     /// @notice Transfers ownership of the validator to a new owner
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
         require(newOwner != address(0), ZeroAddressNotAllowed());
-
-        address currentOwner = smartAccountOwners[msg.sender];
-        require(currentOwner == msg.sender, Unauthorized());
+        require(!_isContract(newOwner), NewOwnerIsContract());
 
         smartAccountOwners[msg.sender] = newOwner;
     }
@@ -71,7 +74,7 @@ contract K1Validator is IValidator {
     /// @param smartAccount The address of the smart account
     /// @return True if the smart account has an owner, false otherwise
     function isInitialized(address smartAccount) external view returns (bool) {
-        return smartAccountOwners[smartAccount] != address(0);
+        return _isInitialized(smartAccount);
     }
 
     /// @notice Validates a user operation by checking the signature against the owner's address
@@ -122,5 +125,23 @@ contract K1Validator is IValidator {
     /// @return True if the module is of the specified type, false otherwise
     function isModuleType(uint256 typeID) external pure returns (bool) {
         return typeID == MODULE_TYPE_VALIDATOR;
+    }
+
+    /// @notice Checks if the smart account is initialized with an owner
+    /// @param smartAccount The address of the smart account
+    /// @return True if the smart account has an owner, false otherwise
+    function _isInitialized(address smartAccount) private view returns (bool) {
+        return smartAccountOwners[smartAccount] != address(0);
+    }
+
+    /// @notice Checks if the address is a contract
+    /// @param account The address to check
+    /// @return True if the address is a contract, false otherwise
+    function _isContract(address account) private view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 }
