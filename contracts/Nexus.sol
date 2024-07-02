@@ -24,7 +24,7 @@ import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, VALIDATION_FAILED } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 
 /// @title Nexus - Smart Account
@@ -105,11 +105,13 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         
         if (!_isValidatorInstalled(validator)) {
             //check everything and enable
+            _installModule 
         } 
         if validator has already been installed and mode enable mode was included into userOp by mistake, 
         we can just proceed with validating the userOp after cleaning the moduleEnableData from the op.signature
-        
+
     }
+    */
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
@@ -191,8 +193,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    /// @dev This function also goes through hook checks via withHook modifier.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -519,7 +520,8 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// - 4 for Hook
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
+    /// @dev This function goes through hook checks via withHook modifier.
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (_isModuleInstalled(moduleTypeId, module, initData)) {
@@ -533,6 +535,8 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             _installFallbackHandler(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
+        } else if (moduleType == MULTITYPE_MODULE) {
+            _multiTypeInstall(module, initData);            
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }

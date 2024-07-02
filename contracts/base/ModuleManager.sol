@@ -239,6 +239,77 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         IFallback(fallbackHandler).onUninstall(deInitData);
     }
 
+    /// To make it easier to install multiple modules at once, this function will
+    /// install multiple modules at once. The init data is expected to be a abi encoded tuple
+    /// of (uint[] types, bytes[] initDatas)
+    /// @dev Install multiple modules at once
+    /// @dev It will call module.onInstall for every initialization so it ensure the flow
+    /// consistent with the flow of the SA's that do not implement _multiTypeInstall 
+    /// and thus will call the multityped module several times
+    /// The multityped modules can not expect all the 7579 SA's to implement _multiTypeInstall and
+    /// thus should account for the flow when they are going to be called with onUnistall
+    /// for the initialization as every of the module types they declare they are 
+    /// @param module address of the module
+    /// @param initData initialization data for the module
+    function _multiTypeInstall(
+        address module,
+        bytes calldata initData
+    )
+        internal virtual
+    {
+        uint256[] calldata types;
+        bytes[] calldata initDatas;
+
+        // equivalent of:
+        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[])
+        assembly ("memory-safe") {
+            let offset := initData.offset
+            let baseOffset := offset
+            let dataPointer := add(baseOffset, calldataload(offset))
+
+            types.offset := add(dataPointer, 32)
+            types.length := calldataload(dataPointer)
+            offset := add(offset, 32)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            initDatas.offset := add(dataPointer, 32)
+            initDatas.length := calldataload(dataPointer)
+        }
+
+        uint256 length = types.length;
+        if (initDatas.length != length) revert InvalidInput();
+
+        // iterate over all module types and install the module as a type accordingly
+        for (uint256 i; i < length; i++) {
+            uint256 _type = types[i];
+
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                      INSTALL VALIDATORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            if (_type == MODULE_TYPE_VALIDATOR) {
+                _installValidator(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL EXECUTORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_EXECUTOR) {
+                _installExecutor(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL FALLBACK                     */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_FALLBACK) {
+                _installFallbackHandler(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*          INSTALL HOOK (global or sig specific)             */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_HOOK) {
+                _installHook(module, initDatas[i]);
+            }
+        }
+    }
+
     /// @dev Checks if a fallback handler is set for a given selector.
     /// @param selector The function selector to check.
     /// @return True if a fallback handler is set, otherwise false.
