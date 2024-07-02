@@ -106,8 +106,6 @@ contract TestK1Validator is NexusTest_Base {
     function test_ValidateUserOp_toEthSignedMessageHash_Success() public {
         prank(address(BOB_ACCOUNT));
 
-        validator.onInstall(initData);
-
         userOp.signature = signature;
 
         uint256 validationResult = validator.validateUserOp(userOp, userOpHash);
@@ -118,8 +116,6 @@ contract TestK1Validator is NexusTest_Base {
     /// @notice Tests the validateUserOp function with an invalid signature
     function test_ValidateUserOp_Failure() public {
         prank(address(BOB_ACCOUNT));
-
-        validator.onInstall(initData);
 
         userOp.signature = abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid"))));
 
@@ -166,7 +162,6 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_Failure() public {
         prank(address(BOB_ACCOUNT));
 
-        validator.onInstall(initData);
 
         bytes4 result = validator.isValidSignatureWithSender(
             address(BOB_ACCOUNT),
@@ -176,6 +171,36 @@ contract TestK1Validator is NexusTest_Base {
 
         assertEq(result, ERC1271_INVALID, "Signature should be invalid");
     }
+
+    /// @notice Tests the transferOwnership function to ensure ownership is transferred correctly
+function test_TransferOwnership_Success() public {
+    startPrank(address(BOB_ACCOUNT));
+
+
+    // Transfer ownership to ALICE
+    validator.transferOwnership(ALICE_ADDRESS);
+
+    // Verify that the ownership is transferred
+    assertEq(validator.smartAccountOwners(address(BOB_ACCOUNT)), ALICE_ADDRESS, "Ownership should be transferred to ALICE");
+
+    stopPrank();
+}
+
+
+/// @notice Tests the transferOwnership function to ensure it reverts when transferring to the zero address
+function test_RevertWhen_TransferOwnership_ToZeroAddress() public {
+    startPrank(address(BOB_ACCOUNT));
+
+    // Expect the ZeroAddressNotAllowed error to be thrown
+    vm.expectRevert(ZeroAddressNotAllowed.selector);
+
+    // Attempt to transfer ownership to the zero address
+    validator.transferOwnership(address(0));
+
+    stopPrank();
+}
+
+
 
     /// @notice Tests the name function to return the correct contract name
     function test_Name() public {
@@ -201,6 +226,25 @@ contract TestK1Validator is NexusTest_Base {
 
         assertFalse(result, "Module type should be invalid");
     }
+
+    /// @notice Ensures the transferOwnership function reverts when transferring to a contract address
+function test_RevertWhen_TransferOwnership_ToContract() public {
+    startPrank(address(BOB_ACCOUNT));
+
+    // Deploy a dummy contract to use as the new owner
+    address dummyContract = address(new K1Validator());
+
+    // Install the validator module first
+
+    // Expect the NewOwnerIsContract error to be thrown
+    vm.expectRevert(K1Validator.NewOwnerIsContract.selector);
+
+    // Attempt to transfer ownership to the dummy contract address
+    validator.transferOwnership(dummyContract);
+
+    stopPrank();
+}
+
 
     /// @notice Generates an ERC-1271 hash for personal sign
     /// @param childHash The child hash
