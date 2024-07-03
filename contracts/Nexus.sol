@@ -35,7 +35,7 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
 
@@ -69,6 +69,10 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
     /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
     /// This method forwards the validation task to the extracted validator module address.
+    /// @dev Features Module Enable Mode.
+    /// This Module Enable Mode flow only makes sense for the module that is used as validator
+    /// for the userOp that triggers Module Enable Flow. Otherwise, one should just include
+    /// a call to Nexus.installModule into userOp.callData
     function validateUserOp(
         PackedUserOperation calldata op,
         bytes32 userOpHash,
@@ -82,36 +86,20 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         // parse nonce properly and get validationMode
 
         PackedUserOperation memory userOp = op;
-        /* 
-        if (validationMode == MODULE_ENABLE_MODE {
-            // enable the validator
+        
+        if (true) {
+        //if (validationMode == MODULE_ENABLE_MODE) {
             bytes calldata userOpSignature = _enableMode(validator, op.signature);
             userOp.signature = userOpSignature;
         } else {
             // Check if validator is not enabled. If not, return VALIDATION_FAILED.
             if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
         }
-        */
+        
         
         // bubble up the return value of the validator module
         validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }
-
-    /*
-
-    function _enableMode(validator, op.signature) _internal returns(bytes calldata userOpSignature) {
-        
-        // parse everything including userOpSignature from op.signature
-        
-        if (!_isValidatorInstalled(validator)) {
-            //check everything and enable
-            _installModule 
-        } 
-        if validator has already been installed and mode enable mode was included into userOp by mistake, 
-        we can just proceed with validating the userOp after cleaning the moduleEnableData from the op.signature
-
-    }
-    */
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
@@ -262,6 +250,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
         else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
+        else if (moduleTypeId == MULTITYPE_MODULE) return true;
         else return false;
     }
 
@@ -510,50 +499,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
         else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
         else revert UnsupportedExecType(execType);
-    }
-
-    /// @notice Installs a new module to the smart account.
-    /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
-    /// - 1 for Validator
-    /// - 2 for Executor
-    /// - 3 for Fallback
-    /// - 4 for Hook
-    /// @param module The address of the module to install.
-    /// @param initData Initialization data for the module.
-    /// @dev This function goes through hook checks via withHook modifier.
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
-        if (module == address(0)) revert ModuleAddressCanNotBeZero();
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
-        if (_isModuleInstalled(moduleTypeId, module, initData)) {
-            revert ModuleAlreadyInstalled(moduleTypeId, module);
-        }
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            _installValidator(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            _installExecutor(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            _installFallbackHandler(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            _installHook(module, initData);
-        } else if (moduleTypeId == MULTITYPE_MODULE) {
-            _multiTypeInstall(module, initData);            
-        } else {
-            revert InvalidModuleTypeId(moduleTypeId);
-        }
-    }
-
-    /// @notice Checks if a module is installed on the smart account.
-    /// @param moduleTypeId The module type ID.
-    /// @param module The module address.
-    /// @param additionalContext Additional context for checking installation.
-    /// @return True if the module is installed, false otherwise.
-    function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
-        additionalContext;
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
     }
 
     /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,

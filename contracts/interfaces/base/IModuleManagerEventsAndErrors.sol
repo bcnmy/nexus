@@ -72,4 +72,10 @@ interface IModuleManagerEventsAndErrors {
 
     /// @dev Thrown when Invalid data is provided for MultiType install flow
     error InvalidInput();
+
+    /// @dev Thrown when unable to validate Module Enable Mode signature
+    error EnableModeSigError();
+
+    /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
+    error MismatchModuleTypeId(uint256 moduleTypeId);
 }

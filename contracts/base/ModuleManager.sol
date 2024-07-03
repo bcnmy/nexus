@@ -23,7 +23,8 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK } from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -33,7 +34,7 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODU
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
+abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors {
     using SentinelListLib for SentinelListLib.SentinelList;
 
     /// @notice Ensures the message sender is a registered executor module.
@@ -145,6 +146,88 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
         ams.validators.init();
+    }
+
+    /// @dev Implements Module Enable Mode flow.
+    /// @param module The address of the module to be installed.
+    /// @param packedData Data source to parse data required to perform Module Enable mode from.
+    /// @return userOpSignature the clean signature which can be further used for userOp validation
+    function _enableMode(address module, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+        uint256 moduleType;
+        bytes calldata moduleInitData;
+        bytes calldata enableModeSignature;
+        uint256 p;
+
+        assembly {
+            p := packedData.offset
+            moduleType := calldataload(p)
+            
+            moduleInitData.length := shr(224, calldataload(add(p, 0x20)))
+            moduleInitData.offset := add(p, 0x24)
+            p := add(moduleInitData.offset, moduleInitData.length)
+
+            enableModeSignature.length := shr(224, calldataload(p))
+            enableModeSignature.offset := add(p, 0x04)
+            p := add(enableModeSignature.offset, enableModeSignature.length)
+        }  
+        userOpSignature = packedData[p:];
+
+        _checkEnableModeSignature(
+            _getEnableModeDataHash(module, moduleInitData),
+            enableModeSignature
+        );
+        _installModule(moduleType, module, moduleInitData);
+    }
+
+    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal {
+        address enableModeSigValidator = address(bytes20(sig[0:20]));
+        if (!_isValidatorInstalled(enableModeSigValidator)) {
+            revert InvalidModule(enableModeSigValidator);
+        }
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+            revert EnableModeSigError();
+        }
+    }
+
+    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
+        digest = _hashTypedData(
+            keccak256(
+                abi.encode(
+                    MODULE_ENABLE_MODE_TYPE_HASH,
+                    module,
+                    keccak256(initData)
+                )
+            )
+        );
+    }
+
+    /// @notice Installs a new module to the smart account.
+    /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
+    /// - 1 for Validator
+    /// - 2 for Executor
+    /// - 3 for Fallback
+    /// - 4 for Hook
+    /// @param module The address of the module to install.
+    /// @param initData Initialization data for the module.
+    /// @dev This function goes through hook checks via withHook modifier.
+    /// @dev No need to check that the module is already installed, as this check is done 
+    /// when trying to sstore the module in an appropriate SentinelList
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+        if (module == address(0)) revert ModuleAddressCanNotBeZero();
+        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            _installValidator(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            _installExecutor(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            _installFallbackHandler(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            _installHook(module, initData);
+        } else if (moduleTypeId == MULTITYPE_MODULE) {
+            _multiTypeInstall(module, initData);            
+        } else {
+            revert InvalidModuleTypeId(moduleTypeId);
+        }
     }
 
     /// @dev Installs a new validator module after checking if it matches the required module type.
@@ -262,7 +345,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
         bytes[] calldata initDatas;
 
         // equivalent of:
-        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[])
+        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[]))
         assembly ("memory-safe") {
             let offset := initData.offset
             let baseOffset := offset
@@ -309,6 +392,20 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors {
                 _installHook(module, initDatas[i]);
             }
         }
+    }
+
+    /// @notice Checks if a module is installed on the smart account.
+    /// @param moduleTypeId The module type ID.
+    /// @param module The module address.
+    /// @param additionalContext Additional context for checking installation.
+    /// @return True if the module is installed, false otherwise.
+    function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) internal view returns (bool) {
+        additionalContext;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(abi.decode(additionalContext, (bytes4)), module);
+        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        else return false;
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
