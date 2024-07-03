@@ -22,3 +22,6 @@ uint256 constant MODULE_TYPE_EXECUTOR = 2;
 uint256 constant MODULE_TYPE_FALLBACK = 3;
 uint256 constant MODULE_TYPE_HOOK = 4;
 bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256("ModuleEnableMode(address module, bytes32 initDataHash)");
+
+bytes1 constant MODE_VALIDATION = 0x00;
+bytes1 constant MODE_MODULE_ENABLE = 0x01;

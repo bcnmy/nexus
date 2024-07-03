@@ -155,9 +155,15 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOp.signature = signature;
     }
 
-    function getNonce(address account, address validator) internal view returns (uint256 nonce) {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
+    function getNonce(address account, bytes1 vMode, address validator) internal view returns (uint256 nonce) {
+        uint192 key = makeNonceKey(vMode, validator);
         nonce = ENTRYPOINT.getNonce(address(account), key);
+    }
+
+    function makeNonceKey(bytes1 vMode, address validator) internal pure returns (uint192 key) {
+        assembly {
+            key := or(shr(88, vMode), validator)
+        }
     }
 
     function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {

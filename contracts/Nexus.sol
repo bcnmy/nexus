@@ -26,6 +26,7 @@ import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, VALIDATION_FAILED } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { NonceLib } from "./lib/NonceLib.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -38,6 +39,7 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
+    using NonceLib for uint256;
 
     /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
     ///      cross-account-replay layer.
@@ -78,25 +80,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
-        address validator;
-        uint256 nonce = op.nonce;
-        assembly {
-            validator := shr(96, nonce)
-        }
-        // parse nonce properly and get validationMode
-
         PackedUserOperation memory userOp = op;
-        
-        if (true) {
-        //if (validationMode == MODULE_ENABLE_MODE) {
-            bytes calldata userOpSignature = _enableMode(validator, op.signature);
-            userOp.signature = userOpSignature;
+        address validator = op.nonce.getValidator();
+        if (op.nonce.isModuleEnableMode()) {
+            userOp.signature = _enableMode(validator, op.signature);
         } else {
             // Check if validator is not enabled. If not, return VALIDATION_FAILED.
             if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
         }
-        
-        
         // bubble up the return value of the validator module
         validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }
