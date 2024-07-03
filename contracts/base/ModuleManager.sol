@@ -157,7 +157,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         bytes calldata moduleInitData;
         bytes calldata enableModeSignature;
         uint256 p;
-
         assembly {
             p := packedData.offset
             moduleType := calldataload(p)

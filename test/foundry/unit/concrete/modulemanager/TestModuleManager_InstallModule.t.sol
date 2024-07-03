@@ -110,7 +110,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator)
+            "LinkedList_EntryAlreadyInList(address)", address(mockValidator)
         );
 
         // Expect the UserOperationRevertReason event
@@ -316,7 +316,7 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler)
+            "FallbackAlreadyInstalledForSelector(bytes4)", bytes4(GENERIC_FALLBACK_SELECTOR)
         );
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -368,7 +368,9 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
             preparePackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall);
 
         bytes memory expectedRevertReason =
-            abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_HOOK, address(mockHook));
+            abi.encodeWithSignature(
+                "HookAlreadyInstalled(address)", address(mockHook)
+            );
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 

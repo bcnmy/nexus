@@ -16,6 +16,7 @@ import { Nexus } from "../../../contracts/Nexus.sol";
 import "../../../contracts/lib/ModeLib.sol";
 import "../../../contracts/lib/ExecLib.sol";
 import "../../../contracts/lib/ModuleTypeLib.sol";
+import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 
 import "solady/src/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -147,7 +148,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
 
     function prepareUserOpWithCalldata(Vm.Wallet memory wallet, bytes memory callData) internal view returns (PackedUserOperation memory userOp) {
         address payable account = calculateAccountAddress(wallet.addr);
-        uint256 nonce = getNonce(account, address(VALIDATOR_MODULE));
+        uint256 nonce = getNonce(account, MODE_VALIDATION, address(VALIDATOR_MODULE));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
@@ -235,7 +236,7 @@ contract Helpers is CheatCodes, EventsAndErrors {
         userOps = new PackedUserOperation[](1);
 
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), MODE_VALIDATION, address(VALIDATOR_MODULE)));
         userOps[0].callData = executionCalldata;
 
         // Sign the operation

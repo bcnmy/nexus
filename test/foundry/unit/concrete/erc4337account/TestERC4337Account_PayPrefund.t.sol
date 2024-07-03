@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/SmartAccountTestLab.t.sol";
+import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 
 contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     Nexus public account;
@@ -18,7 +19,7 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     function test_ValidateUserOp_ValidOperation() public {
         // Initialize a user operation with a valid setup
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
 
@@ -32,7 +33,7 @@ contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
     function test_ValidateUserOp_InvalidSignature() public {
         // Initialize a user operation with a valid nonce but signed by an incorrect signer
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(ALICE, userOpHash); // Incorrect signer simulated
 
