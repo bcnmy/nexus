@@ -2,8 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
-import "../../shared/TestModuleManagement_Base.t.sol";
+import "../../../utils/NexusTest_Base.t.sol";
+import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { MODE_VALIDATION, MODE_MODULE_ENABLE, MULTITYPE_MODULE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";

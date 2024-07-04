@@ -11,6 +11,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
     MockHook public mockHook;
+    MockMultiModule public mockMulti;
 
     address public constant INVALID_MODULE_ADDRESS = address(0);
     uint256 public constant INVALID_MODULE_TYPE = 999;
@@ -26,6 +27,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         mockExecutor = new MockExecutor();
         mockHandler = new MockHandler();
         mockHook = new MockHook();
+        mockMulti = new MockMultiModule();
     }
 
     /// @notice Installs a module on the given account

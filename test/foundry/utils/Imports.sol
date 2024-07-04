@@ -56,6 +56,7 @@ import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockToken } from "../../../contracts/mocks/MockToken.sol";
+import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/Counter.sol";
 

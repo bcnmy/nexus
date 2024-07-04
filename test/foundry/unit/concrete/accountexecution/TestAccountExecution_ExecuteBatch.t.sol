@@ -198,7 +198,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
         userOps[0].callData = executionCalldata;
 
         // Sign the operation

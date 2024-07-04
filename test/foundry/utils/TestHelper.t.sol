@@ -21,6 +21,7 @@ import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.s
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
+import { MODE_VALIDATION } from "../../../contracts/types/Constants.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
@@ -214,20 +215,32 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         address validator
     ) internal view returns (PackedUserOperation memory userOp) {
         address payable account = calculateAccountAddress(wallet.addr, validator);
-        uint256 nonce = getNonce(account, validator);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, validator);
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
         bytes memory signature = signUserOp(wallet, userOp);
         userOp.signature = signature;
     }
+
     /// @notice Retrieves the nonce for a given account and validator
     /// @param account The account address
+    /// @param vMode Validation Mode
     /// @param validator The validator address
     /// @return nonce The retrieved nonce
-    function getNonce(address account, address validator) internal view returns (uint256 nonce) {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
+    function getNonce(address account, bytes1 vMode, address validator) internal view returns (uint256 nonce) {
+        uint192 key = makeNonceKey(vMode, validator);
         nonce = ENTRYPOINT.getNonce(address(account), key);
+    }
+
+    /// @notice Composes the nonce key
+    /// @param vMode Validation Mode
+    /// @param validator The validator address
+    /// @return key The nonce key
+    function makeNonceKey(bytes1 vMode, address validator) internal pure returns (uint192 key) {
+        assembly {
+            key := or(shr(88, vMode), validator)
+        }
     }
 
     /// @notice Signs a user operation
@@ -279,26 +292,16 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         signature = abi.encodePacked(r, s, v);
     }
 
-    /// @notice Prepares a packed user operation with specified parameters
-    /// @param signer The wallet to sign the operation
-    /// @param account The Nexus account
+    /// @notice Prepares a 7579 execution calldata
     /// @param execType The execution type
     /// @param executions The executions to include
-    /// @param validator The validator address
-    /// @return userOps The prepared packed user operations
-    function buildPackedUserOperation(
-        Vm.Wallet memory signer,
-        Nexus account,
-        ExecType execType,
-        Execution[] memory executions,
-        address validator
-    ) internal view returns (PackedUserOperation[] memory userOps) {
-        // Validate execType
-        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
-
+    /// @return executionCalldata The prepared callData
+    function prepareERC7579ExecuteCallData(
+        ExecType execType, 
+        Execution[] memory executions
+    ) internal virtual view returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
-        bytes memory executionCalldata;
         uint256 length = executions.length;
 
         if (length == 1) {
@@ -313,13 +316,50 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         } else {
             revert("Executions array cannot be empty");
         }
+    }
+
+    /// @notice Prepares a callData for single execution
+    /// @param execType The execution type
+    /// @param target The call target
+    /// @param value The call value
+    /// @param data The call data
+    /// @return executionCalldata The prepared callData
+    function prepareERC7579SingleExecuteCallData(
+        ExecType execType, 
+        address target,
+        uint256 value,
+        bytes memory data
+    ) internal virtual view returns (bytes memory executionCalldata) {
+        ExecutionMode mode;
+        mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+        executionCalldata = abi.encodeCall(
+            Nexus.execute,
+            (mode, ExecLib.encodeSingle(target, value, data))
+        );
+    }
+
+    /// @notice Prepares a packed user operation with specified parameters
+    /// @param signer The wallet to sign the operation
+    /// @param account The Nexus account
+    /// @param execType The execution type
+    /// @param executions The executions to include
+    /// @return userOps The prepared packed user operations
+    function buildPackedUserOperation(
+        Vm.Wallet memory signer,
+        Nexus account,
+        ExecType execType,
+        Execution[] memory executions,
+        address validator
+    ) internal view returns (PackedUserOperation[] memory userOps) {
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
         // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
 
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), validator));
-        userOps[0].callData = executionCalldata;
+        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), MODE_VALIDATION, validator));
+        userOps[0].callData = prepareERC7579ExecuteCallData(execType, executions);
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);

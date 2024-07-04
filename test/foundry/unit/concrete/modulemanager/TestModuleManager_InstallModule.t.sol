@@ -36,16 +36,9 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed");
     }
 
-<<<<<<< HEAD
-    function test_InstallModule_Success_Validator() public {
-        bytes memory callData = abi.encodeWithSelector(
-        IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
-        );
-=======
     /// @notice Tests successful installation of a validator module
     function test_InstallValidatorModule_Success() public {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
->>>>>>> dev
 
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
     }
@@ -380,13 +373,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         );
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(
-<<<<<<< HEAD
             "FallbackAlreadyInstalledForSelector(bytes4)", bytes4(GENERIC_FALLBACK_SELECTOR)
-=======
-            "ModuleAlreadyInstalled(uint256,address)",
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler)
->>>>>>> dev
         );
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -435,14 +422,10 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
             address(VALIDATOR_MODULE)
         );
 
-<<<<<<< HEAD
         bytes memory expectedRevertReason =
             abi.encodeWithSignature(
                 "HookAlreadyInstalled(address)", address(mockHook)
             );
-=======
-        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", MODULE_TYPE_HOOK, address(mockHook));
->>>>>>> dev
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 

@@ -223,12 +223,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         // Prepare UserOperation for both actions
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
-<<<<<<< HEAD
         userOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
 
-=======
-        userOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
->>>>>>> dev
         userOps[0].signature = signUserOp(BOB, userOps[0]);
 
         // Execute both operations
