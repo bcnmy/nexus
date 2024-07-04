@@ -421,7 +421,15 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         additionalContext;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            bytes4 selector;
+            if (additionalContext.length >= 4) {
+                selector = bytes4(additionalContext[0:4]);
+            } else {
+                selector = bytes4(0x00000000);
+            }
+            return _isFallbackHandlerInstalled(selector, module);
+        }
         else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
         else return false;
     }

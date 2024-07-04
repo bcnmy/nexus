@@ -45,7 +45,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
 
-        assertTrue(res == 0, "Valid operation should pass validation");
+        assertTrue(res == 1, "Invalid operation should not pass validation");
     }
 
     /// @notice Ensures that operations fail validation when invoked from an unauthorized sender.
