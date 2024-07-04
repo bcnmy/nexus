@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import { Execution } from "../types/DataTypes.sol";
 
-/**
- * @title ExecutionLib
- * @author zeroknots.eth | rhinestone.wtf
- * Helper Library for decoding Execution calldata
- * malloc for memory allocation is bad for gas. use this assembly instead
- */
+/// @title ExecutionLib
+/// @author zeroknots.eth | rhinestone.wtf
+/// Helper Library for decoding Execution calldata
+/// malloc for memory allocation is bad for gas. use this assembly instead
 library ExecLib {
     function decodeBatch(bytes calldata callData) internal pure returns (Execution[] calldata executionBatch) {
         /*

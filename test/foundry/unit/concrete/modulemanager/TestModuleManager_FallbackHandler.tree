@@ -1,0 +1,25 @@
+TestModuleManager_FallbackHandler
+├── when setting up the testing environment
+│   └── it should install the fallback handler
+├── when triggering the generic fallback handler
+│   └── it should emit the GenericFallbackCalled event
+├── when handleOps triggers the generic fallback handler
+│   └── it should emit the GenericFallbackCalled event
+├── when installing a fallback handler
+│   └── it should install the handler successfully
+├── when a function selector is already used by another handler
+│   └── it should revert with FallbackAlreadyInstalledForSelector error
+├── when uninstalling a fallback handler with a selector not used
+│   └── it should revert with ModuleNotInstalled error
+├── when uninstalling a fallback handler with a selector not used by this handler
+│   └── it should revert with ModuleNotInstalled error
+├── when uninstalling the fallback handler successfully
+│   └── it should uninstall the handler
+├── when uninstalling a non-installed fallback handler
+│   └── it should revert with ModuleNotInstalled error
+├── when getting the fallback handler by selector
+│   └── it should return the correct handler
+├── when installing forbidden onInstall selector as a fallback handler
+│   └── it should revert with FallbackSelectorForbidden error
+└── when installing forbidden onUninstall selector as a fallback handler
+    └── it should revert with FallbackSelectorForbidden error

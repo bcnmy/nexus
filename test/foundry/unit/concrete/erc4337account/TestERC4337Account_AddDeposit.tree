@@ -1,0 +1,18 @@
+TestERC4337Account_AddDeposit
+└── given the testing environment is initialized
+    ├── when adding a deposit
+    │   └── it should succeed
+    ├── when adding a deposit
+    │   └── it should emit the Deposited event
+    ├── when adding a deposit with no value
+    │   └── it should revert
+    ├── when adding a deposit via handleOps
+    │   └── it should succeed
+    ├── when adding a batch deposit via handleOps
+    │   └── it should succeed
+    ├── when adding a deposit via handleOps with EXECTYPE_TRY
+    │   └── it should succeed
+    ├── when adding a batch deposit via handleOps with EXECTYPE_TRY
+    │   └── it should succeed
+    └── when adding a deposit with the wrong EntryPoint
+        └── it should revert

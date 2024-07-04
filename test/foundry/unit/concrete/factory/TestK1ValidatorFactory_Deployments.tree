@@ -1,0 +1,15 @@
+TestK1ValidatorFactory_Deployments
+└── given the testing environment is initialized
+    ├── when the constructor is called
+    │   ├── it should initialize the factory with valid implementation, K1 Validator, and Bootstrapper addresses
+    │   ├── it should revert if the implementation address is zero
+    │   ├── it should revert if the K1 Validator address is zero
+    │   └── it should revert if the Bootstrapper address is zero
+    ├── when deploying an account using the factory directly
+    │   └── it should deploy the account correctly
+    ├── when computing the account address
+    │   └── it should return the expected address
+    ├── when creating an account with the same owner and index
+    │   └── it should result in the same address
+    └── when creating accounts with different indexes
+        └── it should result in different addresses

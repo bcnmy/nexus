@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
@@ -25,27 +25,23 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.0.0.1";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0-beta";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
-    address private constant _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    address internal immutable _ENTRYPOINT;
 
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPointOrSelf() {
-        if (!(msg.sender == _ENTRYPOINT || msg.sender == address(this))) {
-            revert AccountAccessUnauthorized();
-        }
+        require(msg.sender == _ENTRYPOINT || msg.sender == address(this), AccountAccessUnauthorized());
         _;
     }
 
     /// @dev Ensures the caller is the EntryPoint.
     /// Reverts with AccountAccessUnauthorized if the check fails.
     modifier onlyEntryPoint() {
-        if (msg.sender != _ENTRYPOINT) {
-            revert AccountAccessUnauthorized();
-        }
+        require(msg.sender == _ENTRYPOINT, AccountAccessUnauthorized());
         _;
     }
 
@@ -69,10 +65,11 @@ contract BaseAccount is IBaseAccount {
 
     /// @notice Adds deposit to the EntryPoint to fund transactions.
     function addDeposit() external payable virtual {
+        address entryPointAddress = _ENTRYPOINT;
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(call(gas(), _ENTRYPOINT, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
+            if iszero(call(gas(), entryPointAddress, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
                 revert(codesize(), 0x00)
             } // For gas estimation.
         }
@@ -82,12 +79,13 @@ contract BaseAccount is IBaseAccount {
     /// @param to The address to receive the withdrawn funds.
     /// @param amount The amount to withdraw.
     function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
+        address entryPointAddress = _ENTRYPOINT;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(call(gas(), _ENTRYPOINT, 0, 0x10, 0x44, codesize(), 0x00)) {
+            if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
@@ -105,6 +103,7 @@ contract BaseAccount is IBaseAccount {
     /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return result The current balance held at the EntryPoint.
     function getDeposit() external view virtual returns (uint256 result) {
+        address entryPointAddress = _ENTRYPOINT;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, address()) // Store the `account` argument.
@@ -115,7 +114,7 @@ contract BaseAccount is IBaseAccount {
                 and(
                     // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                    staticcall(gas(), _ENTRYPOINT, 0x1c, 0x24, 0x20, 0x20)
+                    staticcall(gas(), entryPointAddress, 0x1c, 0x24, 0x20, 0x20)
                 )
             )
         }
@@ -125,7 +124,7 @@ contract BaseAccount is IBaseAccount {
     /// @dev This function returns the address of the canonical ERC4337 EntryPoint contract.
     /// It can be overridden to return a different EntryPoint address if needed.
     /// @return The address of the EntryPoint contract.
-    function entryPoint() external pure returns (address) {
+    function entryPoint() external view returns (address) {
         return _ENTRYPOINT;
     }
 }

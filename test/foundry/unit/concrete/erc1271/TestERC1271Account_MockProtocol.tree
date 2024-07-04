@@ -1,0 +1,15 @@
+TestERC1271Account_MockProtocol
+├── when setting up the testing environment
+│   └── it should set up the environment and initialize the permit token
+├── when validating a signature using EIP-712 with the mock protocol and mock validator
+│   └── it should validate the signature successfully
+├── when hashing typed data
+│   └── it should hash the typed data correctly
+├── when checking the domain separator
+│   └── it should return the correct domain separator
+├── when hashing for replay safety
+│   └── it should return the correct replay-safe hash
+├── when validating a signature with an incorrect signer
+│   └── it should revert the transaction due to wrong signer
+└── when validating a signature with wrong allowance
+    └── it should revert the transaction due to wrong allowance

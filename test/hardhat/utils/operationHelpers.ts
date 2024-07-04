@@ -1,15 +1,7 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import {
-  Signer,
-  AddressLike,
-  BytesLike,
-  BigNumberish,
-  hexlify,
-  toBeHex,
-  concat
-} from "ethers";
+import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex, concat } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
@@ -186,31 +178,33 @@ export async function fillSignAndPack(
 /**
  * Generates the full initialization code for deploying a smart account.
  * @param ownerAddress - The address of the owner of the new smart account.
- * @param factoryAddress - The address of the AccountFactory contract.
+ * @param factoryAddress - The address of the K1ValidatorFactory contract.
  * @param validatorAddress - The address of the module to be installed in the smart account.
  * @param saDeploymentIndex: number = 0,
  * @returns The full initialization code as a hex string.
  */
-// TODO:
-// Note: This currently assumes validator to be mock validator or K1 validation. In future specific install data could be passed along
-// or it could be full bootstrap data
-// depending on the nature of the factory below encoding would change
 export async function getInitCode(
   ownerAddress: AddressLike,
   factoryAddress: AddressLike,
-  validatorAddress: AddressLike,
   saDeploymentIndex: number = 0,
 ): Promise<string> {
-  const AccountFactory = await ethers.getContractFactory("AccountFactory");
-  const moduleInstallData = ethers.solidityPacked(["address"], [ownerAddress]);
+  // Deploy the BootstrapLib library
+  const BootstrapLibFactory = await ethers.getContractFactory("BootstrapLib");
+  const BootstrapLib = await BootstrapLibFactory.deploy();
+  BootstrapLib.waitForDeployment();
+
+  const K1ValidatorFactory = await ethers.getContractFactory(
+    "K1ValidatorFactory",
+    {
+      libraries: {
+        BootstrapLib: await BootstrapLib.getAddress(),
+      },
+    },
+  );
 
   // Encode the createAccount function call with the provided parameters
-  const factoryDeploymentData = AccountFactory.interface
-    .encodeFunctionData("createAccount", [
-      validatorAddress,
-      moduleInstallData,
-      saDeploymentIndex,
-    ])
+  const factoryDeploymentData = K1ValidatorFactory.interface
+    .encodeFunctionData("createAccount", [ownerAddress, saDeploymentIndex])
     .slice(2);
 
   return factoryAddress + factoryDeploymentData;
@@ -221,7 +215,7 @@ export async function getInitCode(
 /**
  * Calculates the CREATE2 address for a smart account deployment.
  * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
- * @param {AddressLike} factoryAddress - The address of the AccountFactory contract.
+ * @param {AddressLike} factoryAddress - The address of the K1ValidatorFactory contract.
  * @param {AddressLike} validatorAddress - The address of the module to be installed in the smart account.
  * @param {Object} setup - The setup object containing deployed contracts and addresses.
  * @param {number} saDeploymentIndex - The deployment index for the smart account.
@@ -241,7 +235,7 @@ export async function getAccountAddress(
   setup.accountFactory = setup.accountFactory.attach(factoryAddress);
 
   const counterFactualAddress =
-    await setup.accountFactory.getCounterFactualAddress(
+    await setup.accountFactory.computeAccountAddress(
       validatorAddress,
       moduleInitData,
       saDeploymentIndex,
@@ -284,8 +278,6 @@ export function packGasValues(
  * @returns The execution call data as a string.
  */
 
-// TODO: need to take an argument for CallType and ExecType as well. if it's single or batch / revert or try
-// WIP
 // Should be able to accept array of Transaction (to, value, data) instead of targetcontract and function name
 // If array length is one (given executionMethod = execute or executeFromExecutor) then make executionCallData for singletx
 // handle preparing calldata for executeUserOp differently as it requires different parameters
@@ -394,29 +386,7 @@ export function findEventInLogs(
   throw new Error("No event found with the given name");
 }
 
-// TODO
-// for executeUserOp
 export async function generateCallDataForExecuteUserop() {}
-
-export async function preparePackedUserOperation(
-  userOp: PackedUserOperation,
-  entryPoint: EntryPoint,
-  validationMode: BytesLike,
-  validatorModuleAddress: string,
-  smartAccountOwner: Signer,
-  nonceIncrement: number,
-): Promise<PackedUserOperation> {
-  
-  const nonce = await getNonce(entryPoint, userOp.sender, validationMode, validatorModuleAddress);
-  userOp.nonce = nonce + BigInt(nonceIncrement);
-  const userOpHash = await entryPoint.getUserOpHash(userOp);
-  const signature = await smartAccountOwner.signMessage(
-    ethers.getBytes(userOpHash),
-  );
-  userOp.signature = signature;
-
-  return userOp;
-}
 
 export async function getNonce(
   entryPoint: EntryPoint,

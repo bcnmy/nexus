@@ -1,0 +1,19 @@
+UpgradeSmartAccountTest
+├── when setting up the initial state for the tests
+│   └── it should initialize variables and set up the state
+├── when testing the proxiable UUID slot
+│   └── it should check that the proxiable UUID slot is correct
+├── when testing the current implementation address
+│   └── it should check that the current implementation address is correct
+├── when testing the upgrade of the smart account implementation
+│   └── it should upgrade the smart account implementation
+├── when testing the upgrade of the smart account implementation with invalid call data
+│   └── it should revert with invalid call data
+├── when testing the upgrade of the smart account implementation with an invalid address
+│   └── it should revert with an invalid address
+├── when testing the upgrade of the smart account implementation with an invalid address (not a contract)
+│   └── it should revert with an invalid address that is not a contract
+├── when testing the entire upgrade process
+│   └── it should upgrade the smart account
+└── when testing access control for upgrades
+    └── it should revert if access is unauthorized for upgrading the smart account

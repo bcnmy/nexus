@@ -1,0 +1,23 @@
+TestK1Validator
+├── when setting up the testing environment
+│   └── it should deploy the contract and initialize variables
+├── when testing the onInstall function
+│   ├── it should succeed with valid initialization data
+│   └── it should revert with no owner provided
+├── when testing the onUninstall function
+│   └── it should remove the owner
+├── when testing the isInitialized function
+│   └── it should check if the smart account is initialized
+├── when testing the validateUserOp function
+│   ├── it should succeed with a valid signature (toEthSignedMessageHash)
+│   └── it should fail with an invalid signature
+├── when testing the isValidSignatureWithSender function
+│   ├── it should succeed with a valid signature
+│   └── it should fail with an invalid signature
+├── when testing the name function
+│   └── it should return the correct contract name
+├── when testing the version function
+│   └── it should return the correct contract version
+└── when testing the isModuleType function
+    ├── it should return true for VALIDATOR module type
+    └── it should return false for an invalid module type

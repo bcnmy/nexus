@@ -1,0 +1,15 @@
+TestModuleManager_SupportsModule
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when supporting the Validator module
+│   └── it should support the Validator module
+├── when supporting the Executor module
+│   └── it should support the Executor module
+├── when supporting the Fallback module
+│   └── it should support the Fallback module
+├── when supporting the Hook module
+│   └── it should support the Hook module
+├── when checking unsupported module type
+│   └── it should return false
+└── when checking zero as a module type
+    └── it should return false

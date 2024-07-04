@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -9,13 +9,12 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
@@ -49,12 +48,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
-    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
-    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
-        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+    address private immutable _SELF;
 
-    /// @notice Initializes the smart account by setting up the module manager and state.
-    constructor() {
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+
+    /// @notice Initializes the smart account with the specified entry point.
+    constructor(address anEntryPoint) {
+        _SELF = address(this);
+        require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
+        _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
     }
 
@@ -99,7 +102,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
@@ -117,16 +120,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    )
-        external
-        payable
-        onlyExecutorModule
-        withHook
-        returns (
-            bytes[] memory returnData // TODO returnData is not used
-        )
-    {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+    ) external payable onlyExecutorModule withHook returns (bytes[] memory returnData) {
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
         if (callType == CALLTYPE_SINGLE) {
@@ -155,13 +150,28 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
-    /// @notice Executes a user operation via delegatecall to use the contract's context.
-    /// @param userOp The user operation to execute.
-    /// @dev This function should only be called through the EntryPoint to ensure security and proper execution context.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) external payable virtual onlyEntryPoint {
-        bytes calldata callData = userOp.callData[4:];
-        (bool success, ) = address(this).delegatecall(callData);
-        if (!success) revert ExecutionFailed();
+    /// @notice Executes a user operation via a call using the contract's context.
+    /// @param userOp The user operation to execute, containing transaction details.
+    /// @param - Hash of the user operation.
+    /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
+        // Extract inner call data from user operation, skipping the first 4 bytes.
+        bytes calldata innerCall = userOp.callData[4:];
+        bytes memory innerCallRet = "";
+
+        // Check and execute the inner call if data exists.
+        if (innerCall.length > 0) {
+            // Decode target address and call data from inner call.
+            (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
+            bool success;
+            // Perform the call to the target contract with the decoded data.
+            (success, innerCallRet) = target.call(data);
+            // Ensure the call was successful.
+            require(success, InnerCallFailed());
+        }
+
+        // Emit the Executed event with the user operation and inner call return data.
+        emit Executed(userOp, innerCallRet);
     }
 
     /// @notice Installs a new module to the smart account.
@@ -188,28 +198,27 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
-        // Should be able to validate passed moduleTypeId agaisnt the provided module
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
-        if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
-            revert ModuleNotInstalled(moduleTypeId, module);
-        }
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
-        else if (moduleTypeId == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
-        else revert UnsupportedModuleType(moduleTypeId);
+        require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
+        require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
+
         emit ModuleUninstalled(moduleTypeId, module);
+
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            _uninstallValidator(module, deInitData);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            _uninstallExecutor(module, deInitData);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            _uninstallFallbackHandler(module, deInitData);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            _uninstallHook(module, deInitData);
+        }
     }
 
-    /// @notice Initializes the smart account with a validator.
-    /// @param firstValidator The first validator to install upon initialization.
-    /// @param initData Initialization data for setting up the validator.
-    /// @dev This function sets the foundation for the smart account's operational logic and security.
-    /// @notice Implementation details may be adjusted based on factory requirements.
-    function initialize(address firstValidator, bytes calldata initData) external payable virtual {
-        // checks if already initialized and reverts before setting the state to initialized
+    function initializeAccount(bytes calldata initData) external payable virtual {
         _initModuleManager();
-        _installValidator(firstValidator, initData);
+        (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
+        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        require(success, NexusInitializationFailed());
     }
 
     /// @notice Validates a signature according to ERC-1271 standards.
@@ -221,16 +230,22 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
-        if (!_isValidatorInstalled(validator)) revert InvalidModule(validator);
+        require(_isValidatorInstalled(validator), InvalidModule(validator));
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
         return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
+    /// @notice Checks the 1967 implementation slot, if not found then checks the slot defined by address (Biconomy V2 smart account)
     /// @return implementation The address of the current contract implementation.
     function getImplementation() external view returns (address implementation) {
         assembly {
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+        }
+        if (implementation == address(0)) {
+            assembly {
+                implementation := sload(address())
+            }
         }
     }
 
@@ -250,11 +265,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param mode The execution mode to evaluate.
     /// @return isSupported True if the execution mode is supported, false otherwise.
     function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
-        (CallType callType, ExecType execType, , ) = mode.decode();
+        (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) 
-            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -266,6 +280,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
+    /// @dev EIP712 hashTypedData method.
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    /// @dev EIP712 domain separator.
+    // solhint-disable func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
+    }
+
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
@@ -273,9 +298,22 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
+    /// @notice Updates two slots 1. ERC1967 slot and
+    /// 2. address() slot in case if it's potentially upgraded earlier from Biconomy V2 account,
+    /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
+        require(newImplementation != address(0), InvalidImplementationAddress());
+        bool res;
+        assembly {
+            res := gt(extcodesize(newImplementation), 0)
+        }
+        require(res, InvalidImplementationAddress());
+        // update the address() storage slot as well.
+        assembly {
+            sstore(address(), newImplementation)
+        }
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
@@ -295,12 +333,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return _eip712Hash(hash);
     }
 
+    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
+    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
+    /// denoting support for the default behavior, as implemented in
+    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
+    /// Future extensions should return a different non-zero `result` to denote different behavior.
+    /// This method intentionally returns bytes32 to allow freedom for future extensions.
+    function supportsNestedTypedDataSign() public pure virtual returns (bytes32 result) {
+        result = bytes4(0xd620c85a);
+    }
+
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {
-        newImplementation;
-    }
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
 
     /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
     ///
@@ -326,17 +372,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///
     /// Glossary:
     ///
-    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
+    /// - `APP_DOMAIN_SEPARATOR`: The domain separator of the `hash`.
     ///   Provided by the front end. Intended to be the domain separator of the contract
     ///   that will call `isValidSignature` on this account.
     ///
-    /// - `DOMAIN_SEP_A`: The domain separator of this account.
+    /// - `ACCOUNT_DOMAIN_SEPARATOR`: The domain separator of this account.
     ///   See: `EIP712._domainSeparator()`.
     /// __________________________________________________________________________________________
     ///
     /// For the `TypedDataSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///     keccak256(\x19\x01 ‖ APP_DOMAIN_SEPARATOR ‖
     ///         hashStruct(TypedDataSign({
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
@@ -352,15 +398,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// The order of the fields is important: `contents` comes before `name`.
     ///
     /// The signature will be `r ‖ s ‖ v ‖
-    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    ///     APP_DOMAIN_SEPARATOR ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
     /// where `contents` is the bytes32 struct hash of the original struct.
     ///
-    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
+    /// The `APP_DOMAIN_SEPARATOR` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
     /// For the `PersonalSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///     keccak256(\x19\x01 ‖ ACCOUNT_DOMAIN_SEPARATOR ‖
     ///         hashStruct(PersonalSign({
     ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
     ///                 base10(bytes(someString).length) ‖ someString))
@@ -379,16 +425,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///
     /// Their nomenclature may differ from ours, although the high-level idea is similar.
     ///
-    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// Of course, if you have control over the codebase of the wallet client(s) too,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
-    function _erc1271HashForIsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bytes32, bytes calldata)
-    {
+    function _erc1271HashForIsValidSignatureViaNestedEIP712(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual returns (bytes32, bytes calldata) {
         assembly {
             // Unwraps the ERC6492 wrapper if it exists.
             // See: https://eips.ethereum.org/EIPS/eip-6492
@@ -409,10 +453,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             let m := mload(0x40) // Cache the free memory pointer.
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
-            for {} 1 {} {
+            for {
+
+            } 1 {
+
+            } {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
-                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                calldatacopy(0x20, o, 0x40) // Copy the `APP_DOMAIN_SEPARATOR` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
                 // or if the appended data is invalid (length too long, or empty contents type).
@@ -429,9 +477,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
                 d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
-                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
+                for {
+                    mstore(add(p, c), 40)
+                } 1 {
+                    p := add(p, 1)
+                } {
                     let b := byte(0, mload(p))
-                    if eq(40, b) { break }
+                    if eq(40, b) {
+                        break
+                    }
                     d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n")
@@ -443,11 +497,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
                 mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 // The "\x19\x01" prefix is already at 0x00.
-                // `DOMAIN_SEP_B` is already at 0x20.
+                // `APP_DOMAIN_SEPARATOR` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
                 hash := keccak256(0x1e, add(0x42, and(1, d)))
-                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                result := 1 // Use `result` to temporarily denote if we will use `APP_DOMAIN_SEPARATOR`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
             }
@@ -460,17 +514,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
-        version = "0.0.1";
-    }
-
-    /// @dev EIP712 hashTypedData method. 
-    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
-        return _hashTypedData(structHash);
-    }
-
-    /// @dev EIP712 domain separator.
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparator();
+        version = "1.0.0-beta";
     }
 
     /// @dev Executes a single transaction based on the specified execution type.

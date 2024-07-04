@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
@@ -21,7 +21,6 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
@@ -39,13 +38,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        if (!_getAccountStorage().executors.contains(msg.sender)) revert InvalidModule(msg.sender);
-        _;
-    }
-
-    /// @notice Ensures the specified address is a registered validator module.
-    modifier onlyValidatorModule(address validator) virtual {
-        if (!_getAccountStorage().validators.contains(validator)) revert InvalidModule(validator);
+        require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
         _;
     }
 
@@ -67,7 +60,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        if (handler == address(0)) revert MissingFallbackHandler(msg.sig);
+        require(handler != address(0), MissingFallbackHandler(msg.sig));
 
         if (calltype == CALLTYPE_STATIC) {
             assembly {
@@ -233,7 +226,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
-        if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
+        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
@@ -248,11 +241,8 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
         // Check if the account has at least one validator installed before proceeding
         // Having at least one validator is a requirement for the account to function properly
-        if (prev == address(0x01)) {
-            if(validators.getNext(validator) == address(0x01)) {
-                revert CannotRemoveLastValidator();
-            }
-        }
+        require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
+
         validators.pop(prev, validator);
         IValidator(validator).onUninstall(disableModuleData);
     }
@@ -261,7 +251,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
-        if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
+        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -279,11 +269,9 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
     function _installHook(address hook, bytes calldata data) internal virtual {
-        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
-        if (currentHook != address(0)) {
-            revert HookAlreadyInstalled(currentHook);
-        }
+        require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -306,12 +294,35 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
-        if (!IModule(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
+
+        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
+
         bytes4 selector = bytes4(params[0:4]);
+
+        // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
+
+        // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
-        if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
+
+        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3).
+        // These selectors are explicitly forbidden to prevent security vulnerabilities.
+        // Allowing these selectors would enable unauthorized users to uninstall and reinstall critical modules.
+        // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
+        // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
+        // cannot be manipulated to disrupt the expected behavior and security of the account.
+        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3)), FallbackSelectorForbidden());
+
+        // Revert if a fallback handler is already installed for the given selector.
+        // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.
+        require(!_isFallbackHandlerInstalled(selector), FallbackAlreadyInstalledForSelector(selector));
+
+        // Store the fallback handler and its call type in the account storage.
+        // This maps the function selector to the specified fallback handler and call type.
         _getAccountStorage().fallbacks[selector] = FallbackHandler(handler, calltype);
+
+        // Invoke the `onInstall` function of the fallback handler with the provided initialization data.
+        // This step allows the fallback handler to perform any necessary setup or initialization.
         IFallback(handler).onInstall(initData);
     }
 
@@ -319,11 +330,8 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param fallbackHandler The address of the fallback handler to uninstall.
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
-        bytes4 selector = bytes4(data[0:4]);
-        bytes memory deInitData = data[4:];
-        if (!_isFallbackHandlerInstalled(selector)) revert FallbackNotInstalledForSelector(selector);
-        _getAccountStorage().fallbacks[selector] = FallbackHandler(address(0), CallType.wrap(0x00));
-        IFallback(fallbackHandler).onUninstall(deInitData);
+        _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
+        IFallback(fallbackHandler).onUninstall(data[4:]);
     }
 
     /// To make it easier to install multiple modules at once, this function will
@@ -465,6 +473,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         address cursor,
         uint256 size
     ) private view returns (address[] memory array, address nextCursor) {
-        return list.getEntriesPaginated(cursor, size);
+        (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

@@ -1,46 +1,37 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "../../../utils/Imports.sol";
-import "../../../utils/SmartAccountTestLab.t.sol";
-import { MODE_VALIDATION } from "contracts/types/Constants.sol";
+import "../../../utils/NexusTest_Base.t.sol";
 
-contract TestERC4337Account_ValidateUserOp is Test, SmartAccountTestLab {
-    Nexus public account;
-    MockValidator public validator;
-    address public userAddress;
+/// @title TestERC4337Account_PayPrefund
+/// @notice Tests for the validateUserOp function in the ERC4337 account related to paying prefunds.
+contract TestERC4337Account_PayPrefund is NexusTest_Base {
+    Vm.Wallet internal signer;
+    Nexus internal account;
 
+    /// @notice Sets up the testing environment.
     function setUp() public {
         init();
-        userAddress = address(BOB.addr);
-        validator = new MockValidator();
+        signer = createAndFundWallet("Signer", 0.0001 ether);
+        account = deployNexus(signer, 0.0001 ether, address(VALIDATOR_MODULE));
     }
 
-    function test_ValidateUserOp_ValidOperation() public {
-        // Initialize a user operation with a valid setup
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+    /// @notice Tests the prefund payment handling with sufficient funds.
+    function testPayPrefund_WithSufficientFunds() public {
+        // Fund the account with sufficient ether
+        vm.deal(address(account), 1 ether);
+
+        // Prepare a single execution with no value transfer
+        Execution[] memory executions = prepareSingleExecution(address(account), 0, "");
+
+        // Build a packed user operation
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signMessage(signer, userOpHash);
 
         startPrank(address(ENTRYPOINT));
-        // Attempt to validate the user operation, expecting success
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        assertTrue(res == 0, "Valid operation should pass validation");
-        stopPrank();
-    }
-
-    function test_ValidateUserOp_InvalidSignature() public {
-        // Initialize a user operation with a valid nonce but signed by an incorrect signer
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(ALICE, userOpHash); // Incorrect signer simulated
-
-        startPrank(address(ENTRYPOINT));
-        // Attempt to validate the user operation, expecting failure due to invalid signature
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
-        assertTrue(res == 1, "Operation with invalid signature should fail validation");
+        account.validateUserOp(userOps[0], userOpHash, 0.1 ether);
         stopPrank();
     }
 }

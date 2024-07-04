@@ -1,0 +1,19 @@
+TestFuzz_ModuleManager
+├── when setting up the testing environment
+│   └── it should initialize the required contracts and wallets
+├── when installing a module with invalid parameters
+│   └── it should fail to install the module
+├── when installing fallback handlers with random function selectors
+│   └── it should install the handler correctly
+├── when installing a module with correct type
+│   └── it should install the module correctly
+├── when reinstalling the same module
+│   └── it should fail to reinstall the module
+├── when uninstalling a module
+│   └── it should uninstall the module correctly
+├── when uninstalling a previously installed module
+│   └── it should uninstall the module correctly
+├── when uninstalling a module with mismatched type
+│   └── it should fail to uninstall the module
+└── when uninstalling a non-installed module
+    └── it should fail to uninstall the module

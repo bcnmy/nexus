@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 // /_/ |_/\___/_/|_\__,_/____/
 //
 // ──────────────────────────────────────────────────────────────────────────────
-// Nexus: A suite of contracts for Modular Smart Account compliant with ERC-7579 and ERC-4337, developed by Biconomy.
-// Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
+// Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
+// Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 /// @title ERC-7579 Module Manager Events and Errors Interface
 /// @notice Provides event and error definitions for actions related to module management in smart accounts.
@@ -78,4 +78,7 @@ interface IModuleManagerEventsAndErrors {
 
     /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
     error MismatchModuleTypeId(uint256 moduleTypeId);
+
+    /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
+    error FallbackSelectorForbidden();
 }
