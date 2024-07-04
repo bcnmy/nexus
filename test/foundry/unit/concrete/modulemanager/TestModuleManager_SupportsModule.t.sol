@@ -31,7 +31,7 @@ contract TestModuleManager_SupportsModule is TestModuleManagement_Base {
     }
 
     /// @notice Tests the successful support of the MultiType module.
-    function test_SupportsModuleHook_Success() public {
+    function test_SupportsModuleMultiType_Success() public {
         assertTrue(BOB_ACCOUNT.supportsModule(MULTITYPE_MODULE), "Multitype module not supported");
     }
 

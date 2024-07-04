@@ -132,7 +132,14 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
                 executions,
                 address(VALIDATOR_MODULE)
             );
-            bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", moduleTypeId, moduleAddress);
+            
+            bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
+            if(moduleTypeId == MODULE_TYPE_FALLBACK) {
+                expectedRevertReason = abi.encodeWithSignature("FallbackAlreadyInstalledForSelector(bytes4)", bytes4(funcSig));
+            } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+                expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", moduleAddress);
+            }
+
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOpsSecondAttempt[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOpsSecondAttempt[0].nonce, expectedRevertReason);

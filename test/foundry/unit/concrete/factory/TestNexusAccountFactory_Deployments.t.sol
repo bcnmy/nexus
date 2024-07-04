@@ -187,9 +187,9 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes[] memory datas = new bytes[](2);
 
         modules[0] = address(VALIDATOR_MODULE);
-        modules[1] = address(EXECUTOR_MODULE);
+        modules[1] = address(MULTI_MODULE);
         datas[0] = abi.encodePacked(user.addr);
-        datas[1] = abi.encodePacked(user.addr, "executor");
+        datas[1] = abi.encodePacked(bytes1(uint8(MODULE_TYPE_VALIDATOR)), bytes32(bytes20(user.addr)));
 
         BootstrapConfig[] memory configArray = BootstrapLib.createMultipleConfigs(modules, datas);
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");

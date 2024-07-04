@@ -16,6 +16,7 @@ import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
+import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
 import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
@@ -51,6 +52,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
+    MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
     Bootstrap internal BOOTSTRAPPER;
@@ -103,6 +105,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         HANDLER_MODULE = new MockHandler();
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
+        MULTI_MODULE = new MockMultiModule();
         BOOTSTRAPPER = new Bootstrap();
     }
 
