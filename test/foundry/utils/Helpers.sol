@@ -73,6 +73,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         BOB = createAndFundWallet("BOB", 1000 ether);
         CHARLIE = createAndFundWallet("CHARLIE", 1000 ether);
         BUNDLER = createAndFundWallet("BUNDLER", 1000 ether);
+
+        DEPLOYER_ADDRESS = DEPLOYER.addr;
+        ALICE_ADDRESS = ALICE.addr;
+        BOB_ADDRESS = BOB.addr;
+        CHARLIE_ADDRESS = CHARLIE.addr;
+        BUNDLER_ADDRESS = BUNDLER.addr;
     }
 
     function deployContracts() internal {
@@ -204,10 +210,11 @@ contract Helpers is CheatCodes, EventsAndErrors {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
         signature = abi.encodePacked(r, s, v);
     }
+
     function prepareERC7579ExecuteCallData(
         ExecType execType, 
         Execution[] memory executions
-    ) internal view returns (bytes memory executionCalldata) {
+    ) internal virtual view returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
         uint256 length = executions.length;
@@ -224,6 +231,21 @@ contract Helpers is CheatCodes, EventsAndErrors {
         } else {
             revert("Executions array cannot be empty");
         }
+    }
+
+    function prepareERC7579SingleExecuteCallData(
+        ExecType execType, 
+        address target,
+        uint256 value,
+        bytes memory data
+    ) internal virtual view returns (bytes memory executionCalldata) {
+        // Determine mode and calldata based on callType and executions length
+        ExecutionMode mode;
+        mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+        executionCalldata = abi.encodeCall(
+            Nexus.execute,
+            (mode, ExecLib.encodeSingle(target, value, data))
+        );
     }
 
     function preparePackedUserOperation(

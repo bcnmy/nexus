@@ -167,7 +167,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
             enableModeSignature.length := shr(224, calldataload(p))
             enableModeSignature.offset := add(p, 0x04)
-            p := add(enableModeSignature.offset, enableModeSignature.length)
+            p := sub(add(enableModeSignature.offset, enableModeSignature.length), packedData.offset)
         }  
         userOpSignature = packedData[p:];
 
@@ -183,6 +183,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         if (!_isValidatorInstalled(enableModeSigValidator)) {
             revert InvalidModule(enableModeSigValidator);
         }
+
         if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
             revert EnableModeSigError();
         }

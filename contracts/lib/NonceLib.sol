@@ -14,7 +14,7 @@ library NonceLib {
         bytes32 v;
         assembly {
             let vmode := shr(248, shl(24, nonce))
-            res := eq(vmode, MODE_MODULE_ENABLE)
+            res := eq(shl(248, vmode), MODE_MODULE_ENABLE)
             v := vmode
         }
     }
