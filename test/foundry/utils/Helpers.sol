@@ -204,19 +204,12 @@ contract Helpers is CheatCodes, EventsAndErrors {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
         signature = abi.encodePacked(r, s, v);
     }
-
-    function preparePackedUserOperation(
-        Vm.Wallet memory signer,
-        Nexus account,
-        ExecType execType,
+    function prepareERC7579ExecuteCallData(
+        ExecType execType, 
         Execution[] memory executions
-    ) internal view returns (PackedUserOperation[] memory userOps) {
-        // Validate execType
-        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
-
+    ) internal view returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
-        bytes memory executionCalldata;
         uint256 length = executions.length;
 
         if (length == 1) {
@@ -231,13 +224,23 @@ contract Helpers is CheatCodes, EventsAndErrors {
         } else {
             revert("Executions array cannot be empty");
         }
+    }
+
+    function preparePackedUserOperation(
+        Vm.Wallet memory signer,
+        Nexus account,
+        ExecType execType,
+        Execution[] memory executions
+    ) internal view returns (PackedUserOperation[] memory userOps) {
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
         // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
 
         // Build the UserOperation
         userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), MODE_VALIDATION, address(VALIDATOR_MODULE)));
-        userOps[0].callData = executionCalldata;
+        userOps[0].callData = prepareERC7579ExecuteCallData(execType, executions);
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
