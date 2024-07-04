@@ -14,7 +14,7 @@ contract MockMultiModule is IModule {
     }
 
     function onInstall(bytes calldata data) external override {
-        if (data.length >= 0x33) {
+        if (data.length >= 0x21) {
             uint256 moduleTypeId = uint256(uint8(bytes1(data[:1])));
             configs[moduleTypeId][msg.sender] = bytes32(data[1:33]);
         } else {

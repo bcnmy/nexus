@@ -10,6 +10,7 @@
     "@openzeppelin/contracts": "^5.0.1",
     "dotenv": "^16.4.5",
     "hardhat": "^2.20.1",
+    "solarray": "github:sablier-labs/solarray",
     "viem": "^2.9.23"
   },
   "devDependencies": {

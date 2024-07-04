@@ -5,3 +5,4 @@ account-abstraction/=node_modules/account-abstraction/
 solady/=node_modules/solady
 sentinellist/=node_modules/sentinellist/
 ds-test/=node_modules/ds-test/src/
+solarray/=node_modules/solarray/src/
