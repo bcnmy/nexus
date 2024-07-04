@@ -15,6 +15,8 @@ import {
   buildPackedUserOp,
   findEventInLogs,
   generateUseropCallData,
+  getNonce,
+  MODE_VALIDATION
 } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import {
@@ -290,9 +292,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 
@@ -301,10 +305,6 @@ describe("Nexus Module Management Tests", () => {
         ethers.getBytes(userOpHash),
       );
       userOp.signature = signature;
-
-      const balance = await ethers.provider.getBalance(
-        await deployedMSA.getAddress(),
-      );
 
       await entryPoint.handleOps([userOp], await bundler.getAddress());
 
@@ -433,9 +433,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 
@@ -552,9 +554,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 

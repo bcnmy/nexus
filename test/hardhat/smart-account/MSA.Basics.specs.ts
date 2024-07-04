@@ -24,6 +24,8 @@ import {
   getInitCode,
   buildPackedUserOp,
   generateUseropCallData,
+  getNonce,
+  MODE_VALIDATION
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -250,9 +252,11 @@ describe("Nexus Basic Specs", function () {
         sender: smartAccountAddress,
         callData,
       });
-      const userOpNonce = await entryPoint.getNonce(
+      const userOpNonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(moduleAddress.toString(), 24),
+        MODE_VALIDATION,
+        moduleAddress.toString()
       );
       userOp.nonce = userOpNonce;
 
@@ -324,9 +328,11 @@ describe("Nexus Basic Specs", function () {
         saDeploymentIndex,
       );
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         accountAddress,
-        ethers.zeroPadBytes(moduleAddress.toString(), 24),
+        MODE_VALIDATION,
+        moduleAddress.toString()
       );
 
       const packedUserOp = buildPackedUserOp({
@@ -365,9 +371,11 @@ describe("Nexus Basic Specs", function () {
         saDeploymentIndex,
       );
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         accountAddress,
-        ethers.zeroPadBytes(moduleAddress.toString(), 24),
+        MODE_VALIDATION,
+        moduleAddress.toString()
       );
 
       const packedUserOp = buildPackedUserOp({

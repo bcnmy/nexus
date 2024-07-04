@@ -16,6 +16,8 @@ import { ERC1271_MAGICVALUE, installModule } from "../utils/erc7579Utils";
 import {
   buildPackedUserOp,
   generateUseropCallData,
+  getNonce,
+  MODE_VALIDATION
 } from "../utils/operationHelpers";
 
 describe("K1Validator module tests", () => {
@@ -118,9 +120,11 @@ describe("K1Validator module tests", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
 
       userOp.nonce = nonce;

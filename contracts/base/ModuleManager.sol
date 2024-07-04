@@ -178,7 +178,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         _installModule(moduleType, module, moduleInitData);
     }
 
-    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal {
+    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         if (!_isValidatorInstalled(enableModeSigValidator)) {
             revert InvalidModule(enableModeSigValidator);

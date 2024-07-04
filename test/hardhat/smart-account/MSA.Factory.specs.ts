@@ -10,7 +10,7 @@ import {
 } from "../../../typechain-types";
 import { deployContractsFixture } from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
-import { buildPackedUserOp } from "../utils/operationHelpers";
+import { MODE_VALIDATION, buildPackedUserOp, getNonce } from "../utils/operationHelpers";
 
 describe("Nexus Factory Tests", function () {
   let factory: AccountFactory;
@@ -204,9 +204,11 @@ describe("Nexus Factory Tests", function () {
         callData: "0x",
       });
 
-      const userOpNonce = await entryPoint.getNonce(
+      const userOpNonce = await getNonce(
+        entryPoint,
         expectedAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       userOp.nonce = userOpNonce;
 
