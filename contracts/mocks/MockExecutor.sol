@@ -10,8 +10,14 @@ import { ExecLib } from "contracts/lib/ExecLib.sol";
 import { IExecutor } from "../../contracts/interfaces/modules/IExecutor.sol";
 import "../../contracts/types/DataTypes.sol";
 
+event ExecutorOnInstallCalled(bytes32 dataFirstWord);
+
 contract MockExecutor is IExecutor {
-    function onInstall(bytes calldata data) external override {}
+    function onInstall(bytes calldata data) external override {
+        if (data.length >= 0x20) {
+            emit ExecutorOnInstallCalled(bytes32(data[0:32]));
+        }
+    }
 
     function onUninstall(bytes calldata data) external override {}
 
