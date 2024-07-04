@@ -72,11 +72,58 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
     }
 
     function test_InstallModule_Success_Validator() public {
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+
+        bytes32 validatorConfig = bytes32(uint256(0x1111));
+        bytes32 executorConfig = bytes32(uint256(0x2222));
+        bytes32 fallbackConfig = bytes32(uint256(0x3333));
+        bytes32 hookConfig = bytes32(uint256(0x4444));
+
+        bytes memory validatorInstallData = abi.encodePacked(
+            bytes1(uint8(MODULE_TYPE_VALIDATOR)),
+            validatorConfig
         );
 
-        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
+        bytes memory executorInstallData = abi.encodePacked(
+            bytes1(uint8(MODULE_TYPE_EXECUTOR)),
+            executorConfig
+        );
+
+        bytes memory fallbackInstallData = abi.encodePacked(
+            bytes1(uint8(MODULE_TYPE_FALLBACK)),
+            fallbackConfig
+        );
+
+        bytes memory hookInstallData = abi.encodePacked(
+            bytes1(uint8(MODULE_TYPE_HOOK)),
+            hookConfig
+        );
+
+        //uint256[] memory types = new uint256[](4);
+        //bytes[] memory initDatas = new bytes[](4);
+
+        uint256[4] memory types = [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK];
+        bytes[4] memory initDatas = [validatorInstallData, executorInstallData, fallbackInstallData, hookInstallData];
+
+        bytes memory multiInstallData = abi.encode(
+            types,
+            initDatas
+        );
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MULTITYPE_MODULE, address(mockMulti), multiInstallData
+        );
+
+        installModule(callData, MULTITYPE_MODULE, address(mockMulti), EXECTYPE_DEFAULT);
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMulti), ""),
+            "Module should be installed as validator"
+        );
+        assertEq(
+            mockMulti.getConfig(address(BOB_ACCOUNT), MODULE_TYPE_VALIDATOR),
+            validatorConfig,
+            "Module should be properly configured as validator"
+        );
     }
 
     function test_InstallModule_Success_Executor() public {
@@ -124,6 +171,16 @@ contract TestModuleManager_InstallModule is Test, TestModuleManagement_Base {
         );
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    function test_InstallMidule_MultiTypeInstall() public {
+
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
+        );
+
+        installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
+
     }
 
     function test_InstallModule_Revert_InvalidModuleTypeId() public {

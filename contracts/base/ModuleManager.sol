@@ -213,7 +213,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// when trying to sstore the module in an appropriate SentinelList
     function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
-        if (!IModule(module).isModuleType(moduleTypeId)) revert MismatchModuleTypeId(moduleTypeId);
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
@@ -233,6 +232,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual {
+        if (!IModule(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
@@ -260,6 +260,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual {
+        if (!IModule(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -277,6 +278,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
     function _installHook(address hook, bytes calldata data) internal virtual {
+        if (!IModule(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
@@ -303,6 +305,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+        if (!IModule(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
         bytes4 selector = bytes4(params[0:4]);
         CallType calltype = CallType.wrap(bytes1(params[4]));
         bytes memory initData = params[5:];
@@ -342,9 +345,32 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     {
         uint256[] calldata types;
         bytes[] calldata initDatas;
-
+/*
+        0x
+        0000000000000000000000000000000000000000000000000000000000000001
+        0000000000000000000000000000000000000000000000000000000000000002
+        0000000000000000000000000000000000000000000000000000000000000003
+        0000000000000000000000000000000000000000000000000000000000000004
+        00000000000000000000000000000000000000000000000000000000000000a0 = 5*0x20 // array offset
+        0000000000000000000000000000000000000000000000000000000000000080 // first item offset
+        00000000000000000000000000000000000000000000000000000000000000e0 //offset
+        0000000000000000000000000000000000000000000000000000000000000140 //offset
+        00000000000000000000000000000000000000000000000000000000000001a0 //offset
+        0000000000000000000000000000000000000000000000000000000000000021 //length
+        0100000000000000000000000000000000000000000000000000000000000011
+        1100000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000021 // length
+        0200000000000000000000000000000000000000000000000000000000000022
+        2200000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000021 // length
+        0300000000000000000000000000000000000000000000000000000000000033
+        3300000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000021 // length
+        0400000000000000000000000000000000000000000000000000000000000044
+        4400000000000000000000000000000000000000000000000000000000000000
+*/
         // equivalent of:
-        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[]))
+        // (types, contexs) = abi.decode(initData,(uint[],bytes[]))
         assembly ("memory-safe") {
             let offset := initData.offset
             let baseOffset := offset

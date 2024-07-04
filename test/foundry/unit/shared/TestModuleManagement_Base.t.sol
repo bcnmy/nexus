@@ -7,6 +7,7 @@ import { MockValidator } from "../../../../contracts/mocks/MockValidator.sol";
 import { MockExecutor } from "../../../../contracts/mocks/MockExecutor.sol";
 import { MockHandler } from "../../../../contracts/mocks/MockHandler.sol";
 import { MockHook } from "../../../../contracts/mocks/MockHook.sol";
+import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 
 event ModuleInstalled(uint256 moduleTypeId, address module);
 
@@ -19,6 +20,8 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
     MockHook public mockHook;
+    MockMultiModule mockMulti;
+
 
     address public constant INVALID_MODULE_ADDRESS = address(0);
     uint256 public constant INVALID_MODULE_TYPE = 999;
@@ -35,6 +38,7 @@ abstract contract TestModuleManagement_Base is Test, SmartAccountTestLab {
         mockExecutor = new MockExecutor();
         mockHandler = new MockHandler();
         mockHook = new MockHook();
+        mockMulti = new MockMultiModule();
 
         // Additional shared setup can go here
     }
