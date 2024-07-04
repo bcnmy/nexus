@@ -13,7 +13,6 @@ pragma solidity ^0.8.26;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
-import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
@@ -23,7 +22,14 @@ import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, VALIDATION_FAILED } from "./types/Constants.sol";
+import { 
+    MODULE_TYPE_VALIDATOR, 
+    MODULE_TYPE_EXECUTOR, 
+    MODULE_TYPE_FALLBACK, 
+    MODULE_TYPE_HOOK, 
+    MULTITYPE_MODULE, 
+    VALIDATION_FAILED 
+} from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 

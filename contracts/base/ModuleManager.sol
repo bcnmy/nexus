@@ -22,7 +22,15 @@ import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MULTITYPE_MODULE, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import { 
+    MODULE_TYPE_VALIDATOR, 
+    MODULE_TYPE_EXECUTOR, 
+    MODULE_TYPE_FALLBACK, 
+    MODULE_TYPE_HOOK, 
+    MULTITYPE_MODULE, 
+    MODULE_ENABLE_MODE_TYPE_HASH, 
+    ERC1271_MAGICVALUE 
+} from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 
 /// @title Nexus - ModuleManager
@@ -171,29 +179,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         _installModule(moduleType, module, moduleInitData);
     }
 
-    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
-        if (!_isValidatorInstalled(enableModeSigValidator)) {
-            revert InvalidModule(enableModeSigValidator);
-        }
-
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
-            revert EnableModeSigError();
-        }
-    }
-
-    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(
-            keccak256(
-                abi.encode(
-                    MODULE_ENABLE_MODE_TYPE_HASH,
-                    module,
-                    keccak256(initData)
-                )
-            )
-        );
-    }
-
     /// @notice Installs a new module to the smart account.
     /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
     /// - 1 for Validator
@@ -220,6 +205,29 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
+    }
+
+    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
+        address enableModeSigValidator = address(bytes20(sig[0:20]));
+        if (!_isValidatorInstalled(enableModeSigValidator)) {
+            revert InvalidModule(enableModeSigValidator);
+        }
+
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+            revert EnableModeSigError();
+        }
+    }
+
+    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
+        digest = _hashTypedData(
+            keccak256(
+                abi.encode(
+                    MODULE_ENABLE_MODE_TYPE_HASH,
+                    module,
+                    keccak256(initData)
+                )
+            )
+        );
     }
 
     /// @dev Installs a new validator module after checking if it matches the required module type.
@@ -375,30 +383,30 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
         // iterate over all module types and install the module as a type accordingly
         for (uint256 i; i < length; i++) {
-            uint256 _type = types[i];
+            uint256 theType = types[i];
 
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                      INSTALL VALIDATORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            if (_type == MODULE_TYPE_VALIDATOR) {
+            if (theType == MODULE_TYPE_VALIDATOR) {
                 _installValidator(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL EXECUTORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (_type == MODULE_TYPE_EXECUTOR) {
+            else if (theType == MODULE_TYPE_EXECUTOR) {
                 _installExecutor(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL FALLBACK                     */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (_type == MODULE_TYPE_FALLBACK) {
+            else if (theType == MODULE_TYPE_FALLBACK) {
                 _installFallbackHandler(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL HOOK (global or sig specific)             */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (_type == MODULE_TYPE_HOOK) {
+            else if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
             }
         }
