@@ -110,6 +110,5 @@
       "pre-push": "yarn run check-branch-name && yarn run lint:fix && yarn run generate-and-push-gas-report",
       "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
-  },
-  "packageManager": "yarn@1.22.22"
+  }
 }
