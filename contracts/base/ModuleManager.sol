@@ -207,29 +207,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         }
     }
 
-    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
-        if (!_isValidatorInstalled(enableModeSigValidator)) {
-            revert InvalidModule(enableModeSigValidator);
-        }
-
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
-            revert EnableModeSigError();
-        }
-    }
-
-    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(
-            keccak256(
-                abi.encode(
-                    MODULE_ENABLE_MODE_TYPE_HASH,
-                    module,
-                    keccak256(initData)
-                )
-            )
-        );
-    }
-
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
@@ -410,6 +387,37 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
                 _installHook(module, initDatas[i]);
             }
         }
+    }
+
+        
+    /// @notice Checks if an enable mode signature is valid.
+    /// @param digest signed digest.
+    /// @param sig Signature.
+    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
+        address enableModeSigValidator = address(bytes20(sig[0:20]));
+        if (!_isValidatorInstalled(enableModeSigValidator)) {
+            revert InvalidModule(enableModeSigValidator);
+        }
+
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+            revert EnableModeSigError();
+        }
+    }
+
+    /// @notice Builds the enable mode data hash as per eip712
+    /// @param module Module being enabled.
+    /// @param initData Module init data.
+    /// @return digest EIP712 hash
+    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
+        digest = _hashTypedData(
+            keccak256(
+                abi.encode(
+                    MODULE_ENABLE_MODE_TYPE_HASH,
+                    module,
+                    keccak256(initData)
+                )
+            )
+        );
     }
 
     /// @notice Checks if a module is installed on the smart account.
