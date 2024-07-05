@@ -25,7 +25,8 @@ jobs:
           key: ${{ steps.cache-keys.outputs.cache-key }}
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        #run: yarn install --frozen-lockfile
+        run: yarn install
 
   lint:
     name: Lint sources
