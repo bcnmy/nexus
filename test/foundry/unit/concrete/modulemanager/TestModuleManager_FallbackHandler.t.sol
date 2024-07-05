@@ -44,8 +44,6 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
         // Trigger the onGenericFallback directly
         MockHandler(HANDLER_MODULE).onGenericFallback(exampleSender, exampleValue, exampleData);
-
-        // Additional assertions could go here if needed
     }
 
     /// @notice Tests that handleOps triggers the generic fallback handler.
