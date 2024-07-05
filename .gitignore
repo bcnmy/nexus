@@ -9,7 +9,6 @@ storageLayout
 .husky
 deployments
 .yarn/cache
-.yarn/plugins
 
 # files
 *.env

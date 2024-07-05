@@ -111,5 +111,6 @@
       "pre-push": "yarn run check-branch-name && yarn run lint:fix && yarn run generate-and-push-gas-report",
       "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
-  }
+  },
+  "packageManager": "yarn@3.5.0+sha512.2dc70be5fce9f66756d25b00a888f3ca66f86b502b76750e72ba54cec89da767b938c54124595e26f868825688e0fe3552c26c76a330673343057acadd5cfcf2"
 }
