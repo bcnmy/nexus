@@ -21,6 +21,7 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
+import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 import { 
     MODULE_TYPE_VALIDATOR, 
@@ -43,6 +44,7 @@ import { EIP712 } from "solady/src/utils/EIP712.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using LocalCallDataParserLib for bytes;
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
@@ -157,20 +159,8 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         uint256 moduleType;
         bytes calldata moduleInitData;
         bytes calldata enableModeSignature;
-        uint256 p;
-        assembly {
-            p := packedData.offset
-            moduleType := calldataload(p)
-            
-            moduleInitData.length := shr(224, calldataload(add(p, 0x20)))
-            moduleInitData.offset := add(p, 0x24)
-            p := add(moduleInitData.offset, moduleInitData.length)
-
-            enableModeSignature.length := shr(224, calldataload(p))
-            enableModeSignature.offset := add(p, 0x04)
-            p := sub(add(enableModeSignature.offset, enableModeSignature.length), packedData.offset)
-        }  
-        userOpSignature = packedData[p:];
+        
+        (moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
 
         _checkEnableModeSignature(
             _getEnableModeDataHash(module, moduleInitData),
@@ -337,24 +327,8 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     )
         internal virtual
     {
-        uint256[] calldata types;
-        bytes[] calldata initDatas;
-        // equivalent of:
-        // (types, initDatas) = abi.decode(initData,(uint[],bytes[]))
-        assembly ("memory-safe") {
-            let offset := initData.offset
-            let baseOffset := offset
-            let dataPointer := add(baseOffset, calldataload(offset))
-
-            types.offset := add(dataPointer, 32)
-            types.length := calldataload(dataPointer)
-            offset := add(offset, 32)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            initDatas.offset := add(dataPointer, 32)
-            initDatas.length := calldataload(dataPointer)
-        }
-
+        (uint256[] calldata types, bytes[] calldata initDatas) = initData.parseMultiTypeInitData();
+        
         uint256 length = types.length;
         if (initDatas.length != length) revert InvalidInput();
 
