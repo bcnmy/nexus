@@ -25,7 +25,7 @@ uint256 constant VALIDATION_SUCCESS = 0;
 uint256 constant VALIDATION_FAILED = 1;
 
 // Module type identifier for Multitype install
-uint256 constant MULTITYPE_MODULE = 0;
+uint256 constant MODULE_TYPE_MULTI = 0;
 
 // Module type identifier for validators
 uint256 constant MODULE_TYPE_VALIDATOR = 1;

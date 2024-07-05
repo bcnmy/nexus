@@ -27,7 +27,7 @@ import {
     MODULE_TYPE_EXECUTOR, 
     MODULE_TYPE_FALLBACK, 
     MODULE_TYPE_HOOK, 
-    MULTITYPE_MODULE, 
+    MODULE_TYPE_MULTI, 
     VALIDATION_FAILED 
 } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
@@ -262,7 +262,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
         else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
-        else if (moduleTypeId == MULTITYPE_MODULE) return true;
+        else if (moduleTypeId == MODULE_TYPE_MULTI) return true;
         else return false;
     }
 

@@ -28,7 +28,7 @@ import {
     MODULE_TYPE_EXECUTOR, 
     MODULE_TYPE_FALLBACK, 
     MODULE_TYPE_HOOK, 
-    MULTITYPE_MODULE, 
+    MODULE_TYPE_MULTI, 
     MODULE_ENABLE_MODE_TYPE_HASH, 
     ERC1271_MAGICVALUE 
 } from "contracts/types/Constants.sol";
@@ -190,7 +190,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
             _installFallbackHandler(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
-        } else if (moduleTypeId == MULTITYPE_MODULE) {
+        } else if (moduleTypeId == MODULE_TYPE_MULTI) {
             _multiTypeInstall(module, initData);            
         } else {
             revert InvalidModuleTypeId(moduleTypeId);

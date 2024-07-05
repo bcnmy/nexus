@@ -32,7 +32,7 @@ contract TestModuleManager_SupportsModule is TestModuleManagement_Base {
 
     /// @notice Tests the successful support of the MultiType module.
     function test_SupportsModuleMultiType_Success() public {
-        assertTrue(BOB_ACCOUNT.supportsModule(MULTITYPE_MODULE), "Multitype module not supported");
+        assertTrue(BOB_ACCOUNT.supportsModule(MODULE_TYPE_MULTI), "Multitype module not supported");
     }
 
     /// @notice Tests that an unsupported module type returns false.

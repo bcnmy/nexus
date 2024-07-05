@@ -6,7 +6,7 @@ import "../../../utils/NexusTest_Base.t.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { MODE_VALIDATION, MODE_MODULE_ENABLE, MULTITYPE_MODULE, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";
+import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";
 import "solady/src/utils/EIP712.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
@@ -42,7 +42,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         // bytes4 enableModeSig length
         // enableModeSig
         bytes memory enableModeSigPrefix = abi.encodePacked(
-            MULTITYPE_MODULE,
+            MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
             bytes4(uint32(enableModeSig.length)),
@@ -77,7 +77,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         enableModeSig = abi.encodePacked(invalidValidator, enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
-            MULTITYPE_MODULE,
+            MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
             bytes4(uint32(enableModeSig.length)),
@@ -110,7 +110,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
-            MULTITYPE_MODULE,
+            MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
             bytes4(uint32(enableModeSig.length)),

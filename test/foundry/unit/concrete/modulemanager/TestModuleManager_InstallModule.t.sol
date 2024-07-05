@@ -119,10 +119,10 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MULTITYPE_MODULE, address(mockMulti), multiInstallData
+            IModuleManager.installModule.selector, MODULE_TYPE_MULTI, address(mockMulti), multiInstallData
         );
 
-        installModule(callData, MULTITYPE_MODULE, address(mockMulti), EXECTYPE_DEFAULT);
+        installModule(callData, MODULE_TYPE_MULTI, address(mockMulti), EXECTYPE_DEFAULT);
 
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMulti), ""),

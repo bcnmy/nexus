@@ -21,18 +21,8 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    /*
-    baseSepolia: {
-      url: process.env.BASE_SEPOLIA_URL || "https://sepolia.base.org/",
-      accounts: [process.env.PRIVATE_KEY],
-      chainId: 84532,
-    },
-    */
   },
   etherscan: {
-    apiKey: {
-      baseSepolia: process.env.BASE_SEPOLIA_API_KEY || "",
-    }
   },
   docgen: {
     projectName: "Nexus",
