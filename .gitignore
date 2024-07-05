@@ -8,7 +8,7 @@ docs
 storageLayout
 .husky
 deployments
-.yarn
+.yarn/cache
 
 # files
 *.env
@@ -19,6 +19,8 @@ lcov.info
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+*.bak
+
 
 # broadcasts
 !broadcast
