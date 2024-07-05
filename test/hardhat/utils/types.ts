@@ -21,7 +21,6 @@ import {
   NexusAccountFactory,
   Bootstrap,
   BootstrapLib,
-  ModuleWhitelistFactory,
   MockRegistry,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
@@ -64,7 +63,6 @@ export interface DeploymentFixtureWithSA {
   nexusFactory: NexusAccountFactory;
   bootstrap: Bootstrap;
   BootstrapLib: BootstrapLib;
-  moduleWhitelistFactory: ModuleWhitelistFactory;
   registry: MockRegistry;
 }
 
