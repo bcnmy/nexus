@@ -40,6 +40,7 @@ contract EventsAndErrors {
     error InvalidEntryPointAddress();
     error InnerCallFailed();
     error CallToDeployWithFactoryFailed();
+    error NexusInitializationFailed();
 
     // ==========================
     // Operation Errors
