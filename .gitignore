@@ -18,7 +18,7 @@ deployments
 lcov.info
 package-lock.json
 pnpm-lock.yaml
-yarn.lock
+# yarn.lock
 *.bak
 
 # broadcasts
