@@ -43,6 +43,7 @@ import "../../../contracts/interfaces/INexus.sol";
 // ==========================
 import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/NexusAccountFactory.sol";
+import "../../../contracts/factory/RegistryFactory.sol";
 import "./../../../contracts/modules/validators/K1Validator.sol";
 import "../../../contracts/common/Stakeable.sol";
 
@@ -56,6 +57,8 @@ import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockToken } from "../../../contracts/mocks/MockToken.sol";
+import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
+
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/Counter.sol";
 
@@ -63,7 +66,7 @@ import "../../../contracts/mocks/Counter.sol";
 // Additional Contract Imports
 // ==========================
 import "./../../../contracts/factory/K1ValidatorFactory.sol";
-import "./../../../contracts/utils/Bootstrap.sol";
+import "./../../../contracts/utils/RegistryBootstrap.sol";
 import "./../../../contracts/lib/BootstrapLib.sol";
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
@@ -80,6 +83,6 @@ import { SentinelListHelper } from "sentinellist/src/SentinelListHelper.sol";
 import "./TestHelper.t.sol";
 
 contract Imports {
-    // This contract acts as a single point of import for Foundry tests.
-    // It does not require any logic, as its sole purpose is to consolidate imports.
+// This contract acts as a single point of import for Foundry tests.
+// It does not require any logic, as its sole purpose is to consolidate imports.
 }
