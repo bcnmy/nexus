@@ -91,8 +91,9 @@ contract RegistryFactory is AbstractNexusFactory {
             BootstrapConfig memory hook,
             BootstrapConfig[] memory fallbacks,
             ,
+            ,
 
-        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address[], uint8));
+        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address, address[], uint8));
 
         // Ensure all modules are whitelisted
         for (uint256 i = 0; i < validators.length; i++) {
