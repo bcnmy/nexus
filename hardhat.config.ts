@@ -23,7 +23,7 @@ const config: HardhatUserConfig = {
   networks: {
     baseSepolia: {
       url: process.env.BASE_SEPOLIA_URL || "https://sepolia.base.org/",
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: [process.env.PRIVATE_KEY] || ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"], //anvil for testing purposes
       chainId: 84532,
     },
   },
