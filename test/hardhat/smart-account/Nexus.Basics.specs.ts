@@ -31,7 +31,7 @@ import {
   CALLTYPE_BATCH,
   CALLTYPE_SINGLE,
   EXECTYPE_DEFAULT,
-  EXECTYPE_DELEGATE,
+  CALLTYPE_DELEGATE,
   EXECTYPE_TRY,
   MODE_DEFAULT,
   MODE_PAYLOAD,
@@ -247,14 +247,14 @@ describe("Nexus Basic Specs", function () {
       expect(
         await smartAccount.supportsExecutionMode(
           ethers.concat([
-            ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
-            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_DELEGATE), 1),
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
             ethers.zeroPadValue(toBeHex(UNUSED), 4),
             ethers.zeroPadValue(toBeHex(MODE_DEFAULT), 4),
             ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
           ]),
         ),
-      ).to.be.false;
+      ).to.be.true;
     });
 
     it("Should verify unsupported execution modes", async function () {
@@ -262,14 +262,14 @@ describe("Nexus Basic Specs", function () {
       expect(
         await smartAccount.supportsExecutionMode(
           ethers.concat([
-            ethers.zeroPadValue(toBeHex(EXECTYPE_DELEGATE), 1),
-            ethers.zeroPadValue(toBeHex(CALLTYPE_SINGLE), 1),
+            ethers.zeroPadValue(toBeHex(CALLTYPE_DELEGATE), 1),
+            ethers.zeroPadValue(toBeHex(EXECTYPE_DEFAULT), 1),
             ethers.zeroPadValue(toBeHex(UNUSED), 4),
             ethers.zeroPadValue(toBeHex("0x00"), 4),
             ethers.zeroPadValue(toBeHex(MODE_PAYLOAD), 22),
           ]),
         ),
-      ).to.be.false;
+      ).to.be.true;
     });
 
     it("Should return false for unsupported execution mode", async function () {

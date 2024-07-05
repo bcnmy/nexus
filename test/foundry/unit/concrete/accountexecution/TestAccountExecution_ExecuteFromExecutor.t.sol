@@ -150,26 +150,6 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         assertEq(balanceRecipient, amount, "Recipient should have received 0 tokens");
     }
 
-    /// @notice Tests execution with an unsupported call type via MockExecutor
-    function test_RevertIf_ExecuteFromExecutor_UnsupportedCallType() public {
-        ExecutionMode unsupportedMode = ExecutionMode.wrap(bytes32(abi.encodePacked(bytes1(0xff), bytes1(0x00), bytes4(0), bytes22(0))));
-        bytes memory executionCalldata = abi.encodePacked(address(counter), uint256(0), abi.encodeWithSelector(Counter.incrementNumber.selector));
-
-        (CallType callType, , , ) = ModeLib.decode(unsupportedMode);
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(mockExecutor), 0, executionCalldata);
-
-        vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
-
-        mockExecutor.customExecuteViaAccount(
-            unsupportedMode,
-            BOB_ACCOUNT,
-            address(counter),
-            0,
-            abi.encodeWithSelector(Counter.incrementNumber.selector)
-        );
-    }
-
     /// @notice Tests single execution with an unsupported execution type via MockExecutor
     function test_RevertIf_ExecuteFromExecutor_UnsupportedExecType_Single() public {
         // Create an unsupported execution mode with an invalid execution type

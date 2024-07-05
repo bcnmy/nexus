@@ -25,7 +25,7 @@ import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -102,6 +102,8 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             _handleSingleExecution(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
             _handleBatchExecution(executionCalldata, execType);
+        } else if (callType == CALLTYPE_DELEGATECALL) {
+            _handleDelegateCallExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -139,6 +141,14 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             // check if execType is revert or try
             if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
             else if (execType == EXECTYPE_TRY) returnData = _tryExecuteBatch(executions);
+            else revert UnsupportedExecType(execType);
+        } else if (callType == CALLTYPE_DELEGATECALL) {
+            // destructure executionCallData according to single exec
+            address delegate = address(uint160(bytes20(executionCalldata[0:20])));
+            bytes calldata callData = executionCalldata[20:];
+            // check if execType is revert or try
+            if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
+            else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
             else revert UnsupportedExecType(execType);
         } else {
             revert UnsupportedCallType(callType);
@@ -282,7 +292,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL) && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -548,6 +558,17 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         Execution[] calldata executions = executionCalldata.decodeBatch();
         if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
         else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
+        else revert UnsupportedExecType(execType);
+    }
+
+    /// @dev Executes a single transaction based on the specified execution type.
+    /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
+    /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
+    function _handleDelegateCallExecution(bytes calldata executionCalldata, ExecType execType) private {
+        address delegate = address(uint160(bytes20(executionCalldata[0:20])));
+        bytes calldata callData = executionCalldata[20:];
+        if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
+        else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
         else revert UnsupportedExecType(execType);
     }
 
