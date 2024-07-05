@@ -340,7 +340,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         uint256[] calldata types;
         bytes[] calldata initDatas;
         // equivalent of:
-        // (types, contexs) = abi.decode(initData,(uint[],bytes[]))
+        // (types, initDatas) = abi.decode(initData,(uint[],bytes[]))
         assembly ("memory-safe") {
             let offset := initData.offset
             let baseOffset := offset
