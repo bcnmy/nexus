@@ -18,7 +18,7 @@ contract MockRegistry is IERC7484 {
 
     function check(address module, uint256 moduleType, address[] calldata attesters, uint256 threshold) external view {}
 
-    function trustAttesters(uint8 threshold, address[] calldata attesters) external {
+    function trustAttesters(uint8, address[] calldata attesters) external {
         emit Log(msg.sender);
         emit NewTrustedAttesters();
     }
