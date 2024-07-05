@@ -1,0 +1,5 @@
+TestModuleManager_EnableMode
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+└── when using Enable Mode it should successfully install and configure the new module
+    └── it should install the hook module
