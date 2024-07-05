@@ -15,6 +15,7 @@ import {
   ModuleWhitelistFactory,
   MockExecutor,
   MockHandler,
+  MockRegistry,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
@@ -54,7 +55,7 @@ describe("Nexus Factory Tests", function () {
 
     const saDeploymentIndex = 0;
 
-    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
   });
 
   describe("Nexus K1ValidatorFactory tests", function () {
@@ -65,10 +66,12 @@ describe("Nexus Factory Tests", function () {
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       await expect(
-        factory.createAccount(ownerAddress, saDeploymentIndex),
+        factory.createAccount(ownerAddress, saDeploymentIndex, [], 0),
       ).to.emit(factory, "AccountCreated");
 
       // Verify that the account was created
@@ -82,17 +85,21 @@ describe("Nexus Factory Tests", function () {
       const unexpectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         1,
+        [],
+        0,
       );
 
       // Read the expected account address
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       expect(unexpectedAccountAddress).to.not.equal(expectedAccountAddress);
 
-      await factory.createAccount(ownerAddress, saDeploymentIndex);
+      await factory.createAccount(ownerAddress, saDeploymentIndex, [], 0);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -105,6 +112,8 @@ describe("Nexus Factory Tests", function () {
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       // factory address + factory data
@@ -113,6 +122,8 @@ describe("Nexus Factory Tests", function () {
         factory.interface.encodeFunctionData("createAccount", [
           ownerAddress,
           saDeploymentIndex,
+          [],
+          0,
         ]),
       ]);
 
@@ -158,6 +169,7 @@ describe("Nexus Factory Tests", function () {
     let validatorModule: MockValidator;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
+    let registry: MockRegistry;
     let owner: Signer;
 
     let parsedValidator: BootstrapConfigStruct;
@@ -175,6 +187,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      registry = setup.registry;
 
       ownerAddress = await owner.getAddress();
 
@@ -224,6 +237,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
@@ -240,6 +256,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
@@ -272,6 +291,7 @@ describe("Nexus Factory Tests", function () {
     let validatorModule: MockValidator;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
+    let registry: MockRegistry;
     let owner: Signer;
     let smartAccountImplementation: Nexus;
 
@@ -292,6 +312,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      registry = setup.registry;
       smartAccountImplementation = setup.smartAccountImplementation;
 
       ownerAddress = await owner.getAddress();
@@ -339,6 +360,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const address = await factory.computeAccountAddress(initData, salt);
       console.log("Address: ", address);
@@ -349,6 +373,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
@@ -369,6 +396,7 @@ describe("Nexus Factory Tests", function () {
     let hookModule: MockHook;
     let owner: Signer;
     let mockExecutor: MockExecutor;
+    let registry: MockRegistry;
 
     let parsedValidator: BootstrapConfigStruct;
     let parsedHook: BootstrapConfigStruct;
@@ -389,6 +417,7 @@ describe("Nexus Factory Tests", function () {
       hookModule = setup.mockHook;
       fallbackModule = setup.mockFallbackHandler;
       mockExecutor = setup.mockExecutor;
+      registry = setup.registry;
 
       ownerAddress = await owner.getAddress();
 
@@ -487,6 +516,9 @@ describe("Nexus Factory Tests", function () {
         [parsedExecutor],
         parsedHook,
         [parsedFallback],
+        registry,
+        [],
+        0,
       );
 
       await expect(
@@ -547,6 +579,9 @@ describe("Nexus Factory Tests", function () {
         [parsedExecutor],
         parsedHook,
         [parsedFallback],
+        registry,
+        [],
+        0,
       );
 
       await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
@@ -604,6 +639,9 @@ describe("Nexus Factory Tests", function () {
         [parsedExecutor],
         parsedHook,
         [parsedFallback],
+        registry,
+        [],
+        0,
       );
 
       await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
@@ -661,6 +699,9 @@ describe("Nexus Factory Tests", function () {
         [parsedExecutor],
         parsedHook,
         [parsedFallback],
+        registry,
+        [],
+        0,
       );
 
       await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
@@ -718,6 +759,9 @@ describe("Nexus Factory Tests", function () {
         [parsedExecutor],
         parsedHook,
         [parsedFallback],
+        registry,
+        [],
+        0,
       );
 
       await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be

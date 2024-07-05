@@ -92,9 +92,11 @@ describe("Nexus Basic Specs", function () {
     const expectedAccountAddress = await factory.computeAccountAddress(
       accountOwnerAddress,
       saDeploymentIndex,
+      [],
+      0,
     );
 
-    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
   });
 
   describe("Contract Deployment", function () {
@@ -110,9 +112,11 @@ describe("Nexus Basic Specs", function () {
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
-      await factory.createAccount(ownerAddress, saDeploymentIndex);
+      await factory.createAccount(ownerAddress, saDeploymentIndex, [], 0);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -451,6 +455,8 @@ describe("Nexus Basic Specs", function () {
       const accountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       const nonce = await entryPoint.getNonce(
@@ -490,6 +496,8 @@ describe("Nexus Basic Specs", function () {
       const accountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       const nonce = await entryPoint.getNonce(

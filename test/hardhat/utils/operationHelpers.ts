@@ -196,7 +196,12 @@ export async function getInitCode(
 
   // Encode the createAccount function call with the provided parameters
   const factoryDeploymentData = K1ValidatorFactory.interface
-    .encodeFunctionData("createAccount", [ownerAddress, saDeploymentIndex])
+    .encodeFunctionData("createAccount", [
+      ownerAddress,
+      saDeploymentIndex,
+      [],
+      0,
+    ])
     .slice(2);
 
   return factoryAddress + factoryDeploymentData;
