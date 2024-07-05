@@ -89,17 +89,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
-        PackedUserOperation memory userOp = op;
         address validator = op.nonce.getValidator();
-        
         if (op.nonce.isModuleEnableMode()) {
+            PackedUserOperation memory userOp = op;
             userOp.signature = _enableMode(validator, op.signature);
+            validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
             // Check if validator is not enabled. If not, return VALIDATION_FAILED.
             if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
-        }
-        // bubble up the return value of the validator module
-        validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+            validationData = IValidator(validator).validateUserOp(op, userOpHash);
+        }    
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
