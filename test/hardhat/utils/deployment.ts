@@ -17,7 +17,6 @@ import {
   BiconomyMetaFactory,
   NexusAccountFactory,
   BootstrapLib,
-  ModuleWhitelistFactory,
 } from "../../../typechain-types";
 import { DeploymentFixture, DeploymentFixtureWithSA } from "./types";
 import { to18 } from "./encoding";
@@ -301,33 +300,6 @@ export async function getDeployedNexusAccountFactory(): Promise<NexusAccountFact
 }
 
 /**
- * Deploys the ModuleWhitelistFactory contract with a deterministic deployment.
- * @returns A promise that resolves to the deployed ModuleWhitelistFactory contract instance.
- */
-export async function getDeployedModuleWhitelistFactory(): Promise<ModuleWhitelistFactory> {
-  const accounts: Signer[] = await ethers.getSigners();
-  const addresses = await Promise.all(
-    accounts.map((account) => account.getAddress()),
-  );
-  const smartAccountImplementation = await getDeployedNexusImplementation();
-  const ModuleWhitelistFactory = await ethers.getContractFactory(
-    "ModuleWhitelistFactory",
-  );
-  const deterministicModuleWhitelistFactory = await deployments.deploy(
-    "ModuleWhitelistFactory",
-    {
-      from: addresses[0],
-      deterministicDeployment: true,
-      args: [await smartAccountImplementation.getAddress(), addresses[0]],
-    },
-  );
-
-  return ModuleWhitelistFactory.attach(
-    deterministicModuleWhitelistFactory.address,
-  ) as ModuleWhitelistFactory;
-}
-
-/**
  * Deploys the ECDSA K1Validator contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed ECDSA K1Validator contract instance.
  */
@@ -505,8 +477,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const nexusFactory = await getDeployedNexusAccountFactory();
 
-  const moduleWhitelistFactory = await getDeployedModuleWhitelistFactory();
-
   // Get the addresses of the deployed contracts
   const ownerAddress = await owner.getAddress();
   const aliceAddress = await alice.getAddress();
@@ -567,7 +537,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     nexusFactory,
     bootstrap,
     BootstrapLib,
-    moduleWhitelistFactory,
     registry,
   };
 }
