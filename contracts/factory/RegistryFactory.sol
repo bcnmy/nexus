@@ -16,8 +16,10 @@ import { LibClone } from "solady/src/utils/LibClone.sol";
 import { BytesLib } from "../lib/BytesLib.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/RegistryBootstrap.sol";
-import { AbstractNexusFactory } from "./AbstractNexusFactory.sol";
+
+import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
+import { INexusFactory } from "../interfaces/factory/INexusFactory.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
 /// @title RegistryFactory
@@ -27,7 +29,11 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODU
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract RegistryFactory is AbstractNexusFactory {
+contract RegistryFactory is Stakeable, INexusFactory {
+    /// @notice Address of the implementation contract used to create new Nexus instances.
+    /// @dev This address is immutable and set upon deployment, ensuring the implementation cannot be changed.
+    address public immutable ACCOUNT_IMPLEMENTATION;
+
     IERC7484 public immutable REGISTRY;
     address[] public attesters;
     uint8 public threshold;
@@ -36,23 +42,16 @@ contract RegistryFactory is AbstractNexusFactory {
     /// @param module The module address that is not whitelisted.
     error ModuleNotWhitelisted(address module);
 
-    /// @notice Error thrown when a zero address is provided.
-    error ZeroAddressNotAllowed();
-
     /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
-    constructor(
-        address implementation_,
-        address owner_,
-        IERC7484 registry_,
-        address[] memory attesters_,
-        uint8 threshold_
-    ) AbstractNexusFactory(implementation_, owner_) {
+    constructor(address implementation_, address owner_, IERC7484 registry_, address[] memory attesters_, uint8 threshold_) Stakeable(owner_) {
+        require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
         require(owner_ != address(0), ZeroAddressNotAllowed());
         REGISTRY = registry_;
         attesters = attesters_;
         threshold = threshold_;
+        ACCOUNT_IMPLEMENTATION = implementation_;
     }
 
     function addAttester(address attester) external onlyOwner {
