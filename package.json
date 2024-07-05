@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "solarray": "github:sablier-labs/solarray"
   },
   "devDependencies": {
     "@bonadocs/docgen": "^1.0.1-alpha.1",
@@ -37,11 +38,11 @@
     "hardhat-gas-reporter": "^2.2.0",
     "hardhat-storage-layout": "^0.1.7",
     "husky": "^9.0.11",
+    "modulekit": "github:rhinestonewtf/modulekit",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray",
     "solhint": "^5.0.1",
     "solhint-plugin-prettier": "^0.1.0",
     "solidity-coverage": "^0.8.12",
@@ -87,7 +88,7 @@
     "test:gas:forge": "forge test --gas-report",
     "test:gas:hardhat": "REPORT_GAS=true hardhat test",
     "test:gas": "yarn test:gas:hardhat && yarn test:gas:forge",
-    "gas:report": "node scripts/foundry/generateGasReport.js",
+    "gas-report": "node scripts/foundry/generateGasReport.js",
     "coverage:forge": "forge coverage --ir-minimum",
     "coverage:hardhat": "yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
@@ -103,12 +104,13 @@
     "lint": "yarn run lint:sol && yarn run lint:ts",
     "lint:fix": "yarn run lint:sol-fix && yarn run lint:ts-fix",
     "check-branch-name": "node scripts/git-hooks/checkBranchNames.js",
-    "generate-and-push-gas-report": "yarn run gas:report && git add gas_report.md && git commit -m 'Update gas report' || echo 'No changes to gas report'"
+    "generate-and-push-gas-report": "yarn run gas-report && git add gas_report.md && git commit -m 'Update gas report' || echo 'No changes to gas report'"
   },
   "husky": {
     "hooks": {
       "pre-push": "yarn run check-branch-name && yarn run lint:fix && yarn run generate-and-push-gas-report",
       "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
-  }
+  },
+  "packageManager": "yarn@4.3.1"
 }
