@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-storage-layout";
-import "@bonadocs/docgen";
 import "hardhat-deploy";
 
 dotenv.config();

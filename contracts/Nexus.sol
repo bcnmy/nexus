@@ -13,7 +13,6 @@ pragma solidity ^0.8.26;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
-import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { Execution } from "./types/DataTypes.sol";
@@ -24,9 +23,26 @@ import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, 
-EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { 
+    MODULE_TYPE_VALIDATOR, 
+    MODULE_TYPE_EXECUTOR, 
+    MODULE_TYPE_FALLBACK, 
+    MODULE_TYPE_HOOK, 
+    MODULE_TYPE_MULTI, 
+    VALIDATION_FAILED 
+} from "./types/Constants.sol";
+import { 
+    ModeLib, 
+    ExecutionMode, 
+    ExecType, 
+    CallType, 
+    CALLTYPE_BATCH, 
+    CALLTYPE_SINGLE, 
+    CALLTYPE_DELEGATECALL, 
+    EXECTYPE_DEFAULT, 
+    EXECTYPE_TRY 
+} from "./lib/ModeLib.sol";
+import { NonceLib } from "./lib/NonceLib.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -36,9 +52,10 @@ EXECTYPE_TRY } from "./lib/ModeLib.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
+    using NonceLib for uint256;
 
     /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
     ///      cross-account-replay layer.
@@ -64,7 +81,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// Validates a user operation against a specified validator, extracted from the operation's nonce.
     /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
     /// Other validation failures (e.g., nonce mismatch) should revert.
-    /// @param userOp The operation to validate, encapsulating all transaction details.
+    /// @param op The operation to validate, encapsulating all transaction details.
     /// @param userOpHash Hash of the operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
     /// This can be zero if covered by a paymaster or sufficient deposit exists.
@@ -74,22 +91,25 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
     /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
     /// This method forwards the validation task to the extracted validator module address.
+    /// @dev Features Module Enable Mode.
+    /// This Module Enable Mode flow only makes sense for the module that is used as validator
+    /// for the userOp that triggers Module Enable Flow. Otherwise, one should just include
+    /// a call to Nexus.installModule into userOp.callData
     function validateUserOp(
-        PackedUserOperation calldata userOp,
+        PackedUserOperation calldata op,
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
-        address validator;
-        uint256 userOpnonce = userOp.nonce;
-        assembly {
-            validator := shr(96, userOpnonce)
-        }
-        // Check if validator is not enabled. If not, return VALIDATION_FAILED.
-
-        if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
-
-        // bubble up the return value of the validator module
-        validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+        address validator = op.nonce.getValidator();
+        if (!op.nonce.isModuleEnableMode()) {
+            // Check if validator is not enabled. If not, return VALIDATION_FAILED.
+            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
+            validationData = IValidator(validator).validateUserOp(op, userOpHash);
+        } else {
+            PackedUserOperation memory userOp = op;
+            userOp.signature = _enableMode(validator, op.signature);
+            validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+        }    
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
@@ -183,25 +203,9 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    /// @dev This function also goes through hook checks via withHook modifier.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
-        require(module != address(0), ModuleAddressCanNotBeZero());
-        require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
-        require(!_isModuleInstalled(moduleTypeId, module, initData), ModuleAlreadyInstalled(moduleTypeId, module));
-
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+        _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
-
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            _installValidator(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            _installExecutor(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            _installFallbackHandler(module, initData);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            _installHook(module, initData);
-        } else {
-            revert InvalidModuleTypeId(moduleTypeId);
-        }
     }
 
     /// @notice Uninstalls a module from the smart account.
@@ -277,6 +281,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
         else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
+        else if (moduleTypeId == MODULE_TYPE_MULTI) return true;
         else return false;
     }
 
@@ -566,26 +571,6 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
         if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
         else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
         else revert UnsupportedExecType(execType);
-    }
-
-    /// @notice Checks if a module is installed on the smart account.
-    /// @param moduleTypeId The module type ID.
-    /// @param module The module address.
-    /// @param additionalContext Additional context for checking installation.
-    /// @return True if the module is installed, false otherwise.
-    function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) private view returns (bool) {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            return _isValidatorInstalled(module);
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            return _isExecutorInstalled(module);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            if (additionalContext.length < 4) return false;
-            return _isFallbackHandlerInstalled(bytes4(additionalContext[0:4]), module);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            return _isHookInstalled(module);
-        } else {
-            return false;
-        }
     }
 
     /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,

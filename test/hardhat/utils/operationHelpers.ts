@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex } from "ethers";
+import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex, concat } from "ethers";
 import { EntryPoint } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
@@ -27,6 +27,9 @@ export const DefaultsForUserOp: UserOperation = {
   paymasterPostOpGasLimit: 0,
   signature: "0x",
 };
+
+export const MODE_VALIDATION = "0x00";
+export const MODE_MODULE_ENABLE = "0x01";
 
 /**
  * Simplifies the creation of a PackedUserOperation object by abstracting repetitive logic and enhancing readability.
@@ -107,9 +110,11 @@ export async function signAndPackUserOp(
   }
 
   const validatorAddress = await setup.validator.getAddress();
-  const nonce = await setup.entryPoint.getNonce(
+  const nonce = await getNonce(
+    setup.entryPoint,
     userOp.sender,
-    ethers.zeroPadBytes(validatorAddress, 24),
+    MODE_VALIDATION,
+    validatorAddress
   );
 
   userOp.nonce = nonce;
@@ -149,12 +154,15 @@ export async function fillSignAndPack(
   initCode: BytesLike,
   callData: BytesLike,
   entryPoint: EntryPoint,
+  validationMode: BytesLike,
   validatorAddress: AddressLike, // any validator
   owner: Signer, // ECDSA signer for R1/mock validator
 ): Promise<PackedUserOperation> {
-  const nonce = await entryPoint.getNonce(
+  const nonce = await getNonce(
+    entryPoint,
     accountAddress,
-    ethers.zeroPadBytes(validatorAddress.toString(), 24),
+    validationMode,
+    validatorAddress
   );
   const userOp = buildPackedUserOp({
     sender: accountAddress,
@@ -385,25 +393,15 @@ export function findEventInLogs(
 
 export async function generateCallDataForExecuteUserop() {}
 
-export async function buildPackedUserOperation(
-  userOp: PackedUserOperation,
+export async function getNonce(
   entryPoint: EntryPoint,
-  validatorModuleAddress: string,
-  smartAccountOwner: Signer,
-  nonceIncrement: number,
-): Promise<PackedUserOperation> {
-  const nonce = await entryPoint.getNonce(
-    userOp.sender,
-    ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-  );
-  userOp.nonce = nonce + BigInt(nonceIncrement);
-  const userOpHash = await entryPoint.getUserOpHash(userOp);
-  const signature = await smartAccountOwner.signMessage(
-    ethers.getBytes(userOpHash),
-  );
-  userOp.signature = signature;
-
-  return userOp;
+  accountAddress: AddressLike,
+  validationMode: BytesLike,
+  validatorModuleAddress: AddressLike,
+) :Promise<bigint> {
+  const vm = validatorModuleAddress.toString();
+  const key = concat(["0x000000", validationMode, vm]);
+  return await entryPoint.getNonce(accountAddress, key);
 }
 
 // More functions to be added

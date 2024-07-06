@@ -46,6 +46,7 @@ contract EventsAndErrors {
     // Operation Errors
     // ==========================
     error FailedOp(uint256 opIndex, string reason);
+    error FailedOpWithRevert(uint256 opIndex, string reason, bytes inner);
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     error ERC1271InvalidSigner(address signer);
     error InvalidSignature();
@@ -65,6 +66,7 @@ contract EventsAndErrors {
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
     error ModuleAddressCanNotBeZero();
+    error EnableModeSigError();
 
     // ==========================
     // Hook Errors

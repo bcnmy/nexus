@@ -43,10 +43,6 @@ interface INexusEventsAndErrors {
     /// @notice Error thrown on failed execution.
     error ExecutionFailed();
 
-    /// @notice Error thrown when there is a mismatch between the provided module type ID and the actual module type.
-    /// @param moduleTypeId The mismatched module type ID.
-    error MismatchModuleTypeId(uint256 moduleTypeId);
-
     /// @notice Error thrown when the Factory fails to initialize the account with posted bootstrap data.
     error NexusInitializationFailed();
 

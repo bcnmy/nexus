@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { buildPackedUserOp, generateUseropCallData } from "./operationHelpers";
+import { buildPackedUserOp, generateUseropCallData, getNonce, MODE_VALIDATION } from "./operationHelpers";
 import { ExecutionMethod, ModuleParams, ModuleType } from "./types";
 
 // define mode and exec type enums
@@ -43,9 +43,11 @@ export const installModule = async (args: ModuleParams) => {
     callData: installModuleData,
   });
 
-  const nonce = await entryPoint.getNonce(
+  const nonce = await getNonce(
+    entryPoint,
     userOp.sender,
-    ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
+    MODE_VALIDATION,
+    await validatorModule.getAddress()
   );
   userOp.nonce = nonce;
 
@@ -83,9 +85,11 @@ export const uninstallModule = async (args: ModuleParams) => {
     callData: uninstallModuleData,
   });
 
-  const nonce = await entryPoint.getNonce(
+  const nonce = await getNonce(
+    entryPoint,
     userOp.sender,
-    ethers.zeroPadBytes((await validatorModule.getAddress()).toString(), 24),
+    MODE_VALIDATION,
+    await validatorModule.getAddress()
   );
   userOp.nonce = nonce;
 

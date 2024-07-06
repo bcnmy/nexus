@@ -156,4 +156,10 @@ contract Bootstrap is ModuleManager {
             abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
         );
     }
+
+    /// @dev EIP712 domain name and version.
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        name = "Bootstrap";
+        version = "1.0.0-beta";
+    }
 }

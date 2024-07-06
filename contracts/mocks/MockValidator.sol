@@ -27,7 +27,7 @@ contract MockValidator is IValidator {
         // OR USE EIP-712
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
             return ERC1271_MAGICVALUE;
-        }
+        } 
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
             return ERC1271_MAGICVALUE;
         }

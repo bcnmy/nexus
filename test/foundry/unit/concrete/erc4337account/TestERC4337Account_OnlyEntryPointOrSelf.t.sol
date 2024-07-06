@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 import "../../../utils/NexusTest_Base.t.sol";
 
 /// @title TestERC4337Account_OnlyEntryPointOrSelf
