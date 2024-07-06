@@ -2,6 +2,9 @@
 pragma solidity 0.8.26;
 
 library LocalCallDataParserLib {
+
+    /// @dev Parses the data to obtain enable mode specific data
+    /// @param packedData Packed data. In most cases it will be userOp.signature
     function parseEnableModeData(bytes calldata packedData) 
         internal 
         pure 
@@ -28,6 +31,9 @@ library LocalCallDataParserLib {
         userOpSignature = packedData[p:];
     }
 
+
+    /// @dev Parses the data to obtain types and initdata's for Multi Type module isntall mode
+    /// @param initData Multi Type module init data, abi.encoded
     function parseMultiTypeInitData(bytes calldata initData) 
         internal
         pure

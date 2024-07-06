@@ -171,6 +171,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
     /// @notice Installs a new module to the smart account.
     /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
+    /// - 0 for MultiType
     /// - 1 for Validator
     /// - 2 for Executor
     /// - 3 for Fallback
