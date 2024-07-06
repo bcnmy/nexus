@@ -35,6 +35,12 @@ library ExecLib {
         callData = executionCalldata[52:];
     }
 
+    function decodeDelegateCall(bytes calldata executionCalldata) internal pure returns (address delegate, bytes calldata callData) {
+        // destructure executionCallData according to single exec
+        delegate = address(uint160(bytes20(executionCalldata[0:20])));
+        callData = executionCalldata[20:];
+    }
+
     function encodeSingle(address target, uint256 value, bytes memory callData) internal pure returns (bytes memory userOpCalldata) {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }

@@ -25,7 +25,8 @@ import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, VALIDATION_FAILED } from "./types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, 
+EXECTYPE_TRY } from "./lib/ModeLib.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -143,13 +144,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
             else if (execType == EXECTYPE_TRY) returnData = _tryExecuteBatch(executions);
             else revert UnsupportedExecType(execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            // destructure executionCallData according to single exec
-            address delegate = address(uint160(bytes20(executionCalldata[0:20])));
-            bytes calldata callData = executionCalldata[20:];
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
-            else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
-            else revert UnsupportedExecType(execType);
+            _handleDelegateCallExecution(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -567,8 +562,7 @@ contract Nexus is INexus, EIP712, BaseAccount, ExecutionHelper, ModuleManager, U
     /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleDelegateCallExecution(bytes calldata executionCalldata, ExecType execType) private {
-        address delegate = address(uint160(bytes20(executionCalldata[0:20])));
-        bytes calldata callData = executionCalldata[20:];
+        (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
         if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
         else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
         else revert UnsupportedExecType(execType);
