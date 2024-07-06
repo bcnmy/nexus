@@ -8,6 +8,7 @@ docs
 storageLayout
 .husky
 deployments
+.yarn
 
 # files
 *.env
@@ -17,7 +18,8 @@ deployments
 lcov.info
 package-lock.json
 pnpm-lock.yaml
-yarn.lock
+# yarn.lock
+*.bak
 
 # broadcasts
 !broadcast
@@ -39,9 +41,6 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
-
-node_modules
-.env
 
 # Foundry cache
 cache_forge/solidity-files-cache.json

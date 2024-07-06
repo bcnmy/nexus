@@ -21,5 +21,6 @@
       "(?s:test/[^\\/]*)\\Z",
       "^scripts/.*",
       "^test/.*",
+      "(?s:contracts/lib/local/[^\\/]*)\\Z" #assembly blocks
     ],
 }

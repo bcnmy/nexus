@@ -30,13 +30,13 @@ contract TestModuleManager_SupportsModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.supportsModule(MODULE_TYPE_HOOK), "Hook module not supported");
     }
 
+    /// @notice Tests the successful support of the MultiType module.
+    function test_SupportsModuleMultiType_Success() public {
+        assertTrue(BOB_ACCOUNT.supportsModule(MODULE_TYPE_MULTI), "Multitype module not supported");
+    }
+
     /// @notice Tests that an unsupported module type returns false.
     function test_SupportsModule_FailsForUnsupportedModule() public {
         assertFalse(BOB_ACCOUNT.supportsModule(INVALID_MODULE_TYPE), "Invalid module type should not be supported");
-    }
-
-    /// @notice Tests that zero as a module type returns false.
-    function test_SupportsModule_FailsForZeroModuleType() public {
-        assertFalse(BOB_ACCOUNT.supportsModule(0), "Zero module type should not be supported");
     }
 }

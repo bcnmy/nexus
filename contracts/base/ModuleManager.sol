@@ -21,9 +21,20 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
+import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
+import { 
+    MODULE_TYPE_VALIDATOR, 
+    MODULE_TYPE_EXECUTOR, 
+    MODULE_TYPE_FALLBACK, 
+    MODULE_TYPE_HOOK, 
+    MODULE_TYPE_MULTI, 
+    MODULE_ENABLE_MODE_TYPE_HASH, 
+    ERC1271_MAGICVALUE 
+} from "contracts/types/Constants.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK } from "../types/Constants.sol";
+
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -33,8 +44,10 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODU
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, RegistryAdapter {
+
+abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using LocalCallDataParserLib for bytes;
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
@@ -141,10 +154,58 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
         ams.validators.init();
     }
 
+    /// @dev Implements Module Enable Mode flow.
+    /// @param module The address of the module to be installed.
+    /// @param packedData Data source to parse data required to perform Module Enable mode from.
+    /// @return userOpSignature the clean signature which can be further used for userOp validation
+    function _enableMode(address module, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+        uint256 moduleType;
+        bytes calldata moduleInitData;
+        bytes calldata enableModeSignature;
+        
+        (moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
+
+        _checkEnableModeSignature(
+            _getEnableModeDataHash(module, moduleInitData),
+            enableModeSignature
+        );
+        _installModule(moduleType, module, moduleInitData);
+    }
+
+    /// @notice Installs a new module to the smart account.
+    /// @param moduleTypeId The type identifier of the module being installed, which determines its role:
+    /// - 0 for MultiType
+    /// - 1 for Validator
+    /// - 2 for Executor
+    /// - 3 for Fallback
+    /// - 4 for Hook
+    /// @param module The address of the module to install.
+    /// @param initData Initialization data for the module.
+    /// @dev This function goes through hook checks via withHook modifier.
+    /// @dev No need to check that the module is already installed, as this check is done 
+    /// when trying to sstore the module in an appropriate SentinelList
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+        if (module == address(0)) revert ModuleAddressCanNotBeZero();
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            _installValidator(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            _installExecutor(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            _installFallbackHandler(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            _installHook(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_MULTI) {
+            _multiTypeInstall(module, initData);            
+        } else {
+            revert InvalidModuleTypeId(moduleTypeId);
+        }
+    }
+
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
+        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
@@ -169,6 +230,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
+        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -186,6 +248,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
     function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
+        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
@@ -210,6 +273,7 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
+        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
@@ -246,6 +310,113 @@ contract ModuleManager is Storage, Receiver, IModuleManagerEventsAndErrors, Regi
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
         IFallback(fallbackHandler).onUninstall(data[4:]);
+    }
+
+    /// To make it easier to install multiple modules at once, this function will
+    /// install multiple modules at once. The init data is expected to be a abi encoded tuple
+    /// of (uint[] types, bytes[] initDatas)
+    /// @dev Install multiple modules at once
+    /// @dev It will call module.onInstall for every initialization so it ensure the flow
+    /// consistent with the flow of the SA's that do not implement _multiTypeInstall 
+    /// and thus will call the multityped module several times
+    /// The multityped modules can not expect all the 7579 SA's to implement _multiTypeInstall and
+    /// thus should account for the flow when they are going to be called with onUnistall
+    /// for the initialization as every of the module types they declare they are 
+    /// @param module address of the module
+    /// @param initData initialization data for the module
+    function _multiTypeInstall(
+        address module,
+        bytes calldata initData
+    )
+        internal virtual
+    {
+        (uint256[] calldata types, bytes[] calldata initDatas) = initData.parseMultiTypeInitData();
+        
+        uint256 length = types.length;
+        if (initDatas.length != length) revert InvalidInput();
+
+        // iterate over all module types and install the module as a type accordingly
+        for (uint256 i; i < length; i++) {
+            uint256 theType = types[i];
+
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                      INSTALL VALIDATORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            if (theType == MODULE_TYPE_VALIDATOR) {
+                _installValidator(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL EXECUTORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (theType == MODULE_TYPE_EXECUTOR) {
+                _installExecutor(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL FALLBACK                     */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (theType == MODULE_TYPE_FALLBACK) {
+                _installFallbackHandler(module, initDatas[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*          INSTALL HOOK (global or sig specific)             */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (theType == MODULE_TYPE_HOOK) {
+                _installHook(module, initDatas[i]);
+            }
+        }
+    }
+
+        
+    /// @notice Checks if an enable mode signature is valid.
+    /// @param digest signed digest.
+    /// @param sig Signature.
+    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
+        address enableModeSigValidator = address(bytes20(sig[0:20]));
+        if (!_isValidatorInstalled(enableModeSigValidator)) {
+            revert InvalidModule(enableModeSigValidator);
+        }
+
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+            revert EnableModeSigError();
+        }
+    }
+
+    /// @notice Builds the enable mode data hash as per eip712
+    /// @param module Module being enabled.
+    /// @param initData Module init data.
+    /// @return digest EIP712 hash
+    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
+        digest = _hashTypedData(
+            keccak256(
+                abi.encode(
+                    MODULE_ENABLE_MODE_TYPE_HASH,
+                    module,
+                    keccak256(initData)
+                )
+            )
+        );
+    }
+
+    /// @notice Checks if a module is installed on the smart account.
+    /// @param moduleTypeId The module type ID.
+    /// @param module The module address.
+    /// @param additionalContext Additional context for checking installation.
+    /// @return True if the module is installed, false otherwise.
+    function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) internal view returns (bool) {
+        additionalContext;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
+        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            bytes4 selector;
+            if (additionalContext.length >= 4) {
+                selector = bytes4(additionalContext[0:4]);
+            } else {
+                selector = bytes4(0x00000000);
+            }
+            return _isFallbackHandlerInstalled(selector, module);
+        }
+        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
+        else return false;
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.

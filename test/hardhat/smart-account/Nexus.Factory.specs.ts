@@ -21,7 +21,7 @@ import {
   deployContractsFixture,
 } from "../utils/deployment";
 import { encodeData, to18 } from "../utils/encoding";
-import { buildPackedUserOp } from "../utils/operationHelpers";
+import { MODE_VALIDATION, buildPackedUserOp, getNonce } from "../utils/operationHelpers";
 import { BootstrapConfigStruct } from "../../../typechain-types/contracts/factory/K1ValidatorFactory";
 import { toBytes, zeroAddress } from "viem";
 import { GENERIC_FALLBACK_SELECTOR } from "../utils/erc7579Utils";
@@ -132,9 +132,11 @@ describe("Nexus Factory Tests", function () {
         callData: "0x",
       });
 
-      const userOpNonce = await entryPoint.getNonce(
+      const userOpNonce = await getNonce(
+        entryPoint,
         expectedAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       userOp.nonce = userOpNonce;
 
@@ -364,7 +366,6 @@ describe("Nexus Factory Tests", function () {
         0,
       );
       const address = await factory.computeAccountAddress(initData, salt);
-      console.log("Address: ", address);
     });
 
     it("Should deploy Nexus account", async function () {

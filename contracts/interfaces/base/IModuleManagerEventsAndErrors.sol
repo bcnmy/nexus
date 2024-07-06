@@ -70,6 +70,15 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when no fallback handler is available for a given selector.
     error MissingFallbackHandler(bytes4 selector);
 
+    /// @dev Thrown when Invalid data is provided for MultiType install flow
+    error InvalidInput();
+
+    /// @dev Thrown when unable to validate Module Enable Mode signature
+    error EnableModeSigError();
+
+    /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
+    error MismatchModuleTypeId(uint256 moduleTypeId);
+
     /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
     error FallbackSelectorForbidden();
 }

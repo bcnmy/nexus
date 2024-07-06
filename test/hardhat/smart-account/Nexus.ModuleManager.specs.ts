@@ -16,6 +16,8 @@ import {
   buildPackedUserOp,
   findEventInLogs,
   generateUseropCallData,
+  getNonce,
+  MODE_VALIDATION
 } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import {
@@ -362,9 +364,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 
@@ -373,10 +377,6 @@ describe("Nexus Module Management Tests", () => {
         ethers.getBytes(userOpHash),
       );
       userOp.signature = signature;
-
-      const balance = await ethers.provider.getBalance(
-        await deployedNexus.getAddress(),
-      );
 
       await entryPoint.handleOps([userOp], await bundler.getAddress());
 
@@ -422,7 +422,7 @@ describe("Nexus Module Management Tests", () => {
       expect(isInstalledAfter).to.be.true;
     });
 
-    it("Should throw ModuleAlreadyInstalled if trying to install the same hook again.", async () => {
+    it("Should throw HookAlreadyInstalled if trying to install the same hook again.", async () => {
       await installModule({
         deployedNexus,
         entryPoint,
@@ -457,7 +457,7 @@ describe("Nexus Module Management Tests", () => {
           0n,
           installHookData,
         ),
-      ).to.be.revertedWithCustomError(deployedNexus, "ModuleAlreadyInstalled");
+      ).to.be.revertedWithCustomError(deployedNexus, "HookAlreadyInstalled");
     });
 
     it("Should throw HookAlreadyInstalled if trying to install two different hooks", async () => {
@@ -571,9 +571,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 
@@ -768,9 +770,11 @@ describe("Nexus Module Management Tests", () => {
         callData: uninstallModuleData,
       });
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes((await mockValidator.getAddress()).toString(), 24),
+        MODE_VALIDATION,
+        await mockValidator.getAddress()
       );
       userOp.nonce = nonce;
 

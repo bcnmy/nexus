@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
 /// @title TestAccountExecution_TryExecuteBatch
@@ -186,8 +187,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         combinedUserOps[0] = approvalUserOps[0];
         combinedUserOps[1] = transferUserOps[0];
 
-        combinedUserOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
-        combinedUserOps[1].nonce = getNonce(address(ALICE_ACCOUNT), address(VALIDATOR_MODULE));
+        combinedUserOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
+        combinedUserOps[1].nonce = getNonce(address(ALICE_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
 
         combinedUserOps[0].signature = signUserOp(BOB, combinedUserOps[0]);
         combinedUserOps[1].signature = signUserOp(ALICE, combinedUserOps[1]);
@@ -222,7 +223,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         // Prepare UserOperation for both actions
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
-        userOps[0].nonce = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
+        userOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
+
         userOps[0].signature = signUserOp(BOB, userOps[0]);
 
         // Execute both operations

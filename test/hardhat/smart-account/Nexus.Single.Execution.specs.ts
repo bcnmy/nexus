@@ -17,6 +17,8 @@ import { deployContractsAndSAFixture } from "../utils/deployment";
 import {
   generateUseropCallData,
   buildPackedUserOp,
+  MODE_VALIDATION,
+  getNonce
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -97,9 +99,11 @@ describe("Nexus Single Execution", () => {
       callData: installModuleData,
     });
 
-    const nonce = await entryPoint.getNonce(
+    const nonce = await getNonce(
+      entryPoint,
       userOp.sender,
-      ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+      MODE_VALIDATION,
+      validatorModuleAddress.toString()
     );
     userOp.nonce = nonce;
 
@@ -140,9 +144,11 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
 
       userOp.nonce = nonce;
@@ -241,9 +247,11 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
 
       userOp.nonce = nonce;
@@ -276,9 +284,11 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       userOp.nonce = nonce;
 
@@ -312,9 +322,11 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       userOp.nonce = nonce;
 
@@ -391,9 +403,11 @@ describe("Nexus Single Execution", () => {
         callData: data,
       });
 
-      const incrementNumberUserOpNonce = await entryPoint.getNonce(
+      const incrementNumberUserOpNonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       incrementNumberUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -427,9 +441,11 @@ describe("Nexus Single Execution", () => {
       });
       userOp.callData = callData;
 
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
 
       userOp.nonce = nonce;
@@ -567,9 +583,11 @@ describe("Nexus Single Execution", () => {
         sender: smartAccountAddress,
         callData,
       });
-      const nonce = await entryPoint.getNonce(
+      const nonce = await getNonce(
+        entryPoint,
         userOp.sender,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString()
       );
       userOp.nonce = nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);

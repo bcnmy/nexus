@@ -8,9 +8,12 @@ import "contracts/types/Constants.sol";
 contract MockHook is IModule {
     event PreCheckCalled();
     event PostCheckCalled();
+    event HookOnInstallCalled(bytes32 dataFirstWord);
 
-    function onInstall(bytes calldata) external override {
-        emit PreCheckCalled();
+    function onInstall(bytes calldata data) external override {
+        if (data.length >= 0x20) {
+            emit HookOnInstallCalled(bytes32(data[0:32]));
+        }
     }
 
     function onUninstall(bytes calldata) external override {
