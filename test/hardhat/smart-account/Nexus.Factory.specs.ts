@@ -12,9 +12,9 @@ import {
   Bootstrap,
   BootstrapLib,
   MockHook,
-  ModuleWhitelistFactory,
   MockExecutor,
   MockHandler,
+  MockRegistry,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
@@ -54,7 +54,7 @@ describe("Nexus Factory Tests", function () {
 
     const saDeploymentIndex = 0;
 
-    await factory.createAccount(accountOwnerAddress, saDeploymentIndex);
+    await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
   });
 
   describe("Nexus K1ValidatorFactory tests", function () {
@@ -65,10 +65,12 @@ describe("Nexus Factory Tests", function () {
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       await expect(
-        factory.createAccount(ownerAddress, saDeploymentIndex),
+        factory.createAccount(ownerAddress, saDeploymentIndex, [], 0),
       ).to.emit(factory, "AccountCreated");
 
       // Verify that the account was created
@@ -82,17 +84,21 @@ describe("Nexus Factory Tests", function () {
       const unexpectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         1,
+        [],
+        0,
       );
 
       // Read the expected account address
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       expect(unexpectedAccountAddress).to.not.equal(expectedAccountAddress);
 
-      await factory.createAccount(ownerAddress, saDeploymentIndex);
+      await factory.createAccount(ownerAddress, saDeploymentIndex, [], 0);
 
       // Verify that the account was created
       const proxyCode = await ethers.provider.getCode(expectedAccountAddress);
@@ -105,6 +111,8 @@ describe("Nexus Factory Tests", function () {
       const expectedAccountAddress = await factory.computeAccountAddress(
         ownerAddress,
         saDeploymentIndex,
+        [],
+        0,
       );
 
       // factory address + factory data
@@ -113,6 +121,8 @@ describe("Nexus Factory Tests", function () {
         factory.interface.encodeFunctionData("createAccount", [
           ownerAddress,
           saDeploymentIndex,
+          [],
+          0,
         ]),
       ]);
 
@@ -160,6 +170,7 @@ describe("Nexus Factory Tests", function () {
     let validatorModule: MockValidator;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
+    let registry: MockRegistry;
     let owner: Signer;
 
     let parsedValidator: BootstrapConfigStruct;
@@ -177,6 +188,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      registry = setup.registry;
 
       ownerAddress = await owner.getAddress();
 
@@ -226,6 +238,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
@@ -242,6 +257,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
@@ -274,6 +292,7 @@ describe("Nexus Factory Tests", function () {
     let validatorModule: MockValidator;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
+    let registry: MockRegistry;
     let owner: Signer;
     let smartAccountImplementation: Nexus;
 
@@ -294,6 +313,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      registry = setup.registry;
       smartAccountImplementation = setup.smartAccountImplementation;
 
       ownerAddress = await owner.getAddress();
@@ -341,6 +361,9 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       const address = await factory.computeAccountAddress(initData, salt);
     });
@@ -350,379 +373,14 @@ describe("Nexus Factory Tests", function () {
       const initData = await bootstrap.getInitNexusScopedCalldata(
         [parsedValidator],
         parsedHook,
+        registry,
+        [],
+        0,
       );
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
         "AccountCreated",
       );
-    });
-  });
-
-  describe("Module Whitelist Factory tests", function () {
-    let smartAccount: Nexus;
-    let entryPoint: EntryPoint;
-    let moduleWhitelistFactory: ModuleWhitelistFactory;
-    let factory: NexusAccountFactory;
-    let bootstrap: Bootstrap;
-    let validatorModule: MockValidator;
-    let fallbackModule: MockHandler;
-    let BootstrapLib: BootstrapLib;
-    let hookModule: MockHook;
-    let owner: Signer;
-    let mockExecutor: MockExecutor;
-
-    let parsedValidator: BootstrapConfigStruct;
-    let parsedHook: BootstrapConfigStruct;
-    let ownerAddress: AddressLike;
-    let entryPointAddress: AddressLike;
-
-    beforeEach(async function () {
-      const setup = await loadFixture(deployContractsAndSAFixture);
-      entryPoint = setup.entryPoint;
-      smartAccount = setup.deployedNexus;
-      owner = setup.accountOwner;
-      entryPointAddress = await setup.entryPoint.getAddress();
-      moduleWhitelistFactory = setup.moduleWhitelistFactory;
-      factory = setup.nexusFactory;
-      bootstrap = setup.bootstrap;
-      validatorModule = setup.mockValidator;
-      BootstrapLib = setup.BootstrapLib;
-      hookModule = setup.mockHook;
-      fallbackModule = setup.mockFallbackHandler;
-      mockExecutor = setup.mockExecutor;
-
-      ownerAddress = await owner.getAddress();
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-
-      parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-    });
-
-    it("Add module to whitelist", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await validatorModule.getAddress(),
-      );
-      expect(
-        await moduleWhitelistFactory.moduleWhitelist(
-          await validatorModule.getAddress(),
-        ),
-      ).to.equal(true);
-    });
-
-    it("Remove module from whitelist", async function () {
-      await moduleWhitelistFactory.removeModuleFromWhitelist(
-        await validatorModule.getAddress(),
-      );
-      expect(
-        await moduleWhitelistFactory.moduleWhitelist(
-          await validatorModule.getAddress(),
-        ),
-      ).to.equal(false);
-    });
-
-    it("Create account with modules", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await validatorModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await hookModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await mockExecutor.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await fallbackModule.getAddress(),
-      );
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-      const executor = await BootstrapLib.createSingleConfig(
-        await mockExecutor.getAddress(),
-        "0x",
-      );
-      const fallback = await BootstrapLib.createSingleConfig(
-        await fallbackModule.getAddress(),
-        encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
-      );
-
-      const parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      const parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-      const parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-      const parsedFallback = {
-        module: fallback[0],
-        data: fallback[1],
-      };
-
-      const salt = keccak256(toBytes(1));
-      const initData = await bootstrap.getInitNexusCalldata(
-        [parsedValidator],
-        [parsedExecutor],
-        parsedHook,
-        [parsedFallback],
-      );
-
-      await expect(
-        moduleWhitelistFactory.createAccount(initData, salt),
-      ).to.emit(moduleWhitelistFactory, "AccountCreated");
-
-      await moduleWhitelistFactory.computeAccountAddress(initData, salt);
-    });
-
-    it("Should revert when creating account with validator not whitelisted", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await hookModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await mockExecutor.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await fallbackModule.getAddress(),
-      );
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-      const executor = await BootstrapLib.createSingleConfig(
-        await mockExecutor.getAddress(),
-        "0x",
-      );
-      const fallback = await BootstrapLib.createSingleConfig(
-        await fallbackModule.getAddress(),
-        encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
-      );
-
-      const parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      const parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-      const parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-      const parsedFallback = {
-        module: fallback[0],
-        data: fallback[1],
-      };
-
-      const salt = keccak256(toBytes(1));
-      const initData = await bootstrap.getInitNexusCalldata(
-        [parsedValidator],
-        [parsedExecutor],
-        parsedHook,
-        [parsedFallback],
-      );
-
-      await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
-        .reverted;
-    });
-
-    it("Should revert when creating account with hook not whitelisted", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await validatorModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await mockExecutor.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await fallbackModule.getAddress(),
-      );
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-      const executor = await BootstrapLib.createSingleConfig(
-        await mockExecutor.getAddress(),
-        "0x",
-      );
-      const fallback = await BootstrapLib.createSingleConfig(
-        await fallbackModule.getAddress(),
-        encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
-      );
-
-      const parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      const parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-      const parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-      const parsedFallback = {
-        module: fallback[0],
-        data: fallback[1],
-      };
-
-      const salt = keccak256(toBytes(1));
-      const initData = await bootstrap.getInitNexusCalldata(
-        [parsedValidator],
-        [parsedExecutor],
-        parsedHook,
-        [parsedFallback],
-      );
-
-      await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
-        .reverted;
-    });
-
-    it("Should revert when creating account with executor not whitelisted", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await validatorModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await hookModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await fallbackModule.getAddress(),
-      );
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-      const executor = await BootstrapLib.createSingleConfig(
-        await mockExecutor.getAddress(),
-        "0x",
-      );
-      const fallback = await BootstrapLib.createSingleConfig(
-        await fallbackModule.getAddress(),
-        encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
-      );
-
-      const parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      const parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-      const parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-      const parsedFallback = {
-        module: fallback[0],
-        data: fallback[1],
-      };
-
-      const salt = keccak256(toBytes(1));
-      const initData = await bootstrap.getInitNexusCalldata(
-        [parsedValidator],
-        [parsedExecutor],
-        parsedHook,
-        [parsedFallback],
-      );
-
-      await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
-        .reverted;
-    });
-
-    it("Should revert when creating account with fallback handler not whitelisted", async function () {
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await validatorModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await hookModule.getAddress(),
-      );
-      await moduleWhitelistFactory.addModuleToWhitelist(
-        await mockExecutor.getAddress(),
-      );
-
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
-      const executor = await BootstrapLib.createSingleConfig(
-        await mockExecutor.getAddress(),
-        "0x",
-      );
-      const fallback = await BootstrapLib.createSingleConfig(
-        await fallbackModule.getAddress(),
-        encodeData(["bytes4"], [GENERIC_FALLBACK_SELECTOR]),
-      );
-
-      const parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-      const parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-      const parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-      const parsedFallback = {
-        module: fallback[0],
-        data: fallback[1],
-      };
-
-      const salt = keccak256(toBytes(1));
-      const initData = await bootstrap.getInitNexusCalldata(
-        [parsedValidator],
-        [parsedExecutor],
-        parsedHook,
-        [parsedFallback],
-      );
-
-      await expect(moduleWhitelistFactory.createAccount(initData, salt)).to.be
-        .reverted;
     });
   });
 });

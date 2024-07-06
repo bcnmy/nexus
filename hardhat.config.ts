@@ -20,10 +20,6 @@ const config: HardhatUserConfig = {
       },
     },
   },
-  networks: {
-  },
-  etherscan: {
-  },
   docgen: {
     projectName: "Nexus",
     projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",

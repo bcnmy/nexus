@@ -33,6 +33,8 @@ import {
     ERC1271_MAGICVALUE 
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
+import { RegistryAdapter } from "./RegistryAdapter.sol";
+
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -42,7 +44,8 @@ import { EIP712 } from "solady/src/utils/EIP712.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors {
+
+abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
 
@@ -201,7 +204,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual {
+    function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
@@ -226,7 +229,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual {
+    function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -244,7 +247,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual {
+    function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
@@ -269,10 +272,9 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
-
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
-
+        // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
         // Extract the call type from the provided parameters.

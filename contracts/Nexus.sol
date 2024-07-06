@@ -19,6 +19,7 @@ import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
+import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
@@ -125,7 +126,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    ) external payable onlyExecutorModule withHook returns (bytes[] memory returnData) {
+    ) external payable onlyExecutorModule withHook withRegistry(msg.sender, MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // check if calltype is batch or single
@@ -224,6 +225,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
         require(success, NexusInitializationFailed());
+    }
+
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external onlyEntryPointOrSelf {
+        _configureRegistry(newRegistry, attesters, threshold);
     }
 
     /// @notice Validates a signature according to ERC-1271 standards.
