@@ -97,13 +97,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     }
 
     /// @dev Execute a delegatecall with `delegate` on this account.
-    function _executeDelegatecall(
-        address delegate,
-        bytes calldata callData
-    )
-        internal
-        returns (bytes memory result)
-    {
+    function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -122,13 +116,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     }
 
     /// @dev Execute a delegatecall with `delegate` on this account and catch reverts.
-    function _tryExecuteDelegatecall(
-        address delegate,
-        bytes calldata callData
-    )
-        internal
-        returns (bool success, bytes memory result)
-    {
+    function _tryExecuteDelegatecall(address delegate, bytes calldata callData) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
