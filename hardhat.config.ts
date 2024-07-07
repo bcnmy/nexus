@@ -20,6 +20,11 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
+  },
   docgen: {
     projectName: "Nexus",
     projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",
