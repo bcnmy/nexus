@@ -7,6 +7,7 @@ import "../../../shared/TestAccountExecution_Base.t.sol";
 
 contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     MockExecutor public mockExecutor;
+    MockDelegateTarget delegateTarget;
 
     /// @notice Sets up the testing environment and installs the MockExecutor module
     function setUp() public {
@@ -14,6 +15,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         mockExecutor = new MockExecutor();
         counter = new Counter();
+        delegateTarget = new MockDelegateTarget();
 
         // Install MockExecutor as executor module on BOB_ACCOUNT
         bytes memory callDataInstall = abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
@@ -47,6 +49,22 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         PackedUserOperation[] memory userOpsExec = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
+    }
+     
+    /// @notice Tests delegate call execution via MockExecutor 
+    // Review
+    function test_ExecuteDelegateCallFromExecutor_Success() public {
+
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether}(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
+
+        address valueTarget = makeAddr("valueTarget");
+        uint256 value = 1 ether;
+        bytes memory sendValueCallData =
+            abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value);
+        mockExecutor.execDelegatecall(BOB_ACCOUNT, sendValueCallData);
+        // Assert that the value was set ie that execution was successful
+        // assertTrue(valueTarget.balance == value);
     }
 
     /// @notice Tests batch execution via MockExecutor
@@ -150,26 +168,6 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         assertEq(balanceRecipient, amount, "Recipient should have received 0 tokens");
     }
 
-    /// @notice Tests execution with an unsupported call type via MockExecutor
-    function test_RevertIf_ExecuteFromExecutor_UnsupportedCallType() public {
-        ExecutionMode unsupportedMode = ExecutionMode.wrap(bytes32(abi.encodePacked(bytes1(0xff), bytes1(0x00), bytes4(0), bytes22(0))));
-        bytes memory executionCalldata = abi.encodePacked(address(counter), uint256(0), abi.encodeWithSelector(Counter.incrementNumber.selector));
-
-        (CallType callType, , , ) = ModeLib.decode(unsupportedMode);
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(mockExecutor), 0, executionCalldata);
-
-        vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
-
-        mockExecutor.customExecuteViaAccount(
-            unsupportedMode,
-            BOB_ACCOUNT,
-            address(counter),
-            0,
-            abi.encodeWithSelector(Counter.incrementNumber.selector)
-        );
-    }
-
     /// @notice Tests single execution with an unsupported execution type via MockExecutor
     function test_RevertIf_ExecuteFromExecutor_UnsupportedExecType_Single() public {
         // Create an unsupported execution mode with an invalid execution type
@@ -185,6 +183,26 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         vm.expectRevert(abi.encodeWithSelector(UnsupportedExecType.selector, execType));
 
         // Call the custom execution via the mock executor, which should trigger the revert in Nexus
+        mockExecutor.customExecuteViaAccount(
+            unsupportedMode,
+            BOB_ACCOUNT,
+            address(counter),
+            0,
+            abi.encodeWithSelector(Counter.incrementNumber.selector)
+        );
+    }
+
+    /// @notice Tests execution with an unsupported call type via MockExecutor
+    function test_RevertIf_ExecuteFromExecutor_UnsupportedCallType() public {
+        ExecutionMode unsupportedMode = ExecutionMode.wrap(bytes32(abi.encodePacked(bytes1(0xee), bytes1(0x00), bytes4(0), bytes22(0))));
+        bytes memory executionCalldata = abi.encodePacked(address(counter), uint256(0), abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        (CallType callType, , , ) = ModeLib.decode(unsupportedMode);
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(mockExecutor), 0, executionCalldata);
+
+        vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
+
         mockExecutor.customExecuteViaAccount(
             unsupportedMode,
             BOB_ACCOUNT,

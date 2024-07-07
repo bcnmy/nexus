@@ -5,8 +5,19 @@ import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
 import { INexus } from "contracts/interfaces/INexus.sol";
 import { MODULE_TYPE_EXECUTOR } from "contracts/types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "contracts/lib/ModeLib.sol";
+import { 
+    ModeLib, 
+    ExecutionMode, 
+    ExecType, 
+    CallType, 
+    CALLTYPE_BATCH, 
+    CALLTYPE_SINGLE, 
+    CALLTYPE_DELEGATECALL, 
+    EXECTYPE_DEFAULT, 
+    EXECTYPE_TRY 
+} from "contracts/lib/ModeLib.sol";
 import { ExecLib } from "contracts/lib/ExecLib.sol";
+import { MODE_DEFAULT, ModePayload } from "contracts/lib/ModeLib.sol";
 
 import { IExecutor } from "../../contracts/interfaces/modules/IExecutor.sol";
 import "../../contracts/types/DataTypes.sol";
@@ -25,6 +36,21 @@ contract MockExecutor is IExecutor {
 
     function executeViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
+    }
+
+    function execDelegatecall(
+        INexus account,
+        bytes calldata callData
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
+        return account.executeFromExecutor(
+            ModeLib.encode(
+                CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)
+            ),
+            callData
+        );
     }
 
     function executeBatchViaAccount(INexus account, Execution[] calldata execs) external returns (bytes[] memory returnData) {
@@ -72,4 +98,6 @@ contract MockExecutor is IExecutor {
     function isInitialized(address) external pure override returns (bool) {
         return false;
     }
+
+    receive() external payable {}
 }

@@ -15,6 +15,7 @@ import { Nexus } from "../../../contracts/Nexus.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
+import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";

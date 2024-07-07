@@ -12,7 +12,7 @@ pragma solidity ^0.8.26;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { CallType, ExecType } from "../lib/ModeLib.sol";
+import { CallType } from "../lib/ModeLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - INexus Events and Errors
@@ -35,10 +35,6 @@ interface INexusEventsAndErrors {
     /// @notice Error thrown when an execution with an unsupported CallType was made.
     /// @param callType The unsupported call type.
     error UnsupportedCallType(CallType callType);
-
-    /// @notice Error thrown when an execution with an unsupported ExecType was made.
-    /// @param execType The unsupported execution type.
-    error UnsupportedExecType(ExecType execType);
 
     /// @notice Error thrown on failed execution.
     error ExecutionFailed();
