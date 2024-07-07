@@ -7,6 +7,7 @@ import "../../../shared/TestAccountExecution_Base.t.sol";
 
 contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     MockExecutor public mockExecutor;
+    MockDelegateTarget delegateTarget;
 
     /// @notice Sets up the testing environment and installs the MockExecutor module
     function setUp() public {
@@ -14,6 +15,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         mockExecutor = new MockExecutor();
         counter = new Counter();
+        delegateTarget = new MockDelegateTarget();
 
         // Install MockExecutor as executor module on BOB_ACCOUNT
         bytes memory callDataInstall = abi.encodeWithSelector(IModuleManager.installModule.selector, uint256(2), address(mockExecutor), "");
@@ -48,6 +50,21 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
     }
+     
+    /// @notice Tests delegate call execution via MockExecutor 
+    // function test_ExecuteDelegateCallFromExecutor_Success() public {
+
+    //     (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether}(""); // Fund BOB_ACCOUNT
+    //     assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
+
+    //     address valueTarget = makeAddr("valueTarget");
+    //     uint256 value = 1 ether;
+    //     bytes memory sendValueCallData =
+    //         abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value);
+    //     mockExecutor.execDelegatecall(BOB_ACCOUNT, sendValueCallData);
+    //     // Assert that the value was set ie that execution was successful
+    //     assertTrue(valueTarget.balance == value);
+    // }
 
     /// @notice Tests batch execution via MockExecutor
     function test_ExecBatchFromExecutor_Success() public {
