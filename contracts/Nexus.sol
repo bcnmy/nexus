@@ -15,7 +15,6 @@ pragma solidity ^0.8.26;
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
-import { Execution } from "./types/DataTypes.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
