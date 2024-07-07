@@ -146,7 +146,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (callType == CALLTYPE_BATCH) {
             returnData = _handleBatchExecutionAndReturnData(executionCalldata, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            _handleDelegateCallExecution(executionCalldata, execType);
+            returnData =  _handleDelegateCallExecutionAndReturnData(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
