@@ -36,10 +36,6 @@ interface INexusEventsAndErrors {
     /// @param callType The unsupported call type.
     error UnsupportedCallType(CallType callType);
 
-    /// @notice Error thrown when an execution with an unsupported ExecType was made.
-    /// @param execType The unsupported execution type.
-    error UnsupportedExecType(ExecType execType);
-
     /// @notice Error thrown on failed execution.
     error ExecutionFailed();
 

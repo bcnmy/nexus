@@ -140,29 +140,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes calldata executionCalldata
     ) external payable onlyExecutorModule withHook withRegistry(msg.sender, MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
         (CallType callType, ExecType execType) = mode.decodeBasic();
-
-        // check if calltype is batch or single
+        // check if calltype is batch or single or delegate call
         if (callType == CALLTYPE_SINGLE) {
-            // destructure executionCallData according to single exec
-            (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-            returnData = new bytes[](1);
-            bool success;
-            // check if execType is revert(default) or try
-            if (execType == EXECTYPE_DEFAULT) {
-                returnData[0] = _execute(target, value, callData);
-            } else if (execType == EXECTYPE_TRY) {
-                (success, returnData[0]) = _tryExecute(target, value, callData);
-                if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
-            } else {
-                revert UnsupportedExecType(execType);
-            }
+            returnData = _handleSingleExecutionAndReturnData(executionCalldata, execType);
         } else if (callType == CALLTYPE_BATCH) {
-            // destructure executionCallData according to batched exec
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            // check if execType is revert or try
-            if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
-            else if (execType == EXECTYPE_TRY) returnData = _tryExecuteBatch(executions);
-            else revert UnsupportedExecType(execType);
+            returnData = _handleBatchExecutionAndReturnData(executionCalldata, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
             _handleDelegateCallExecution(executionCalldata, execType);
         } else {
@@ -541,36 +523,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
         version = "1.0.0-beta";
-    }
-
-    /// @dev Executes a single transaction based on the specified execution type.
-    /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
-    /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
-    function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) private {
-        (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
-        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
-        else revert UnsupportedExecType(execType);
-    }
-
-    /// @dev Executes a batch of transactions based on the specified execution type.
-    /// @param executionCalldata The calldata for a batch of transactions.
-    /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
-    function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) private {
-        Execution[] calldata executions = executionCalldata.decodeBatch();
-        if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
-        else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
-        else revert UnsupportedExecType(execType);
-    }
-
-    /// @dev Executes a single transaction based on the specified execution type.
-    /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
-    /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
-    function _handleDelegateCallExecution(bytes calldata executionCalldata, ExecType execType) private {
-        (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
-        if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
-        else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
-        else revert UnsupportedExecType(execType);
     }
 
     /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,
