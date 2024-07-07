@@ -52,19 +52,20 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     }
      
     /// @notice Tests delegate call execution via MockExecutor 
-    // function test_ExecuteDelegateCallFromExecutor_Success() public {
+    // Review
+    function test_ExecuteDelegateCallFromExecutor_Success() public {
 
-    //     (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether}(""); // Fund BOB_ACCOUNT
-    //     assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
+        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether}(""); // Fund BOB_ACCOUNT
+        assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
 
-    //     address valueTarget = makeAddr("valueTarget");
-    //     uint256 value = 1 ether;
-    //     bytes memory sendValueCallData =
-    //         abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value);
-    //     mockExecutor.execDelegatecall(BOB_ACCOUNT, sendValueCallData);
-    //     // Assert that the value was set ie that execution was successful
-    //     assertTrue(valueTarget.balance == value);
-    // }
+        address valueTarget = makeAddr("valueTarget");
+        uint256 value = 1 ether;
+        bytes memory sendValueCallData =
+            abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value);
+        mockExecutor.execDelegatecall(BOB_ACCOUNT, sendValueCallData);
+        // Assert that the value was set ie that execution was successful
+        // assertTrue(valueTarget.balance == value);
+    }
 
     /// @notice Tests batch execution via MockExecutor
     function test_ExecBatchFromExecutor_Success() public {

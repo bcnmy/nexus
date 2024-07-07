@@ -197,11 +197,14 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleDelegateCallExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData) {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
+        returnData = new bytes[](1);
+        bool success;
         if (execType == EXECTYPE_DEFAULT) { 
             returnData[0] = _executeDelegatecall(delegate, callData);
         }
         else if (execType == EXECTYPE_TRY) {
-            (, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
+            (success, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
+            if (!success) emit TryDelegateCallUnsuccessful(0, returnData[0]);
         }
         else revert UnsupportedExecType(execType);
     }
