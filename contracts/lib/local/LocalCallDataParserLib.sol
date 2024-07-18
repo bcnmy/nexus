@@ -9,6 +9,7 @@ library LocalCallDataParserLib {
         internal 
         pure 
         returns (
+            address module,
             uint256 moduleType,
             bytes calldata moduleInitData,
             bytes calldata enableModeSignature,
@@ -18,6 +19,9 @@ library LocalCallDataParserLib {
         uint256 p;
         assembly {
             p := packedData.offset
+            module := shr(96, calldataload(p))
+
+            p := add(p, 0x14)
             moduleType := calldataload(p)
             
             moduleInitData.length := shr(224, calldataload(add(p, 0x20)))

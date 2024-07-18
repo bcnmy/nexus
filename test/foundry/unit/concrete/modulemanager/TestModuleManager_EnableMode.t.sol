@@ -24,8 +24,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function test_EnableMode_Success() public {
         address moduleToEnable = address(mockMultiModule);
+        address opValidator = address(mockMultiModule);
 
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+        PackedUserOperation memory op = makeDraftOp(opValidator);
         
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
@@ -42,6 +43,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         // bytes4 enableModeSig length
         // enableModeSig
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
@@ -66,9 +68,12 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         );
     }
 
-    function test_EnableMode_FailsWithWrongValidationModule() public {
+    function test_EnableMode_FailsWithWrongValidationModuleInEnableModeSig() public {
         address moduleToEnable = address(mockMultiModule);
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+        address opValidator = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
@@ -77,6 +82,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         enableModeSig = abi.encodePacked(invalidValidator, enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
@@ -101,7 +107,10 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function test_EnableMode_FailsWithWrongSig() public {
         address moduleToEnable = address(mockMultiModule);
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+        address opValidator = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); 
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
@@ -110,6 +119,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,

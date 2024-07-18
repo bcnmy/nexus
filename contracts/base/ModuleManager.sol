@@ -155,15 +155,15 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     }
 
     /// @dev Implements Module Enable Mode flow.
-    /// @param module The address of the module to be installed.
     /// @param packedData Data source to parse data required to perform Module Enable mode from.
     /// @return userOpSignature the clean signature which can be further used for userOp validation
-    function _enableMode(address module, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+    function _enableMode(bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+        address module;
         uint256 moduleType;
         bytes calldata moduleInitData;
         bytes calldata enableModeSignature;
         
-        (moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
+        (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
 
         _checkEnableModeSignature(
             _getEnableModeDataHash(module, moduleInitData),

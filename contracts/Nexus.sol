@@ -106,7 +106,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             validationData = IValidator(validator).validateUserOp(op, userOpHash);
         } else {
             PackedUserOperation memory userOp = op;
-            userOp.signature = _enableMode(validator, op.signature);
+            userOp.signature = _enableMode(op.signature);
+            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         }    
     }
