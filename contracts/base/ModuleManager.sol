@@ -157,7 +157,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @dev Implements Module Enable Mode flow.
     /// @param packedData Data source to parse data required to perform Module Enable mode from.
     /// @return userOpSignature the clean signature which can be further used for userOp validation
-    function _enableMode(bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+    function _enableMode(bytes32 userOpHash, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
         address module;
         uint256 moduleType;
         bytes calldata moduleInitData;
@@ -166,7 +166,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
 
         _checkEnableModeSignature(
-            _getEnableModeDataHash(module, moduleInitData),
+            _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData),
             enableModeSignature
         );
         _installModule(moduleType, module, moduleInitData);
@@ -382,15 +382,21 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     }
 
     /// @notice Builds the enable mode data hash as per eip712
-    /// @param module Module being enabled.
+    /// @param module Module being enabled
+    /// @param moduleType Type of the module as per EIP-7579
+    /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
     /// @return digest EIP712 hash
-    function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
+    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32 digest) {
+        // userOpHash is from validateUserOp
         digest = _hashTypedData(
             keccak256(
                 abi.encode(
+                    // IMPORTANT! NEED TO CHANGE MODULE_ENABLE_MODE_TYPE_HASH TO INCLUDE THE NEW FIELDS
                     MODULE_ENABLE_MODE_TYPE_HASH,
                     module,
+                    moduleType,
+                    userOpHash,
                     keccak256(initData)
                 )
             )
