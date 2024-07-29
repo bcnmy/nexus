@@ -166,7 +166,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
             bool success;
             // Perform the call to the target contract with the decoded data.
-            (success, innerCallRet) = target.call(data);
+            (success, innerCallRet) = target.call{value: msg.value}(data);
             // Ensure the call was successful.
             require(success, InnerCallFailed());
         }

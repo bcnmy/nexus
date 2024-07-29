@@ -69,7 +69,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @return createdAccount The address of the newly created Nexus account.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
         require(factoryWhitelist[address(factory)], FactoryNotWhitelisted());
-        (bool success, bytes memory returnData) = factory.call(factoryData);
+        (bool success, bytes memory returnData) = factory.call{value: msg.value}(factoryData);
 
         // Check if the call was successful
         require(success, CallToDeployWithFactoryFailed());
