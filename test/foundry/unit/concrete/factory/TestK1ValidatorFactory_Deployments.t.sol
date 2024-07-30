@@ -121,9 +121,6 @@ function test_CreateAccount_SameOwnerAndIndex() public payable {
     // Expect the second call to revert with InnerCallFailed
     vm.expectRevert(K1ValidatorFactory.InnerCallFailed.selector);
     address payable secondAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
-
-    // Validate that the first account address matches the expected address
-    assertEq(firstAccountAddress, secondAccountAddress, "Addresses should match for the same owner and index");
 }
 
 

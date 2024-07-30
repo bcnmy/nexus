@@ -96,7 +96,10 @@ contract K1Validator is IValidator {
             return VALIDATION_FAILED;
         }
 
-        if (owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) || owner.isValidSignatureNow(userOpHash, userOp.signature)) {
+        if (
+            owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
+            owner.isValidSignatureNow(userOpHash, userOp.signature)
+        ) {
             return VALIDATION_SUCCESS;
         }
         return VALIDATION_FAILED;
