@@ -23,18 +23,17 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { 
-    MODULE_TYPE_VALIDATOR, 
-    MODULE_TYPE_EXECUTOR, 
-    MODULE_TYPE_FALLBACK, 
-    MODULE_TYPE_HOOK, 
-    MODULE_TYPE_MULTI, 
-    MODULE_ENABLE_MODE_TYPE_HASH, 
-    ERC1271_MAGICVALUE 
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_MULTI,
+    MODULE_ENABLE_MODE_TYPE_HASH,
+    ERC1271_MAGICVALUE
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
-
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -55,6 +54,14 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         _;
     }
 
+    /// @notice Ensures the caller is authorized.
+    modifier onlyAuthorized() {
+        if (msg.sender != _ENTRYPOINT && msg.sender != address(this) && !_getAccountStorage().executors.contains(msg.sender)) {
+            revert UnauthorizedOperation(msg.sender);
+        }
+        _;
+    }
+
     /// @notice Does pre-checks and post-checks using an installed hook on the account.
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
@@ -69,7 +76,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable override(Receiver) receiverFallback {
+    fallback() external payable override(Receiver) receiverFallback onlyAuthorized {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
@@ -158,17 +165,14 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param module The address of the module to be installed.
     /// @param packedData Data source to parse data required to perform Module Enable mode from.
     /// @return userOpSignature the clean signature which can be further used for userOp validation
-    function _enableMode(address module, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+    function _enableMode(address module, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {
         uint256 moduleType;
         bytes calldata moduleInitData;
         bytes calldata enableModeSignature;
-        
-        (moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
 
-        _checkEnableModeSignature(
-            _getEnableModeDataHash(module, moduleInitData),
-            enableModeSignature
-        );
+        (moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
+
+        _checkEnableModeSignature(_getEnableModeDataHash(module, moduleInitData), enableModeSignature);
         _installModule(moduleType, module, moduleInitData);
     }
 
@@ -182,7 +186,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
-    /// @dev No need to check that the module is already installed, as this check is done 
+    /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
     function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
@@ -195,7 +199,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_MULTI) {
-            _multiTypeInstall(module, initData);            
+            _multiTypeInstall(module, initData);
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
@@ -317,21 +321,16 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// of (uint[] types, bytes[] initDatas)
     /// @dev Install multiple modules at once
     /// @dev It will call module.onInstall for every initialization so it ensure the flow
-    /// consistent with the flow of the SA's that do not implement _multiTypeInstall 
+    /// consistent with the flow of the SA's that do not implement _multiTypeInstall
     /// and thus will call the multityped module several times
     /// The multityped modules can not expect all the 7579 SA's to implement _multiTypeInstall and
     /// thus should account for the flow when they are going to be called with onUnistall
-    /// for the initialization as every of the module types they declare they are 
+    /// for the initialization as every of the module types they declare they are
     /// @param module address of the module
     /// @param initData initialization data for the module
-    function _multiTypeInstall(
-        address module,
-        bytes calldata initData
-    )
-        internal virtual
-    {
+    function _multiTypeInstall(address module, bytes calldata initData) internal virtual {
         (uint256[] calldata types, bytes[] calldata initDatas) = initData.parseMultiTypeInitData();
-        
+
         uint256 length = types.length;
         if (initDatas.length != length) revert InvalidInput();
 
@@ -366,7 +365,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         }
     }
 
-        
     /// @notice Checks if an enable mode signature is valid.
     /// @param digest signed digest.
     /// @param sig Signature.
@@ -376,7 +374,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
             revert InvalidModule(enableModeSigValidator);
         }
 
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) {
             revert EnableModeSigError();
         }
     }
@@ -386,15 +384,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param initData Module init data.
     /// @return digest EIP712 hash
     function _getEnableModeDataHash(address module, bytes calldata initData) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(
-            keccak256(
-                abi.encode(
-                    MODULE_ENABLE_MODE_TYPE_HASH,
-                    module,
-                    keccak256(initData)
-                )
-            )
-        );
+        digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, keccak256(initData))));
     }
 
     /// @notice Checks if a module is installed on the smart account.
@@ -404,9 +394,11 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @return True if the module is installed, false otherwise.
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) internal view returns (bool) {
         additionalContext;
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            return _isValidatorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            return _isExecutorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             if (additionalContext.length >= 4) {
                 selector = bytes4(additionalContext[0:4]);
@@ -414,9 +406,11 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
                 selector = bytes4(0x00000000);
             }
             return _isFallbackHandlerInstalled(selector, module);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            return _isHookInstalled(module);
+        } else {
+            return false;
         }
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
@@ -473,7 +467,11 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    ) private view returns (address[] memory array, address nextCursor) {
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }
