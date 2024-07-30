@@ -60,8 +60,7 @@ import { MockToken } from "../../../contracts/mocks/MockToken.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 
-import "../../../contracts/mocks/MockNFT.sol";
-import "../../../contracts/mocks/Counter.sol";
+
 
 // ==========================
 // Additional Contract Imports
@@ -69,8 +68,9 @@ import "../../../contracts/mocks/Counter.sol";
 import "./../../../contracts/factory/K1ValidatorFactory.sol";
 import "./../../../contracts/utils/RegistryBootstrap.sol";
 import "./../../../contracts/lib/BootstrapLib.sol";
-import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
+import "../../../contracts/mocks/MockNFT.sol";
+import "../../../contracts/mocks/Counter.sol";
 
 // ==========================
 // Sentinel List Helper

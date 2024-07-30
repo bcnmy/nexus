@@ -16,6 +16,9 @@ import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { INexus } from "./interfaces/INexus.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC7579Account } from "./interfaces/IERC7579Account.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { IERC7484 } from "./interfaces/IERC7484.sol";
@@ -51,7 +54,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, ERC165, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
     using NonceLib for uint256;
@@ -264,6 +267,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
         else if (moduleTypeId == MODULE_TYPE_MULTI) return true;
         else return false;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return
+            interfaceId == type(IERC165).interfaceId ||
+            interfaceId == type(IERC7579Account).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// @notice Determines if a specific execution mode is supported.
