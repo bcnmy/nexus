@@ -21,12 +21,8 @@ contract TestK1Validator is NexusTest_Base {
         validator = new K1Validator();
 
         // Prepare the call data for installing the validator module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(validator),
-            abi.encodePacked(BOB_ADDRESS)
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encodePacked(BOB_ADDRESS));
 
         // Create an execution array with the installation call data
         Execution[] memory execution = new Execution[](1);
@@ -74,17 +70,12 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests the onUninstall function to ensure the owner is removed
     function test_OnUninstall_Success() public {
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(validator);
         address prev = SentinelListHelper.findPrevious(array, remove);
         if (prev == address(0)) prev = address(0x01);
 
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(validator),
-            abi.encode(prev, "")
-        );
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encode(prev, ""));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -128,8 +119,7 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_Success() public {
         startPrank(address(BOB_ACCOUNT));
 
-        bytes32 originalHash = keccak256(abi.encodePacked("123"));
-
+        bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, toERC1271HashPersonalSign(originalHash));
         bytes memory signedMessage = abi.encodePacked(r, s, v);
         bytes memory completeSignature = abi.encodePacked(address(validator), signedMessage);
@@ -162,45 +152,37 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_Failure() public {
         prank(address(BOB_ACCOUNT));
 
-
-        bytes4 result = validator.isValidSignatureWithSender(
-            address(BOB_ACCOUNT),
-            userOpHash,
-            abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid"))))
-        );
+        bytes4 result =
+            validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
 
         assertEq(result, ERC1271_INVALID, "Signature should be invalid");
     }
 
     /// @notice Tests the transferOwnership function to ensure ownership is transferred correctly
-function test_TransferOwnership_Success() public {
-    startPrank(address(BOB_ACCOUNT));
+    function test_TransferOwnership_Success() public {
+        startPrank(address(BOB_ACCOUNT));
 
+        // Transfer ownership to ALICE
+        validator.transferOwnership(ALICE_ADDRESS);
 
-    // Transfer ownership to ALICE
-    validator.transferOwnership(ALICE_ADDRESS);
+        // Verify that the ownership is transferred
+        assertEq(validator.smartAccountOwners(address(BOB_ACCOUNT)), ALICE_ADDRESS, "Ownership should be transferred to ALICE");
 
-    // Verify that the ownership is transferred
-    assertEq(validator.smartAccountOwners(address(BOB_ACCOUNT)), ALICE_ADDRESS, "Ownership should be transferred to ALICE");
+        stopPrank();
+    }
 
-    stopPrank();
-}
+    /// @notice Tests the transferOwnership function to ensure it reverts when transferring to the zero address
+    function test_RevertWhen_TransferOwnership_ToZeroAddress() public {
+        startPrank(address(BOB_ACCOUNT));
 
+        // Expect the ZeroAddressNotAllowed error to be thrown
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
 
-/// @notice Tests the transferOwnership function to ensure it reverts when transferring to the zero address
-function test_RevertWhen_TransferOwnership_ToZeroAddress() public {
-    startPrank(address(BOB_ACCOUNT));
+        // Attempt to transfer ownership to the zero address
+        validator.transferOwnership(address(0));
 
-    // Expect the ZeroAddressNotAllowed error to be thrown
-    vm.expectRevert(ZeroAddressNotAllowed.selector);
-
-    // Attempt to transfer ownership to the zero address
-    validator.transferOwnership(address(0));
-
-    stopPrank();
-}
-
-
+        stopPrank();
+    }
 
     /// @notice Tests the name function to return the correct contract name
     function test_Name() public {
@@ -228,23 +210,107 @@ function test_RevertWhen_TransferOwnership_ToZeroAddress() public {
     }
 
     /// @notice Ensures the transferOwnership function reverts when transferring to a contract address
-function test_RevertWhen_TransferOwnership_ToContract() public {
-    startPrank(address(BOB_ACCOUNT));
+    function test_RevertWhen_TransferOwnership_ToContract() public {
+        startPrank(address(BOB_ACCOUNT));
 
-    // Deploy a dummy contract to use as the new owner
-    address dummyContract = address(new K1Validator());
+        // Deploy a dummy contract to use as the new owner
+        address dummyContract = address(new K1Validator());
 
-    // Install the validator module first
+        // Expect the NewOwnerIsContract error to be thrown
+        vm.expectRevert(K1Validator.NewOwnerIsContract.selector);
 
-    // Expect the NewOwnerIsContract error to be thrown
-    vm.expectRevert(K1Validator.NewOwnerIsContract.selector);
+        // Attempt to transfer ownership to the dummy contract address
+        validator.transferOwnership(dummyContract);
 
-    // Attempt to transfer ownership to the dummy contract address
-    validator.transferOwnership(dummyContract);
+        stopPrank();
+    }
 
-    stopPrank();
-}
+    /// @notice Tests that a valid signature with a valid 's' value is accepted
+    function test_ValidateUserOp_ValidSignature() public {
+        startPrank(address(BOB_ACCOUNT));
 
+        bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
+
+        // Ensure 's' is in the lower range
+        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "Invalid 's' value");
+
+        userOp.signature = abi.encodePacked(r, s, v);
+
+        uint256 res = validator.validateUserOp(userOp, originalHash);
+
+        stopPrank();
+
+        assertEq(res, VALIDATION_SUCCESS, "Valid signature should be accepted");
+    }
+
+    /// @notice Tests that a signature with an invalid 's' value is rejected
+    function test_ValidateUserOp_InvalidSValue() public {
+        startPrank(address(BOB_ACCOUNT));
+
+        bytes32 originalHash = keccak256(abi.encodePacked("invalid message"));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
+
+        // Ensure 's' is in the upper range (invalid)
+        if (uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            s = bytes32(0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A1); // Set an invalid 's' value
+        }
+
+        userOp.signature = abi.encodePacked(r, s, v);
+
+        uint256 res = validator.validateUserOp(userOp, originalHash);
+
+        stopPrank();
+
+        assertEq(res, VALIDATION_FAILED, "Signature with invalid 's' value should be rejected");
+    }
+
+    /// @notice Tests that a valid signature with a valid 's' value is accepted for isValidSignatureWithSender
+    function test_IsValidSignatureWithSender_ValidSignature() public {
+        startPrank(address(BOB_ACCOUNT));
+
+        // Generate a valid message hash
+        bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
+
+        // Sign the message hash with BOB's private key
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
+
+        // Ensure 's' is in the lower range
+        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "Invalid 's' value");
+
+        // Construct the signature from r, s, v
+        bytes memory signedMessage = abi.encodePacked(r, s, v);
+
+        // Call isValidSignatureWithSender on the validator contract with the correct parameters
+        bytes4 result = validator.isValidSignatureWithSender(address(BOB_ACCOUNT), originalHash, signedMessage);
+
+        stopPrank();
+
+        // Ensure the result is the expected ERC1271_MAGICVALUE
+        assertEq(result, ERC1271_MAGICVALUE, "Valid signature should be accepted");
+    }
+
+    /// @notice Tests that a signature with an invalid 's' value is rejected for isValidSignatureWithSender
+    function test_IsValidSignatureWithSender_InvalidSValue() public {
+        startPrank(address(BOB_ACCOUNT));
+
+        bytes32 originalHash = keccak256(abi.encodePacked("invalid message"));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
+
+        // Ensure 's' is in the upper range (invalid)
+        if (uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            s = bytes32(0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A1); // Set an invalid 's' value
+        }
+
+        bytes memory signedMessage = abi.encodePacked(r, s, v);
+        bytes memory completeSignature = abi.encodePacked(address(validator), signedMessage);
+
+        bytes4 result = BOB_ACCOUNT.isValidSignature(originalHash, completeSignature);
+
+        stopPrank();
+
+        assertEq(result, ERC1271_INVALID, "Signature with invalid 's' value should be rejected");
+    }
 
     /// @notice Generates an ERC-1271 hash for personal sign
     /// @param childHash The child hash
