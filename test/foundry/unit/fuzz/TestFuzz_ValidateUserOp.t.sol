@@ -54,10 +54,10 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         stopPrank();
     }
 
-    /// @notice Fuzz test for validateUserOp with an invalid nonce
-    /// @param randomNonce The random nonce for the user operation
-    /// @param missingAccountFunds The random missing funds for the account
-    function testFuzz_ValidateUserOp_InvalidNonce(uint256 randomNonce, uint256 missingAccountFunds) public {
+    /// @notice Fuzz testing for validateUserOp with an invalid nonce.
+    /// @param randomNonce The random nonce for the user operation.
+    /// @param missingAccountFunds The random missing funds for the account.
+    function testFuzz_RevertWhen_InvalidNonce(uint256 randomNonce, uint256 missingAccountFunds) public {
         vm.assume(randomNonce < type(uint192).max);
         vm.assume(missingAccountFunds < 100 ether);
 
@@ -71,17 +71,25 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         prank(BOB.addr);
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
 
+        address validator;
+
+        assembly {
+            validator := shr(96, shl(32, randomNonce)) 
+        }
+
+        // Expect revert with InvalidModule selector
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
-        assertTrue(res == 1, "Operation should fail validation due to invalid nonce");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
     }
 
-    /// @notice Fuzz test for validateUserOp with an invalid nonce and valid signature
-    /// @param randomNonce The random nonce for the user operation
-    /// @param missingAccountFunds The random missing funds for the account
-    function testFuzz_ValidateUserOp_InvalidNonceAndValidSignature(uint256 randomNonce, uint256 missingAccountFunds) public {
+    /// @notice Fuzz testing for validateUserOp with an invalid nonce and valid signature.
+    /// @param randomNonce The random nonce for the user operation.
+    /// @param missingAccountFunds The random missing funds for the account.
+    function testFuzz_RevertWhen_InvalidNonceAndValidSignature(uint256 randomNonce, uint256 missingAccountFunds) public {
         vm.assume(randomNonce < type(uint192).max);
         vm.assume(missingAccountFunds < 100 ether);
 
@@ -93,17 +101,24 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signUserOp(BOB, userOps[0]); // Using a valid signature
 
+        address validator;
+        assembly {
+            validator := shr(96, shl(32, randomNonce)) 
+        }
+
+        // Expect revert with InvalidModule selector
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, missingAccountFunds);
-        assertTrue(res == 1, "Operation should fail validation due to invalid nonce");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, missingAccountFunds);
         stopPrank();
     }
 
-    /// @notice Fuzz test for validateUserOp with an invalid user address
-    /// @param randomNonce The random nonce for the user operation
-    /// @param userAddress The invalid user address for the user operation
-    function testFuzz_ValidateUserOp_InvalidUserAddress(uint256 randomNonce, address userAddress) public {
+    /// @notice Fuzz testing for validateUserOp with an invalid user address.
+    /// @param randomNonce The random nonce for the user operation.
+    /// @param userAddress The invalid user address for the user operation.
+    function testFuzz_RevertWhen_InvalidUserAddress(uint256 randomNonce, address userAddress) public {
         vm.assume(randomNonce < type(uint192).max);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -111,10 +126,18 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
 
+        address validator;
+        assembly {
+            validator := shr(96, shl(32, randomNonce)) 
+        }
+
+        // Expect revert with InvalidModule selector
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
-        assertTrue(res == 1, "Operation should fail validation with an invalid user address");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
     }
+
 }
