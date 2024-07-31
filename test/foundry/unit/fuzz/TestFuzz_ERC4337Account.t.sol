@@ -71,10 +71,18 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = randomSignature; // Using fuzzed signature
 
+        address validator;
+
+        assembly {
+            validator := shr(96, shl(32, randomNonce)) 
+        }
+
+        // Expect revert with InvalidModule selector
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        assertTrue(res == 0 || res == 1, "Operation should either pass or fail validation properly");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         stopPrank();
     }
 
@@ -118,10 +126,17 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         userOps[0] = buildPackedUserOp(userAddress, randomNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = invalidSignature; // Using invalid signature
+        address validator;
+
+                assembly {
+            validator := shr(96, shl(32, randomNonce)) 
+        }
+        // Expect revert with InvalidModule selector
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+
 
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        assertTrue(res == 1, "Operation should fail validation with an invalid signature");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         stopPrank();
     }
 
