@@ -102,8 +102,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     {
         address validator = op.nonce.getValidator();
         if (!op.nonce.isModuleEnableMode()) {
-            // Check if validator is not enabled. If not, return VALIDATION_FAILED.
-            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
+            // Check if validator is not enabled. If not, revert.
+            require(_isValidatorInstalled(validator), InvalidModule(validator));
             validationData = IValidator(validator).validateUserOp(op, userOpHash);
         } else {
             PackedUserOperation memory userOp = op;
