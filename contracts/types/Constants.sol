@@ -38,7 +38,12 @@ uint256 constant MODULE_TYPE_FALLBACK = 3;
 
 // Module type identifier for hooks
 uint256 constant MODULE_TYPE_HOOK = 4;
-bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256("ModuleEnableMode(address module, bytes32 initDataHash)");
 
+// Typehash for ModuleEnableMode struct, compliant with EIP-712
+bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256("ModuleEnableMode(address module,bytes initData)");
+
+// Mode for validation
 bytes1 constant MODE_VALIDATION = 0x00;
+
+// Mode for module enablement
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
