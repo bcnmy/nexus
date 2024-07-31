@@ -7,7 +7,7 @@ contract EventsAndErrors {
     // ==========================
     // Events
     // ==========================
-    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+    event AccountCreated(address indexed account, bytes initData, bytes32 indexed salt);
     event GenericFallbackCalled(address sender, uint256 value, bytes data);
     event Deposited(address indexed account, uint256 totalDeposit);
     event ModuleInstalled(uint256 moduleTypeId, address module);
