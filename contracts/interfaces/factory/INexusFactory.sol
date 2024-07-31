@@ -24,7 +24,7 @@ interface INexusFactory {
     /// @param account The address of the newly created account.
     /// @param initData Initialization data used for the new Smart Account.
     /// @param salt Unique salt used during the creation of the Smart Account.
-    event AccountCreated(address indexed account, bytes indexed initData, bytes32 indexed salt);
+    event AccountCreated(address indexed account, bytes initData, bytes32 indexed salt);
 
     /// @notice Error indicating that the account is already deployed
     /// @param account The address of the account that is already deployed
