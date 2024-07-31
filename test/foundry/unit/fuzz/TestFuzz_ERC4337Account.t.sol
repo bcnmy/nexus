@@ -36,8 +36,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         uint256 tolerance = 0.001 ether;
 
         // Check if the deposit balance is updated correctly within the tolerance
-        bool isWithinTolerance = (balanceAfter >= balanceBefore + depositAmount - tolerance) &&
-            (balanceAfter <= balanceBefore + depositAmount + tolerance);
+        bool isWithinTolerance = (balanceAfter >= balanceBefore + depositAmount - tolerance) && (balanceAfter <= balanceBefore + depositAmount + tolerance);
         assertTrue(isWithinTolerance, "Deposit balance should correctly reflect the new deposit amount within tolerance");
     }
 
@@ -74,7 +73,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         address validator;
 
         assembly {
-            validator := shr(96, shl(32, randomNonce)) 
+            validator := shr(96, shl(32, randomNonce))
         }
 
         // Expect revert with InvalidModule selector
@@ -106,11 +105,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
 
         // Withdraw the amount to the 'to' address
         Execution[] memory withdrawExecutions = new Execution[](1);
-        withdrawExecutions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        withdrawExecutions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
         executeBatch(BOB, BOB_ACCOUNT, withdrawExecutions, EXECTYPE_DEFAULT);
 
         assertEq(to.balance, amount, "Withdrawal amount should reflect in the 'to' address balance");
@@ -128,12 +124,11 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         userOps[0].signature = invalidSignature; // Using invalid signature
         address validator;
 
-                assembly {
-            validator := shr(96, shl(32, randomNonce)) 
+        assembly {
+            validator := shr(96, shl(32, randomNonce))
         }
         // Expect revert with InvalidModule selector
         vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
-
 
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
@@ -154,13 +149,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
-        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            withdrawExecutions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory withdrawUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
     }
 }

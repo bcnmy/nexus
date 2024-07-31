@@ -74,7 +74,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         address validator;
 
         assembly {
-            validator := shr(96, shl(32, randomNonce)) 
+            validator := shr(96, shl(32, randomNonce))
         }
 
         // Expect revert with InvalidModule selector
@@ -103,7 +103,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
 
         address validator;
         assembly {
-            validator := shr(96, shl(32, randomNonce)) 
+            validator := shr(96, shl(32, randomNonce))
         }
 
         // Expect revert with InvalidModule selector
@@ -128,7 +128,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
 
         address validator;
         assembly {
-            validator := shr(96, shl(32, randomNonce)) 
+            validator := shr(96, shl(32, randomNonce))
         }
 
         // Expect revert with InvalidModule selector
@@ -139,5 +139,4 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
     }
-
 }

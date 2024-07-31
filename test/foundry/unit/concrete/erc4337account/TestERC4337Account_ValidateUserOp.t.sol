@@ -82,8 +82,8 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         stopPrank();
     }
 
-/// @notice Tests user operation validation with an invalid nonce.
-function test_RevertWhen_InvalidNonce() public {
+    /// @notice Tests user operation validation with an invalid nonce.
+    function test_RevertWhen_InvalidNonce() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         uint256 correctNonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(0));
         uint256 incorrectNonce = correctNonce + 1; // deliberately incorrect to simulate invalid nonce
@@ -98,5 +98,4 @@ function test_RevertWhen_InvalidNonce() public {
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
     }
-
 }
