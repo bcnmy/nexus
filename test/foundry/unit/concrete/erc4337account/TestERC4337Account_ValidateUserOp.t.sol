@@ -82,17 +82,21 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         stopPrank();
     }
 
-    /// @notice Tests user operation validation with an invalid nonce.
-    function test_ValidateUserOp_InvalidNonce() public {
+/// @notice Tests user operation validation with an invalid nonce.
+function test_RevertWhen_InvalidNonce() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        uint256 incorrectNonce = 123; // deliberately incorrect
+        uint256 correctNonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(0));
+        uint256 incorrectNonce = correctNonce + 1; // deliberately incorrect to simulate invalid nonce
         userOps[0] = buildPackedUserOp(signer.addr, incorrectNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
 
+        // Expect the custom error InvalidModule to be thrown
+        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, 0x0000000000000000000000000000000000000000));
+
         startPrank(address(ENTRYPOINT));
-        uint res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         stopPrank();
-        assertTrue(res == 1, "Operation with invalid nonce should fail validation");
     }
+
 }
