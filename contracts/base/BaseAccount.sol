@@ -74,24 +74,24 @@ contract BaseAccount is IBaseAccount {
             } // For gas estimation.
         }
     }
-
-    /// @notice Withdraws ETH from the EntryPoint to a specified address.
-    /// @param to The address to receive the withdrawn funds.
-    /// @param amount The amount to withdraw.
-    function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
-        address entryPointAddress = _ENTRYPOINT;
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x14, to) // Store the `to` argument.
-            mstore(0x34, amount) // Store the `amount` argument.
-            mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
-            }
-            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
+/// @notice Withdraws ETH from the EntryPoint to a specified address.
+/// @param to The address to receive the withdrawn funds.
+/// @param amount The amount to withdraw.
+function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
+    address entryPointAddress = _ENTRYPOINT;
+    /// @solidity memory-safe-assembly
+    assembly {
+        let freeMemPtr := mload(0x40) // Store the free memory pointer.
+        mstore(0x14, to) // Store the `to` argument.
+        mstore(0x34, amount) // Store the `amount` argument.
+        mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
+        if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
+            returndatacopy(freeMemPtr, 0x00, returndatasize())
+            revert(freeMemPtr, returndatasize())
         }
     }
+}
+
 
     /// @notice Gets the nonce for a particular key.
     /// @param key The nonce key.
