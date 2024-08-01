@@ -11,5 +11,7 @@ TestK1ValidatorFactory_Deployments
     │   └── it should return the expected address
     ├── when creating an account with the same owner and index
     │   └── it should result in the same address
-    └── when creating accounts with different indexes
-        └── it should result in different addresses
+    ├── when creating accounts with different indexes
+    │   └── it should result in different addresses
+    └── when manually computing the address using keccak256
+        └── it should match the address computed by computeAccountAddress
