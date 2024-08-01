@@ -10,11 +10,9 @@ import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VAL
 import "solady/src/utils/EIP712.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
-
     MockMultiModule mockMultiModule;
     Counter public counter;
-    bytes32 internal constant _DOMAIN_TYPEHASH =
-        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+    bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     function setUp() public {
         setUpModuleManagement_Base();
@@ -26,9 +24,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         address moduleToEnable = address(mockMultiModule);
 
         PackedUserOperation memory op = makeDraftOp(moduleToEnable);
-        
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
 
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
 
@@ -55,22 +53,16 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         uint256 counterBefore = counter.getNumber();
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        assertEq(counter.getNumber(), counterBefore+1, "Counter should have been incremented after single execution");
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""),
-            "Module should be installed as validator"
-        );
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""),
-            "Module should be installed as executor"
-        );
+        assertEq(counter.getNumber(), counterBefore + 1, "Counter should have been incremented after single execution");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""), "Module should be installed as validator");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""), "Module should be installed as executor");
     }
 
     function test_EnableMode_FailsWithWrongValidationModule() public {
         address moduleToEnable = address(mockMultiModule);
         PackedUserOperation memory op = makeDraftOp(moduleToEnable);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         address invalidValidator = address(0xdeaf);
@@ -87,14 +79,14 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = op;
-        
+
         bytes memory expectedRevertReason = abi.encodeWithSelector(
-            FailedOpWithRevert.selector, 
-            0, 
+            FailedOpWithRevert.selector,
+            0,
             "AA23 reverted",
             abi.encodeWithSelector(InvalidModule.selector, invalidValidator)
         );
-        
+
         vm.expectRevert(expectedRevertReason);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
@@ -103,9 +95,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         address moduleToEnable = address(mockMultiModule);
         PackedUserOperation memory op = makeDraftOp(moduleToEnable);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash); 
+        op.signature = signMessage(ALICE, userOpHash);
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
-        
+
         bytes memory enableModeSig = signMessage(CHARLIE, hashToSign); // SIGN WITH NOT OWNER
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
 
@@ -120,28 +112,133 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = op;
-        
+
         bytes memory expectedRevertReason = abi.encodeWithSelector(
-            FailedOpWithRevert.selector, 
-            0, 
+            FailedOpWithRevert.selector,
+            0,
             "AA23 reverted",
             abi.encodeWithSelector(EnableModeSigError.selector)
         );
-        
+
         vm.expectRevert(expectedRevertReason);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
+    function test_EnableMode_ValidMultiModule() public {
+        address moduleToEnable = address(mockMultiModule);
 
-    // ==========
+        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+
+        bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
+        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
+
+        // Enable Mode Sig Prefix
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            MODULE_TYPE_MULTI,
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = op;
+
+        uint256 counterBefore = counter.getNumber();
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        assertEq(counter.getNumber(), counterBefore + 1, "Counter should have been incremented after single execution");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""), "Module should be installed as validator");
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""), "Module should be installed as executor");
+    }
+
+    function test_EnableMode_InvalidModuleType() public {
+        address moduleToEnable = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+
+        bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
+        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
+
+        // Invalid Module Type
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            MODULE_TYPE_EXECUTOR, // Invalid module type for enable mode
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = op;
+        bytes memory expectedRevertReason = abi.encodeWithSelector(
+            FailedOpWithRevert.selector,
+            0,
+            "AA23 reverted",
+            abi.encodeWithSelector(InvalidModule.selector, address(mockMultiModule))
+        );
+
+        vm.expectRevert(expectedRevertReason);
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
+
+    function test_EnableMode_InvalidSignature() public {
+        address moduleToEnable = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+
+        bytes memory enableModeSig = signMessage(CHARLIE, hashToSign); // Invalid signature, not signed by the owner
+        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
+
+        // Enable Mode Sig Prefix
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            MODULE_TYPE_MULTI,
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = op;
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(
+            FailedOpWithRevert.selector,
+            0,
+            "AA23 reverted",
+            abi.encodeWithSelector(EnableModeSigError.selector)
+        );
+
+        vm.expectRevert(expectedRevertReason);
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
 
     function makeDraftOp(address moduleToEnable) internal view returns (PackedUserOperation memory op) {
         uint256 nonce = getNonce(BOB_ADDRESS, MODE_MODULE_ENABLE, moduleToEnable);
         op = buildPackedUserOp(address(BOB_ACCOUNT), nonce);
 
         op.callData = prepareERC7579SingleExecuteCallData(
-            EXECTYPE_DEFAULT, 
-            address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector)
+            EXECTYPE_DEFAULT,
+            address(counter),
+            0,
+            abi.encodeWithSelector(Counter.incrementNumber.selector)
         );
     }
 
@@ -150,31 +247,18 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 validatorConfig = bytes32(bytes20(ALICE_ADDRESS)); //set Alice as owner via MultiTypeModule
         bytes32 executorConfig = bytes32(uint256(0x2222));
 
-        bytes memory validatorInstallData = abi.encodePacked(
-            bytes1(uint8(MODULE_TYPE_VALIDATOR)),
-            validatorConfig
-        );
+        bytes memory validatorInstallData = abi.encodePacked(bytes1(uint8(MODULE_TYPE_VALIDATOR)), validatorConfig);
 
-        bytes memory executorInstallData = abi.encodePacked(
-            bytes1(uint8(MODULE_TYPE_EXECUTOR)),
-            executorConfig
-        );
+        bytes memory executorInstallData = abi.encodePacked(bytes1(uint8(MODULE_TYPE_EXECUTOR)), executorConfig);
 
         uint256[] memory types = Solarray.uint256s(MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR);
         bytes[] memory initDatas = Solarray.bytess(validatorInstallData, executorInstallData);
 
-        bytes memory multiInstallData = abi.encode(
-            types,
-            initDatas
-        );
+        bytes memory multiInstallData = abi.encode(types, initDatas);
 
         // prepare Enable Mode Signature
-        bytes32 structHash = keccak256(abi.encode(
-            MODULE_ENABLE_MODE_TYPE_HASH, 
-            address(mockMultiModule), 
-            keccak256(multiInstallData)
-        ));
-        (,string memory name,string memory version,,,,) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
+        bytes32 structHash = keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, address(mockMultiModule), keccak256(multiInstallData)));
+        (, string memory name, string memory version, , , , ) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
         bytes32 hashToSign = _hashTypedData(structHash, name, version, address(BOB_ACCOUNT));
         return (multiInstallData, hashToSign);
     }
@@ -213,6 +297,4 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             separator := keccak256(m, 0xa0)
         }
     }
-
-    
 }
