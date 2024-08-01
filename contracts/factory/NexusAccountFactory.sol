@@ -42,14 +42,17 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     /// @param salt Unique salt for the Smart Account creation.
     /// @return The address of the newly created Nexus account.
     function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
-        // Compute the actual salt for deterministic deployment
+        // Compute the actual salt as the hash of initData and salt using assembly
         bytes32 actualSalt;
         assembly {
+            // Load the free memory pointer
             let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
+            // Store initData at the free memory pointer
+            calldatacopy(ptr, initData.offset, initData.length)
+            // Store salt after initData
+            mstore(add(ptr, initData.length), salt)
+            // Compute the keccak256 hash of the concatenated initData and salt
+            actualSalt := keccak256(ptr, add(initData.length, 32))
         }
 
         // Deploy the account using the deterministic address
@@ -63,20 +66,22 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param - Initialization data to be called on the new Smart Account.
-    /// @param - Unique salt for the Smart Account creation.
+    /// @param initData - Initialization data to be called on the new Smart Account.
+    /// @param salt - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    function computeAccountAddress(bytes calldata, bytes32) external view override returns (address payable expectedAddress) {
+    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view override returns (address payable expectedAddress) {
         // Compute the actual salt for deterministic deployment
         bytes32 actualSalt;
         assembly {
+            // Load the free memory pointer
             let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
+            // Store initData at the free memory pointer
+            calldatacopy(ptr, initData.offset, initData.length)
+            // Store salt after initData
+            mstore(add(ptr, initData.length), salt)
+            // Compute the keccak256 hash of the concatenated initData and salt
+            actualSalt := keccak256(ptr, add(initData.length, 32))
         }
-
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 }
