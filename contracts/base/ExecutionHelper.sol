@@ -40,11 +40,19 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
+            
+            // Check if the target has code
+            if iszero(extcodesize(target)) {
+                mstore(result, 0) // Set result length to 0
+                mstore(0x40, add(result, 0x20)) // Update free memory pointer
+            } 
+
             if iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
             }
+
             mstore(result, returndatasize()) // Store the length.
             let o := add(result, 0x20)
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
@@ -64,11 +72,20 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
-            success := call(gas(), target, value, result, callData.length, codesize(), 0x00)
-            mstore(result, returndatasize()) // Store the length.
-            let o := add(result, 0x20)
-            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
-            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+
+            // Check if the target has code
+            if iszero(extcodesize(target)) {
+                success := 0
+                mstore(result, 0) // Set result length to 0
+                mstore(0x40, add(result, 0x20)) // Update free memory pointer
+            } 
+            if iszero(success) {
+                success := call(gas(), target, value, result, callData.length, codesize(), 0x00)
+                mstore(result, returndatasize()) // Store the length.
+                let o := add(result, 0x20)
+                returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
+                mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+            }
         }
     }
 
