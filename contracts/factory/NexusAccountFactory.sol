@@ -58,6 +58,8 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
         if (!alreadyDeployed) {
             INexus(account).initializeAccount(initData);
             emit AccountCreated(account, initData, salt);
+        } else if (msg.value > 0) {
+            revert AccountAlreadyDeployed(account);
         }
         return payable(account);
     }

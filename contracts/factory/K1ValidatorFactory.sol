@@ -47,6 +47,9 @@ contract K1ValidatorFactory is Stakeable {
     /// @notice Error thrown when a zero address is provided for the implementation, K1 validator, or bootstrapper.
     error ZeroAddressNotAllowed();
 
+    /// @notice Error thrown when an inner call fails.
+    error InnerCallFailed();
+
     /// @notice Constructor to set the immutable variables.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     /// @param factoryOwner The address of the factory owner.
@@ -100,6 +103,9 @@ contract K1ValidatorFactory is Stakeable {
         if (!alreadyDeployed) {
             INexus(account).initializeAccount(initData);
             emit AccountCreated(account, eoaOwner, index);
+        } else if (msg.value > 0) {
+            (bool success, ) = eoaOwner.call{ value: msg.value }("");
+            require(success, InnerCallFailed());
         }
         return payable(account);
     }
