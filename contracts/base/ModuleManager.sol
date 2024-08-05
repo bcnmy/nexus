@@ -99,7 +99,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
                 // Then the address without padding is stored right after the calldata
                 mstore(calldatasize(), shl(96, caller()))
 
-                if iszero(call(gas(), handler, 0, 0, add(calldatasize(), 20), 0, 0)) {
+                if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
                     returndatacopy(0, 0, returndatasize())
                     revert(0, returndatasize())
                 }
