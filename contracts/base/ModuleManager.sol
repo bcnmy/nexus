@@ -388,11 +388,9 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param initData Module init data.
     /// @return digest EIP712 hash
     function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32 digest) {
-        // userOpHash is from validateUserOp
         digest = _hashTypedData(
             keccak256(
                 abi.encode(
-                    // IMPORTANT! NEED TO CHANGE MODULE_ENABLE_MODE_TYPE_HASH TO INCLUDE THE NEW FIELDS
                     MODULE_ENABLE_MODE_TYPE_HASH,
                     module,
                     moduleType,
