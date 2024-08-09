@@ -121,7 +121,7 @@ contract BaseAccount is Storage, IBaseAccount {
     /// @dev This function returns the address of the canonical ERC4337 EntryPoint contract.
     /// It can be overridden to return a different EntryPoint address if needed.
     /// @return The address of the EntryPoint contract.
-    function entryPoint() external view returns (address) {
+    function entryPoint() external view virtual returns (address) {
         return _ENTRYPOINT;
     }
 }
