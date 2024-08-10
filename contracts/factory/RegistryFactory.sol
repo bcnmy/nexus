@@ -22,6 +22,26 @@ import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { INexusFactory } from "../interfaces/factory/INexusFactory.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK } from "../types/Constants.sol";
 
+library AddressSort {
+    function sort(address[] storage arr) internal {
+        uint n = arr.length;
+        for (uint i = 1; i < n; i++) {
+            address key = arr[i];
+            uint j = i - 1;
+            
+            // Sort addresses by comparing them directly
+            while (j >= 0 && arr[j] > key) {
+                arr[j + 1] = arr[j];
+                if (j == 0) {
+                    break;
+                }
+                j--;
+            }
+            arr[j + 1] = key;
+        }
+    }
+}
+
 /// @title RegistryFactory
 /// @notice Factory for creating Nexus accounts with whitelisted modules. Ensures compliance with ERC-7579 and ERC-4337 standards.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
@@ -56,6 +76,7 @@ contract RegistryFactory is Stakeable, INexusFactory {
 
     function addAttester(address attester) external onlyOwner {
         attesters.push(attester);
+        AddressSort.sort(attesters);
     }
 
     function removeAttester(address attester) external onlyOwner {
@@ -66,6 +87,7 @@ contract RegistryFactory is Stakeable, INexusFactory {
                 break;
             }
         }
+        AddressSort.sort(attesters);
     }
 
     function setThreshold(uint8 newThreshold) external onlyOwner {
