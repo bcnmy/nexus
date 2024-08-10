@@ -222,7 +222,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         require(success, NexusInitializationFailed());
     }
 
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
