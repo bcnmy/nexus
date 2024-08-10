@@ -46,6 +46,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        // Review: this test is impacted
         bytes memory expectedRevertReason = abi.encodeWithSelector(MissingFallbackHandler.selector, bytes4(hex"1234"));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expect the UserOperationRevertReason event
