@@ -109,18 +109,8 @@ contract RegistryFactory is Stakeable, INexusFactory {
             require(_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
-        // Compute the actual salt as the hash of initData and salt using assembly
-        bytes32 actualSalt;
-        assembly {
-            // Load the free memory pointer
-            let ptr := mload(0x40)
-            // Store initData at the free memory pointer
-            calldatacopy(ptr, initData.offset, initData.length)
-            // Store salt after initData
-            mstore(add(ptr, initData.length), salt)
-            // Compute the keccak256 hash of the concatenated initData and salt
-            actualSalt := keccak256(ptr, add(initData.length, 32))
-        }
+        // Compute the actual salt for deterministic deployment
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
 
         // Deploy the account using the deterministic address
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
@@ -137,18 +127,8 @@ contract RegistryFactory is Stakeable, INexusFactory {
     /// @param salt - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
     function computeAccountAddress(bytes calldata initData, bytes32 salt) external view override returns (address payable expectedAddress) {
-        // Compute the actual salt as the hash of initData and salt using assembly
-        bytes32 actualSalt;
-        assembly {
-            // Load the free memory pointer
-            let ptr := mload(0x40)
-            // Store initData at the free memory pointer
-            calldatacopy(ptr, initData.offset, initData.length)
-            // Store salt after initData
-            mstore(add(ptr, initData.length), salt)
-            // Compute the keccak256 hash of the concatenated initData and salt
-            actualSalt := keccak256(ptr, add(initData.length, 32))
-        }
+        // Compute the actual salt for deterministic deployment
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 
