@@ -44,7 +44,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), 2, "Counter should have been incremented even after revert operation in batch execution");
@@ -63,7 +63,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         // Execute batch operation
         prank(address(BOB_ACCOUNT));
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
 
         BOB_ACCOUNT.execute(ModeLib.encodeTryBatch(), abi.encode(executions));
 
@@ -82,7 +82,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(0, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 

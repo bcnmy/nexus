@@ -96,7 +96,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
             exec = executions[i];
             bool success;
             (success, result[i]) = _tryExecute(exec.target, exec.value, exec.callData);
-            if (!success) emit TryExecuteUnsuccessful(i, result[i]);
+            if (!success) emit TryExecuteUnsuccessful(exec.callData, result[i]);
         }
     }
 
@@ -176,7 +176,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
             returnData[0] = _execute(target, value, callData);
         } else if (execType == EXECTYPE_TRY) {
             (success, returnData[0]) = _tryExecute(target, value, callData);
-            if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
+            if (!success) emit TryExecuteUnsuccessful(callData, returnData[0]);
         } else {
             revert UnsupportedExecType(execType);
         }
@@ -204,7 +204,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         }
         else if (execType == EXECTYPE_TRY) {
             (success, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
-            if (!success) emit TryDelegateCallUnsuccessful(0, returnData[0]);
+            if (!success) emit TryDelegateCallUnsuccessful(callData, returnData[0]);
         }
         else revert UnsupportedExecType(execType);
     }
