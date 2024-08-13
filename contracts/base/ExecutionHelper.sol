@@ -142,7 +142,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
         else if (execType == EXECTYPE_TRY) {
             (bool success, bytes memory result) = _tryExecute(target, value, callData);
-            if (!success) emit TryExecuteUnsuccessful(0, result);
+            if (!success) emit TryExecuteUnsuccessful(callData, result);
         } else revert UnsupportedExecType(execType);
     }
 
@@ -164,7 +164,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
         else if (execType == EXECTYPE_TRY) {
             (bool success, bytes memory result) = _tryExecuteDelegatecall(delegate, callData);
-            if (!success) emit TryDelegateCallUnsuccessful(0, result);
+            if (!success) emit TryDelegateCallUnsuccessful(callData, result);
         } else revert UnsupportedExecType(execType);
     }
 
