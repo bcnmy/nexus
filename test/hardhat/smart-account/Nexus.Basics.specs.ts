@@ -416,7 +416,7 @@ describe("Nexus Basic Specs", function () {
       console.log("Hardhat - Active Validator Module Address: ", await validatorModule.getAddress());
       console.log("Hardhat - SA Address : ", smartAccountAddress);
       
-      const data = keccak256(toHex("1234"))
+      const data = keccak256("0x1234")
       console.log("Hardhat - Data msg: ", data);
 
       // Define constants as per the original Solidity function
@@ -441,9 +441,10 @@ describe("Nexus Basic Specs", function () {
           ],
         ),
       );
-      // const domainSeparator = "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b";
 
       console.log("Hardhat - Domain Separator: ", domainSeparator);
+
+      const app_domain_sep = "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b"
 
       const encodedAccountDomainStructFields = await getAccountDomainStructFields(ethers.provider, smartAccountAddress as Hex)
       console.log("Hardhat - Encoded Account Domain Struct Fields: ", encodedAccountDomainStructFields);
@@ -454,7 +455,7 @@ describe("Nexus Basic Specs", function () {
           ["bytes", "bytes"],
           [
             encodeAbiParameters(parseAbiParameters("bytes32, bytes32"), [
-              keccak256(toHex(PARENT_TYPEHASH)) as Hex,
+              keccak256(toBytes(PARENT_TYPEHASH)) as Hex,
               data as Hex
             ]),
             encodedAccountDomainStructFields as Hex
@@ -465,7 +466,7 @@ describe("Nexus Basic Specs", function () {
 
       // Calculate the final hash
       const dataToSign = ethers.keccak256(
-        encodePacked(["string", "bytes32", "bytes32"],["\x19\x01", domainSeparator as Hex, parentStructHash as Hex]),
+        encodePacked(["string", "bytes32", "bytes32"],["\x19\x01", app_domain_sep as Hex, parentStructHash as Hex]),
       );
 
      console.log("Hardhat - Data to Sign: ", dataToSign);
@@ -478,7 +479,7 @@ describe("Nexus Basic Specs", function () {
         ["bytes", "bytes32", "bytes32", "bytes", "uint16"],
         [
           signature as Hex,
-          domainSeparator as Hex,
+          app_domain_sep as Hex,
           data as Hex,
           contentsType,
           contentsType.length
@@ -495,7 +496,7 @@ describe("Nexus Basic Specs", function () {
       const contents = keccak256(
         encodePacked(
           ["bytes", "bytes", "bytes"],
-          [toHex("1901"), domainSeparator as Hex, data as Hex]
+          [toHex("1901"), app_domain_sep as Hex, data as Hex]
         )
       )
 

@@ -419,6 +419,14 @@ export const getAccountDomainStructFields = async (
 
   const [fields, name, version, chainId, verifyingContract, salt, extensions] = accountDomainStructFields;
 
+  console.log('fields', fields);
+  console.log('name', name);
+  console.log('version', version);
+  console.log('chainId', chainId);
+  console.log('verifyingContract', verifyingContract);
+  console.log('salt', salt);
+  console.log('extensions', extensions);
+
   const abiCoder = new ethers.AbiCoder();
   
   return abiCoder.encode(
