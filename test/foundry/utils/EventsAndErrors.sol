@@ -15,7 +15,8 @@ contract EventsAndErrors {
     event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
     event PreCheckCalled();
     event PostCheckCalled();
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryExecuteUnsuccessful(bytes callData, bytes result);
+    event TryDelegateCallUnsuccessful(uint256 batchExecutionindex, bytes result);
 
     // ==========================
     // General Errors
