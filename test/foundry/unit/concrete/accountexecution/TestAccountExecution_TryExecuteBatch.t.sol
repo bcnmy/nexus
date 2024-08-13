@@ -82,7 +82,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
 
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[0].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
