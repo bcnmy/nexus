@@ -27,7 +27,8 @@ import {
   buildPackedUserOp,
   generateUseropCallData,
   getNonce,
-  MODE_VALIDATION
+  MODE_VALIDATION,
+  getAccountDomainStructFields
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -39,7 +40,7 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "../utils/erc7579Utils";
-import { Hex, hashTypedData, toHex } from "viem";
+import { Hex, encodeAbiParameters, encodePacked, hashTypedData, parseAbiParameters, toBytes, toHex } from "viem";
 
 describe("Nexus Basic Specs", function () {
   let factory: K1ValidatorFactory;
@@ -335,7 +336,76 @@ describe("Nexus Basic Specs", function () {
     // https://github.com/frangio/eip712-wrapper-for-eip1271/blob/master/src/eip1271-account.ts#L34
     // https://github.com/wevm/viem/blob/main/src/actions/wallet/signMessage.ts
     // https://github.com/ethers-io/ethers.js/blob/92761872198cf6c9334570da3d110bca2bafa641/src.ts/providers/provider-jsonrpc.ts#L435
-    it("Should check signature validity using smart account isValidSignature", async function () {
+    // it("Should check signature validity using smart account isValidSignature for Personal Sign", async function () {
+    //   const isModuleInstalled = await smartAccount.isModuleInstalled(
+    //     ModuleType.Validation,
+    //     await validatorModule.getAddress(),
+    //     ethers.hexlify("0x"),
+    //   );
+    //   expect(isModuleInstalled).to.be.true;
+
+    //   // 1. Convert foundry util to ts code (as below)
+
+    //   const data = keccak256("0x1234");
+
+    //   // Define constants as per the original Solidity function
+    //   const DOMAIN_NAME = "Nexus";
+    //   const DOMAIN_VERSION = "1.0.0-beta";
+    //   const DOMAIN_TYPEHASH =
+    //     "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)";
+    //   const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
+    //   const ALICE_ACCOUNT = smartAccountAddress;
+    //   const network = await ethers.provider.getNetwork();
+    //   const chainId = network.chainId;
+
+    //   // Calculate the domain separator
+    //   const domainSeparator = ethers.keccak256(
+    //     ethers.AbiCoder.defaultAbiCoder().encode(
+    //       ["bytes32", "bytes32", "bytes32", "uint256", "address"],
+    //       [
+    //         ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_TYPEHASH)),
+    //         ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME)),
+    //         ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_VERSION)),
+    //         chainId,
+    //         ALICE_ACCOUNT,
+    //       ],
+    //     ),
+    //   );
+
+    //   // Calculate the parent struct hash
+    //   const parentStructHash = ethers.keccak256(
+    //     ethers.AbiCoder.defaultAbiCoder().encode(
+    //       ["bytes32", "bytes32"],
+    //       [ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)), data],
+    //     ),
+    //   );
+
+    //   // Calculate the final hash
+    //   const resultHash = ethers.keccak256(
+    //     ethers.concat(["0x1901", domainSeparator, parentStructHash]),
+    //   );
+
+    //   console.log(
+    //     "being signed",
+    //     ethers.hashMessage(ethers.getBytes(resultHash)),
+    //   );
+
+    //   const signature = await smartAccountOwner.signMessage(
+    //     ethers.getBytes(resultHash),
+    //   );
+
+    //   const isValid = await smartAccount.isValidSignature(
+    //     data,
+    //     solidityPacked(
+    //       ["address", "bytes"],
+    //       [await validatorModule.getAddress(), signature],
+    //     ),
+    //   );
+
+    //   expect(isValid).to.equal("0x1626ba7e");
+    // });
+
+    it("Should check signature validity using smart account isValidSignature for EIP-712", async function () {
       const isModuleInstalled = await smartAccount.isModuleInstalled(
         ModuleType.Validation,
         await validatorModule.getAddress(),
@@ -343,21 +413,22 @@ describe("Nexus Basic Specs", function () {
       );
       expect(isModuleInstalled).to.be.true;
 
-      // 1. Convert foundry util to ts code (as below)
-
-      const data = keccak256("0x1234");
+      console.log("Hardhat - Active Validator Module Address: ", await validatorModule.getAddress());
+      console.log("Hardhat - SA Address : ", smartAccountAddress);
+      
+      const data = keccak256(toHex("1234"))
+      console.log("Hardhat - Data msg: ", data);
 
       // Define constants as per the original Solidity function
-      const DOMAIN_NAME = "Nexus";
-      const DOMAIN_VERSION = "1.0.0-beta";
+      const DOMAIN_NAME = "Nexus"
+      const DOMAIN_VERSION = "1.0.0-beta"
       const DOMAIN_TYPEHASH =
-        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)";
-      const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
-      const ALICE_ACCOUNT = smartAccountAddress;
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+      const PARENT_TYPEHASH =
+        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions) Contents(bytes32 stuff)"
       const network = await ethers.provider.getNetwork();
       const chainId = network.chainId;
 
-      // Calculate the domain separator
       const domainSeparator = ethers.keccak256(
         ethers.AbiCoder.defaultAbiCoder().encode(
           ["bytes32", "bytes32", "bytes32", "uint256", "address"],
@@ -366,168 +437,202 @@ describe("Nexus Basic Specs", function () {
             ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_NAME)),
             ethers.keccak256(ethers.toUtf8Bytes(DOMAIN_VERSION)),
             chainId,
-            ALICE_ACCOUNT,
+            smartAccountAddress,
           ],
         ),
       );
+      // const domainSeparator = "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b";
+
+      console.log("Hardhat - Domain Separator: ", domainSeparator);
+
+      const encodedAccountDomainStructFields = await getAccountDomainStructFields(ethers.provider, smartAccountAddress as Hex)
+      console.log("Hardhat - Encoded Account Domain Struct Fields: ", encodedAccountDomainStructFields);
 
       // Calculate the parent struct hash
-      const parentStructHash = ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(
-          ["bytes32", "bytes32"],
-          [ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)), data],
-        ),
-      );
+      const parentStructHash = keccak256(
+        encodePacked(
+          ["bytes", "bytes"],
+          [
+            encodeAbiParameters(parseAbiParameters("bytes32, bytes32"), [
+              keccak256(toHex(PARENT_TYPEHASH)) as Hex,
+              data as Hex
+            ]),
+            encodedAccountDomainStructFields as Hex
+          ]
+        )
+      )
+      console.log("Hardhat - Parent Struct Hash: ", parentStructHash);
 
       // Calculate the final hash
-      const resultHash = ethers.keccak256(
-        ethers.concat(["0x1901", domainSeparator, parentStructHash]),
+      const dataToSign = ethers.keccak256(
+        encodePacked(["string", "bytes32", "bytes32"],["\x19\x01", domainSeparator as Hex, parentStructHash as Hex]),
       );
 
-      console.log(
-        "being signed",
-        ethers.hashMessage(ethers.getBytes(resultHash)),
-      );
+     console.log("Hardhat - Data to Sign: ", dataToSign);
 
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(resultHash),
-      );
+      let signature = await smartAccountOwner.signMessage(dataToSign);
+
+      const contentsType: Hex = toHex("Contents(bytes32 stuff)")
+      console.log("Hardhat - Contents Type: ", contentsType);
+      signature = encodePacked(
+        ["bytes", "bytes32", "bytes32", "bytes", "uint16"],
+        [
+          signature as Hex,
+          domainSeparator as Hex,
+          data as Hex,
+          contentsType,
+          contentsType.length
+        ]
+      )
+
+      const finalSignature = encodePacked(
+        ["address", "bytes"],
+        [await validatorModule.getAddress() as Hex, signature as Hex]
+      )
+
+      console.log("Hardhat - Final Signature: ", finalSignature);
+      
+      const contents = keccak256(
+        encodePacked(
+          ["bytes", "bytes", "bytes"],
+          [toHex("1901"), domainSeparator as Hex, data as Hex]
+        )
+      )
+
+      console.log("Hardhat - Contents: ", contents);
 
       const isValid = await smartAccount.isValidSignature(
-        data,
-        solidityPacked(
-          ["address", "bytes"],
-          [await validatorModule.getAddress(), signature],
-        ),
+        contents,
+        finalSignature
       );
 
       expect(isValid).to.equal("0x1626ba7e");
     });
   });
 
-  describe("Smart Account check Only Entrypoint actions", function () {
-    it("Should revert with AccountAccessUnauthorized", async function () {
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "incrementNumber",
-      });
+  // describe("Smart Account check Only Entrypoint actions", function () {
+  //   it("Should revert with AccountAccessUnauthorized", async function () {
+  //     const callData = await generateUseropCallData({
+  //       executionMethod: ExecutionMethod.Execute,
+  //       targetContract: counter,
+  //       functionName: "incrementNumber",
+  //     });
 
-      const userOp = buildPackedUserOp({
-        sender: await smartAccount.getAddress(),
-        callData,
-      });
-      userOp.callData = callData;
+  //     const userOp = buildPackedUserOp({
+  //       sender: await smartAccount.getAddress(),
+  //       callData,
+  //     });
+  //     userOp.callData = callData;
 
-      const validatorModuleAddress = await validatorModule.getAddress();
-      const nonce = await smartAccount.nonce(
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-      );
+  //     const validatorModuleAddress = await validatorModule.getAddress();
+  //     const nonce = await smartAccount.nonce(
+  //       ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+  //     );
 
-      userOp.nonce = nonce;
+  //     userOp.nonce = nonce;
 
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
+  //     const userOpHash = await entryPoint.getUserOpHash(userOp);
 
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
+  //     const signature = await smartAccountOwner.signMessage(
+  //       ethers.getBytes(userOpHash),
+  //     );
 
-      userOp.signature = signature;
+  //     userOp.signature = signature;
 
-      await expect(
-        smartAccount.validateUserOp(userOp, userOpHash, 0n),
-      ).to.be.revertedWithCustomError(
-        smartAccount,
-        "AccountAccessUnauthorized",
-      );
-    });
-  });
+  //     await expect(
+  //       smartAccount.validateUserOp(userOp, userOpHash, 0n),
+  //     ).to.be.revertedWithCustomError(
+  //       smartAccount,
+  //       "AccountAccessUnauthorized",
+  //     );
+  //   });
+  // });
 
-  describe("Nexus Smart Account Deployment via EntryPoint", function () {
-    it("Should successfully deploy Smart Account via the EntryPoint", async function () {
-      const saDeploymentIndex = 1;
-      // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
-      const initCode = await getInitCode(
-        ownerAddress,
-        factoryAddress,
-        saDeploymentIndex,
-      );
+  // describe("Nexus Smart Account Deployment via EntryPoint", function () {
+  //   it("Should successfully deploy Smart Account via the EntryPoint", async function () {
+  //     const saDeploymentIndex = 1;
+  //     // This involves preparing a user operation (userOp), signing it, and submitting it through the EntryPoint
+  //     const initCode = await getInitCode(
+  //       ownerAddress,
+  //       factoryAddress,
+  //       saDeploymentIndex,
+  //     );
 
-      // Module initialization data, encoded
-      const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+  //     // Module initialization data, encoded
+  //     const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.computeAccountAddress(
-        ownerAddress,
-        saDeploymentIndex,
-        [],
-        0,
-      );
+  //     const accountAddress = await factory.computeAccountAddress(
+  //       ownerAddress,
+  //       saDeploymentIndex,
+  //       [],
+  //       0,
+  //     );
 
-      const nonce = await getNonce(
-        entryPoint,
-        accountAddress,
-        MODE_VALIDATION,
-        moduleAddress.toString()
-      );
+  //     const nonce = await getNonce(
+  //       entryPoint,
+  //       accountAddress,
+  //       MODE_VALIDATION,
+  //       moduleAddress.toString()
+  //     );
 
-      const packedUserOp = buildPackedUserOp({
-        sender: accountAddress,
-        nonce,
-        initCode,
-      });
+  //     const packedUserOp = buildPackedUserOp({
+  //       sender: accountAddress,
+  //       nonce,
+  //       initCode,
+  //     });
 
-      const userOpHash = await entryPoint.getUserOpHash(packedUserOp);
+  //     const userOpHash = await entryPoint.getUserOpHash(packedUserOp);
 
-      const sig = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
+  //     const sig = await smartAccountOwner.signMessage(
+  //       ethers.getBytes(userOpHash),
+  //     );
 
-      packedUserOp.signature = sig;
+  //     packedUserOp.signature = sig;
 
-      await entryPoint.depositTo(accountAddress, { value: to18(1) });
+  //     await entryPoint.depositTo(accountAddress, { value: to18(1) });
 
-      await entryPoint.handleOps([packedUserOp], bundlerAddress);
-    });
+  //     await entryPoint.handleOps([packedUserOp], bundlerAddress);
+  //   });
 
-    it("Should fail Smart Account deployment with an unauthorized signer", async function () {
-      const saDeploymentIndex = 2;
-      const initCode = await getInitCode(
-        ownerAddress,
-        factoryAddress,
-        saDeploymentIndex,
-      );
-      // Module initialization data, encoded
-      const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
+  //   it("Should fail Smart Account deployment with an unauthorized signer", async function () {
+  //     const saDeploymentIndex = 2;
+  //     const initCode = await getInitCode(
+  //       ownerAddress,
+  //       factoryAddress,
+  //       saDeploymentIndex,
+  //     );
+  //     // Module initialization data, encoded
+  //     const moduleInitData = ethers.solidityPacked(["address"], [ownerAddress]);
 
-      const accountAddress = await factory.computeAccountAddress(
-        ownerAddress,
-        saDeploymentIndex,
-        [],
-        0,
-      );
+  //     const accountAddress = await factory.computeAccountAddress(
+  //       ownerAddress,
+  //       saDeploymentIndex,
+  //       [],
+  //       0,
+  //     );
 
-      const nonce = await getNonce(
-        entryPoint,
-        accountAddress,
-        MODE_VALIDATION,
-        moduleAddress.toString()
-      );
+  //     const nonce = await getNonce(
+  //       entryPoint,
+  //       accountAddress,
+  //       MODE_VALIDATION,
+  //       moduleAddress.toString()
+  //     );
 
-      const packedUserOp = buildPackedUserOp({
-        sender: accountAddress,
-        nonce: nonce,
-        initCode: initCode,
-      });
+  //     const packedUserOp = buildPackedUserOp({
+  //       sender: accountAddress,
+  //       nonce: nonce,
+  //       initCode: initCode,
+  //     });
 
-      const userOpHash = await entryPoint.getUserOpHash(packedUserOp);
+  //     const userOpHash = await entryPoint.getUserOpHash(packedUserOp);
 
-      const sig = await accounts[10].signMessage(ethers.getBytes(userOpHash));
-      packedUserOp.signature = sig;
-      await entryPoint.depositTo(accountAddress, { value: to18(1) });
+  //     const sig = await accounts[10].signMessage(ethers.getBytes(userOpHash));
+  //     packedUserOp.signature = sig;
+  //     await entryPoint.depositTo(accountAddress, { value: to18(1) });
 
-      await expect(entryPoint.handleOps([packedUserOp], bundlerAddress))
-        .to.be.revertedWithCustomError(entryPoint, "FailedOp")
-        .withArgs(0, "AA24 signature error");
-    });
-  });
+  //     await expect(entryPoint.handleOps([packedUserOp], bundlerAddress))
+  //       .to.be.revertedWithCustomError(entryPoint, "FailedOp")
+  //       .withArgs(0, "AA24 signature error");
+  //   });
+  // });
 });

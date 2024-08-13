@@ -10,6 +10,8 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
+import "hardhat/console.sol";
+
 contract MockValidator is IValidator {
     mapping(address => address) public smartAccountOwners;
 
@@ -25,6 +27,10 @@ contract MockValidator is IValidator {
         // MAYBE SHOULD PREPARE REPLAY RESISTANT HASH BY APPENDING MSG.SENDER
         // SEE: https://github.com/bcnmy/scw-contracts/blob/3362262dab34fa0f57e2fbe0e57a4bdbd5318165/contracts/smart-account/modules/EcdsaOwnershipRegistryModule.sol#L122-L132
         // OR USE EIP-712
+        console.log("LOGGING: owner, hash, signature");
+        console.log(owner);
+        console.logBytes32(hash);
+        console.logBytes(signature);
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
             return ERC1271_MAGICVALUE;
         } 

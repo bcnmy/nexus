@@ -45,12 +45,21 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @notice Tests the validation of an EIP-712 signature using the mock validator.
     function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
         TestTemps memory t;
+        console.log("LOGGING: t.contents, ALICE_ACCOUNT, dataToSign, contentsType, signature");
         t.contents = keccak256("0x1234");
+        console.logBytes32(t.contents);
         bytes32 dataToSign = toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT)));
+        console.log(address(ALICE_ACCOUNT), "ADDRESS");
+        console.logBytes32(dataToSign);
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
+        console.logBytes(contentsType);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        console.logBytes(signature);
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
+        console.log("LOGGING PARAMS");
+        console.logBytes32(toContentsHash(t.contents));
+        console.logBytes(abi.encodePacked(address(VALIDATOR_MODULE), signature));
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
         assertEq(ret, bytes4(0x1626ba7e));
 
@@ -131,6 +140,9 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                 accountDomainStructFields(account)
             )
         );
+        console.log("LOGGING: parentStructHash, accountDomainStructFields");
+        console.logBytes32(parentStructHash);
+        console.logBytes(accountDomainStructFields(account));
         return keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, parentStructHash));
     }
 
