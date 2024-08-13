@@ -74,8 +74,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        // review
-        // require(handler != address(0), MissingFallbackHandler(msg.sig));
         if(handler != address(0)) {
             if (calltype == CALLTYPE_STATIC) {
                assembly {
@@ -109,7 +107,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return(0, returndatasize())
                 }
             }
-        }
+        } 
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, calldataload(0))
@@ -121,8 +119,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
-        // review
-        // could revert with unsupported func selector / calltype etc
+        revert MissingFallbackHandler(msg.sig);   
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -299,7 +296,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
 
-        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3).
+        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3) or explicit bytes(0).
         // These selectors are explicitly forbidden to prevent security vulnerabilities.
         // Allowing these selectors would enable unauthorized users to uninstall and reinstall critical modules.
         // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
