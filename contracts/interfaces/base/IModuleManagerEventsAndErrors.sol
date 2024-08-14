@@ -81,4 +81,7 @@ interface IModuleManagerEventsAndErrors {
 
     /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
     error FallbackSelectorForbidden();
+
+    /// @dev Thrown when there is an attempt to install a fallback handler with an invalid calltype for a given selector.
+    error FallbackCallTypeInvalid();
 }

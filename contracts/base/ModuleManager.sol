@@ -12,7 +12,6 @@ pragma solidity ^0.8.26;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { Receiver } from "solady/src/accounts/Receiver.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 import { Storage } from "./Storage.sol";
@@ -46,7 +45,7 @@ import { RegistryAdapter } from "./RegistryAdapter.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 
-abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
 
@@ -69,15 +68,16 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         }
     }
 
+    receive() external payable {}
+
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable override(Receiver) receiverFallback {
+    fallback() external payable withHook {
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        require(handler != address(0), MissingFallbackHandler(msg.sig));
-
-        if (calltype == CALLTYPE_STATIC) {
-            assembly {
+        if(handler != address(0)) {
+            if (calltype == CALLTYPE_STATIC) {
+               assembly {
                 calldatacopy(0, 0, calldatasize())
 
                 // The msg.sender address is shifted to the left by 12 bytes to remove the padding
@@ -90,10 +90,10 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
                 }
                 returndatacopy(0, 0, returndatasize())
                 return(0, returndatasize())
+                }
             }
-        }
-        if (calltype == CALLTYPE_SINGLE) {
-            assembly {
+            if (calltype == CALLTYPE_SINGLE) {
+               assembly {
                 calldatacopy(0, 0, calldatasize())
 
                 // The msg.sender address is shifted to the left by 12 bytes to remove the padding
@@ -106,8 +106,21 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
                 }
                 returndatacopy(0, 0, returndatasize())
                 return(0, returndatasize())
+                }
+            }
+        } 
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := shr(224, calldataload(0))
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
+                mstore(0x20, s) // Store `msg.sig`.
+                return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
+        revert MissingFallbackHandler(msg.sig);   
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -281,16 +294,18 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
 
+        require(calltype == CALLTYPE_SINGLE || calltype == CALLTYPE_STATIC, FallbackCallTypeInvalid());
+
         // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
 
-        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3).
+        // Revert if the selector is either `onInstall(bytes)` (0x6d61fe70) or `onUninstall(bytes)` (0x8a91b0e3) or explicit bytes(0).
         // These selectors are explicitly forbidden to prevent security vulnerabilities.
         // Allowing these selectors would enable unauthorized users to uninstall and reinstall critical modules.
         // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
         // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
         // cannot be manipulated to disrupt the expected behavior and security of the account.
-        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3)), FallbackSelectorForbidden());
+        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3) || selector == bytes4(0)), FallbackSelectorForbidden());
 
         // Revert if a fallback handler is already installed for the given selector.
         // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.

@@ -85,16 +85,34 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         assertFalse(success, "State change through fallback static call should fail");
     }
 
-    /// @notice Tests fallback handler with an invalid call type.
+    /// @notice Tests installing fallback handler with an invalid call type.
     function test_FallbackHandlerInvalidCallType() public {
         bytes4 selector = mockFallbackHandler.stateChangingFunction.selector;
         // Use an invalid call type (0xFF is not defined)
         bytes memory customData = abi.encodePacked(selector, bytes1(0xFF));
-        installFallbackHandler(customData);
 
-        // Make a call to the fallback function with an invalid call type
-        (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
-        assertTrue(success, "Call with invalid call type should fail");
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(mockFallbackHandler),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(FallbackCallTypeInvalid.selector);
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        // Expect the UserOperationRevertReason event
+        vm.expectEmit(true, true, true, true);
+        emit UserOperationRevertReason(
+            userOpHash, // userOpHash
+            address(BOB_ACCOUNT), // sender
+            userOps[0].nonce, // nonce
+            expectedRevertReason
+        );
+        
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
     /// @notice Tests fallback handler when the handler is missing.
