@@ -55,11 +55,23 @@ contract RegistryFactory is Stakeable, INexusFactory {
     }
 
     function addAttester(address attester) external onlyOwner {
+        // Add the new attester to the storage array
         attesters.push(attester);
-        LibSort.sort(attesters);
+
+        // Copy the storage array into memory for sorting
+        address[] memory attestersMemory = attesters;
+
+        // Sort the memory array
+        LibSort.sort(attestersMemory);
+
+        // Copy the sorted memory array back to the storage array
+        for (uint256 i = 0; i < attestersMemory.length; i++) {
+            attesters[i] = attestersMemory[i];
+        }
     }
 
     function removeAttester(address attester) external onlyOwner {
+        // Find and remove the attester by swapping it with the last element and popping the array
         for (uint256 i = 0; i < attesters.length; i++) {
             if (attesters[i] == attester) {
                 attesters[i] = attesters[attesters.length - 1];
@@ -67,7 +79,17 @@ contract RegistryFactory is Stakeable, INexusFactory {
                 break;
             }
         }
-        LibSort.sort(attesters);
+
+        // Copy the storage array into memory for sorting
+        address[] memory attestersMemory = attesters;
+
+        // Sort the memory array
+        LibSort.sort(attestersMemory);
+
+        // Copy the sorted memory array back to the storage array
+        for (uint256 i = 0; i < attestersMemory.length; i++) {
+            attesters[i] = attestersMemory[i];
+        }
     }
 
     function setThreshold(uint8 newThreshold) external onlyOwner {
