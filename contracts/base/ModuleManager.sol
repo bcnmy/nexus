@@ -293,6 +293,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
 
+        require(calltype == CALLTYPE_SINGLE || calltype == CALLTYPE_STATIC, FallbackCallTypeInvalid());
+
         // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
 
