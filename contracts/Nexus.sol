@@ -324,22 +324,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
-    ///
-    /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
-    ///      keccak256(
-    ///         \x19\x01 ||
-    ///         this.domainSeparator ||
-    ///         hashStruct(BiconomyNexusMessage({ hash: `hash`}))
-    ///      )
-    ///
-    /// @param hash The original hash.
-    ///
-    /// @return The corresponding replay-safe hash.
-    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
-        return _eip712Hash(hash);
-    }
-
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
     /// denoting support for the default behavior, as implemented in

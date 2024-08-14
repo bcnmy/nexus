@@ -83,18 +83,6 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
         assertEq(expectedDomainSeparator, calculatedDomainSeparator);
     }
 
-    function testReplaySafeHash() public {
-        bytes32 hash = keccak256(abi.encodePacked("testHash"));
-        bytes32 expectedHash = BOB_ACCOUNT.replaySafeHash(hash);
-
-        bytes32 domainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
-        bytes32 actualHash = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, keccak256(abi.encode(keccak256("BiconomyNexusMessage(bytes32 hash)"), hash)))
-        );
-
-        assertEq(expectedHash, actualHash);
-    }
-
     /// @notice Tests the failure of signature validation due to an incorrect signer.
     function test_RevertWhen_SignatureIsInvalidDueToWrongSigner() public {
         TestTemps memory t;
