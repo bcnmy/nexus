@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex, concat, Provider, keccak256 } from "ethers";
-import { EntryPoint } from "../../../typechain-types";
+import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex, concat } from "ethers";
+import { EntryPoint, Nexus } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
   EXECTYPE_DEFAULT,
@@ -10,7 +10,6 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "./erc7579Utils";
-import { encodePacked, toBytes } from "viem";
 
 export const DefaultsForUserOp: UserOperation = {
   sender: ethers.ZeroAddress,
@@ -32,6 +31,7 @@ export const DefaultsForUserOp: UserOperation = {
 export const MODE_VALIDATION = "0x00";
 export const MODE_MODULE_ENABLE = "0x01";
 
+const abiCoder = new ethers.AbiCoder();
 /**
  * Simplifies the creation of a PackedUserOperation object by abstracting repetitive logic and enhancing readability.
  * @param userOp The user operation details.
@@ -405,28 +405,21 @@ export async function getNonce(
   return await entryPoint.getNonce(accountAddress, key);
 }
 
-export const getAccountDomainStructFields = async (
-  provider: Provider,
-  accountAddress: string
-) => {
-  const accountInterface = new ethers.Interface([
-    "function eip712Domain() public view returns (bytes1 fields, string memory name, string memory version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] memory extensions)"
-  ]);
-
-  const contract = new ethers.Contract(accountAddress, accountInterface, provider);
-
-  const accountDomainStructFields = await contract.eip712Domain();
-
-  const [fields, name, version, chainId, verifyingContract, salt, extensions] = accountDomainStructFields;
-
-  const abiCoder = new ethers.AbiCoder();
-  
-  return abiCoder.encode(
-    ["bytes1", "bytes32", "string", "uint256", "address", "bytes32", "bytes32"],
-    [fields, keccak256(toBytes(name)), keccak256(toBytes(version)), chainId, verifyingContract, salt, keccak256(encodePacked(['uint256[]'],[extensions]))]
+export async function getAccountDomainStructFields(account: Nexus): Promise<string> {
+  const [fields, name, version, chainId, verifyingContract, salt, extensions] = await account.eip712Domain();
+  return ethers.AbiCoder.defaultAbiCoder().encode(
+    ["bytes1", "bytes32", "bytes32", "uint256", "address", "bytes32", "bytes32"],
+    [
+      fields, // matches Solidity
+      ethers.keccak256(ethers.toUtf8Bytes(name)), // matches Solidity
+      ethers.keccak256(ethers.toUtf8Bytes(version)), // matches Solidity
+      chainId, 
+      verifyingContract, 
+      salt,
+      ethers.keccak256(ethers.solidityPacked(["uint256[]"], [extensions]))
+    ]
   );
-};
-
+}
 // More functions to be added
 // 1. simulateValidation (using EntryPointSimulations)
 // 2. simulareHandleOps
