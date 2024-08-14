@@ -119,7 +119,6 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     function test_FallbackHandlerMissingHandler() public {
         bytes4 selector = bytes4(keccak256("nonexistentFunction()"));
         (bool success, ) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
-        // Review: since now we are not reverting this does not fail anymore. 
         assertFalse(success, "Call to missing fallback handler should fail");
     }
 
