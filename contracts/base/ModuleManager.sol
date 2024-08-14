@@ -17,6 +17,7 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
@@ -223,7 +224,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
 
         validators.pop(prev, validator);
-        IValidator(validator).onUninstall(disableModuleData);
+        (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
@@ -241,7 +242,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     function _uninstallExecutor(address executor, bytes calldata data) internal virtual {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
-        IExecutor(executor).onUninstall(disableModuleData);
+        (bool success, ) = executor.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -260,7 +261,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
-        IHook(hook).onUninstall(data);
+        (bool success, ) = hook.call(abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -309,7 +310,7 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
-        IFallback(fallbackHandler).onUninstall(data[4:]);
+        (bool success, ) = fallbackHandler.call(abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
     }
 
     /// To make it easier to install multiple modules at once, this function will
