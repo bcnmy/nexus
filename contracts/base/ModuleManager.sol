@@ -225,7 +225,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
 
         validators.pop(prev, validator);
         (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
-        if(!success) return;
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
@@ -244,7 +243,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
         (bool success, ) = executor.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
-        if(!success) return;
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -264,7 +262,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
         (bool success, ) = hook.call(abi.encodeWithSelector(IModule.onUninstall.selector, data));
-        if(!success) return;
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -314,7 +311,6 @@ abstract contract ModuleManager is Storage, Receiver, EIP712, IModuleManagerEven
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
         (bool success, ) = fallbackHandler.call(abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
-        if(!success) return;
     }
 
     /// To make it easier to install multiple modules at once, this function will
