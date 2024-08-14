@@ -54,13 +54,14 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         address attester = address(0x456);
         address attester2 = address(0x654);
         vm.startPrank(FACTORY_OWNER.addr);
+        
         registryFactory.addAttester(attester);
         registryFactory.addAttester(attester2);
-        assertTrue(registryFactory.attesters(1) == attester, "Attester should be added");
-        assertTrue(registryFactory.attesters(2) == attester2, "Attester should be added");
-
+        assertTrue(registryFactory.attesters(0) == attester, "Attester should be added");
+        assertTrue(registryFactory.attesters(1) == attester2, "Attester should be added");
+        
         registryFactory.removeAttester(attester);
-        assertFalse(registryFactory.attesters(1) == attester, "Attester should be removed");
+        assertFalse(registryFactory.attesters(0) == attester, "Attester should be removed");
         vm.stopPrank();
     }
 
