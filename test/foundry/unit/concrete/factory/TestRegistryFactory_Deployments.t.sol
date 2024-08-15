@@ -60,7 +60,6 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         new RegistryFactory(implementation, address(this), registry, attestersArray, 2);
     }
 
-
     /// @notice Tests adding and removing attesters from the registry.
     function test_AddRemoveAttester() public {
         address attester = address(0x456);
