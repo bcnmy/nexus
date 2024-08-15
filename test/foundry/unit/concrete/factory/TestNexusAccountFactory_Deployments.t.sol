@@ -117,6 +117,20 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         INexus(firstAccountAddress).initializeAccount(factoryData);
     }
 
+    /// @notice Tests that account initialization reverts if no validator is installed.
+    function test_RevertIf_NoValidatorDuringInitialization() public {
+        BootstrapConfig[] memory emptyValidators; // Empty validators array
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        // Create initcode with no validator configuration
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(emptyValidators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+
+        vm.expectRevert(MissingValidator.selector);
+        FACTORY.createAccount(_initData, salt);
+    }
+
     /// @notice Tests creating accounts with different indexes.
     function test_DeployAccount_DifferentIndexes() public {
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
