@@ -183,7 +183,7 @@ describe("Nexus Module Management Tests", () => {
         ),
       ).to.be.revertedWithCustomError(
         deployedNexus,
-        "CannotRemoveLastValidator()",
+        "MissingValidator()",
       );
     });
 
