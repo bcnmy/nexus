@@ -42,12 +42,18 @@ contract RegistryFactory is Stakeable, INexusFactory {
     /// @param module The module address that is not whitelisted.
     error ModuleNotWhitelisted(address module);
 
+    /// @notice Error thrown when the threshold exceeds the number of attesters.
+    /// @param threshold The provided threshold value.
+    /// @param attestersLength The number of attesters provided.
+    error InvalidThreshold(uint8 threshold, uint256 attestersLength);
+
     /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_, IERC7484 registry_, address[] memory attesters_, uint8 threshold_) Stakeable(owner_) {
         require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
         require(owner_ != address(0), ZeroAddressNotAllowed());
+        require(threshold_ <= attesters_.length, InvalidThreshold(threshold_, attesters_.length));
         REGISTRY = registry_;
         attesters = attesters_;
         threshold = threshold_;
