@@ -34,7 +34,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
-    /// @return result The bytes returned from the execution.
+    /// @return result The bytes returned from the execution, which contains the returned data from the target address.
     function _execute(address target, uint256 value, bytes calldata callData) internal virtual returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -58,7 +58,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
     /// @return success True if the execution was successful, false otherwise.
-    /// @return result The bytes returned from the execution.
+    /// @return result The bytes returned from the execution, which contains the returned data from the target address.
     function _tryExecute(address target, uint256 value, bytes calldata callData) internal virtual returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -74,7 +74,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
 
     /// @notice Executes a batch of calls.
     /// @param executions An array of Execution structs each containing target, value, and calldata.
-    /// @return result An array of results from each executed call.
+    /// @return result An array of bytes returned from each executed call, corresponding to the returndata from each target address.
     function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         result = new bytes[](executions.length);
 
@@ -87,7 +87,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
 
     /// @notice Tries to execute a batch of calls and emits an event for each unsuccessful call.
     /// @param executions An array of Execution structs.
-    /// @return result An array of results, with unsuccessful calls marked by events.
+    /// @return result An array of bytes returned from each executed call, with unsuccessful calls marked by events.
     function _tryExecuteBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         result = new bytes[](executions.length);
 
@@ -101,6 +101,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     }
 
     /// @dev Execute a delegatecall with `delegate` on this account.
+    /// @return result The bytes returned from the delegatecall, which contains the returned data from the delegate contract.
     function _executeDelegatecall(address delegate, bytes calldata callData) internal returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -120,6 +121,8 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     }
 
     /// @dev Execute a delegatecall with `delegate` on this account and catch reverts.
+    /// @return success True if the delegatecall was successful, false otherwise.
+    /// @return result The bytes returned from the delegatecall, which contains the returned data from the delegate contract.
     function _tryExecuteDelegatecall(address delegate, bytes calldata callData) internal returns (bool success, bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -167,6 +170,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @dev Executes a single transaction based on the specified execution type.
     /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
+    /// @return returnData An array containing the execution result. In the case of a single transaction, the array contains one element.
     function _handleSingleExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData) {
         (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
         returnData = new bytes[](1);
@@ -182,9 +186,10 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         }
     }
 
-     /// @dev Executes a batch of transactions based on the specified execution type.
+    /// @dev Executes a batch of transactions based on the specified execution type.
     /// @param executionCalldata The calldata for a batch of transactions.
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
+    /// @return returnData An array containing the execution results for each transaction in the batch.
     function _handleBatchExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData){
         Execution[] calldata executions = executionCalldata.decodeBatch();
         if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
@@ -195,6 +200,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @dev Executes a single transaction based on the specified execution type.
     /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
+    /// @return returnData An array containing the result of the delegatecall execution.
     function _handleDelegateCallExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData) {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
         returnData = new bytes[](1);
