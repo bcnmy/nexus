@@ -31,8 +31,8 @@ interface IModuleManagerEventsAndErrors {
     /// @param module The address of the uninstalled module.
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
-    /// @dev Thrown when an attempt is made to uninstall the last validator module, which is prohibited.
-    error CannotRemoveLastValidator();
+    /// @notice Thrown when no validators exist or when attempting to remove the last one.
+    error MissingValidator();
 
     /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);
