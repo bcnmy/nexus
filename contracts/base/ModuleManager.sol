@@ -236,7 +236,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         validators.pop(prev, validator);
 
         // Sentinel pointing to itself means the list is empty, so check this after removal
-        require(validators.getNext(address(0x01)) != address(0x01), CannotRemoveLastValidator());
+        require(_hasValidators(), MissingValidator());
 
         (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
@@ -456,6 +456,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return True if the validator is installed, otherwise false.
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
         return _getAccountStorage().validators.contains(validator);
+    }
+
+    /// @dev Checks if there is at least one validator installed.
+    /// @return True if there is at least one validator, otherwise false.
+    function _hasValidators() internal view returns (bool) {
+        return _getAccountStorage().validators.getNext(address(0x01)) != address(0x01);
     }
 
     /// @dev Checks if an executor is currently installed.
