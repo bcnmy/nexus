@@ -52,7 +52,7 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         /// @notice Tests that the constructor reverts if the threshold is greater than the length of the attesters array.
     function test_Constructor_RevertIf_ThresholdExceedsAttestersLength() public {
         address implementation = address(0x123);
-        address;
+        address[] memory attestersArray = new address[](1);
         attestersArray[0] = address(0x789);
 
         // Expect the constructor to revert because the threshold (2) is greater than the number of attesters (1)
