@@ -49,6 +49,18 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         new RegistryFactory(address(0), address(this), registry, attestersArray, 1);
     }
 
+        /// @notice Tests that the constructor reverts if the threshold is greater than the length of the attesters array.
+    function test_Constructor_RevertIf_ThresholdExceedsAttestersLength() public {
+        address implementation = address(0x123);
+        address;
+        attestersArray[0] = address(0x789);
+
+        // Expect the constructor to revert because the threshold (2) is greater than the number of attesters (1)
+        vm.expectRevert(abi.encodeWithSelector(InvalidThreshold.selector, 2, attestersArray.length));
+        new RegistryFactory(implementation, address(this), registry, attestersArray, 2);
+    }
+
+
     /// @notice Tests adding and removing attesters from the registry.
     function test_AddRemoveAttester() public {
         address attester = address(0x456);
