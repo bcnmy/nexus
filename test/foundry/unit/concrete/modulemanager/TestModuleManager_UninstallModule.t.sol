@@ -164,7 +164,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MissingValidator()");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -205,7 +205,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         );
 
         // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
+        bytes memory expectedRevertReason = abi.encodeWithSelector(ModuleNotInstalled.selector, MODULE_TYPE_EXECUTOR, address(VALIDATOR_MODULE));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -392,7 +392,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MissingValidator()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);

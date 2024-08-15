@@ -10,13 +10,13 @@ TestModuleManager_UninstallModule
 ├── when uninstalling an executor module successfully
 │   └── it should uninstall the executor module
 ├── when uninstalling the last validator module
-│   └── it should revert with CannotRemoveLastValidator error
+│   └── it should revert with MissingValidator error
 ├── when uninstalling a module with incorrect module type
 │   └── it should revert with MismatchModuleTypeId error
 ├── when uninstalling a module that is not installed
 │   └── it should revert with ModuleNotInstalled error
 ├── when uninstalling the last validator module
-│   └── it should revert with CannotRemoveLastValidator error
+│   └── it should revert with MissingValidator error
 ├── when uninstalling the fallback handler module successfully
 │   └── it should uninstall the fallback handler module
 ├── when uninstalling a fallback handler that is not installed
