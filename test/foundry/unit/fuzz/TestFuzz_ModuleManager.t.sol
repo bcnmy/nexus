@@ -314,7 +314,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         // If the module type does not match the installation, expect a revert
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSelector(ModuleNotInstalled.selector, moduleTypeId, moduleAddress);
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(
