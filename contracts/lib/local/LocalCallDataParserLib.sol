@@ -36,7 +36,7 @@ library LocalCallDataParserLib {
     }
 
 
-    /// @dev Parses the data to obtain types and initdata's for Multi Type module isntall mode
+    /// @dev Parses the data to obtain types and initdata's for Multi Type module install mode
     /// @param initData Multi Type module init data, abi.encoded
     function parseMultiTypeInitData(bytes calldata initData) 
         internal

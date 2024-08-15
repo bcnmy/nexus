@@ -78,8 +78,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// Validates a user operation against a specified validator, extracted from the operation's nonce.
-    /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
-    /// Other validation failures (e.g., nonce mismatch) should revert.
     /// @param op The operation to validate, encapsulating all transaction details.
     /// @param userOpHash Hash of the operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
@@ -326,7 +324,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
+    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash from the given `hash`.
     ///
     /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
     ///      keccak256(

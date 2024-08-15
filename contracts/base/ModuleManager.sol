@@ -330,18 +330,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         (bool success, ) = fallbackHandler.call(abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
     }
 
-    /// To make it easier to install multiple modules at once, this function will
-    /// install multiple modules at once. The init data is expected to be a abi encoded tuple
-    /// of (uint[] types, bytes[] initDatas)
-    /// @dev Install multiple modules at once
-    /// @dev It will call module.onInstall for every initialization so it ensure the flow
-    /// consistent with the flow of the SA's that do not implement _multiTypeInstall 
-    /// and thus will call the multityped module several times
-    /// The multityped modules can not expect all the 7579 SA's to implement _multiTypeInstall and
-    /// thus should account for the flow when they are going to be called with onUnistall
-    /// for the initialization as every of the module types they declare they are 
-    /// @param module address of the module
-    /// @param initData initialization data for the module
+    /// @notice Installs a module with multiple types in a single operation.
+    /// @dev This function handles installing a multi-type module by iterating through each type and initializing it.
+    /// The initData should include an ABI-encoded tuple of (uint[] types, bytes[] initDatas).
+    /// @param module The address of the multi-type module.
+    /// @param initData Initialization data for each type within the module.
     function _multiTypeInstall(
         address module,
         bytes calldata initData
@@ -376,7 +369,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 _installFallbackHandler(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-            /*          INSTALL HOOK (global or sig specific)             */
+            /*          INSTALL HOOK (global only, not sig-specific)      */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             else if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
