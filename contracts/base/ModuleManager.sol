@@ -232,13 +232,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
 
-        // Check if the account has at least one validator installed before proceeding
-        // Having at least one validator is a requirement for the account to function properly
-        require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
-
+        // Perform the removal first
         validators.pop(prev, validator);
+
+        // Sentinel pointing to itself means the list is empty, so check this after removal
+        require(validators.getNext(address(0x01)) != address(0x01), CannotRemoveLastValidator());
+
         (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
+
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
