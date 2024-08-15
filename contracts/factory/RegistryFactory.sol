@@ -102,29 +102,27 @@ contract RegistryFactory is Stakeable, INexusFactory {
         threshold = newThreshold;
     }
 
+
     /// @notice Creates a new Nexus account with the provided initialization data.
-    /// @param initData Initialization data to be called on the new Smart Account.
-    /// @param salt Unique salt for the Smart Account creation.
-    /// @return The address of the newly created Nexus.
+    /// @param initData Initialization data that is expected to be compatible with a `Bootstrap` contract's initialization method.
+    /// @param salt Unique salt used for deterministic deployment of the Nexus smart account.
+    /// @return The address of the newly created Nexus account.
     function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
-        // Decode the initData to extract the call target and call data
+        // Decode the initialization data to extract the target bootstrap contract and the data to be used for initialization.
         (, bytes memory callData) = abi.decode(initData, (address, bytes));
 
-        // Extract the inner data by removing the first 4 bytes (the function selector)
+        // Ensure that the initData is structured for the expected Bootstrap.initNexus or similar method.
+        // This step is crucial for ensuring the proper initialization of the Nexus smart account.
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
-
-        // Decode the call data to extract the parameters passed to initNexus
         (
             BootstrapConfig[] memory validators,
             BootstrapConfig[] memory executors,
             BootstrapConfig memory hook,
             BootstrapConfig[] memory fallbacks,
-            ,
-            ,
-
+            , , 
         ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address, address[], uint8));
 
-        // Ensure all modules are whitelisted
+        // Ensure that all specified modules are whitelisted and allowed for the account.
         for (uint256 i = 0; i < validators.length; i++) {
             require(isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR), ModuleNotWhitelisted(validators[i].module));
         }
@@ -153,11 +151,14 @@ contract RegistryFactory is Stakeable, INexusFactory {
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 
         if (!alreadyDeployed) {
+            // Initialize the Nexus account using the provided initialization data
             INexus(account).initializeAccount(initData);
             emit AccountCreated(account, initData, salt);
         }
+
         return payable(account);
     }
+
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @param - Initialization data to be called on the new Smart Account.
