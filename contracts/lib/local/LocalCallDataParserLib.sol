@@ -17,7 +17,7 @@ library LocalCallDataParserLib {
         ) 
     {
         uint256 p;
-        assembly {
+        assembly ("memory-safe") {
             p := packedData.offset
             module := shr(96, calldataload(p))
 

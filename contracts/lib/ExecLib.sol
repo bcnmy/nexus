@@ -16,7 +16,7 @@ library ExecLib {
          * 0x4                  | -                 |
         abi.encode(IERC7579Execution.Execution[])
          */
-        assembly {
+        assembly ("memory-safe") {
             let dataPointer := add(callData.offset, calldataload(callData.offset))
 
             // Extract the ERC7579 Executions
