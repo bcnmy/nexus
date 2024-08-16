@@ -65,7 +65,6 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         vm.stopPrank();
     }
 
-
     /// @notice Tests deploying an account using the registry factory directly.
     function test_DeployAccount_RegistryFactory_CreateAccount() public payable {
         // Prepare bootstrap configuration for validators
@@ -92,7 +91,9 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
             "Validator should be installed"
         );
         assertEq(
-            Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""), true, "Executor should be installed"
+            Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), ""),
+            true,
+            "Executor should be installed"
         );
         assertEq(Nexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), true, "Hook should be installed");
         assertEq(
@@ -142,66 +143,64 @@ contract TestRegistryFactory_Deployments is NexusTest_Base {
         assertTrue(accountAddress0 != accountAddress1, "Accounts with different indexes should have different addresses");
     }
 
-/// @notice Tests that creating an account fails if an executor module is not whitelisted.
-function test_DeployAccount_FailsIfExecutorNotWhitelisted() public payable {
-    // Prepare bootstrap configuration with a non-whitelisted executor module
-    address nonWhitelistedExecutor = address(0x789);
-    BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-    BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(nonWhitelistedExecutor, "");
-    BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-    BootstrapConfig[] memory fallbacks;
+    /// @notice Tests that creating an account fails if an executor module is not whitelisted.
+    function test_DeployAccount_FailsIfExecutorNotWhitelisted() public payable {
+        // Prepare bootstrap configuration with a non-whitelisted executor module
+        address nonWhitelistedExecutor = address(0x789);
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(nonWhitelistedExecutor, "");
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory fallbacks;
 
-    bytes memory saDeploymentIndex = "0";
-    bytes32 salt = keccak256(saDeploymentIndex);
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
 
-    // Create initcode and salt to be sent to Factory
-    bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, ATTESTERS, THRESHOLD);
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, ATTESTERS, THRESHOLD);
 
-    // Expect the account creation to revert with ModuleNotWhitelisted error
-    vm.expectRevert(abi.encodeWithSelector(NexusInitializationFailed.selector));
-    registryFactory.createAccount{ value: 1 ether }(_initData, salt);
-}
+        // Expect the account creation to revert with ModuleNotWhitelisted error
+        vm.expectRevert(abi.encodeWithSelector(NexusInitializationFailed.selector));
+        registryFactory.createAccount{ value: 1 ether }(_initData, salt);
+    }
 
-/// @notice Tests that creating an account fails if the threshold is zero.
-function test_DeployAccount_WithThresholdZero() public payable {
-    // Set threshold to zero
-    prank(FACTORY_OWNER.addr);
-    registryFactory.setThreshold(0);
+    /// @notice Tests that creating an account fails if the threshold is zero.
+    function test_DeployAccount_WithThresholdZero() public payable {
+        // Set threshold to zero
+        prank(FACTORY_OWNER.addr);
+        registryFactory.setThreshold(0);
 
-    // Prepare bootstrap configuration for validators
-    BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-    BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(EXECUTOR_MODULE), "");
-    BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), "");
-    BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(HANDLER_MODULE), abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR)));
-    bytes memory saDeploymentIndex = "0";
-    bytes32 salt = keccak256(saDeploymentIndex);
+        // Prepare bootstrap configuration for validators
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(EXECUTOR_MODULE), "");
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), "");
+        BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(HANDLER_MODULE), abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR)));
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
 
-    // Create initcode and salt to be sent to Factory
-    bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, attesters, 0);
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, attesters, 0);
 
-    // Expect the account creation to revert due to zero threshold
-    registryFactory.createAccount{ value: 1 ether }(_initData, salt);
-}
+        // Expect the account creation to revert due to zero threshold
+        registryFactory.createAccount{ value: 1 ether }(_initData, salt);
+    }
 
-/// @notice Tests that creating an account fails if there are no attesters.
-function test_DeployAccount_FailsIfNoAttesters() public payable {
-    // Set attesters to an empty array
-    address[] memory noAttesters;
+    /// @notice Tests that creating an account fails if there are no attesters.
+    function test_DeployAccount_FailsIfNoAttesters() public payable {
+        // Set attesters to an empty array
+        address[] memory noAttesters;
 
-    // Prepare bootstrap configuration for validators
-    BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-    BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(EXECUTOR_MODULE), "");
-    BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), "");
-    BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(HANDLER_MODULE), abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR)));
-    bytes memory saDeploymentIndex = "0";
-    bytes32 salt = keccak256(saDeploymentIndex);
+        // Prepare bootstrap configuration for validators
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(EXECUTOR_MODULE), "");
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), "");
+        BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(HANDLER_MODULE), abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR)));
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
 
-    // Create initcode and salt to be sent to Factory
-    bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, noAttesters, THRESHOLD);
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, noAttesters, THRESHOLD);
 
-    // Expect the account creation to revert due to no attesters
-    registryFactory.createAccount{ value: 1 ether }(_initData, salt);
-}
-
-
+        // Expect the account creation to revert due to no attesters
+        registryFactory.createAccount{ value: 1 ether }(_initData, salt);
+    }
 }
