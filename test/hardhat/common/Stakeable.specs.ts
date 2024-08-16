@@ -1,10 +1,9 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, parseEther } from "ethers";
+import { AddressLike, parseEther, ZeroAddress } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { EntryPoint, Nexus, Stakeable } from "../../../typechain-types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
-import { zeroAddress } from "viem";
 
 describe("Stakeable tests", function () {
   let smartAccount: Nexus;
@@ -66,19 +65,19 @@ describe("Stakeable tests", function () {
 
     it("Should fail to add stake to an incorrect entrypoint address", async function () {
       await expect(
-        stakeable.addStake(zeroAddress, 0, { value: parseEther("1") }),
+        stakeable.addStake(ZeroAddress, 0, { value: parseEther("1") }),
       ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 
     it("Should fail to unlock stake from an incorrect entrypoint address", async function () {
       await expect(
-        stakeable.unlockStake(zeroAddress),
+        stakeable.unlockStake(ZeroAddress),
       ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 
     it("Should fail to withdraw stake from an incorrect entrypoint address", async function () {
       await expect(
-        stakeable.withdrawStake(zeroAddress, ownerAddress),
+        stakeable.withdrawStake(ZeroAddress, ownerAddress),
       ).to.be.revertedWithCustomError(stakeable, "InvalidEntryPointAddress");
     });
 

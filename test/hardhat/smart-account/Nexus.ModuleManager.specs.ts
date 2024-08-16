@@ -29,7 +29,6 @@ import {
   UNUSED,
   installModule,
 } from "../utils/erc7579Utils";
-import { toBytes } from "viem";
 
 describe("Nexus Module Management Tests", () => {
   let deployedNexus: Nexus;
@@ -632,7 +631,7 @@ describe("Nexus Module Management Tests", () => {
     it("Should correctly install a fallback handler module on the smart account", async () => {
       const exampleSender = await deployedNexus.getAddress();
       const exampleValue = 12345;
-      const exampleData = toBytes("0x12345678");
+      const exampleData = ethers.getBytes("0x12345678");
 
       await expect(
         mockFallbackHandler.onGenericFallback(

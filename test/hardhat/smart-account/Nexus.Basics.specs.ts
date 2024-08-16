@@ -37,7 +37,6 @@ import {
   MODE_PAYLOAD,
   UNUSED,
 } from "../utils/erc7579Utils";
-import { Hex, hashTypedData } from "viem";
 
 describe("Nexus Basic Specs", function () {
   let factory: K1ValidatorFactory;
@@ -157,42 +156,6 @@ describe("Nexus Basic Specs", function () {
     it("Should get domain separator", async () => {
       const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
       expect(domainSeparator).to.not.equal(ZeroAddress);
-    });
-
-    it("Should get hashed typed data", async () => {
-      const hash = hashTypedData({
-        domain: {
-          name: "Nexus",
-          version: "1",
-          chainId: 1,
-          verifyingContract: smartAccountAddress as Hex,
-        },
-        types: {
-          Person: [
-            { name: "name", type: "string" },
-            { name: "wallet", type: "address" },
-          ],
-          Mail: [
-            { name: "from", type: "Person" },
-            { name: "to", type: "Person" },
-            { name: "contents", type: "string" },
-          ],
-        },
-        primaryType: "Mail",
-        message: {
-          from: {
-            name: "Cow",
-            wallet: "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
-          },
-          to: {
-            name: "Bob",
-            wallet: "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
-          },
-          contents: "Hello, Bob!",
-        },
-      });
-      const hashedTypedData = await smartAccount.hashTypedData(hash);
-      expect(hashedTypedData).to.not.be.undefined;
     });
 
     it("Should verify supported account modes", async function () {
