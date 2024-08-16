@@ -339,19 +339,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
 
-    /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
-    ///
-    /// @dev Implements encode(domainSeparator : 𝔹²⁵⁶, message : 𝕊) = "\x19\x01" || domainSeparator ||
-    ///      hashStruct(message).
-    /// @dev See https://eips.ethereum.org/EIPS/eip-712#specification.
-    ///
-    /// @param hash The `BiconomyNexusMessage.hash` field to hash.
-    ////
-    /// @return The resulting EIP-712 hash.
-    function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
-    }
-
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
     ///
     /// This implementation uses a nested EIP-712 approach to
