@@ -33,6 +33,7 @@ import {
     ERC1271_MAGICVALUE 
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
+import { ExcessivelySafeCall } from "excessivelysafecall/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 
 
@@ -237,7 +238,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
 
         validators.pop(prev, validator);
-        (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
+            validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
+        );
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
@@ -255,7 +258,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _uninstallExecutor(address executor, bytes calldata data) internal virtual {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
-        (bool success, ) = executor.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
+            executor, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
+        );
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -274,7 +279,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
-        (bool success, ) = hook.call(abi.encodeWithSelector(IModule.onUninstall.selector, data));
+        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
+            hook, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data)
+        );
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -325,7 +332,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
-        (bool success, ) = fallbackHandler.call(abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
+        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
+            fallbackHandler, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:])
+        );
     }
 
     /// To make it easier to install multiple modules at once, this function will
