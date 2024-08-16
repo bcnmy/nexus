@@ -77,21 +77,24 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
     }
 
-    /// Validates a user operation against a specified validator, extracted from the operation's nonce.
-    /// @param op The operation to validate, encapsulating all transaction details.
-    /// @param userOpHash Hash of the operation data, used for signature validation.
+    /// @notice Validates a user operation against a specified validator, extracted from the operation's nonce.
+    /// @param op The user operation to validate, encapsulating all transaction details.
+    /// @param userOpHash Hash of the user operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
-    /// This can be zero if covered by a paymaster or sufficient deposit exists.
+    /// This can be zero if covered by a paymaster or if sufficient deposit exists.
     /// @return validationData Encoded validation result or failure, propagated from the validator module.
     /// - Encoded format in validationData:
-    ///     - First 20 bytes: Validator address, 0x0 for valid or specific failure modes.
-    ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
-    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
+    ///     - First 20 bytes: Address of the Validator module, to which the validation task is forwarded.
+    ///       The validator module returns:
+    ///         - `SIG_VALIDATION_SUCCESS` (0) indicates successful validation.
+    ///         - `SIG_VALIDATION_FAILED` (1) indicates signature validation failure.
+    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the user operation's nonce.
     /// This method forwards the validation task to the extracted validator module address.
+    /// @dev The entryPoint calls this function. If validation fails, it returns `VALIDATION_FAILED` (1) otherwise `0`.
     /// @dev Features Module Enable Mode.
-    /// This Module Enable Mode flow only makes sense for the module that is used as validator
-    /// for the userOp that triggers Module Enable Flow. Otherwise, one should just include
-    /// a call to Nexus.installModule into userOp.callData
+    /// This Module Enable Mode flow is intended for the module acting as the validator
+    /// for the user operation that triggers the Module Enable Flow. Otherwise, a call to 
+    /// `Nexus.installModule` should be included in `userOp.callData`.
     function validateUserOp(
         PackedUserOperation calldata op,
         bytes32 userOpHash,
