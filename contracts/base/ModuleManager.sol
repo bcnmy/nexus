@@ -236,7 +236,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         validators.pop(prev, validator);
 
         // Sentinel pointing to itself means the list is empty, so check this after removal
-        require(_hasValidators(), MissingValidator());
+        require(_hasValidators(), CanNotRemoveLastValidator());
 
         (bool success, ) = validator.call(abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
