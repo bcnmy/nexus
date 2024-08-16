@@ -33,7 +33,7 @@ import {
     ERC1271_MAGICVALUE 
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
-import { ExcessivelySafeCall } from "excessivelysafecall/src/ExcessivelySafeCall.sol";
+import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 
 
