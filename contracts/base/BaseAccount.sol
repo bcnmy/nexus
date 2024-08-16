@@ -89,6 +89,7 @@ contract BaseAccount is IBaseAccount {
                 returndatacopy(freeMemPtr, 0x00, returndatasize())
                 revert(freeMemPtr, returndatasize())
             }
+             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
