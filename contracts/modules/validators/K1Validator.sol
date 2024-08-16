@@ -21,8 +21,6 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-import "hardhat/console.sol";
-
 /// @title Nexus - K1Validator
 /// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
@@ -101,9 +99,6 @@ contract K1Validator is IValidator {
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
         // Validate the signature using SignatureCheckerLib
-        console.log(owner);
-        console.logBytes32(hash);
-        console.logBytes(data);
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)) {
             return ERC1271_MAGICVALUE;
         }

@@ -133,7 +133,6 @@ describe("Nexus Basic Specs", function () {
 
     it("Should get implementation address of smart account", async () => {
       const saImplementation = await smartAccount.getImplementation();
-      console.log("Implementation Address: ", saImplementation);
       expect(saImplementation).to.not.equal(ZeroAddress);
     });
 
@@ -344,15 +343,12 @@ describe("Nexus Basic Specs", function () {
       // 1. Convert foundry util to ts code (as below)
 
       const data = keccak256("0x1234");
-      console.log("Data from personal sign: ", data);
       
       // Define constants as per the original Solidity function
       const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
 
       // Calculate the domain separator
       const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-
-      console.log("Domain Separator from personal sign: ", domainSeparator);
 
       // Calculate the parent struct hash
       const parentStructHash = ethers.keccak256(
@@ -365,11 +361,6 @@ describe("Nexus Basic Specs", function () {
       // Calculate the final hash
       const resultHash = ethers.keccak256(
         ethers.concat(["0x1901", domainSeparator, parentStructHash]),
-      );
-
-      console.log(
-        "being signed",
-        ethers.hashMessage(ethers.getBytes(resultHash)),
       );
 
       const signature = await smartAccountOwner.signMessage(

@@ -34,7 +34,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
-        console.logBytes(enableModeSig);
         // Enable Mode Sig Prefix
         // uint256 moduleTypeId
         // bytes4 initDataLength
@@ -48,8 +47,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             bytes4(uint32(enableModeSig.length)),
             enableModeSig
         );
-
-        console.logBytes(enableModeSigPrefix);
 
         op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -139,9 +136,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function makeDraftOp(address moduleToEnable) internal view returns (PackedUserOperation memory op) {
         uint256 nonce = getNonce(BOB_ADDRESS, MODE_MODULE_ENABLE, moduleToEnable);
-        console.logBytes1(MODE_MODULE_ENABLE);
-        console.log(moduleToEnable);
-        console.logUint(nonce);
         op = buildPackedUserOp(address(BOB_ACCOUNT), nonce);
 
         op.callData = prepareERC7579SingleExecuteCallData(
