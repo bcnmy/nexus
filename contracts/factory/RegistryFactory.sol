@@ -13,10 +13,10 @@ pragma solidity ^0.8.26;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibSort } from "solady/src/utils/LibSort.sol";
 import { BytesLib } from "../lib/BytesLib.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapConfig } from "../utils/RegistryBootstrap.sol";
-
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { INexusFactory } from "../interfaces/factory/INexusFactory.sol";
@@ -55,16 +55,40 @@ contract RegistryFactory is Stakeable, INexusFactory {
     }
 
     function addAttester(address attester) external onlyOwner {
+        // Add the new attester to the storage array
         attesters.push(attester);
+
+        // Copy the storage array into memory for sorting
+        address[] memory attestersMemory = attesters;
+
+        // Sort the memory array
+        LibSort.sort(attestersMemory);
+
+        // Copy the sorted memory array back to the storage array
+        for (uint256 i = 0; i < attestersMemory.length; i++) {
+            attesters[i] = attestersMemory[i];
+        }
     }
 
     function removeAttester(address attester) external onlyOwner {
+        // Find and remove the attester by swapping it with the last element and popping the array
         for (uint256 i = 0; i < attesters.length; i++) {
             if (attesters[i] == attester) {
                 attesters[i] = attesters[attesters.length - 1];
                 attesters.pop();
                 break;
             }
+        }
+
+        // Copy the storage array into memory for sorting
+        address[] memory attestersMemory = attesters;
+
+        // Sort the memory array
+        LibSort.sort(attestersMemory);
+
+        // Copy the sorted memory array back to the storage array
+        for (uint256 i = 0; i < attestersMemory.length; i++) {
+            attesters[i] = attestersMemory[i];
         }
     }
 

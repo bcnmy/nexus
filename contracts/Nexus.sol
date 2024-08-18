@@ -100,17 +100,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator = op.nonce.getValidator();
-        if (!op.nonce.isModuleEnableMode()) {
+        if (op.nonce.isModuleEnableMode()) {
+            PackedUserOperation memory userOp = op;
+            userOp.signature = _enableMode(userOpHash, op.signature);
+            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
+            validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+        } else {
             // Check if validator is not enabled. If not, return VALIDATION_FAILED.
             if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
             validationData = IValidator(validator).validateUserOp(op, userOpHash);
-        } else {
-            PackedUserOperation memory userOp = op;
-            userOp.signature = _enableMode(validator, op.signature);
-            // Ensure the module being enabled is a validator
-            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
-            validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
-        }
+        }    
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
@@ -157,7 +156,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param userOp The user operation to execute, containing transaction details.
     /// @param - Hash of the user operation.
     /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
         // Extract inner call data from user operation, skipping the first 4 bytes.
         bytes calldata innerCall = userOp.callData[4:];
         bytes memory innerCallRet = "";
@@ -186,7 +185,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -200,7 +199,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
         require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
@@ -224,7 +223,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         require(success, NexusInitializationFailed());
     }
 
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
@@ -312,7 +311,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf withHook {
         require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {

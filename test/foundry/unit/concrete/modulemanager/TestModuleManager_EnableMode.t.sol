@@ -22,13 +22,14 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function test_EnableMode_Success() public {
         address moduleToEnable = address(mockMultiModule);
+        address opValidator = address(mockMultiModule);
 
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
-
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+        
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
 
-        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
@@ -40,6 +41,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         // bytes4 enableModeSig length
         // enableModeSig
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
@@ -58,17 +60,21 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""), "Module should be installed as executor");
     }
 
-    function test_EnableMode_FailsWithWrongValidationModule() public {
+    function test_EnableMode_FailsWithWrongValidationModuleInEnableModeSig() public {
         address moduleToEnable = address(mockMultiModule);
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
+        address opValidator = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash); // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
-        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         address invalidValidator = address(0xdeaf);
         enableModeSig = abi.encodePacked(invalidValidator, enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
@@ -93,15 +99,19 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function test_EnableMode_FailsWithWrongSig() public {
         address moduleToEnable = address(mockMultiModule);
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);
-        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash();
+        address opValidator = address(mockMultiModule);
 
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash); 
+        (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        
         bytes memory enableModeSig = signMessage(CHARLIE, hashToSign); // SIGN WITH NOT OWNER
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
             MODULE_TYPE_MULTI,
             bytes4(uint32(multiInstallData.length)),
             multiInstallData,
@@ -242,7 +252,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         );
     }
 
-    function makeInstallDataAndHash() internal view returns (bytes memory, bytes32) {
+    function makeInstallDataAndHash(uint256 moduleType, bytes32 userOpHash) internal view returns (bytes memory, bytes32) {
         // prepare Enable Mode Data
         bytes32 validatorConfig = bytes32(bytes20(ALICE_ADDRESS)); //set Alice as owner via MultiTypeModule
         bytes32 executorConfig = bytes32(uint256(0x2222));
@@ -257,8 +267,14 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes memory multiInstallData = abi.encode(types, initDatas);
 
         // prepare Enable Mode Signature
-        bytes32 structHash = keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, address(mockMultiModule), keccak256(multiInstallData)));
-        (, string memory name, string memory version, , , , ) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
+        bytes32 structHash = keccak256(abi.encode(
+            MODULE_ENABLE_MODE_TYPE_HASH, 
+            address(mockMultiModule),
+            moduleType,
+            userOpHash,
+            keccak256(multiInstallData)
+        ));
+        (,string memory name,string memory version,,,,) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
         bytes32 hashToSign = _hashTypedData(structHash, name, version, address(BOB_ACCOUNT));
         return (multiInstallData, hashToSign);
     }
