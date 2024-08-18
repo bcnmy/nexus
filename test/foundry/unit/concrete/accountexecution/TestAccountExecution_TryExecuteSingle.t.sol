@@ -177,7 +177,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Expect the TryDelegateCallUnsuccessful event to be emitted
         vm.expectEmit(true, true, true, true);
-        emit TryDelegateCallUnsuccessful(0, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryDelegateCallUnsuccessful(execution[0].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
 
         // Execute the operation
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
