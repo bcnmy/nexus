@@ -20,5 +20,7 @@ TestAccountFactory_Deployments
     │   └── it should deploy the account correctly
     ├── when initializing Nexus with a hook module and deploying an account
     │   └── it should deploy the account and install the modules correctly
-    └── when the Nexus contract constructor is called with a zero entry point address
-        └── it should revert
+    ├── when the Nexus contract constructor is called with a zero entry point address
+    │   └── it should revert
+    └── when manually computing the address using keccak256
+        └── it should match the address computed by computeAccountAddress

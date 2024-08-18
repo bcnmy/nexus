@@ -21,8 +21,13 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
         bootstrapper = new Bootstrap();
-        validatorFactory =
-            new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
+        validatorFactory = new K1ValidatorFactory(
+            address(ACCOUNT_IMPLEMENTATION),
+            address(FACTORY_OWNER.addr),
+            address(VALIDATOR_MODULE),
+            bootstrapper,
+            REGISTRY
+        );
     }
 
     /// @notice Tests if the constructor correctly initializes the factory with the given implementation, K1 Validator, and Bootstrapper addresses.
@@ -142,5 +147,27 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         address payable accountAddress1 = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index1, ATTESTERS, THRESHOLD);
 
         assertTrue(accountAddress0 != accountAddress1, "Accounts with different indexes should have different addresses");
+    }
+
+    /// @notice Tests that the computed address matches the manually computed address using keccak256.
+    function test_ComputeAccountAddress_MatchesManualComputation() public {
+        address eoaOwner = user.addr;
+        uint256 index = 1;
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x1234);
+        uint8 threshold = 1;
+
+        // Compute the actual salt manually using keccak256
+        bytes32 manualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
+
+        address expectedAddress = LibClone.predictDeterministicAddressERC1967(
+            address(validatorFactory.ACCOUNT_IMPLEMENTATION()),
+            manualSalt,
+            address(validatorFactory)
+        );
+
+        address computedAddress = validatorFactory.computeAccountAddress(eoaOwner, index, attesters, threshold);
+
+        assertEq(expectedAddress, computedAddress, "Computed address does not match manually computed address");
     }
 }

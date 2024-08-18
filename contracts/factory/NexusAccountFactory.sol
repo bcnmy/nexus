@@ -43,14 +43,8 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     /// @return The address of the newly created Nexus account.
     function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
         // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
+
 
         // Deploy the account using the deterministic address
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
@@ -63,20 +57,12 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param - Initialization data to be called on the new Smart Account.
-    /// @param - Unique salt for the Smart Account creation.
+    /// @param initData - Initialization data to be called on the new Smart Account.
+    /// @param salt - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    function computeAccountAddress(bytes calldata, bytes32) external view override returns (address payable expectedAddress) {
+    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view override returns (address payable expectedAddress) {
         // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
-
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 }

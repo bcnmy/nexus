@@ -124,28 +124,21 @@ contract RegistryFactory is Stakeable, INexusFactory {
 
         // Ensure that all specified modules are whitelisted and allowed for the account.
         for (uint256 i = 0; i < validators.length; i++) {
-            require(isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR), ModuleNotWhitelisted(validators[i].module));
+            require(_isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR), ModuleNotWhitelisted(validators[i].module));
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            require(isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR), ModuleNotWhitelisted(executors[i].module));
+            require(_isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR), ModuleNotWhitelisted(executors[i].module));
         }
 
-        require(isModuleAllowed(hook.module, MODULE_TYPE_HOOK), ModuleNotWhitelisted(hook.module));
+        require(_isModuleAllowed(hook.module, MODULE_TYPE_HOOK), ModuleNotWhitelisted(hook.module));
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            require(isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK), ModuleNotWhitelisted(fallbacks[i].module));
+            require(_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
         // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
 
         // Deploy the account using the deterministic address
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
@@ -161,25 +154,20 @@ contract RegistryFactory is Stakeable, INexusFactory {
 
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param - Initialization data to be called on the new Smart Account.
-    /// @param - Unique salt for the Smart Account creation.
+    /// @param initData - Initialization data to be called on the new Smart Account.
+    /// @param salt - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    function computeAccountAddress(bytes calldata, bytes32) external view override returns (address payable expectedAddress) {
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
+    function computeAccountAddress(bytes calldata initData, bytes32 salt) external view override returns (address payable expectedAddress) {
+        // Compute the actual salt for deterministic deployment
+        bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 
     /// @notice Checks if a module is whitelisted.
     /// @param module The address of the module to check.
-    /// @return True if the module is whitelisted, false otherwise.
-    function isModuleAllowed(address module, uint256 moduleType) public view returns (bool) {
+    /// @param moduleType The type of the module to check.
+    /// @return True if the module is whitelisted, reverts otherwise.
+    function _isModuleAllowed(address module, uint256 moduleType) private view returns (bool) {
         REGISTRY.check(module, moduleType, attesters, threshold);
         return true;
     }
