@@ -16,7 +16,7 @@ contract EventsAndErrors {
     event PreCheckCalled();
     event PostCheckCalled();
     event TryExecuteUnsuccessful(bytes callData, bytes result);
-    event TryDelegateCallUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryDelegateCallUnsuccessful(bytes callData, bytes result);
 
     // ==========================
     // General Errors
