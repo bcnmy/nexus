@@ -26,10 +26,10 @@ import { ExecType } from "../../lib/ModeLib.sol";
 
 interface IExecutionHelperEventsAndErrors {
     /// @notice Event emitted when a transaction fails to execute successfully.
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryExecuteUnsuccessful(bytes callData, bytes result);
 
     /// @notice Event emitted when a transaction fails to execute successfully.
-    event TryDelegateCallUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryDelegateCallUnsuccessful(bytes callData, bytes result);
 
     /// @notice Error thrown when an execution with an unsupported ExecType was made.
     /// @param execType The unsupported execution type.

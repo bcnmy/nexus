@@ -183,6 +183,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData),
             enableModeSignature
         );
+
+        // Ensure the module type is VALIDATOR or MULTI
+        if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModule(module);
+        
         _installModule(moduleType, module, moduleInitData);
     }
 
