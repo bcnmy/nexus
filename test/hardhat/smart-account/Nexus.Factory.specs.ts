@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { AddressLike, Signer, keccak256, solidityPacked } from "ethers";
+import { AddressLike, Signer, ZeroAddress, keccak256, solidityPacked } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
   K1ValidatorFactory,
@@ -12,19 +12,15 @@ import {
   Bootstrap,
   BootstrapLib,
   MockHook,
-  MockExecutor,
-  MockHandler,
   MockRegistry,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
   deployContractsFixture,
 } from "../utils/deployment";
-import { encodeData, to18 } from "../utils/encoding";
+import {  to18 } from "../utils/encoding";
 import { MODE_VALIDATION, buildPackedUserOp, getNonce } from "../utils/operationHelpers";
-import { BootstrapConfigStruct } from "../../../typechain-types/contracts/factory/K1ValidatorFactory";
-import { toBytes, zeroAddress } from "viem";
-import { GENERIC_FALLBACK_SELECTOR } from "../utils/erc7579Utils";
+import { BootstrapConfigStruct } from "../../../typechain-types/contracts/lib/BootstrapLib";
 
 describe("Nexus Factory Tests", function () {
   let factory: K1ValidatorFactory;
@@ -349,7 +345,7 @@ describe("Nexus Factory Tests", function () {
         owner,
       );
       await expect(
-        ContractFactory.deploy(zeroAddress, owner),
+        ContractFactory.deploy(ZeroAddress, owner),
       ).to.be.revertedWithCustomError(
         factory,
         "ImplementationAddressCanNotBeZero()",

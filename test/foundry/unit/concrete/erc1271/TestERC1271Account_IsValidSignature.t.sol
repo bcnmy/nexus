@@ -65,7 +65,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     }
 
     /// @notice Tests the failure of an EIP-712 signature validation due to a wrong signer.
-    function test_isValidSignature_EIP712Sign_MockValidator_Wrong1271Signer_Fail() public {
+    function test_isValidSignature_EIP712Sign_MockValidator_Wrong1271Signer_Fail() public view {
         TestTemps memory t;
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
