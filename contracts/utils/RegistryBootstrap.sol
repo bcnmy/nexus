@@ -42,8 +42,8 @@ contract Bootstrap is ModuleManager {
         address[] calldata attesters,
         uint8 threshold
     ) external {
-        _installValidator(address(validator), data);
         _configureRegistry(registry, attesters, threshold);
+        _installValidator(address(validator), data);
     }
 
     /// @notice Initializes the Nexus account with multiple modules.
@@ -61,6 +61,8 @@ contract Bootstrap is ModuleManager {
         address[] calldata attesters,
         uint8 threshold
     ) external {
+        _configureRegistry(registry, attesters, threshold);
+
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
@@ -82,8 +84,6 @@ contract Bootstrap is ModuleManager {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
         }
-
-        _configureRegistry(registry, attesters, threshold);
     }
 
     /// @notice Initializes the Nexus account with a scoped set of modules.
@@ -97,6 +97,8 @@ contract Bootstrap is ModuleManager {
         address[] calldata attesters,
         uint8 threshold
     ) external {
+        _configureRegistry(registry, attesters, threshold);
+
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
@@ -106,8 +108,6 @@ contract Bootstrap is ModuleManager {
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
         }
-
-        _configureRegistry(registry, attesters, threshold);
     }
 
     /// @notice Prepares calldata for the initNexus function.

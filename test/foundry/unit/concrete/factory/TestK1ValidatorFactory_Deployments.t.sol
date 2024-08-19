@@ -119,6 +119,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         address payable secondAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
 
         assertEq(firstAccountAddress, secondAccountAddress, "Addresses should match for the same owner and index");
+        assertEq(firstAccountAddress.balance, 2 ether, "Account balance should be 2 ether");
     }
 
     /// @notice Tests that creating accounts with different indexes results in different addresses.
