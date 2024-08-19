@@ -379,7 +379,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         // Expect the TryExecuteUnsuccessful event to be emitted
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
 
         // Execute batch operation via MockExecutor
         mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);
@@ -400,7 +400,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         // Expect the TryExecuteUnsuccessful event to be emitted
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
 
         // Prank and execute batch operation via BOB_ACCOUNT
         prank(address(mockExecutor));
@@ -423,9 +423,9 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         // Expect the TryExecuteUnsuccessful event to be emitted for each failure
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(0, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[0].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(1, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+        emit TryExecuteUnsuccessful(executions[1].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
 
         // Execute batch operation via MockExecutor
         mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);
@@ -445,7 +445,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         // Expect the TryExecuteUnsuccessful event to be emitted
         vm.expectEmit(true, true, true, true);
-        emit TryExecuteUnsuccessful(0, "");
+        emit TryExecuteUnsuccessful(executions[0].callData, "");
 
         // Execute batch operation via MockExecutor
         mockExecutor.tryExecuteBatchViaAccount(BOB_ACCOUNT, executions);

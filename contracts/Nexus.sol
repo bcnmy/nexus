@@ -64,14 +64,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
-    address private immutable _SELF;
-
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
-        _SELF = address(this);
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
@@ -147,7 +144,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (callType == CALLTYPE_BATCH) {
             returnData = _handleBatchExecutionAndReturnData(executionCalldata, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            returnData =  _handleDelegateCallExecutionAndReturnData(executionCalldata, execType);
+            returnData = _handleDelegateCallExecutionAndReturnData(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }

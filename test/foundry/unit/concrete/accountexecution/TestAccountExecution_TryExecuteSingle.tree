@@ -10,5 +10,9 @@ TestAccountExecution_TryExecuteSingle
     │   └── it should transfer ETH correctly
     ├── when executing a token transfer in single execution
     │   └── it should transfer tokens correctly
-    └── when executing approve and transferFrom in single execution
-        └── it should update balances and allowances correctly
+    ├── when executing approve and transferFrom in single execution
+    │   └── it should update balances and allowances correctly
+    ├── when execution fails
+    │   └── it should emit the TryExecuteUnsuccessful event
+    └── when delegate call execution fails
+        └── it should emit the TryDelegateCallUnsuccessful event

@@ -31,6 +31,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     using ExecLib for bytes;
 
     /// @notice Executes a call to a target address with specified value and data.
+    /// @dev calls to an EOA should be counted as successful.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
@@ -54,6 +55,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
 
     /// @notice Tries to execute a call and captures if it was successful or not.
     /// @dev Similar to _execute but returns a success boolean and catches reverts instead of propagating them.
+    /// @dev calls to an EOA should be counted as successful.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
@@ -96,7 +98,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
             exec = executions[i];
             bool success;
             (success, result[i]) = _tryExecute(exec.target, exec.value, exec.callData);
-            if (!success) emit TryExecuteUnsuccessful(i, result[i]);
+            if (!success) emit TryExecuteUnsuccessful(exec.callData, result[i]);
         }
     }
 
@@ -143,8 +145,10 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) internal {
         (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
         if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
-        else if (execType == EXECTYPE_TRY) _tryExecute(target, value, callData);
-        else revert UnsupportedExecType(execType);
+        else if (execType == EXECTYPE_TRY) {
+            (bool success, bytes memory result) = _tryExecute(target, value, callData);
+            if (!success) emit TryExecuteUnsuccessful(callData, result);
+        } else revert UnsupportedExecType(execType);
     }
 
     /// @dev Executes a batch of transactions based on the specified execution type.
@@ -163,8 +167,10 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     function _handleDelegateCallExecution(bytes calldata executionCalldata, ExecType execType) internal {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
         if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
-        else if (execType == EXECTYPE_TRY) _tryExecuteDelegatecall(delegate, callData);
-        else revert UnsupportedExecType(execType);
+        else if (execType == EXECTYPE_TRY) {
+            (bool success, bytes memory result) = _tryExecuteDelegatecall(delegate, callData);
+            if (!success) emit TryDelegateCallUnsuccessful(callData, result);
+        } else revert UnsupportedExecType(execType);
     }
 
     /// @dev Executes a single transaction based on the specified execution type.
@@ -180,7 +186,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
             returnData[0] = _execute(target, value, callData);
         } else if (execType == EXECTYPE_TRY) {
             (success, returnData[0]) = _tryExecute(target, value, callData);
-            if (!success) emit TryExecuteUnsuccessful(0, returnData[0]);
+            if (!success) emit TryExecuteUnsuccessful(callData, returnData[0]);
         } else {
             revert UnsupportedExecType(execType);
         }
@@ -205,12 +211,11 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
         returnData = new bytes[](1);
         bool success;
-        if (execType == EXECTYPE_DEFAULT) { 
+        if (execType == EXECTYPE_DEFAULT) {
             returnData[0] = _executeDelegatecall(delegate, callData);
-        }
-        else if (execType == EXECTYPE_TRY) {
+        } else if (execType == EXECTYPE_TRY) {
             (success, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
-            if (!success) emit TryDelegateCallUnsuccessful(0, returnData[0]);
+            if (!success) emit TryDelegateCallUnsuccessful(callData, returnData[0]);
         }
         else revert UnsupportedExecType(execType);
     }
