@@ -91,8 +91,8 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
 
-        // Expect the custom error InvalidModule to be thrown
-        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, 0x0000000000000000000000000000000000000000));
+        // Expect the custom error ValidatorNotInstalled to be thrown
+        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, 0x0000000000000000000000000000000000000000));
 
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);

@@ -21,8 +21,12 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-/// @title Nexus - K1Validator
-/// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
+/// @title Nexus - K1Validator (ECDSA)
+/// @notice Validator module for smart accounts, verifying user operation signatures 
+///         based on the K1 curve (secp256k1), a widely used ECDSA algorithm.
+/// @dev Implements secure ownership validation by checking signatures against registered 
+///      owners. This module supports ERC-7579 and ERC-4337 standards, ensuring only the 
+///      legitimate owner of a smart account can authorize transactions.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
@@ -97,8 +101,8 @@ contract K1Validator is IValidator {
         }
 
         if (
-            owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
-            owner.isValidSignatureNow(userOpHash, userOp.signature)
+            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
+            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
         ) {
             return VALIDATION_SUCCESS;
         }

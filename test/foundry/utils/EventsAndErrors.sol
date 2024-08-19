@@ -15,12 +15,14 @@ contract EventsAndErrors {
     event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
     event PreCheckCalled();
     event PostCheckCalled();
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryExecuteUnsuccessful(bytes callData, bytes result);
+    event TryDelegateCallUnsuccessful(bytes callData, bytes result);
 
     // ==========================
     // General Errors
     // ==========================
     error MissingFallbackHandler(bytes4 sig);
+    error FallbackCallTypeInvalid();
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
@@ -41,6 +43,8 @@ contract EventsAndErrors {
     error InnerCallFailed();
     error CallToDeployWithFactoryFailed();
     error NexusInitializationFailed();
+    error InvalidThreshold(uint8 providedThreshold, uint256 attestersCount);
+
 
     // ==========================
     // Operation Errors
@@ -60,8 +64,8 @@ contract EventsAndErrors {
     // ==========================
     // Module Errors
     // ==========================
-    error CannotRemoveLastValidator();
-    error InvalidModule(address module);
+    error CanNotRemoveLastValidator();
+    error ValidatorNotInstalled(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
