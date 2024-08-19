@@ -473,7 +473,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if there is at least one validator installed.
     /// @return True if there is at least one validator, otherwise false.
     function _hasValidators() internal view returns (bool) {
-        return _getAccountStorage().validators.getNext(address(0x01)) != address(0x01);
+        return _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
     /// @dev Checks if an executor is currently installed.

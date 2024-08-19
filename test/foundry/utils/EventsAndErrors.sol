@@ -64,7 +64,6 @@ contract EventsAndErrors {
     // ==========================
     // Module Errors
     // ==========================
-    error MissingValidator();
     error CanNotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);

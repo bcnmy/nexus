@@ -31,9 +31,6 @@ interface IModuleManagerEventsAndErrors {
     /// @param module The address of the uninstalled module.
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
-    /// @notice Thrown when no validators exist on the initialization of a smart account.
-    error MissingValidator();
-
     /// @notice Thrown when attempting to remove the last validator.
     error CanNotRemoveLastValidator();
 
