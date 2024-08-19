@@ -31,6 +31,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     using ExecLib for bytes;
 
     /// @notice Executes a call to a target address with specified value and data.
+    /// @dev calls to an EOA should be counted as successful.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
@@ -54,6 +55,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
 
     /// @notice Tries to execute a call and captures if it was successful or not.
     /// @dev Similar to _execute but returns a success boolean and catches reverts instead of propagating them.
+    /// @dev calls to an EOA should be counted as successful.
     /// @param target The address to execute the call on.
     /// @param value The amount of wei to send with the call.
     /// @param callData The calldata to send.
