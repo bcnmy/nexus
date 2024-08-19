@@ -324,22 +324,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
-    ///
-    /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
-    ///      keccak256(
-    ///         \x19\x01 ||
-    ///         this.domainSeparator ||
-    ///         hashStruct(BiconomyNexusMessage({ hash: `hash`}))
-    ///      )
-    ///
-    /// @param hash The original hash.
-    ///
-    /// @return The corresponding replay-safe hash.
-    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
-        return _eip712Hash(hash);
-    }
-
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
     /// denoting support for the default behavior, as implemented in
@@ -354,19 +338,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
-
-    /// @notice Returns the EIP-712 typed hash of the `BiconomyNexusMessage(bytes32 hash)` data structure.
-    ///
-    /// @dev Implements encode(domainSeparator : 𝔹²⁵⁶, message : 𝕊) = "\x19\x01" || domainSeparator ||
-    ///      hashStruct(message).
-    /// @dev See https://eips.ethereum.org/EIPS/eip-712#specification.
-    ///
-    /// @param hash The `BiconomyNexusMessage.hash` field to hash.
-    ////
-    /// @return The resulting EIP-712 hash.
-    function _eip712Hash(bytes32 hash) internal view virtual returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), keccak256(abi.encode(_MESSAGE_TYPEHASH, hash))));
-    }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
     ///
