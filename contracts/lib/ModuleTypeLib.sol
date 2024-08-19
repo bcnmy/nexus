@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 type EncodedModuleTypes is uint256;
 
-type ModuleType is uint256;
+type ModuleType is uint8;
 
 /// @title ModuleTypeLib
 /// @notice A library for handling module types and encoding them as bits

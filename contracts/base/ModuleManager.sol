@@ -237,15 +237,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
 
-        // Check if the account has at least one validator installed before proceeding
-        // Having at least one validator is a requirement for the account to function properly
-        require(!(prev == address(0x01) && validators.getNext(validator) == address(0x01)), CannotRemoveLastValidator());
-
+        // Perform the removal first
         validators.pop(prev, validator);
+
+        // Sentinel pointing to itself means the list is empty, so check this after removal
+        require(_hasValidators(), CanNotRemoveLastValidator());
         (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
             validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
         );
     }
+
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
@@ -341,18 +342,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         );
     }
 
-    /// To make it easier to install multiple modules at once, this function will
-    /// install multiple modules at once. The init data is expected to be a abi encoded tuple
-    /// of (uint[] types, bytes[] initDatas)
-    /// @dev Install multiple modules at once
-    /// @dev It will call module.onInstall for every initialization so it ensure the flow
-    /// consistent with the flow of the SA's that do not implement _multiTypeInstall 
-    /// and thus will call the multityped module several times
-    /// The multityped modules can not expect all the 7579 SA's to implement _multiTypeInstall and
-    /// thus should account for the flow when they are going to be called with onUnistall
-    /// for the initialization as every of the module types they declare they are 
-    /// @param module address of the module
-    /// @param initData initialization data for the module
+    /// @notice Installs a module with multiple types in a single operation.
+    /// @dev This function handles installing a multi-type module by iterating through each type and initializing it.
+    /// The initData should include an ABI-encoded tuple of (uint[] types, bytes[] initDatas).
+    /// @param module The address of the multi-type module.
+    /// @param initData Initialization data for each type within the module.
     function _multiTypeInstall(
         address module,
         bytes calldata initData
@@ -387,7 +381,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 _installFallbackHandler(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-            /*          INSTALL HOOK (global or sig specific)             */
+            /*          INSTALL HOOK (global only, not sig-specific)      */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             else if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
@@ -474,6 +468,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return True if the validator is installed, otherwise false.
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
         return _getAccountStorage().validators.contains(validator);
+    }
+
+    /// @dev Checks if there is at least one validator installed.
+    /// @return True if there is at least one validator, otherwise false.
+    function _hasValidators() internal view returns (bool) {
+        return _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
     /// @dev Checks if an executor is currently installed.

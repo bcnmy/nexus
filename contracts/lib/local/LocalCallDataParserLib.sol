@@ -3,8 +3,15 @@ pragma solidity 0.8.26;
 
 library LocalCallDataParserLib {
 
-    /// @dev Parses the data to obtain enable mode specific data
-    /// @param packedData Packed data. In most cases it will be userOp.signature
+    /// @dev Parses the `userOp.signature` to extract the module type, module initialization data,
+    ///      enable mode signature, and user operation signature. The `userOp.signature` must be
+    ///      encoded in a specific way to be parsed correctly.
+    /// @param packedData The packed signature data, typically coming from `userOp.signature`.
+    /// @return module The address of the module.
+    /// @return moduleType The type of module as a `uint256`.
+    /// @return moduleInitData Initialization data specific to the module.
+    /// @return enableModeSignature Signature used to enable the module mode.
+    /// @return userOpSignature The remaining user operation signature data.
     function parseEnableModeData(bytes calldata packedData) 
         internal 
         pure 
@@ -17,7 +24,7 @@ library LocalCallDataParserLib {
         ) 
     {
         uint256 p;
-        assembly {
+        assembly ("memory-safe") {
             p := packedData.offset
             module := shr(96, calldataload(p))
 
@@ -36,7 +43,7 @@ library LocalCallDataParserLib {
     }
 
 
-    /// @dev Parses the data to obtain types and initdata's for Multi Type module isntall mode
+    /// @dev Parses the data to obtain types and initdata's for Multi Type module install mode
     /// @param initData Multi Type module init data, abi.encoded
     function parseMultiTypeInitData(bytes calldata initData) 
         internal

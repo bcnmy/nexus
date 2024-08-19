@@ -74,23 +74,24 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
     }
 
-    /// Validates a user operation against a specified validator, extracted from the operation's nonce.
-    /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
-    /// Other validation failures (e.g., nonce mismatch) should revert.
-    /// @param op The operation to validate, encapsulating all transaction details.
-    /// @param userOpHash Hash of the operation data, used for signature validation.
+    /// @notice Validates a user operation against a specified validator, extracted from the operation's nonce.
+    /// @param op The user operation to validate, encapsulating all transaction details.
+    /// @param userOpHash Hash of the user operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
-    /// This can be zero if covered by a paymaster or sufficient deposit exists.
+    /// This can be zero if covered by a paymaster or if sufficient deposit exists.
     /// @return validationData Encoded validation result or failure, propagated from the validator module.
     /// - Encoded format in validationData:
-    ///     - First 20 bytes: Validator address, 0x0 for valid or specific failure modes.
-    ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
-    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
+    ///     - First 20 bytes: Address of the Validator module, to which the validation task is forwarded.
+    ///       The validator module returns:
+    ///         - `SIG_VALIDATION_SUCCESS` (0) indicates successful validation.
+    ///         - `SIG_VALIDATION_FAILED` (1) indicates signature validation failure.
+    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the user operation's nonce.
     /// This method forwards the validation task to the extracted validator module address.
+    /// @dev The entryPoint calls this function. If validation fails, it returns `VALIDATION_FAILED` (1) otherwise `0`.
     /// @dev Features Module Enable Mode.
-    /// This Module Enable Mode flow only makes sense for the module that is used as validator
-    /// for the userOp that triggers Module Enable Flow. Otherwise, one should just include
-    /// a call to Nexus.installModule into userOp.callData
+    /// This Module Enable Mode flow is intended for the module acting as the validator
+    /// for the user operation that triggers the Module Enable Flow. Otherwise, a call to 
+    /// `Nexus.installModule` should be included in `userOp.callData`.
     function validateUserOp(
         PackedUserOperation calldata op,
         bytes32 userOpHash,
@@ -197,9 +198,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
-        require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
-
         emit ModuleUninstalled(moduleTypeId, module);
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -217,7 +216,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        
         require(success, NexusInitializationFailed());
+        require(_hasValidators(), MissingValidator());
     }
 
     function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
@@ -322,7 +323,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash fron the given `hash`.
+    /// @notice Wrapper around `_eip712Hash()` to produce a replay-safe hash from the given `hash`.
     ///
     /// @dev The returned EIP-712 compliant replay-safe hash is the result of:
     ///      keccak256(

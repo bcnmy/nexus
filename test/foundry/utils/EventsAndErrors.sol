@@ -43,6 +43,8 @@ contract EventsAndErrors {
     error InnerCallFailed();
     error CallToDeployWithFactoryFailed();
     error NexusInitializationFailed();
+    error InvalidThreshold(uint8 providedThreshold, uint256 attestersCount);
+
 
     // ==========================
     // Operation Errors
@@ -62,7 +64,7 @@ contract EventsAndErrors {
     // ==========================
     // Module Errors
     // ==========================
-    error CannotRemoveLastValidator();
+    error CanNotRemoveLastValidator();
     error InvalidModule(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);

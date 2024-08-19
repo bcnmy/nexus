@@ -61,6 +61,17 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         new K1ValidatorFactory(zeroAddress, address(this), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
     }
 
+    /// @notice Tests that the constructor reverts if the factory owner address is zero.
+    function test_Constructor_RevertIf_FactoryOwnerIsZero() public {
+        address zeroAddress = address(0);
+
+        // Expect the contract deployment to revert with the correct error message
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+
+        // Try deploying the K1ValidatorFactory with an implementation address of zero
+        new K1ValidatorFactory(address(this), zeroAddress, address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
+    }
+
     /// @notice Tests that the constructor reverts if the K1 Validator address is zero.
     function test_Constructor_RevertIf_K1ValidatorIsZero() public {
         address zeroAddress = address(0);
