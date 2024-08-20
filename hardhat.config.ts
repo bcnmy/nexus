@@ -24,6 +24,9 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: true
     },
+    anvil: {
+      allowUnlimitedContractSize: true
+    }
   },
   docgen: {
     projectName: "Nexus",
