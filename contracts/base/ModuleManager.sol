@@ -57,7 +57,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @notice Ensures the given validator is a registered validator module.
     modifier onlyValidatorModule(address validator) {
-        require(_getAccountStorage().validators.contains(validator), InvalidModule(msg.sender));
+        require(_getAccountStorage().validators.contains(validator), InvalidModule(validator));
         _;
     }
 

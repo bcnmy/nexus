@@ -241,7 +241,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
-        require(_isValidatorInstalled(validator), InvalidModule(validator));
+        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
         return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
