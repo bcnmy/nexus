@@ -98,9 +98,6 @@ contract K1ValidatorFactory is Stakeable {
         if (!alreadyDeployed) {
             INexus(account).initializeAccount(initData);
             emit AccountCreated(account, eoaOwner, index);
-        } else if (msg.value > 0) {
-            (bool success, ) = eoaOwner.call{ value: msg.value }("");
-            require(success, InnerCallFailed());
         }
         return payable(account);
     }

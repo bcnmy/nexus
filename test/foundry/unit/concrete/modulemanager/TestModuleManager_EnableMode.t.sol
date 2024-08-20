@@ -35,7 +35,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
-
         // Enable Mode Sig Prefix
         // uint256 moduleTypeId
         // bytes4 initDataLength
