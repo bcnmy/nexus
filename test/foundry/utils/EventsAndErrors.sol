@@ -71,6 +71,8 @@ contract EventsAndErrors {
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
     error ModuleAddressCanNotBeZero();
     error EnableModeSigError();
+    error InvalidModule(address module);
+    error NoValidatorInstalled();
 
     // ==========================
     // Hook Errors

@@ -127,7 +127,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         // Create initcode with no validator configuration
         bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(emptyValidators, hook, REGISTRY, ATTESTERS, THRESHOLD);
 
-        vm.expectRevert(MissingValidator.selector);
+        vm.expectRevert(NoValidatorInstalled.selector);
         FACTORY.createAccount(_initData, salt);
     }
 

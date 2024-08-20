@@ -76,8 +76,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             validator := shr(96, shl(32, randomNonce))
         }
 
-        // Expect revert with InvalidModule selector
-        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+        // Expect revert with ValidatorNotInstalled selector
+        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
 
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
@@ -127,8 +127,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         assembly {
             validator := shr(96, shl(32, randomNonce))
         }
-        // Expect revert with InvalidModule selector
-        vm.expectRevert(abi.encodeWithSelector(InvalidModule.selector, validator));
+        // Expect revert with ValidatorNotInstalled selector
+        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
 
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
