@@ -6,10 +6,10 @@ TestFuzz_ERC4337Account
 ├── when testing nonce behavior with fuzzing
 │   └── it should increment the nonce correctly for each operation
 ├── when validating user operations with random nonces and signatures
-│   └── it should validate the operation properly
+│   └── it should fail validation with InvalidModule error
 ├── when withdrawing deposits to a specific address with fuzzing
 │   └── it should reflect the withdrawal amount in the recipient's balance
 ├── when validating user operations with invalid signatures
-│   └── it should fail the validation
+│   └── it should fail the validation with InvalidModule error
 └── when withdrawing deposits with insufficient funds
     └── it should handle the withdrawal attempt properly

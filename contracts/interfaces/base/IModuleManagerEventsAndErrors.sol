@@ -35,6 +35,12 @@ interface IModuleManagerEventsAndErrors {
     error CanNotRemoveLastValidator();
 
     /// @dev Thrown when the specified module address is not recognized as valid.
+    error ValidatorNotInstalled(address module);
+
+    /// @dev Thrown when there is no installed validator detected.
+    error NoValidatorInstalled();
+
+    /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);
 
     /// @dev Thrown when an invalid module type identifier is provided.

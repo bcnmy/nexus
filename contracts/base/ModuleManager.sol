@@ -23,19 +23,18 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { 
-    MODULE_TYPE_VALIDATOR, 
-    MODULE_TYPE_EXECUTOR, 
-    MODULE_TYPE_FALLBACK, 
-    MODULE_TYPE_HOOK, 
-    MODULE_TYPE_MULTI, 
-    MODULE_ENABLE_MODE_TYPE_HASH, 
-    ERC1271_MAGICVALUE 
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_MULTI,
+    MODULE_ENABLE_MODE_TYPE_HASH,
+    ERC1271_MAGICVALUE
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
-
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -53,6 +52,20 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
+        _;
+    }
+
+    /// @notice Ensures the given validator is a registered validator module.
+    modifier onlyValidatorModule(address validator) {
+        require(_getAccountStorage().validators.contains(validator), InvalidModule(validator));
+        _;
+    }
+
+    /// @notice Ensures the caller is authorized.
+    modifier onlyAuthorized() {
+        if (msg.sender != _ENTRYPOINT && msg.sender != address(this) && !_getAccountStorage().executors.contains(msg.sender)) {
+            revert UnauthorizedOperation(msg.sender);
+        }
         _;
     }
 
@@ -101,7 +114,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 // Then the address without padding is stored right after the calldata
                 mstore(calldatasize(), shl(96, caller()))
 
-                if iszero(call(gas(), handler, 0, 0, add(calldatasize(), 20), 0, 0)) {
+                if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
                     returndatacopy(0, 0, returndatasize())
                     revert(0, returndatasize())
                 }
@@ -186,7 +199,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         );
 
         // Ensure the module type is VALIDATOR or MULTI
-        if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModule(module);
+        if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModuleTypeId(moduleType);
         
         _installModule(moduleType, module, moduleInitData);
     }
@@ -201,7 +214,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
-    /// @dev No need to check that the module is already installed, as this check is done 
+    /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
     function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
@@ -214,7 +227,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_MULTI) {
-            _multiTypeInstall(module, initData);            
+            _multiTypeInstall(module, initData);
         } else {
             revert InvalidModuleTypeId(moduleTypeId);
         }
@@ -241,6 +254,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         validators.pop(prev, validator);
 
         // Sentinel pointing to itself means the list is empty, so check this after removal
+        // Below error is very specific to uninstalling validators.
         require(_hasValidators(), CanNotRemoveLastValidator());
         (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
             validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
@@ -354,7 +368,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         internal virtual
     {
         (uint256[] calldata types, bytes[] calldata initDatas) = initData.parseMultiTypeInitData();
-        
+
         uint256 length = types.length;
         if (initDatas.length != length) revert InvalidInput();
 
@@ -389,17 +403,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-        
     /// @notice Checks if an enable mode signature is valid.
     /// @param digest signed digest.
     /// @param sig Signature.
     function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         if (!_isValidatorInstalled(enableModeSigValidator)) {
-            revert InvalidModule(enableModeSigValidator);
+            revert ValidatorNotInstalled(enableModeSigValidator);
         }
 
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) { 
+        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) {
             revert EnableModeSigError();
         }
     }
@@ -431,9 +444,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return True if the module is installed, false otherwise.
     function _isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) internal view returns (bool) {
         additionalContext;
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            return _isValidatorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            return _isExecutorInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             if (additionalContext.length >= 4) {
                 selector = bytes4(additionalContext[0:4]);
@@ -441,9 +456,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 selector = bytes4(0x00000000);
             }
             return _isFallbackHandlerInstalled(selector, module);
+        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+            return _isHookInstalled(module);
+        } else {
+            return false;
         }
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
@@ -506,7 +523,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    ) private view returns (address[] memory array, address nextCursor) {
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }
