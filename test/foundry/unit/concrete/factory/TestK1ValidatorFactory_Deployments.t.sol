@@ -126,21 +126,19 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         assertEq(deployedAccountAddress, expectedAddress, "Computed address mismatch");
     }
 
-/// @notice Tests that creating an account with the same owner and index results in the same address.
-function test_CreateAccount_SameOwnerAndIndex() public payable {
-    uint256 index = 0;
-    address expectedOwner = user.addr;
+    /// @notice Tests that creating an account with the same owner and index results in the same address.
+    function test_CreateAccount_SameOwnerAndIndex() public payable {
+        uint256 index = 0;
+        address expectedOwner = user.addr;
+        console2.logBytes(expectedOwner.code);
 
-    // Create the first account with the given owner and index
-    address payable firstAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
+        // Create the first account with the given owner and index
+        address payable firstAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
 
-    // Expect the second call to revert with InnerCallFailed
-    vm.expectRevert(K1ValidatorFactory.InnerCallFailed.selector);
-    address payable secondAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
-}
+        address payable secondAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
 
-        assertEq(firstAccountAddress, secondAccountAddress, "Addresses should match for the same owner and index");
         assertEq(firstAccountAddress.balance, 2 ether, "Account balance should be 2 ether");
+        assertEq(firstAccountAddress, secondAccountAddress, "Account addresses should be same");
     }
 
     /// @notice Tests that creating accounts with different indexes results in different addresses.

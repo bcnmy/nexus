@@ -147,8 +147,6 @@ contract RegistryFactory is Stakeable, INexusFactory {
             // Initialize the Nexus account using the provided initialization data
             INexus(account).initializeAccount(initData);
             emit AccountCreated(account, initData, salt);
-        } else if (msg.value > 0) {
-            revert AccountAlreadyDeployed(account);
         }
 
         return payable(account);
