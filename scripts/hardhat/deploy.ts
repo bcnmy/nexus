@@ -48,11 +48,18 @@ async function main() {
     },
   );
 
+  const MockRegistry = await ethers.getContractFactory("MockRegistry");
+
+  const mockRegistry = await MockRegistry.deploy();
+
+  await mockRegistry.waitForDeployment();
+
   const k1ValidatorFactory = await K1ValidatorFactory.deploy(
     await smartAccountImpl.getAddress(),
     await factoryOwner.getAddress(),
     await k1Validator.getAddress(),
     await bootstrapper.getAddress(),
+    await mockRegistry.getAddress()
   );
 
   await k1ValidatorFactory.waitForDeployment();
