@@ -67,7 +67,9 @@ contract BaseAccount is Storage, IBaseAccount {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(call(gas(), entryPointAddress, callvalue(), codesize(), 0x00, codesize(), 0x00)) { revert(codesize(), 0x00) } // For gas estimation.
+            if iszero(call(gas(), entryPointAddress, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
+                revert(codesize(), 0x00)
+            } // For gas estimation.
         }
     }
 
@@ -78,14 +80,14 @@ contract BaseAccount is Storage, IBaseAccount {
         address entryPointAddress = _ENTRYPOINT;
         assembly {
             let freeMemPtr := mload(0x40) // Store the free memory pointer.
-             mstore(0x14, to) // Store the `to` argument.
-             mstore(0x34, amount) // Store the `amount` argument.
-             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-             if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
+            mstore(0x14, to) // Store the `to` argument.
+            mstore(0x34, amount) // Store the `amount` argument.
+            mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
+            if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
                 returndatacopy(freeMemPtr, 0x00, returndatasize())
                 revert(freeMemPtr, returndatasize())
             }
-             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
@@ -104,16 +106,15 @@ contract BaseAccount is Storage, IBaseAccount {
         assembly {
             mstore(0x20, address()) // Store the `account` argument.
             mstore(0x00, 0x70a08231) // `balanceOf(address)`.
-            result :=
-                mul(
-                    // Returns 0 if the EntryPoint does not exist.
-                    mload(0x20),
-                    and(
-                        // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), entryPointAddress, 0x1c, 0x24, 0x20, 0x20)
-                    )
+            result := mul(
+                // Returns 0 if the EntryPoint does not exist.
+                mload(0x20),
+                and(
+                    // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), entryPointAddress, 0x1c, 0x24, 0x20, 0x20)
                 )
+            )
         }
     }
 

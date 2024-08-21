@@ -17,7 +17,7 @@ import {
   findEventInLogs,
   generateUseropCallData,
   getNonce,
-  MODE_VALIDATION
+  MODE_VALIDATION,
 } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import {
@@ -367,7 +367,7 @@ describe("Nexus Module Management Tests", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        await mockValidator.getAddress()
+        await mockValidator.getAddress(),
       );
       userOp.nonce = nonce;
 
@@ -574,7 +574,7 @@ describe("Nexus Module Management Tests", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        await mockValidator.getAddress()
+        await mockValidator.getAddress(),
       );
       userOp.nonce = nonce;
 
@@ -773,7 +773,7 @@ describe("Nexus Module Management Tests", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        await mockValidator.getAddress()
+        await mockValidator.getAddress(),
       );
       userOp.nonce = nonce;
 

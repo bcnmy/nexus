@@ -45,7 +45,6 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
         // Compute the actual salt for deterministic deployment
         bytes32 actualSalt = keccak256(abi.encodePacked(initData, salt));
 
-
         // Deploy the account using the deterministic address
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 

@@ -23,15 +23,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK,
-    MODULE_TYPE_HOOK,
-    MODULE_TYPE_MULTI,
-    MODULE_ENABLE_MODE_TYPE_HASH,
-    ERC1271_MAGICVALUE
-} from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
@@ -89,40 +81,40 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-        if(handler != address(0)) {
+        if (handler != address(0)) {
             if (calltype == CALLTYPE_STATIC) {
-               assembly {
-                calldatacopy(0, 0, calldatasize())
+                assembly {
+                    calldatacopy(0, 0, calldatasize())
 
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                mstore(calldatasize(), shl(96, caller()))
+                    // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                    // Then the address without padding is stored right after the calldata
+                    mstore(calldatasize(), shl(96, caller()))
 
-                if iszero(staticcall(gas(), handler, 0, add(calldatasize(), 20), 0, 0)) {
+                    if iszero(staticcall(gas(), handler, 0, add(calldatasize(), 20), 0, 0)) {
+                        returndatacopy(0, 0, returndatasize())
+                        revert(0, returndatasize())
+                    }
                     returndatacopy(0, 0, returndatasize())
-                    revert(0, returndatasize())
-                }
-                returndatacopy(0, 0, returndatasize())
-                return(0, returndatasize())
+                    return(0, returndatasize())
                 }
             }
             if (calltype == CALLTYPE_SINGLE) {
-               assembly {
-                calldatacopy(0, 0, calldatasize())
+                assembly {
+                    calldatacopy(0, 0, calldatasize())
 
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                mstore(calldatasize(), shl(96, caller()))
+                    // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                    // Then the address without padding is stored right after the calldata
+                    mstore(calldatasize(), shl(96, caller()))
 
-                if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
+                    if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
+                        returndatacopy(0, 0, returndatasize())
+                        revert(0, returndatasize())
+                    }
                     returndatacopy(0, 0, returndatasize())
-                    revert(0, returndatasize())
-                }
-                returndatacopy(0, 0, returndatasize())
-                return(0, returndatasize())
+                    return(0, returndatasize())
                 }
             }
-        } 
+        }
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, calldataload(0))
@@ -134,7 +126,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
-        revert MissingFallbackHandler(msg.sig);   
+        revert MissingFallbackHandler(msg.sig);
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -185,22 +177,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Implements Module Enable Mode flow.
     /// @param packedData Data source to parse data required to perform Module Enable mode from.
     /// @return userOpSignature the clean signature which can be further used for userOp validation
-    function _enableMode(bytes32 userOpHash, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {   
+    function _enableMode(bytes32 userOpHash, bytes calldata packedData) internal returns (bytes calldata userOpSignature) {
         address module;
         uint256 moduleType;
         bytes calldata moduleInitData;
         bytes calldata enableModeSignature;
-        
-        (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();  
 
-        _checkEnableModeSignature(
-            _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData),
-            enableModeSignature
-        );
+        (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
+
+        _checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature);
 
         // Ensure the module type is VALIDATOR or MULTI
         if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModuleTypeId(moduleType);
-        
+
         _installModule(moduleType, module, moduleInitData);
     }
 
@@ -256,11 +245,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Sentinel pointing to itself means the list is empty, so check this after removal
         // Below error is very specific to uninstalling validators.
         require(_hasValidators(), CanNotRemoveLastValidator());
-        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
-            validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
-        );
+        ExcessivelySafeCall.excessivelySafeCall(validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
-
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
@@ -277,9 +263,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _uninstallExecutor(address executor, bytes calldata data) internal virtual {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
-        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
-            executor, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData)
-        );
+        ExcessivelySafeCall.excessivelySafeCall(executor, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -298,9 +282,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
-        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
-            hook, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data)
-        );
+        ExcessivelySafeCall.excessivelySafeCall(hook, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -351,9 +333,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
-        (bool success,) = ExcessivelySafeCall.excessivelySafeCall(
-            fallbackHandler, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:])
-        );
+        ExcessivelySafeCall.excessivelySafeCall(fallbackHandler, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
     }
 
     /// @notice Installs a module with multiple types in a single operation.
@@ -361,12 +341,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// The initData should include an ABI-encoded tuple of (uint[] types, bytes[] initDatas).
     /// @param module The address of the multi-type module.
     /// @param initData Initialization data for each type within the module.
-    function _multiTypeInstall(
-        address module,
-        bytes calldata initData
-    )
-        internal virtual
-    {
+    function _multiTypeInstall(address module, bytes calldata initData) internal virtual {
         (uint256[] calldata types, bytes[] calldata initDatas) = initData.parseMultiTypeInitData();
 
         uint256 length = types.length;
@@ -423,18 +398,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
     /// @return digest EIP712 hash
-    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(
-            keccak256(
-                abi.encode(
-                    MODULE_ENABLE_MODE_TYPE_HASH,
-                    module,
-                    moduleType,
-                    userOpHash,
-                    keccak256(initData)
-                )
-            )
-        );
+    function _getEnableModeDataHash(
+        address module,
+        uint256 moduleType,
+        bytes32 userOpHash,
+        bytes calldata initData
+    ) internal view returns (bytes32 digest) {
+        digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
     }
 
     /// @notice Checks if a module is installed on the smart account.
@@ -490,7 +460,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if there is at least one validator installed.
     /// @return True if there is at least one validator, otherwise false.
     function _hasValidators() internal view returns (bool) {
-        return _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
+        return
+            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) &&
+            _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
     /// @dev Checks if an executor is currently installed.
@@ -523,11 +495,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address nextCursor)
-    {
+    ) private view returns (address[] memory array, address nextCursor) {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

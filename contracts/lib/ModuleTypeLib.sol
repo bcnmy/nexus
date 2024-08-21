@@ -13,10 +13,9 @@ library ModuleTypeLib {
     /// @param moduleTypeId The module type to check for
     /// @return True if the module type is present, false otherwise
     function isType(EncodedModuleTypes self, ModuleType moduleTypeId) internal pure returns (bool) {
-          // Check if the specific bit for the moduleTypeId is set in the encoded value using bitwise shift
-          return (EncodedModuleTypes.unwrap(self) & (uint256(1) << ModuleType.unwrap(moduleTypeId))) != 0;
+        // Check if the specific bit for the moduleTypeId is set in the encoded value using bitwise shift
+        return (EncodedModuleTypes.unwrap(self) & (uint256(1) << ModuleType.unwrap(moduleTypeId))) != 0;
     }
-
 
     /// @notice Encodes an array of ModuleType into a single EncodedModuleTypes bitmask
     /// @param moduleTypes An array of ModuleType to encode
@@ -27,7 +26,7 @@ library ModuleTypeLib {
 
         // Iterate through the moduleTypes array and set the corresponding bits in the result
         for (uint256 i; i < moduleTypes.length; i++) {
-           result |= uint256(1) << ModuleType.unwrap(moduleTypes[i]);
+            result |= uint256(1) << ModuleType.unwrap(moduleTypes[i]);
         }
 
         return EncodedModuleTypes.wrap(result);

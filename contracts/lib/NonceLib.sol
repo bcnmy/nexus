@@ -9,13 +9,12 @@ import { MODE_MODULE_ENABLE } from "contracts/types/Constants.sol";
 */
 
 library NonceLib {
-
     /// @dev Parses validator address out of nonce
     /// @param nonce The nonce
     /// @return validator
     function getValidator(uint256 nonce) internal pure returns (address validator) {
         assembly {
-            validator := shr(96, shl(32, nonce)) 
+            validator := shr(96, shl(32, nonce))
         }
     }
 

@@ -102,7 +102,6 @@ contract RegistryFactory is Stakeable, INexusFactory {
         threshold = newThreshold;
     }
 
-
     /// @notice Creates a new Nexus account with the provided initialization data.
     /// @param initData Initialization data that is expected to be compatible with a `Bootstrap` contract's initialization method.
     /// @param salt Unique salt used for deterministic deployment of the Nexus smart account.
@@ -119,7 +118,9 @@ contract RegistryFactory is Stakeable, INexusFactory {
             BootstrapConfig[] memory executors,
             BootstrapConfig memory hook,
             BootstrapConfig[] memory fallbacks,
-            , , 
+            ,
+            ,
+
         ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address, address[], uint8));
 
         // Ensure that all specified modules are whitelisted and allowed for the account.
@@ -151,7 +152,6 @@ contract RegistryFactory is Stakeable, INexusFactory {
 
         return payable(account);
     }
-
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @param initData - Initialization data to be called on the new Smart Account.

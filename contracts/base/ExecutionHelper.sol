@@ -177,7 +177,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     /// @return returnData An array containing the execution result. In the case of a single transaction, the array contains one element.
-    function _handleSingleExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData) {
+    function _handleSingleExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns (bytes[] memory returnData) {
         (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
         returnData = new bytes[](1);
         bool success;
@@ -196,7 +196,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param executionCalldata The calldata for a batch of transactions.
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     /// @return returnData An array containing the execution results for each transaction in the batch.
-    function _handleBatchExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData){
+    function _handleBatchExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns (bytes[] memory returnData) {
         Execution[] calldata executions = executionCalldata.decodeBatch();
         if (execType == EXECTYPE_DEFAULT) returnData = _executeBatch(executions);
         else if (execType == EXECTYPE_TRY) returnData = _tryExecuteBatch(executions);
@@ -207,7 +207,10 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param executionCalldata The calldata containing the transaction details (target address, value, and data).
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     /// @return returnData An array containing the result of the delegatecall execution.
-    function _handleDelegateCallExecutionAndReturnData(bytes calldata executionCalldata, ExecType execType) internal returns(bytes[] memory returnData) {
+    function _handleDelegateCallExecutionAndReturnData(
+        bytes calldata executionCalldata,
+        ExecType execType
+    ) internal returns (bytes[] memory returnData) {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
         returnData = new bytes[](1);
         bool success;
@@ -216,7 +219,6 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         } else if (execType == EXECTYPE_TRY) {
             (success, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
             if (!success) emit TryDelegateCallUnsuccessful(callData, returnData[0]);
-        }
-        else revert UnsupportedExecType(execType);
+        } else revert UnsupportedExecType(execType);
     }
 }
