@@ -193,6 +193,29 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
+    uint256 constant _EMERGENCY_TIMELOCK = 1 days;
+
+    mapping(address hook => uint256) public emergencyUninstallTimelock;
+
+    function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
+        uint256 _emergencyUninstallTimelock = emergencyUninstallTimelock[hook];
+
+        if (_emergencyUninstallTimelock == 0) {
+            // if the timelock hasnt been initiated, initiate it
+            emergencyUninstallTimelock[hook] = block.timestamp;
+        } else if (block.timestamp >= _emergencyUninstallTimelock + 3 * EMERGENCY_TIMELOCK) {
+            // if the timelock has been left for too long, reset it
+            emergencyUninstallTimelock[hook] = block.timestamp;
+        } else if (block.timestamp >= _emergencyUninstallTimelock + EMERGENCY_TIMELOCK) {
+            // if the timelock expired, clear it and uninstall the hook
+            emergencyUninstallTimelock[hook] = 0;
+            _uninstallHook(hook, deInitData);
+        } else {
+            // if the timelock is initiated but not expired, revert
+            revert("Emergency timelock not expired");
+        }
+    }
+
     function initializeAccount(bytes calldata initData) external payable virtual {
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
