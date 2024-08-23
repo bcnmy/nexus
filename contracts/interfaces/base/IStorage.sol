@@ -31,23 +31,16 @@ import { CallType } from "../../lib/ModeLib.sol";
 interface IStorage {
     /// @notice Struct storing validators and executors using Sentinel lists, and fallback handlers via mapping.
     struct AccountStorage {
-        SentinelListLib.SentinelList validators;
-        ///< List of validators, initialized upon contract deployment.
-        SentinelListLib.SentinelList executors;
-        ///< List of executors, similarly initialized.
-        mapping(bytes4 => FallbackHandler) fallbacks;
-        ///< Mapping of selectors to their respective fallback handlers.
-        IHook hook;
-        ///< Current hook module associated with this account.
-        mapping(address hook => uint256) emergencyUninstallTimelock;
+        SentinelListLib.SentinelList validators; ///< List of validators, initialized upon contract deployment.
+        SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
+        mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
+        IHook hook; ///< Current hook module associated with this account.
+        mapping(address hook => uint256) emergencyUninstallTimelock; ///< Mapping of hooks to requested timelocks.
     }
-    ///< Mapping of shooks to their emergency uninstall timelock.
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
     struct FallbackHandler {
-        address handler;
-        ///< The address of the fallback function handler.
-        CallType calltype;
+        address handler; ///< The address of the fallback function handler.
+        CallType calltype; ///< The type of call this handler supports (e.g., static or delegatecall).
     }
-    ///< The type of call this handler supports (e.g., static or call).
 }
