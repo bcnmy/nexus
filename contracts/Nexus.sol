@@ -136,23 +136,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param - Hash of the user operation.
     /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
-        // Extract inner call data from user operation, skipping the first 4 bytes.
-        bytes calldata innerCall = userOp.callData[4:];
-        bytes memory innerCallRet = "";
-
-        // Check and execute the inner call if data exists.
-        if (innerCall.length > 0) {
-            // Decode target address and call data from inner call.
-            (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
-            bool success;
-            // Perform the call to the target contract with the decoded data.
-            (success, innerCallRet) = target.call{ value: msg.value }(data);
-            // Ensure the call was successful.
-            require(success, InnerCallFailed());
-        }
-
-        // Emit the Executed event with the user operation and inner call return data.
-        emit Executed(userOp, innerCallRet);
+        bytes calldata callData = userOp.callData[4:];
+        (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
+        if(success) { emit Executed(userOp, innerCallRet); }
+        else revert ExecutionFailed();
     }
 
     /// @notice Installs a new module to the smart account.
