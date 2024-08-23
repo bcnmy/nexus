@@ -68,6 +68,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         if (hook == address(0)) {
             _;
         } else {
+            _checkRegistry(hook, MODULE_TYPE_HOOK);
             bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
             _;
             IHook(hook).postCheck(hookData);
@@ -82,6 +83,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
         if (handler != address(0)) {
+            _checkRegistry(handler, MODULE_TYPE_FALLBACK);
             if (calltype == CALLTYPE_STATIC) {
                 assembly {
                     calldatacopy(0, 0, calldatasize())
