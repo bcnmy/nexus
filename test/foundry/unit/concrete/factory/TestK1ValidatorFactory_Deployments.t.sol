@@ -45,6 +45,29 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         assertTrue(isContract(address(factory)), "Factory should be a contract");
     }
 
+    /// @notice Tests that the constructor can take a zero address for the registry.
+    function test_ConstructorInitializesWithRegistryAddressZero() public {
+        IERC7484 registry = IERC7484(address(0));
+        address k1Validator = address(0x456);
+        Bootstrap bootstrapperInstance = new Bootstrap();
+        K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
+
+        // Verify the registry address 0
+        assertEq(address(factory.REGISTRY()), address(0), "Registry address mismatch");
+
+        // Verify the implementation address is set correctly
+        assertEq(factory.ACCOUNT_IMPLEMENTATION(), address(ACCOUNT_IMPLEMENTATION), "Implementation address mismatch");
+
+        // Verify the K1 Validator address is set correctly
+        assertEq(factory.K1_VALIDATOR(), k1Validator, "K1 Validator address mismatch");
+
+        // Verify the bootstrapper address is set correctly
+        assertEq(address(factory.BOOTSTRAPPER()), address(bootstrapperInstance), "Bootstrapper address mismatch");
+
+        // Ensure the factory contract is deployed and is a valid contract
+        assertTrue(isContract(address(factory)), "Factory should be a contract");
+    }
+
     /// @notice Tests that the constructor reverts if the implementation address is zero.
     function test_Constructor_RevertIf_ImplementationIsZero() public {
         address zeroAddress = address(0);
