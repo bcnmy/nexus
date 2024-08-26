@@ -18,7 +18,7 @@ import {
   generateUseropCallData,
   buildPackedUserOp,
   MODE_VALIDATION,
-  getNonce
+  getNonce,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -103,7 +103,7 @@ describe("Nexus Single Execution", () => {
       entryPoint,
       userOp.sender,
       MODE_VALIDATION,
-      validatorModuleAddress.toString()
+      validatorModuleAddress.toString(),
     );
     userOp.nonce = nonce;
 
@@ -148,7 +148,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
 
       userOp.nonce = nonce;
@@ -251,7 +251,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
 
       userOp.nonce = nonce;
@@ -288,7 +288,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp.nonce = nonce;
 
@@ -326,7 +326,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp.nonce = nonce;
 
@@ -407,7 +407,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       incrementNumberUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -445,7 +445,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
 
       userOp.nonce = nonce;
@@ -587,7 +587,7 @@ describe("Nexus Single Execution", () => {
         entryPoint,
         userOp.sender,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp.nonce = nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);

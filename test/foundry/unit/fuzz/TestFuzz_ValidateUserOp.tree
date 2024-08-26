@@ -1,13 +1,13 @@
 TestFuzz_ValidateUserOp
 ├── when setting up the testing environment
 │   └── it should initialize the required contracts and wallets
-├── when validating user operation with a valid signature and sufficient funds
-│   └── it should pass the validation
-├── when validating user operation with an invalid signature
-│   └── it should fail the validation
-├── when validating user operation with an invalid nonce
-│   └── it should fail the validation
-├── when validating user operation with an invalid nonce and valid signature
-│   └── it should fail the validation
-└── when validating user operation with an invalid user address
-    └── it should fail the validation
+├── when validating user operations with a valid signature and sufficient funds
+│   └── it should pass validation
+├── when validating user operations with an invalid signature
+│   └── it should fail validation with InvalidModule error
+├── when validating user operations with an invalid nonce
+│   └── it should fail validation with InvalidModule error
+├── when validating user operations with an invalid nonce and valid signature
+│   └── it should fail validation with InvalidModule error
+└── when validating user operations with an invalid user address
+    └── it should fail validation with InvalidModule error

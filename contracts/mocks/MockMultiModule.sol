@@ -10,15 +10,11 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 import "contracts/types/Constants.sol";
 
 contract MockMultiModule is IModule {
-
-    mapping(uint256 moduleTypeId => mapping (address smartAccount => bytes32 initData)) configs;
+    mapping(uint256 moduleTypeId => mapping(address smartAccount => bytes32 initData)) configs;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
         address owner = address(bytes20(configs[MODULE_TYPE_VALIDATOR][msg.sender]));
-        return
-            ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) == owner
-                ? VALIDATION_SUCCESS
-                : VALIDATION_FAILED;
+        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) == owner ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     function getConfig(address smartAccount, uint256 moduleTypeId) external view returns (bytes32) {
@@ -43,26 +39,21 @@ contract MockMultiModule is IModule {
         }
     }
 
-    function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {
-    }
+    function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {}
 
-    function postCheck(bytes calldata hookData) external {
-    }
+    function postCheck(bytes calldata hookData) external {}
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return 
-            (moduleTypeId == MODULE_TYPE_HOOK ||
+        return (moduleTypeId == MODULE_TYPE_HOOK ||
             moduleTypeId == MODULE_TYPE_EXECUTOR ||
             moduleTypeId == MODULE_TYPE_VALIDATOR ||
             moduleTypeId == MODULE_TYPE_FALLBACK);
     }
 
-    function isInitialized(address smartAccount) external view returns(bool) {
-        return (
-            configs[MODULE_TYPE_VALIDATOR][smartAccount] != bytes32(0x00) ||
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return (configs[MODULE_TYPE_VALIDATOR][smartAccount] != bytes32(0x00) ||
             configs[MODULE_TYPE_EXECUTOR][smartAccount] != bytes32(0x00) ||
             configs[MODULE_TYPE_HOOK][smartAccount] != bytes32(0x00) ||
-            configs[MODULE_TYPE_FALLBACK][smartAccount] != bytes32(0x00)
-        );
+            configs[MODULE_TYPE_FALLBACK][smartAccount] != bytes32(0x00));
     }
 }

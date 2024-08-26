@@ -21,8 +21,12 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-/// @title Nexus - K1Validator
-/// @notice This contract is a simple validator for testing purposes, verifying user operation signatures against registered owners.
+/// @title Nexus - K1Validator (ECDSA)
+/// @notice Validator module for smart accounts, verifying user operation signatures
+///         based on the K1 curve (secp256k1), a widely used ECDSA algorithm.
+/// @dev Implements secure ownership validation by checking signatures against registered
+///      owners. This module supports ERC-7579 and ERC-4337 standards, ensuring only the
+///      legitimate owner of a smart account can authorize transactions.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
@@ -83,9 +87,22 @@ contract K1Validator is IValidator {
     /// @return The validation result (0 for success, 1 for failure)
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
         address owner = smartAccountOwners[userOp.sender];
+
+        // Extract the signature
+        bytes memory signature = userOp.signature;
+
+        // Check if the 's' value is valid
+        bytes32 s;
+        assembly {
+            s := mload(add(signature, 0x40))
+        }
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return VALIDATION_FAILED;
+        }
+
         if (
-            owner.isValidSignatureNow(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
-            owner.isValidSignatureNow(userOpHash, userOp.signature)
+            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
+            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
         ) {
             return VALIDATION_SUCCESS;
         }
@@ -98,6 +115,17 @@ contract K1Validator is IValidator {
     /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
+
+        // Check if the 's' value is valid
+        bytes32 s;
+        assembly {
+            let dataOffset := add(data.offset, 0x40)
+            s := calldataload(dataOffset)
+        }
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return ERC1271_INVALID;
+        }
+
         // Validate the signature using SignatureCheckerLib
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)) {
             return ERC1271_MAGICVALUE;

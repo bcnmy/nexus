@@ -16,31 +16,13 @@ import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ExecLib } from "./lib/ExecLib.sol";
 import { INexus } from "./interfaces/INexus.sol";
-import { IModule } from "./interfaces/modules/IModule.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { 
-    MODULE_TYPE_VALIDATOR, 
-    MODULE_TYPE_EXECUTOR, 
-    MODULE_TYPE_FALLBACK, 
-    MODULE_TYPE_HOOK, 
-    MODULE_TYPE_MULTI, 
-    VALIDATION_FAILED 
-} from "./types/Constants.sol";
-import { 
-    ModeLib, 
-    ExecutionMode, 
-    ExecType, 
-    CallType, 
-    CALLTYPE_BATCH, 
-    CALLTYPE_SINGLE, 
-    CALLTYPE_DELEGATECALL, 
-    EXECTYPE_DEFAULT, 
-    EXECTYPE_TRY 
-} from "./lib/ModeLib.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI } from "./types/Constants.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 
 /// @title Nexus - Smart Account
@@ -64,51 +46,49 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
 
-    address private immutable _SELF;
-
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
-        _SELF = address(this);
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
     }
 
-    /// Validates a user operation against a specified validator, extracted from the operation's nonce.
-    /// The entryPoint calls this only if validation succeeds. Fails by returning `VALIDATION_FAILED` for invalid signatures.
-    /// Other validation failures (e.g., nonce mismatch) should revert.
-    /// @param op The operation to validate, encapsulating all transaction details.
-    /// @param userOpHash Hash of the operation data, used for signature validation.
+    /// @notice Validates a user operation against a specified validator, extracted from the operation's nonce.
+    /// @param op The user operation to validate, encapsulating all transaction details.
+    /// @param userOpHash Hash of the user operation data, used for signature validation.
     /// @param missingAccountFunds Funds missing from the account's deposit necessary for transaction execution.
-    /// This can be zero if covered by a paymaster or sufficient deposit exists.
+    /// This can be zero if covered by a paymaster or if sufficient deposit exists.
     /// @return validationData Encoded validation result or failure, propagated from the validator module.
     /// - Encoded format in validationData:
-    ///     - First 20 bytes: Validator address, 0x0 for valid or specific failure modes.
-    ///     - `SIG_VALIDATION_FAILED` (1) denotes signature validation failure allowing simulation calls without a valid signature.
-    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the userOp's nonce.
+    ///     - First 20 bytes: Address of the Validator module, to which the validation task is forwarded.
+    ///       The validator module returns:
+    ///         - `SIG_VALIDATION_SUCCESS` (0) indicates successful validation.
+    ///         - `SIG_VALIDATION_FAILED` (1) indicates signature validation failure.
+    /// @dev Expects the validator's address to be encoded in the upper 96 bits of the user operation's nonce.
     /// This method forwards the validation task to the extracted validator module address.
+    /// @dev The entryPoint calls this function. If validation fails, it returns `VALIDATION_FAILED` (1) otherwise `0`.
     /// @dev Features Module Enable Mode.
-    /// This Module Enable Mode flow only makes sense for the module that is used as validator
-    /// for the userOp that triggers Module Enable Flow. Otherwise, one should just include
-    /// a call to Nexus.installModule into userOp.callData
+    /// This Module Enable Mode flow is intended for the module acting as the validator
+    /// for the user operation that triggers the Module Enable Flow. Otherwise, a call to
+    /// `Nexus.installModule` should be included in `userOp.callData`.
     function validateUserOp(
         PackedUserOperation calldata op,
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator = op.nonce.getValidator();
-        if (!op.nonce.isModuleEnableMode()) {
-            // Check if validator is not enabled. If not, return VALIDATION_FAILED.
-            if (!_isValidatorInstalled(validator)) return VALIDATION_FAILED;
-            validationData = IValidator(validator).validateUserOp(op, userOpHash);
-        } else {
+        if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
-            userOp.signature = _enableMode(validator, op.signature);
+            userOp.signature = _enableMode(userOpHash, op.signature);
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
-        }    
+        } else {
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            validationData = IValidator(validator).validateUserOp(op, userOpHash);
+        }
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
@@ -145,7 +125,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (callType == CALLTYPE_BATCH) {
             returnData = _handleBatchExecutionAndReturnData(executionCalldata, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            returnData =  _handleDelegateCallExecutionAndReturnData(executionCalldata, execType);
+            returnData = _handleDelegateCallExecutionAndReturnData(executionCalldata, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -155,24 +135,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param userOp The user operation to execute, containing transaction details.
     /// @param - Hash of the user operation.
     /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint {
-        // Extract inner call data from user operation, skipping the first 4 bytes.
-        bytes calldata innerCall = userOp.callData[4:];
-        bytes memory innerCallRet = "";
-
-        // Check and execute the inner call if data exists.
-        if (innerCall.length > 0) {
-            // Decode target address and call data from inner call.
-            (address target, bytes memory data) = abi.decode(innerCall, (address, bytes));
-            bool success;
-            // Perform the call to the target contract with the decoded data.
-            (success, innerCallRet) = target.call{value: msg.value}(data);
-            // Ensure the call was successful.
-            require(success, InnerCallFailed());
-        }
-
-        // Emit the Executed event with the user operation and inner call return data.
-        emit Executed(userOp, innerCallRet);
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
+        bytes calldata callData = userOp.callData[4:];
+        (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
+        if(success) { emit Executed(userOp, innerCallRet); }
+        else revert ExecutionFailed();
     }
 
     /// @notice Installs a new module to the smart account.
@@ -184,7 +151,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -198,10 +165,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf {
-        require(IModule(module).isModuleType(moduleTypeId), MismatchModuleTypeId(moduleTypeId));
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
-
         emit ModuleUninstalled(moduleTypeId, module);
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -219,10 +184,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+
         require(success, NexusInitializationFailed());
+        require(_hasValidators(), NoValidatorInstalled());
     }
 
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
@@ -235,7 +202,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
-        require(_isValidatorInstalled(validator), InvalidModule(validator));
+        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
         return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
@@ -310,7 +277,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf withHook {
         require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {
@@ -431,11 +398,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             let m := mload(0x40) // Cache the free memory pointer.
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
-            for {
-
-            } 1 {
-
-            } {
+            for {} 1 {} {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `APP_DOMAIN_SEPARATOR` and contents struct hash.

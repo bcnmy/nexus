@@ -3,7 +3,8 @@ TestRegistryFactory_Deployments
     ├── when the constructor is called
     │   ├── it should set the implementation address correctly
     │   ├── it should revert if the owner address is zero
-    │   └── it should revert if the implementation address is zero
+    │   ├── it should revert if the implementation address is zero
+    │   └── it should revert if the threshold exceeds the length of attesters
     ├── when managing the attesters
     │   ├── it should add an attester
     │   ├── it should add multiple attesters
