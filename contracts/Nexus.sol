@@ -218,7 +218,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             emit ModuleUninstalled(MODULE_TYPE_HOOK, hook);
         } else {
             // if the timelock is initiated but not expired, revert
-            revert("Emergency timelock not expired");
+            revert EmergencyTimeLockNotExpired();
         }
     }
 

@@ -74,6 +74,7 @@ contract EventsAndErrors {
     error EnableModeSigError();
     error InvalidModule(address module);
     error NoValidatorInstalled();
+    error EmergencyTimeLockNotExpired();
 
     // ==========================
     // Hook Errors
