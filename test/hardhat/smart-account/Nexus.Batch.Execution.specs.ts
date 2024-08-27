@@ -20,7 +20,7 @@ import {
   generateUseropCallData,
   buildPackedUserOp,
   getNonce,
-  MODE_VALIDATION
+  MODE_VALIDATION,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -177,7 +177,7 @@ describe("Nexus Batch Execution", () => {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp.nonce = userOpNonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -290,7 +290,7 @@ describe("Nexus Batch Execution", () => {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp.nonce = userOp1Nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -346,7 +346,7 @@ describe("Nexus Batch Execution", () => {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp1.nonce = userOp1Nonce;
 
@@ -389,7 +389,7 @@ describe("Nexus Batch Execution", () => {
         entryPoint,
         aliceSmartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       userOp2.nonce = userOp2Nonce;
 
@@ -442,7 +442,7 @@ describe("Nexus Batch Execution", () => {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        validatorModuleAddress.toString()
+        validatorModuleAddress.toString(),
       );
       incrementNumberBatchUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -515,7 +515,12 @@ describe("Nexus Batch Execution", () => {
         callData: userOpCallData,
       });
 
-      userOp.nonce = await getNonce(entryPoint, userOp.sender, MODE_VALIDATION, validatorModuleAddress);
+      userOp.nonce = await getNonce(
+        entryPoint,
+        userOp.sender,
+        MODE_VALIDATION,
+        validatorModuleAddress,
+      );
       const userOpHash = await entryPoint.getUserOpHash(userOp);
       userOp.signature = await smartAccountOwner.signMessage(
         ethers.getBytes(userOpHash),

@@ -93,7 +93,7 @@
     "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
     "docs": "yarn hardhat docgen",
     "check-storage": "yarn hardhat check",
-    "deploy:hardhat": "yarn hardhat run --network localhost scripts/hardhat/deploy.ts",
+    "deploy:hardhat": "yarn hardhat run --network localhost scripts/typescript/deploy.ts",
     "deploy:forge": "forge script scripts/solidity/Deploy.s.sol --broadcast --rpc-url http://localhost:8545",
     "lint:sol": "yarn solhint 'contracts/**/*.sol'",
     "lint:sol-fix": "yarn prettier --write 'contracts/**/*.sol' && yarn solhint 'contracts/**/*.sol' --fix --noPrompt",

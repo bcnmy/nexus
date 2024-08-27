@@ -25,7 +25,7 @@ import {
   generateUseropCallData,
   getNonce,
   MODE_VALIDATION,
-  getAccountDomainStructFields
+  getAccountDomainStructFields,
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -272,7 +272,7 @@ describe("Nexus Basic Specs", function () {
         entryPoint,
         smartAccountAddress,
         MODE_VALIDATION,
-        moduleAddress.toString()
+        moduleAddress.toString(),
       );
       userOp.nonce = userOpNonce;
 
@@ -306,7 +306,7 @@ describe("Nexus Basic Specs", function () {
       // 1. Convert foundry util to ts code (as below)
 
       const data = keccak256("0x1234");
-      
+
       // Define constants as per the original Solidity function
       const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
 
@@ -342,61 +342,63 @@ describe("Nexus Basic Specs", function () {
     });
 
     it("Should check signature validity using smart account isValidSignature for EIP 712 signature", async function () {
-      const PARENT_TYPEHASH = "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)";
-      const APP_DOMAIN_SEPARATOR = "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b";
+      const PARENT_TYPEHASH =
+        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)";
+      const APP_DOMAIN_SEPARATOR =
+        "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b";
       const data = "0x1234";
       const contents = ethers.keccak256(ethers.toUtf8Bytes(data));
 
-      const accountDomainStructFields = await getAccountDomainStructFields(smartAccount);
-    
+      const accountDomainStructFields =
+        await getAccountDomainStructFields(smartAccount);
+
       const parentStructHash = ethers.keccak256(
-        ethers.solidityPacked(["bytes", "bytes"],[
-          ethers.AbiCoder.defaultAbiCoder().encode(
-            ["bytes32", "bytes32"],
-            [ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)), contents]
-          ),
-          accountDomainStructFields
-        ])
+        ethers.solidityPacked(
+          ["bytes", "bytes"],
+          [
+            ethers.AbiCoder.defaultAbiCoder().encode(
+              ["bytes32", "bytes32"],
+              [ethers.keccak256(ethers.toUtf8Bytes(PARENT_TYPEHASH)), contents],
+            ),
+            accountDomainStructFields,
+          ],
+        ),
       );
 
       const dataToSign = ethers.keccak256(
-        ethers.concat([
-            '0x1901',
-            APP_DOMAIN_SEPARATOR,
-            parentStructHash
-        ])
-       );
-    
-      const signature = await smartAccountOwner.signMessage(ethers.getBytes(dataToSign));
-    
-      const contentsType = ethers.toUtf8Bytes("Contents(bytes32 stuff)");
-      
-      const signatureData = ethers.concat([
-          signature,
-          APP_DOMAIN_SEPARATOR,
-          contents,
-          contentsType,
-          ethers.toBeHex(contentsType.length, 2) 
-      ]);
-      
-      const contentsHash = keccak256(
-        ethers.concat([
-          '0x1901',
-          APP_DOMAIN_SEPARATOR,
-          contents
-        ])
+        ethers.concat(["0x1901", APP_DOMAIN_SEPARATOR, parentStructHash]),
       );
-    
-      const finalSignature = ethers.solidityPacked(["address", "bytes"],[
-        await validatorModule.getAddress(),
-        signatureData
+
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(dataToSign),
+      );
+
+      const contentsType = ethers.toUtf8Bytes("Contents(bytes32 stuff)");
+
+      const signatureData = ethers.concat([
+        signature,
+        APP_DOMAIN_SEPARATOR,
+        contents,
+        contentsType,
+        ethers.toBeHex(contentsType.length, 2),
       ]);
-    
-      const isValid = await smartAccount.isValidSignature(contentsHash, finalSignature);
-    
+
+      const contentsHash = keccak256(
+        ethers.concat(["0x1901", APP_DOMAIN_SEPARATOR, contents]),
+      );
+
+      const finalSignature = ethers.solidityPacked(
+        ["address", "bytes"],
+        [await validatorModule.getAddress(), signatureData],
+      );
+
+      const isValid = await smartAccount.isValidSignature(
+        contentsHash,
+        finalSignature,
+      );
+
       expect(isValid).to.equal("0x1626ba7e");
     });
-      
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
@@ -461,7 +463,7 @@ describe("Nexus Basic Specs", function () {
         entryPoint,
         accountAddress,
         MODE_VALIDATION,
-        moduleAddress.toString()
+        moduleAddress.toString(),
       );
 
       const packedUserOp = buildPackedUserOp({
@@ -504,7 +506,7 @@ describe("Nexus Basic Specs", function () {
         entryPoint,
         accountAddress,
         MODE_VALIDATION,
-        moduleAddress.toString()
+        moduleAddress.toString(),
       );
 
       const packedUserOp = buildPackedUserOp({

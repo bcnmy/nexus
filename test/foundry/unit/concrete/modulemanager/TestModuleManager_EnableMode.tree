@@ -5,5 +5,11 @@ TestModuleManager_EnableMode
 │   └── it should install the hook module
 ├── when trying to use wrong validator to validate enable mode sig
 │   └── it should revert
-└── when trying to use wrong enable mode signature
+├── when trying to use wrong enable mode signature
+│   └── it should revert
+├── when using a valid multi-module
+│   └── it should successfully install and configure the new module
+├── when using an invalid module type
+│   └── it should revert
+└── when using an invalid signature
     └── it should revert

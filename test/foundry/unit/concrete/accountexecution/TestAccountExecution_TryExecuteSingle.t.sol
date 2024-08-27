@@ -130,4 +130,56 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         assertEq(token.balanceOf(ALICE.addr), transferFromAmount, "TransferFrom did not execute correctly");
         assertEq(token.allowance(address(BOB_ACCOUNT), CHARLIE.addr), approvalAmount - transferFromAmount, "Allowance not updated correctly");
     }
+
+    /// @notice Tests if the TryExecuteUnsuccessful event is emitted correctly when execution fails.
+    function test_TryExecuteSingle_EmitTryExecuteUnsuccessful() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE));
+
+        // Expect the TryExecuteUnsuccessful event to be emitted with specific data
+        vm.expectEmit(true, true, true, true);
+        emit TryExecuteUnsuccessful(execution[0].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        // Asserting the counter did not increment
+        assertEq(counter.getNumber(), 0, "Counter should not have been incremented after revert");
+    }
+
+    /// @notice Tests if the TryDelegateCallUnsuccessful event is emitted correctly when delegate call execution fails.
+    function test_TryExecuteDelegateCall_EmitTryDelegateCallUnsuccessful() public {
+        // Create calldata for the account to execute a failing delegate call
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
+
+        // Build UserOperation for delegate call execution
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE));
+
+        // Create delegate call data
+        bytes memory userOpCalldata = abi.encodeCall(
+            Nexus.execute,
+            (
+                ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00)),
+                abi.encodePacked(address(counter), execution[0].callData)
+            )
+        );
+
+        userOps[0].callData = userOpCalldata;
+
+        // Sign the operation
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
+        userOps[0].signature = signMessage(BOB, userOpHash);
+
+        // Expect the TryDelegateCallUnsuccessful event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit TryDelegateCallUnsuccessful(execution[0].callData, abi.encodeWithSignature("Error(string)", "Counter: Revert operation"));
+
+        // Execute the operation
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+    }
 }

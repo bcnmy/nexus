@@ -14,6 +14,12 @@ TestK1Validator
 ├── when testing the isValidSignatureWithSender function
 │   ├── it should succeed with a valid signature
 │   └── it should fail with an invalid signature
+│   └── it should succeed with a valid signature for isValidSignatureWithSender
+│   └── it should fail with an invalid 's' value for isValidSignatureWithSender
+├── when testing the transferOwnership function
+│   ├── it should transfer ownership to a new address
+│   └── it should revert when transferring to the zero address
+│   └── it should revert when transferring to a contract address
 ├── when testing the name function
 │   └── it should return the correct contract name
 ├── when testing the version function
