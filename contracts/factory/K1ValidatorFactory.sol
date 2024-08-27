@@ -63,7 +63,7 @@ contract K1ValidatorFactory is Stakeable {
         IERC7484 registry
     ) Stakeable(factoryOwner) {
         require(
-            !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0)),
+            !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
         );
         ACCOUNT_IMPLEMENTATION = implementation;
