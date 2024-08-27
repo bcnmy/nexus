@@ -94,9 +94,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
     /// @param executionCalldata The encoded transaction data to execute.
-    /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPointOrSelf` modifier.
+    /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPointOrSelf withHook {
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
