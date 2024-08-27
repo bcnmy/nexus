@@ -63,7 +63,7 @@ contract K1ValidatorFactory is Stakeable {
         IERC7484 registry
     ) Stakeable(factoryOwner) {
         require(
-            !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || address(registry) == address(0)),
+            !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
         );
         ACCOUNT_IMPLEMENTATION = implementation;
@@ -75,6 +75,8 @@ contract K1ValidatorFactory is Stakeable {
     /// @notice Creates a new Nexus with a specific validator and initialization data.
     /// @param eoaOwner The address of the EOA owner of the Nexus.
     /// @param index The index of the Nexus.
+    /// @param attesters The list of attesters for the Nexus.
+    /// @param threshold The threshold for the Nexus.
     /// @return The address of the newly created Nexus.
     function createAccount(
         address eoaOwner,
@@ -83,14 +85,7 @@ contract K1ValidatorFactory is Stakeable {
         uint8 threshold
     ) external payable returns (address payable) {
         // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
+        bytes32 actualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
         // Deploy the Nexus contract using the computed salt
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
@@ -108,19 +103,19 @@ contract K1ValidatorFactory is Stakeable {
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
-    /// @param - The address of the EOA owner of the Nexus.
-    /// @param - The index of the Nexus.
+    /// @param eoaOwner The address of the EOA owner of the Nexus.
+    /// @param index The index of the Nexus.
+    /// @param attesters The list of attesters for the Nexus.
+    /// @param threshold The threshold for the Nexus.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided parameters are used.
-    function computeAccountAddress(address, uint256, address[] calldata, uint8) external view returns (address payable expectedAddress) {
+    function computeAccountAddress(
+        address eoaOwner,
+        uint256 index,
+        address[] calldata attesters,
+        uint8 threshold
+    ) external view returns (address payable expectedAddress) {
         // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt;
-        assembly {
-            let ptr := mload(0x40)
-            let calldataLength := sub(calldatasize(), 0x04)
-            mstore(0x40, add(ptr, calldataLength))
-            calldatacopy(ptr, 0x04, calldataLength)
-            actualSalt := keccak256(ptr, calldataLength)
-        }
+        bytes32 actualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
         // Predict the deterministic address using the LibClone library
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));

@@ -21,8 +21,13 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
         bootstrapper = new Bootstrap();
-        validatorFactory =
-            new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
+        validatorFactory = new K1ValidatorFactory(
+            address(ACCOUNT_IMPLEMENTATION),
+            address(FACTORY_OWNER.addr),
+            address(VALIDATOR_MODULE),
+            bootstrapper,
+            REGISTRY
+        );
     }
 
     /// @notice Tests if the constructor correctly initializes the factory with the given implementation, K1 Validator, and Bootstrapper addresses.
@@ -45,6 +50,29 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         assertTrue(isContract(address(factory)), "Factory should be a contract");
     }
 
+    /// @notice Tests that the constructor can take a zero address for the registry.
+    function test_ConstructorInitializesWithRegistryAddressZero() public {
+        IERC7484 registry = IERC7484(address(0));
+        address k1Validator = address(0x456);
+        Bootstrap bootstrapperInstance = new Bootstrap();
+        K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
+
+        // Verify the registry address 0
+        assertEq(address(factory.REGISTRY()), address(0), "Registry address mismatch");
+
+        // Verify the implementation address is set correctly
+        assertEq(factory.ACCOUNT_IMPLEMENTATION(), address(ACCOUNT_IMPLEMENTATION), "Implementation address mismatch");
+
+        // Verify the K1 Validator address is set correctly
+        assertEq(factory.K1_VALIDATOR(), k1Validator, "K1 Validator address mismatch");
+
+        // Verify the bootstrapper address is set correctly
+        assertEq(address(factory.BOOTSTRAPPER()), address(bootstrapperInstance), "Bootstrapper address mismatch");
+
+        // Ensure the factory contract is deployed and is a valid contract
+        assertTrue(isContract(address(factory)), "Factory should be a contract");
+    }
+
     /// @notice Tests that the constructor reverts if the implementation address is zero.
     function test_Constructor_RevertIf_ImplementationIsZero() public {
         address zeroAddress = address(0);
@@ -54,6 +82,17 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
 
         // Try deploying the K1ValidatorFactory with an implementation address of zero
         new K1ValidatorFactory(zeroAddress, address(this), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
+    }
+
+    /// @notice Tests that the constructor reverts if the factory owner address is zero.
+    function test_Constructor_RevertIf_FactoryOwnerIsZero() public {
+        address zeroAddress = address(0);
+
+        // Expect the contract deployment to revert with the correct error message
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+
+        // Try deploying the K1ValidatorFactory with an implementation address of zero
+        new K1ValidatorFactory(address(this), zeroAddress, address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
     }
 
     /// @notice Tests that the constructor reverts if the K1 Validator address is zero.
@@ -114,12 +153,15 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_CreateAccount_SameOwnerAndIndex() public payable {
         uint256 index = 0;
         address expectedOwner = user.addr;
+        console2.logBytes(expectedOwner.code);
 
+        // Create the first account with the given owner and index
         address payable firstAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
+
         address payable secondAccountAddress = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index, ATTESTERS, THRESHOLD);
 
-        assertEq(firstAccountAddress, secondAccountAddress, "Addresses should match for the same owner and index");
         assertEq(firstAccountAddress.balance, 2 ether, "Account balance should be 2 ether");
+        assertEq(firstAccountAddress, secondAccountAddress, "Account addresses should be same");
     }
 
     /// @notice Tests that creating accounts with different indexes results in different addresses.
@@ -132,5 +174,27 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         address payable accountAddress1 = validatorFactory.createAccount{ value: 1 ether }(expectedOwner, index1, ATTESTERS, THRESHOLD);
 
         assertTrue(accountAddress0 != accountAddress1, "Accounts with different indexes should have different addresses");
+    }
+
+    /// @notice Tests that the computed address matches the manually computed address using keccak256.
+    function test_ComputeAccountAddress_MatchesManualComputation() public {
+        address eoaOwner = user.addr;
+        uint256 index = 1;
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x1234);
+        uint8 threshold = 1;
+
+        // Compute the actual salt manually using keccak256
+        bytes32 manualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
+
+        address expectedAddress = LibClone.predictDeterministicAddressERC1967(
+            address(validatorFactory.ACCOUNT_IMPLEMENTATION()),
+            manualSalt,
+            address(validatorFactory)
+        );
+
+        address computedAddress = validatorFactory.computeAccountAddress(eoaOwner, index, attesters, threshold);
+
+        assertEq(expectedAddress, computedAddress, "Computed address does not match manually computed address");
     }
 }

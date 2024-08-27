@@ -1,7 +1,14 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex, concat } from "ethers";
+import {
+  Signer,
+  AddressLike,
+  BytesLike,
+  BigNumberish,
+  toBeHex,
+  concat,
+} from "ethers";
 import { EntryPoint, Nexus } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
@@ -115,7 +122,7 @@ export async function signAndPackUserOp(
     setup.entryPoint,
     userOp.sender,
     MODE_VALIDATION,
-    validatorAddress
+    validatorAddress,
   );
 
   userOp.nonce = nonce;
@@ -163,7 +170,7 @@ export async function fillSignAndPack(
     entryPoint,
     accountAddress,
     validationMode,
-    validatorAddress
+    validatorAddress,
   );
   const userOp = buildPackedUserOp({
     sender: accountAddress,
@@ -399,25 +406,36 @@ export async function getNonce(
   accountAddress: AddressLike,
   validationMode: BytesLike,
   validatorModuleAddress: AddressLike,
-) :Promise<bigint> {
+): Promise<bigint> {
   const vm = validatorModuleAddress.toString();
   const key = concat(["0x000000", validationMode, vm]);
   return await entryPoint.getNonce(accountAddress, key);
 }
 
-export async function getAccountDomainStructFields(account: Nexus): Promise<string> {
-  const [fields, name, version, chainId, verifyingContract, salt, extensions] = await account.eip712Domain();
+export async function getAccountDomainStructFields(
+  account: Nexus,
+): Promise<string> {
+  const [fields, name, version, chainId, verifyingContract, salt, extensions] =
+    await account.eip712Domain();
   return ethers.AbiCoder.defaultAbiCoder().encode(
-    ["bytes1", "bytes32", "bytes32", "uint256", "address", "bytes32", "bytes32"],
+    [
+      "bytes1",
+      "bytes32",
+      "bytes32",
+      "uint256",
+      "address",
+      "bytes32",
+      "bytes32",
+    ],
     [
       fields, // matches Solidity
       ethers.keccak256(ethers.toUtf8Bytes(name)), // matches Solidity
       ethers.keccak256(ethers.toUtf8Bytes(version)), // matches Solidity
-      chainId, 
-      verifyingContract, 
+      chainId,
+      verifyingContract,
       salt,
-      ethers.keccak256(ethers.solidityPacked(["uint256[]"], [extensions]))
-    ]
+      ethers.keccak256(ethers.solidityPacked(["uint256[]"], [extensions])),
+    ],
   );
 }
 // More functions to be added

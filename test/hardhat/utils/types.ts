@@ -62,7 +62,7 @@ export interface DeploymentFixtureWithSA {
   metaFactory: BiconomyMetaFactory;
   nexusFactory: NexusAccountFactory;
   bootstrap: Bootstrap;
-  bootstrapLib: BootstrapLib;
+  BootstrapLib: BootstrapLib;
   registry: MockRegistry;
 }
 

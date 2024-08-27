@@ -205,12 +205,38 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
 
         // Verify that the validators and hook were installed
         assertTrue(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Validator should be installed"
+            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            "Validator should be installed"
         );
         assertTrue(
             INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
             "Hook should be installed"
         );
+    }
+
+    /// @notice Tests that the manually computed address matches the one from computeAccountAddress.
+    function test_ComputeAccountAddress_ManualComparison() public {
+        // Prepare the initial data and salt
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+
+        // Manually compute the actual salt
+        bytes32 actualSalt = keccak256(abi.encodePacked(_initData, salt));
+        // Compute the expected address using the factory's function
+        address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
+
+        // Manually compute the expected address
+        address payable manualExpectedAddress = payable(
+            LibClone.predictDeterministicAddressERC1967(FACTORY.ACCOUNT_IMPLEMENTATION(), actualSalt, address(FACTORY))
+        );
+
+        // Validate that both addresses match
+        assertEq(expectedAddress, manualExpectedAddress, "Manually computed address mismatch");
     }
 
     /// @notice Tests that the Nexus contract constructor reverts if the entry point address is zero.

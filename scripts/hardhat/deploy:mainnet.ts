@@ -1,8 +1,8 @@
-import {deployToTestnet} from './deployToTestnet';
+import { deployToMainnet } from './deployToMainnet';
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-deployToTestnet()
+deployToMainnet()
   .then(() => {
     process.exit(0);
   })

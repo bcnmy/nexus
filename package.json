@@ -94,7 +94,7 @@
     "docs": "yarn hardhat docgen",
     "check-storage": "yarn hardhat check",
     "deploy:hardhat": "yarn hardhat run scripts/hardhat/deploy.ts",
-    "deploy:hardhat:withoutFixtures": "yarn hardhat run scripts/hardhat/deploy:withoutFixtures.ts",
+    "deploy:hardhat:mainnet": "yarn hardhat run scripts/hardhat/deploy:mainnet.ts",
     "deploy:forge": "forge script scripts/solidity/Deploy.s.sol --broadcast --rpc-url http://localhost:8545",
     "lint:sol": "yarn solhint 'contracts/**/*.sol'",
     "lint:sol-fix": "yarn prettier --write 'contracts/**/*.sol' && yarn solhint 'contracts/**/*.sol' --fix --noPrompt",

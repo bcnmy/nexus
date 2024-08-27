@@ -40,6 +40,6 @@ interface IStorage {
     /// @notice Defines a fallback handler with an associated handler address and a call type.
     struct FallbackHandler {
         address handler; ///< The address of the fallback function handler.
-        CallType calltype; ///< The type of call this handler supports (e.g., static or delegatecall).
+        CallType calltype; ///< The type of call this handler supports (e.g., static or call).
     }
 }

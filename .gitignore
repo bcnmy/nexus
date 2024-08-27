@@ -33,7 +33,6 @@ node_modules
 /cache
 /artifacts
 /docs
-hh-deployed-contracts.json
 
 # TypeChain files
 /typechain
