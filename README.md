@@ -112,7 +112,7 @@ Generate documentation from NatSpec comments.
 ### 🚀 Deploy Contracts
 
 ```bash
-yarn run deploy:hardhat --network hardhat
+yarn deploy
 ```
 
 Deploys contracts onto the blockchain network.
