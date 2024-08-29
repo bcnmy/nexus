@@ -84,9 +84,7 @@ ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.
 
 /// @dev ModeLib is a helper library to encode/decode ModeCodes
 library ModeLib {
-    function decode(
-        ExecutionMode mode
-    ) internal pure returns (CallType _calltype, ExecType _execType, ModeSelector _modeSelector, ModePayload _modePayload) {
+    function decode(ExecutionMode mode) internal pure returns (CallType _calltype, ExecType _execType, ModeSelector _modeSelector, ModePayload _modePayload) {
         assembly {
             _calltype := mode
             _execType := shl(8, mode)
@@ -135,10 +133,15 @@ library ModeLib {
 
 using { _eqModeSelector as == } for ModeSelector global;
 using { _eqCallType as == } for CallType global;
+using { _uneqCallType as != } for CallType global;
 using { _eqExecType as == } for ExecType global;
 
 function _eqCallType(CallType a, CallType b) pure returns (bool) {
     return CallType.unwrap(a) == CallType.unwrap(b);
+}
+
+function _uneqCallType(CallType a, CallType b) pure returns (bool) {
+    return CallType.unwrap(a) != CallType.unwrap(b);
 }
 
 function _eqExecType(ExecType a, ExecType b) pure returns (bool) {

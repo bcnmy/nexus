@@ -23,7 +23,15 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_MULTI,
+    MODULE_ENABLE_MODE_TYPE_HASH,
+    ERC1271_MAGICVALUE
+} from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
@@ -43,13 +51,17 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
+        if (!_getAccountStorage().executors.contains(msg.sender)) {
+            revert InvalidModule(msg.sender);
+        }
         _;
     }
 
     /// @notice Ensures the given validator is a registered validator module.
     modifier onlyValidatorModule(address validator) {
-        require(_getAccountStorage().validators.contains(validator), InvalidModule(validator));
+        if (!_getAccountStorage().validators.contains(validator)) {
+            revert InvalidModule(validator);
+        }
         _;
     }
 
@@ -74,7 +86,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-    receive() external payable {}
+    receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
     fallback() external payable withHook {
@@ -244,7 +256,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         // Sentinel pointing to itself means the list is empty, so check this after removal
         // Below error is very specific to uninstalling validators.
-        require(_hasValidators(), CanNotRemoveLastValidator());
+        if (!_hasValidators()) {
+            revert CanNotRemoveLastValidator();
+        }
         ExcessivelySafeCall.excessivelySafeCall(validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
@@ -272,7 +286,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
-        require(currentHook == address(0), HookAlreadyInstalled(currentHook));
+        if (currentHook != address(0)) revert HookAlreadyInstalled(currentHook);
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -302,7 +316,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
 
-        require(calltype == CALLTYPE_SINGLE || calltype == CALLTYPE_STATIC, FallbackCallTypeInvalid());
+        if (calltype != CALLTYPE_SINGLE && calltype != CALLTYPE_STATIC) revert FallbackCallTypeInvalid();
 
         // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
@@ -313,11 +327,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
         // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
         // cannot be manipulated to disrupt the expected behavior and security of the account.
-        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3) || selector == bytes4(0)), FallbackSelectorForbidden());
+        if (selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3) || selector == bytes4(0)) {
+            revert FallbackSelectorForbidden();
+        }
 
         // Revert if a fallback handler is already installed for the given selector.
         // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.
-        require(!_isFallbackHandlerInstalled(selector), FallbackAlreadyInstalledForSelector(selector));
+        if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
 
         // Store the fallback handler and its call type in the account storage.
         // This maps the function selector to the specified fallback handler and call type.
@@ -398,12 +414,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
     /// @return digest EIP712 hash
-    function _getEnableModeDataHash(
-        address module,
-        uint256 moduleType,
-        bytes32 userOpHash,
-        bytes calldata initData
-    ) internal view returns (bytes32 digest) {
+    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32 digest) {
         digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
     }
 
@@ -461,8 +472,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return True if there is at least one validator, otherwise false.
     function _hasValidators() internal view returns (bool) {
         return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) &&
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
+            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
     /// @dev Checks if an executor is currently installed.
@@ -495,7 +505,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    ) private view returns (address[] memory array, address nextCursor) {
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

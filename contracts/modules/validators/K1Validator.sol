@@ -53,10 +53,16 @@ contract K1Validator is IValidator {
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
     function onInstall(bytes calldata data) external {
-        require(data.length != 0, NoOwnerProvided());
-        require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
+        if (data.length == 0) {
+            revert NoOwnerProvided();
+        }
+        if (_isInitialized(msg.sender)) {
+            revert ModuleAlreadyInitialized();
+        }
         address newOwner = address(bytes20(data));
-        require(!_isContract(newOwner), NewOwnerIsContract());
+        if (_isContract(newOwner)) {
+            revert NewOwnerIsContract();
+        }
         smartAccountOwners[msg.sender] = newOwner;
     }
 
@@ -68,8 +74,12 @@ contract K1Validator is IValidator {
     /// @notice Transfers ownership of the validator to a new owner
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
-        require(newOwner != address(0), ZeroAddressNotAllowed());
-        require(!_isContract(newOwner), NewOwnerIsContract());
+        if (newOwner == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
+        if (_isContract(newOwner)) {
+            revert NewOwnerIsContract();
+        }
 
         smartAccountOwners[msg.sender] = newOwner;
     }
@@ -101,8 +111,8 @@ contract K1Validator is IValidator {
         }
 
         if (
-            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
-            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
+            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)
+                || owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
         ) {
             return VALIDATION_SUCCESS;
         }

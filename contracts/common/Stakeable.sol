@@ -37,7 +37,9 @@ contract Stakeable is Ownable, IStakeable {
     /// @param epAddress The address of the EntryPoint where the stake is added.
     /// @param unstakeDelaySec The delay in seconds before the stake can be unlocked.
     function addStake(address epAddress, uint32 unstakeDelaySec) external payable onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
+        if (epAddress == address(0)) {
+            revert InvalidEntryPointAddress();
+        }
         IEntryPoint(epAddress).addStake{ value: msg.value }(unstakeDelaySec);
     }
 
@@ -45,7 +47,9 @@ contract Stakeable is Ownable, IStakeable {
     /// @dev This starts the unstaking delay after which funds can be withdrawn.
     /// @param epAddress The address of the EntryPoint from which the stake is to be unlocked.
     function unlockStake(address epAddress) external onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
+        if (epAddress == address(0)) {
+            revert InvalidEntryPointAddress();
+        }
         IEntryPoint(epAddress).unlockStake();
     }
 
@@ -54,7 +58,9 @@ contract Stakeable is Ownable, IStakeable {
     /// @param epAddress The address of the EntryPoint where the stake is withdrawn from.
     /// @param withdrawAddress The address to receive the withdrawn stake.
     function withdrawStake(address epAddress, address payable withdrawAddress) external onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
+        if (epAddress == address(0)) {
+            revert InvalidEntryPointAddress();
+        }
         IEntryPoint(epAddress).withdrawStake(withdrawAddress);
     }
 }

@@ -44,13 +44,17 @@ contract BiconomyMetaFactory is Stakeable {
     /// @notice Constructor to set the owner of the contract.
     /// @param owner_ The address of the owner.
     constructor(address owner_) Stakeable(owner_) {
-        require(owner_ != address(0), ZeroAddressNotAllowed());
+        if (owner_ == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
     }
 
     /// @notice Adds an address to the factory whitelist.
     /// @param factory The address to be whitelisted.
     function addFactoryToWhitelist(address factory) external onlyOwner {
-        require(factory != address(0), InvalidFactoryAddress());
+        if (factory == address(0)) {
+            revert InvalidFactoryAddress();
+        }
         factoryWhitelist[factory] = true;
     }
 
@@ -68,11 +72,15 @@ contract BiconomyMetaFactory is Stakeable {
     /// @param factoryData The encoded data for the method to be called on the Factory.
     /// @return createdAccount The address of the newly created Nexus account.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
-        require(factoryWhitelist[address(factory)], FactoryNotWhitelisted());
+        if (!factoryWhitelist[address(factory)]) {
+            revert FactoryNotWhitelisted();
+        }
         (bool success, bytes memory returnData) = factory.call{ value: msg.value }(factoryData);
 
         // Check if the call was successful
-        require(success, CallToDeployWithFactoryFailed());
+        if (!success) {
+            revert CallToDeployWithFactoryFailed();
+        }
 
         // Decode the returned address
         assembly {

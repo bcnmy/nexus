@@ -51,9 +51,15 @@ contract RegistryFactory is Stakeable, INexusFactory {
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_, IERC7484 registry_, address[] memory attesters_, uint8 threshold_) Stakeable(owner_) {
-        require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
-        require(owner_ != address(0), ZeroAddressNotAllowed());
-        require(threshold_ <= attesters_.length, InvalidThreshold(threshold_, attesters_.length));
+        if (implementation_ == address(0)) {
+            revert ImplementationAddressCanNotBeZero();
+        }
+        if (owner_ == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
+        if (threshold_ > attesters_.length) {
+            revert InvalidThreshold(threshold_, attesters_.length);
+        }
         REGISTRY = registry_;
         attesters = attesters_;
         threshold = threshold_;
@@ -113,29 +119,30 @@ contract RegistryFactory is Stakeable, INexusFactory {
         // Ensure that the initData is structured for the expected Bootstrap.initNexus or similar method.
         // This step is crucial for ensuring the proper initialization of the Nexus smart account.
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
-        (
-            BootstrapConfig[] memory validators,
-            BootstrapConfig[] memory executors,
-            BootstrapConfig memory hook,
-            BootstrapConfig[] memory fallbacks,
-            ,
-            ,
-
-        ) = abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address, address[], uint8));
+        (BootstrapConfig[] memory validators, BootstrapConfig[] memory executors, BootstrapConfig memory hook, BootstrapConfig[] memory fallbacks,,,) =
+            abi.decode(innerData, (BootstrapConfig[], BootstrapConfig[], BootstrapConfig, BootstrapConfig[], address, address[], uint8));
 
         // Ensure that all specified modules are whitelisted and allowed for the account.
         for (uint256 i = 0; i < validators.length; i++) {
-            require(_isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR), ModuleNotWhitelisted(validators[i].module));
+            if (!_isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR)) {
+                revert ModuleNotWhitelisted(validators[i].module);
+            }
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            require(_isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR), ModuleNotWhitelisted(executors[i].module));
+            if (!_isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR)) {
+                revert ModuleNotWhitelisted(executors[i].module);
+            }
         }
 
-        require(_isModuleAllowed(hook.module, MODULE_TYPE_HOOK), ModuleNotWhitelisted(hook.module));
+        if (!_isModuleAllowed(hook.module, MODULE_TYPE_HOOK)) {
+            revert ModuleNotWhitelisted(hook.module);
+        }
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            require(_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK), ModuleNotWhitelisted(fallbacks[i].module));
+            if (!_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK)) {
+                revert ModuleNotWhitelisted(fallbacks[i].module);
+            }
         }
 
         // Compute the actual salt for deterministic deployment
