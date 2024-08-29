@@ -87,7 +87,7 @@
     "test:gas:hardhat": "REPORT_GAS=true hardhat test",
     "test:gas": "yarn test:gas:hardhat && yarn test:gas:forge",
     "gas-report": "node scripts/foundry/generateGasReport.js",
-    "coverage:forge": "FOUNDRY_PROFILE=coverage forge coverage",
+    "coverage:forge": "FOUNDRY_PROFILE=coverage forge coverage --no-match-coverage 'test|mocks'",
     "coverage:hardhat": "SHOULD_ENABLE_VIA_IR=false yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
     "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
