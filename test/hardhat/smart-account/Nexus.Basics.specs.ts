@@ -96,6 +96,16 @@ describe("Nexus Basic Specs", function () {
     );
 
     await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
+
+    const funder = accounts[0];
+    await funder.sendTransaction({
+      to: smartAccountAddress,
+      value: ethers.parseEther("10.0"),
+    });
+    await funder.sendTransaction({
+      to: entryPointAddress,
+      value: ethers.parseEther("10.0"),
+    });
   });
 
   describe("Contract Deployment", function () {
