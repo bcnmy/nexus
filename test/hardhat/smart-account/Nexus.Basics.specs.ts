@@ -495,6 +495,13 @@ describe("Nexus Basic Specs", function () {
       await entryPoint.handleOps([packedUserOp], bundlerAddress);
     });
 
+    it("should revert if EntryPoint is zero", async function () {
+      const NexusFactory = await ethers.getContractFactory("Nexus");
+      await expect(
+        NexusFactory.deploy(ZeroAddress),
+      ).to.be.revertedWithCustomError(NexusFactory, "EntryPointCanNotBeZero");
+    });
+
     it("Should fail Smart Account deployment with an unauthorized signer", async function () {
       const saDeploymentIndex = 2;
       const initCode = await getInitCode(
