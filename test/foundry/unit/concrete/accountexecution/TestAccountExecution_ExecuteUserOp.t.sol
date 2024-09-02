@@ -23,7 +23,8 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         // Build the inner call data
-        bytes memory innerCall = abi.encode(address(counter), abi.encodeWithSelector(Counter.incrementNumber.selector));
+        bytes memory innerCall =
+            prepareERC7579SingleExecuteCallData(EXECTYPE_DEFAULT, address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         // Build the callData for the user operation
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);

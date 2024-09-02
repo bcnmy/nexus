@@ -82,7 +82,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         uint256 sendValue = 1 ether;
 
         // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
-        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
         assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
 
         Execution[] memory execution = new Execution[](1);
@@ -131,13 +131,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            approvalExecution,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory approveOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE));
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 
@@ -160,7 +154,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         ExecutionMode mode = unsupportedMode; // Example unsupported call type
 
-        (CallType callType, ) = ModeLib.decodeBasic(mode);
+        (CallType callType,) = ModeLib.decodeBasic(mode);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
         prank(address(ENTRYPOINT));
         BOB_ACCOUNT.execute(mode, abi.encode(execution));
@@ -178,9 +172,9 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
         ExecutionMode mode = unsupportedMode; // Example unsupported call type
 
-        (CallType callType, ) = ModeLib.decodeBasic(mode);
+        (CallType callType,) = ModeLib.decodeBasic(mode);
         vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
-        prank(address(BOB_ACCOUNT));
+        prank(address(ENTRYPOINT));
         BOB_ACCOUNT.execute(mode, abi.encode(execution));
 
         // Asserting the counter did not increment
@@ -200,10 +194,8 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // Determine mode and calldata based on execType and executions length
         ExecutionMode mode = ModeLib.encodeCustom(callType, unsupportedExecType);
-        bytes memory executionCalldata = abi.encodeCall(
-            Nexus.execute,
-            (mode, ExecLib.encodeSingle(execution[0].target, execution[0].value, execution[0].callData))
-        );
+        bytes memory executionCalldata =
+            abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(execution[0].target, execution[0].value, execution[0].callData)));
 
         // Initialize the userOps array with one operation
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
