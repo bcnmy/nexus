@@ -543,4 +543,176 @@ describe("Nexus Basic Specs", function () {
         .withArgs(0, "AA24 signature error");
     });
   });
+
+  describe("Smart Account Upgrade Authorization", function () {
+    let newImplementation: AddressLike;
+    let impersonatedSmartAccount: Signer;
+    let impersonatedEntryPoint: Signer;
+    let mockHook: MockHook;
+
+    beforeEach(async function () {
+      // Deploy a new Nexus implementation
+      const NewNexusFactory = await ethers.getContractFactory("Nexus");
+      const deployedNewNexusImplementation =
+        await NewNexusFactory.deploy(entryPointAddress);
+      await deployedNewNexusImplementation.waitForDeployment();
+      newImplementation = await deployedNewNexusImplementation.getAddress();
+
+      // Deploy the MockHook contract
+      const MockHookFactory = await ethers.getContractFactory("MockHook");
+      mockHook = await MockHookFactory.deploy();
+      await mockHook.waitForDeployment();
+
+      // Impersonate the smart account and the EntryPoint
+      impersonatedSmartAccount = await impersonateAccount(
+        await smartAccount.getAddress(),
+      );
+
+      impersonatedEntryPoint = await impersonateAccount(
+        await entryPoint.getAddress(),
+      );
+      // Fund the impersonated smart account and EntryPoint with ETH
+      const funder = accounts[0];
+      await funder.sendTransaction({
+        to: smartAccountAddress,
+        value: ethers.parseEther("10.0"),
+      });
+      await funder.sendTransaction({
+        to: entryPointAddress,
+        value: ethers.parseEther("10.0"),
+      });
+
+      // Install the MockHook module on the smart account
+      await installModule({
+        deployedNexus: smartAccount,
+        entryPoint,
+        module: mockHook,
+        validatorModule: validatorModule,
+        moduleType: ModuleType.Hooks,
+        accountOwner: smartAccountOwner,
+        bundler,
+      });
+    });
+
+    afterEach(async function () {
+      // Stop impersonating the accounts after the tests
+      await stopImpersonateAccount(await smartAccount.getAddress());
+      await stopImpersonateAccount(await entryPoint.getAddress());
+    });
+
+    it("Should successfully authorize an upgrade when called by the smart account itself", async function () {
+      // Perform the upgrade using the impersonated smart account
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      // Verify that the implementation was updated
+      const updatedImplementation = await smartAccount.getImplementation();
+      expect(updatedImplementation).to.equal(newImplementation);
+    });
+
+    it("Should revert the upgrade attempt if the new implementation address is invalid", async function () {
+      const invalidImplementation = ethers.ZeroAddress;
+
+      // Attempt upgrade using the impersonated smart account with an invalid address
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(invalidImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "InvalidImplementationAddress",
+      );
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(invalidImplementation);
+    });
+
+    it("Should revert the upgrade attempt if the new implementation address has no code", async function () {
+      // Generate a random address that doesn't have a contract deployed at it
+      const noCodeAddress = ethers.Wallet.createRandom().address;
+
+      // Attempt upgrade using the impersonated smart account with the address that has no code
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(noCodeAddress, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "InvalidImplementationAddress",
+      );
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(noCodeAddress);
+    });
+
+    it("Should trigger pre-function and post-function hooks during the upgrade", async function () {
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      await expect(tx).to.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should allow the function to be called by EntryPoint", async function () {
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.not.be.reverted;
+    });
+
+    it("Should revert the function call when called by an unauthorized address", async function () {
+      await expect(
+        smartAccount
+          .connect(accounts[2])
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+
+    it("Should execute preCheck and postCheck with hook installed", async function () {
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      await expect(tx).to.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should proceed without hooks when no hook is installed", async function () {
+      // Temporarily uninstall the hook if any is installed
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .uninstallModule(ModuleType.Hooks, await mockHook.getAddress(), "0x");
+
+      // Execute the function and ensure no PreCheckCalled or PostCheckCalled event is emitted
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+      await expect(tx).to.not.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.not.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should revert if msg.value is exactly 1 ether", async function () {
+      // Attempt to upgrade with a value of 1 ether, triggering the revert in preCheck
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(newImplementation, "0x", {
+            value: ethers.parseEther("1"), // 1 ether
+          }),
+      ).to.be.revertedWith("PreCheckFailed");
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(newImplementation);
+    });
+  });
+
 });
