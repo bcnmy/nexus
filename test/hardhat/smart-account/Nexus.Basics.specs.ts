@@ -715,4 +715,78 @@ describe("Nexus Basic Specs", function () {
     });
   });
 
+  describe("Nexus ValidateUserOp", function () {
+    it("Should revert if validator is not installed", async function () {
+      // Impersonate the smart account
+      const impersonatedEntryPoint = await impersonateAccount(
+        await entryPoint.getAddress(),
+      );
+
+      // Construct a PackedUserOperation with an arbitrary validator address
+      const invalidValidator = ethers.Wallet.createRandom().address;
+
+      const op = buildPackedUserOp({
+        sender: await smartAccount.getAddress(),
+        nonce: "0x" + "00".repeat(11) + invalidValidator.slice(2), // Encode the invalid validator in the nonce
+        callData: "0x",
+      });
+
+      const userOpHash = await entryPoint.getUserOpHash(op);
+
+      // Stop impersonating the smart account after the test
+      await stopImpersonateAccount(await smartAccount.getAddress());
+
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .validateUserOp(op, userOpHash, 0n),
+      ).to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+    });
+
+    it("Should successfully handle prefund payment with sufficient funds", async function () {
+      // Fund the smart account with sufficient ETH
+      await smartAccountOwner.sendTransaction({
+        to: smartAccountAddress,
+        value: ethers.parseEther("1.0"), // Send 1 ETH to the smart account
+      });
+
+      // Prepare a PackedUserOperation
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const userOpNonce = await getNonce(
+        entryPoint,
+        smartAccountAddress,
+        MODE_MODULE_ENABLE,
+        await validatorModule.getAddress(),
+      );
+
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+        nonce: userOpNonce,
+      });
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      // // Sign the user operation
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+      userOp.signature = signature;
+
+      // Impersonate the EntryPoint
+      const impersonatedEntryPoint = await impersonateAccount(
+        entryPointAddress.toString(),
+      );
+
+      // Validate the user operation with sufficient prefund
+      await smartAccount
+        .connect(impersonatedEntryPoint)
+        .validateUserOp(userOp, userOpHash, ethers.parseEther("0.1"));
+    });
+  });
 });
