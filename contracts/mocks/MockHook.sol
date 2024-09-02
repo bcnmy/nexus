@@ -20,8 +20,14 @@ contract MockHook is IModule {
         emit PostCheckCalled();
     }
 
-    function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {
+    function preCheck(address sender, uint256 value, bytes calldata data) external returns (bytes memory) {
         emit PreCheckCalled();
+
+        // Add a condition to revert if the sender is the zero address or if the value is 1 ether for testing purposes
+        if (value == 1 ether) {
+            revert("PreCheckFailed");
+        }
+
         return "";
     }
 
