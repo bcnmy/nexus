@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
   AddressLike,
+  Provider,
   Signer,
   ZeroAddress,
   keccak256,
@@ -15,6 +16,7 @@ import {
   EntryPoint,
   MockValidator,
   Nexus,
+  MockHook,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
@@ -26,6 +28,9 @@ import {
   getNonce,
   MODE_VALIDATION,
   getAccountDomainStructFields,
+  impersonateAccount,
+  stopImpersonateAccount,
+  MODE_MODULE_ENABLE,
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -36,6 +41,7 @@ import {
   MODE_DEFAULT,
   MODE_PAYLOAD,
   UNUSED,
+  installModule,
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
@@ -56,6 +62,7 @@ describe("Nexus Basic Specs", function () {
   let validatorModule: MockValidator;
   let deployer: Signer;
   let aliceOwner: Signer;
+  let provider: Provider;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsAndSAFixture);
@@ -69,6 +76,7 @@ describe("Nexus Basic Specs", function () {
     smartAccountOwner = setup.accountOwner;
     deployer = setup.deployer;
     aliceOwner = setup.aliceAccountOwner;
+    provider = ethers.provider;
 
     entryPointAddress = await entryPoint.getAddress();
     smartAccountAddress = await smartAccount.getAddress();
