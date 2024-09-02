@@ -3,6 +3,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-storage-layout";
 import "hardhat-deploy";
+import { dynamicNetworkConfig } from "./scripts/hardhat/dynamicNetworkConfig";
 
 dotenv.config();
 
