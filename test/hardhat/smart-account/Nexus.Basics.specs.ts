@@ -797,4 +797,126 @@ describe("Nexus Basic Specs", function () {
         .validateUserOp(userOp, userOpHash, ethers.parseEther("0.1"));
     });
   });
+  // New describe block for Smart Account Registry and Modules
+  describe("Smart Account Registry and Modules", function () {
+    it("Should successfully set the registry", async function () {
+      // Deploy a mock registry
+      const mockRegistryFactory =
+        await ethers.getContractFactory("MockRegistry");
+      const mockRegistry = await mockRegistryFactory.deploy();
+      await mockRegistry.waitForDeployment();
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      const attesters = [await accounts[1].getAddress()];
+      const threshold = 1;
+
+      // Set the registry using the impersonated smart account
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .setRegistry(mockRegistry.getAddress(), attesters, threshold);
+
+      // Verify the registry is set
+      const configuredRegistry = await smartAccount.registry();
+      expect(configuredRegistry).to.equal(await mockRegistry.getAddress());
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+
+    it("Should revert when setRegistry is called by an unauthorized account", async function () {
+      // Deploy a mock registry
+      const mockRegistryFactory =
+        await ethers.getContractFactory("MockRegistry");
+      const mockRegistry = await mockRegistryFactory.deploy();
+      await mockRegistry.waitForDeployment();
+
+      const attesters = [await accounts[1].getAddress()];
+      const threshold = 1;
+
+      await expect(
+        smartAccount
+          .connect(accounts[1])
+          .setRegistry(mockRegistry.getAddress(), attesters, threshold),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+
+    it("Should return true for supported module types", async function () {
+      const supportedModules = [
+        ModuleType.Validation,
+        ModuleType.Execution,
+        ModuleType.Fallback,
+        ModuleType.Hooks,
+        ModuleType.Multi,
+      ];
+
+      for (const moduleType of supportedModules) {
+        expect(await smartAccount.supportsModule(moduleType)).to.be.true;
+      }
+    });
+
+    it("Should return false for unsupported module types", async function () {
+      const unsupportedModuleType = 999; // An arbitrary module type that is not supported
+      expect(await smartAccount.supportsModule(unsupportedModuleType)).to.be
+        .false;
+    });
+  });
+
+  describe("Smart Account Typed Data Hashing", function () {
+    it("Should correctly hash the structured data", async function () {
+      const structuredDataHash = ethers.keccak256(
+        ethers.toUtf8Bytes("Structured Data"),
+      );
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      // Fetch the domain separator used in the smart contract
+      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
+
+      // Manually compute the expected hash for comparison
+      const expectedHash = ethers.keccak256(
+        ethers.concat([
+          "0x1901", // EIP-191 prefix
+          domainSeparator,
+          structuredDataHash,
+        ]),
+      );
+
+      // Get the actual result from the smart contract
+      const result = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .hashTypedData(structuredDataHash);
+
+      expect(result).to.equal(expectedHash);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+
+    it("Should return correct bytes4 value for supportsNestedTypedDataSign", async function () {
+      const expectedValue = ethers.zeroPadBytes("0xd620c85a", 32);
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      const result = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .supportsNestedTypedDataSign();
+      expect(result).to.equal(expectedValue);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+  });
 });
