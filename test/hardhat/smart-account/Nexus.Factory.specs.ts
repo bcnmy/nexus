@@ -4,8 +4,10 @@ import {
   AddressLike,
   Signer,
   ZeroAddress,
+  ZeroHash,
   keccak256,
   solidityPacked,
+  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -19,6 +21,7 @@ import {
   BootstrapLib,
   MockHook,
   MockRegistry,
+  MockExecutor,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
@@ -296,6 +299,7 @@ describe("Nexus Factory Tests", function () {
     let factory: NexusAccountFactory;
     let bootstrap: Bootstrap;
     let validatorModule: MockValidator;
+    let executorModule: MockExecutor;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
     let registry: MockRegistry;
@@ -303,6 +307,7 @@ describe("Nexus Factory Tests", function () {
     let smartAccountImplementation: Nexus;
 
     let parsedValidator: BootstrapConfigStruct;
+    let parsedExecutor: BootstrapConfigStruct;
     let parsedHook: BootstrapConfigStruct;
     let ownerAddress: AddressLike;
     let entryPointAddress: AddressLike;
@@ -319,6 +324,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      executorModule = setup.mockExecutor;
       registry = setup.registry;
       smartAccountImplementation = setup.smartAccountImplementation;
 
@@ -327,6 +333,11 @@ describe("Nexus Factory Tests", function () {
       const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
+      );
+
+      const executor = await BootstrapLib.createSingleConfig(
+        await executorModule.getAddress(),
+        "0x",
       );
       const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
@@ -337,6 +348,12 @@ describe("Nexus Factory Tests", function () {
         module: validator[0],
         data: validator[1],
       };
+
+      parsedExecutor = {
+        module: executor[0],
+        data: executor[1],
+      };
+
       parsedHook = {
         module: hook[0],
         data: hook[1],
@@ -383,9 +400,64 @@ describe("Nexus Factory Tests", function () {
         [],
         0,
       );
+
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
         "AccountCreated",
+      );
+    });
+
+    it("Should revert with NexusInitializationFailed when delegatecall fails", async function () {
+      // Get the actual bootstrap address
+      const bootstrapAddress = await bootstrap.getAddress();
+
+      // Generate valid initialization data
+      let initData = await bootstrap.getInitNexusScopedCalldata(
+        [parsedValidator],
+        parsedHook,
+        registry,
+        [],
+        0,
+      );
+
+      // Manually corrupt the bootstrapCall data to cause failure
+      const corruptedBootstrapCall = "0x12345678"; // Invalid data
+
+      // Encode the corrupted init data
+      const corruptedInitData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [bootstrapAddress, corruptedBootstrapCall],
+      );
+
+      // Replace the original bootstrapCall with corrupted one in initData
+      const salt = keccak256("0x");
+
+      // Expect the transaction to revert with NexusInitializationFailed due to delegatecall failure
+      await expect(
+        factory.createAccount(corruptedInitData, salt),
+      ).to.be.revertedWithCustomError(
+        smartAccountImplementation,
+        "NexusInitializationFailed",
+      );
+    });
+
+    it("Should revert with NoValidatorInstalled if no validator is installed after initialization", async function () {
+      // Set up a valid bootstrap address but do not include any validators in the initData
+      const validBootstrapAddress = await owner.getAddress();
+      const bootstrapData = "0x"; // Valid but does not install any validators
+
+      const initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [validBootstrapAddress, bootstrapData],
+      );
+
+      const salt = keccak256("0x");
+
+      await expect(
+        factory.createAccount(initData, salt),
+      ).to.be.revertedWithCustomError(
+        smartAccountImplementation,
+        "NoValidatorInstalled",
       );
     });
   });
