@@ -721,6 +721,39 @@ describe("Nexus Basic Specs", function () {
       const currentImplementation = await smartAccount.getImplementation();
       expect(currentImplementation).to.not.equal(newImplementation);
     });
+    
+    it("Should allow upgrade when called by the smart account itself", async function () {
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(smartAccountAddress.toString());
+
+      // Attempt to upgrade
+      await expect(smartAccount.connect(impersonatedSmartAccount).upgradeToAndCall(newImplementation, "0x"))
+          .to.emit(smartAccount, "Upgraded")
+          .withArgs(newImplementation);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+  });
+
+    it("Should allow upgrade when called by the EntryPoint", async function () {
+        // Impersonate the EntryPoint
+        const impersonatedEntryPoint = await impersonateAccount(entryPointAddress.toString());
+
+        // Attempt to upgrade
+        await expect(smartAccount.connect(impersonatedEntryPoint).upgradeToAndCall(newImplementation, "0x"))
+            .to.emit(smartAccount, "Upgraded")
+            .withArgs(newImplementation);
+
+        // Stop impersonating the EntryPoint
+        await stopImpersonateAccount(entryPointAddress.toString());
+    });
+
+    it("Should revert upgrade attempt when called by an unauthorized address", async function () {
+        // Attempt upgrade using an unauthorized signer
+        await expect(smartAccount.connect(accounts[1]).upgradeToAndCall(newImplementation, "0x"))
+            .to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+    });
+
   });
 
   describe("Nexus ValidateUserOp", function () {
