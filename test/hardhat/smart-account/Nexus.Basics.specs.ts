@@ -417,6 +417,19 @@ describe("Nexus Basic Specs", function () {
 
       expect(isValid).to.equal("0x1626ba7e");
     });
+
+    it("Should revert signature validation when the validator is not installed", async function () {
+      const hash = ethers.keccak256("0x1234");
+      const signature = await smartAccountOwner.signMessage(ethers.getBytes(hash));
+
+      const signatureData = ethers.solidityPacked(
+          ["address", "bytes"],
+          [ZeroAddress, signature]
+      );
+
+      await expect(smartAccount.isValidSignature(hash, signatureData))
+          .to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+  });
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
