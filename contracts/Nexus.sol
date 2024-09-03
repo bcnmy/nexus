@@ -313,7 +313,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf withHook {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override withHook {
         if (newImplementation == address(0)) {
             revert InvalidImplementationAddress();
         }
