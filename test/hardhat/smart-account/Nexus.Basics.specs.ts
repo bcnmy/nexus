@@ -5,9 +5,11 @@ import {
   Provider,
   Signer,
   ZeroAddress,
+  ZeroHash,
   keccak256,
   solidityPacked,
   toBeHex,
+  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -17,6 +19,8 @@ import {
   MockValidator,
   Nexus,
   MockHook,
+  Nexus__factory,
+  MockV2SmartAccount,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
@@ -89,19 +93,6 @@ describe("Nexus Basic Specs", function () {
     const accountOwnerAddress = ownerAddress;
 
     const saDeploymentIndex = 0;
-
-    const installData = ethers.AbiCoder.defaultAbiCoder().encode(
-      ["address"],
-      [accountOwnerAddress],
-    ); // Example data, customize as needed
-
-    // Read the expected account address
-    const expectedAccountAddress = await factory.computeAccountAddress(
-      accountOwnerAddress,
-      saDeploymentIndex,
-      [],
-      0,
-    );
 
     await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
 
@@ -843,6 +834,7 @@ describe("Nexus Basic Specs", function () {
         .validateUserOp(userOp, userOpHash, ethers.parseEther("0.1"));
     });
   });
+
   // New describe block for Smart Account Registry and Modules
   describe("Smart Account Registry and Modules", function () {
     it("Should successfully set the registry", async function () {
