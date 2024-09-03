@@ -170,6 +170,11 @@ contract RegistryFactory is Stakeable, INexusFactory {
         expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
     }
 
+    function getAttesters() public view returns (address[] memory) {
+        return attesters;
+    }
+
+
     /// @notice Checks if a module is whitelisted.
     /// @param module The address of the module to check.
     /// @param moduleType The type of the module to check.
