@@ -411,16 +411,19 @@ describe("Nexus Basic Specs", function () {
 
     it("Should revert signature validation when the validator is not installed", async function () {
       const hash = ethers.keccak256("0x1234");
-      const signature = await smartAccountOwner.signMessage(ethers.getBytes(hash));
-
-      const signatureData = ethers.solidityPacked(
-          ["address", "bytes"],
-          [ZeroAddress, signature]
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(hash),
       );
 
-      await expect(smartAccount.isValidSignature(hash, signatureData))
-          .to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
-  });
+      const signatureData = ethers.solidityPacked(
+        ["address", "bytes"],
+        [ZeroAddress, signature],
+      );
+
+      await expect(
+        smartAccount.isValidSignature(hash, signatureData),
+      ).to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+    });
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
@@ -725,39 +728,56 @@ describe("Nexus Basic Specs", function () {
       const currentImplementation = await smartAccount.getImplementation();
       expect(currentImplementation).to.not.equal(newImplementation);
     });
-    
+
     it("Should allow upgrade when called by the smart account itself", async function () {
       // Impersonate the smart account
-      const impersonatedSmartAccount = await impersonateAccount(smartAccountAddress.toString());
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
 
       // Attempt to upgrade
-      await expect(smartAccount.connect(impersonatedSmartAccount).upgradeToAndCall(newImplementation, "0x"))
-          .to.emit(smartAccount, "Upgraded")
-          .withArgs(newImplementation);
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(newImplementation, "0x"),
+      )
+        .to.emit(smartAccount, "Upgraded")
+        .withArgs(newImplementation);
 
       // Stop impersonating the smart account
       await stopImpersonateAccount(smartAccountAddress.toString());
-  });
+    });
 
     it("Should allow upgrade when called by the EntryPoint", async function () {
-        // Impersonate the EntryPoint
-        const impersonatedEntryPoint = await impersonateAccount(entryPointAddress.toString());
+      // Impersonate the EntryPoint
+      const impersonatedEntryPoint = await impersonateAccount(
+        entryPointAddress.toString(),
+      );
 
-        // Attempt to upgrade
-        await expect(smartAccount.connect(impersonatedEntryPoint).upgradeToAndCall(newImplementation, "0x"))
-            .to.emit(smartAccount, "Upgraded")
-            .withArgs(newImplementation);
+      // Attempt to upgrade
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .upgradeToAndCall(newImplementation, "0x"),
+      )
+        .to.emit(smartAccount, "Upgraded")
+        .withArgs(newImplementation);
 
-        // Stop impersonating the EntryPoint
-        await stopImpersonateAccount(entryPointAddress.toString());
+      // Stop impersonating the EntryPoint
+      await stopImpersonateAccount(entryPointAddress.toString());
     });
 
     it("Should revert upgrade attempt when called by an unauthorized address", async function () {
-        // Attempt upgrade using an unauthorized signer
-        await expect(smartAccount.connect(accounts[1]).upgradeToAndCall(newImplementation, "0x"))
-            .to.be.revertedWithCustomError(smartAccount, "AccountAccessUnauthorized");
+      // Attempt upgrade using an unauthorized signer
+      await expect(
+        smartAccount
+          .connect(accounts[1])
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
     });
-
   });
 
   describe("Nexus ValidateUserOp", function () {
