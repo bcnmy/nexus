@@ -25,6 +25,7 @@ import { IValidator } from "./interfaces/modules/IValidator.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
+import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -302,6 +303,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This method intentionally returns bytes32 to allow freedom for future extensions.
     function supportsNestedTypedDataSignWithValidator(address validator) public view virtual returns (bytes32) {
         return(IERC7739(validator).supportsNestedTypedDataSign());
+    }
+
+    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
+    /// Offchain usage only
+    /// Iterates over all the validators
+    function supportsNestedTypedDataSign() public view virtual returns (bytes32) {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        address next = validators.entries[SENTINEL];
+        while (next != ZERO_ADDRESS && next != SENTINEL) {
+            if (IERC7739(next).supportsNestedTypedDataSign() == bytes4(0xd620c85a)) return bytes4(0xd620c85a);
+            next = validators.entries[next];
+        }
+        return bytes4(0xffffffff);
     }
 
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.

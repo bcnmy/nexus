@@ -42,5 +42,6 @@ bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256(
     "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)"
 );
 
+// Validation modes
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;

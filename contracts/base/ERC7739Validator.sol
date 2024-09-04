@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { EIP712ForModular7739 } from "../utils/EIP712ForModular7739.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 
 /// @title ERC-7739: Nested Typed Data Sign Support for ERC-7579 Validators
 
-abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739 {
+abstract contract ERC7739Validator is IValidator, IERC7739 {
 
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+    bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
     
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
@@ -21,17 +21,6 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
     /// This method intentionally returns bytes32 to allow freedom for future extensions.
     function supportsNestedTypedDataSign() public view virtual returns (bytes32 result) {
         result = bytes4(0xd620c85a);
-    }
-
-    /// @dev EIP712 domain separator in a modular 7739 flow.
-    // solhint-disable func-name-mixedcase
-    function DOMAIN_SEPARATOR_MODULAR_7739(address account) external view returns (bytes32) {
-        return _domainSeparator(account);
-    }
-
-    /// @dev EIP712 hashTypedData method.
-    function hashTypedDataModular7739(bytes32 structHash, address account) external view returns (bytes32) {
-        return _hashTypedData(structHash, account);
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
@@ -196,6 +185,7 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
         
         /// @solidity memory-safe-assembly
         assembly {
+            //Rebuild domain separator out of 712 domain
             let m := mload(0x40) // Load the free memory pointer.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash) // Name hash.
@@ -204,6 +194,7 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
             mstore(add(m, 0x80), verifyingContract)
             digest := keccak256(m, 0xa0) //domain separator
 
+            // Hash typed data
             mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
             mstore(0x1a, digest) // Store the domain separator.
             mstore(0x3a, structHash) // Store the struct hash.

@@ -175,10 +175,4 @@ contract K1Validator is ERC7739Validator {
         }
         return size > 0;
     }
-
-    /// @dev EIP712 domain name and version.
-    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
-        name = "K1Validator";
-        version = "1.0.0";
-    }
 }

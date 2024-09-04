@@ -60,11 +60,4 @@ contract MockValidator is ERC7739Validator {
     function getOwner(address account) external view returns (address) {
         return smartAccountOwners[account];
     }
-
-    /// @dev EIP712 domain name and version.
-    /// @dev Override it to provide the domain name and version.
-    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
-        name = "MockValidator";
-        version = "0.alpha";
-    }
 }

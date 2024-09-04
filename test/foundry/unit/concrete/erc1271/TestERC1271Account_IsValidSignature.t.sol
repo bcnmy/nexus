@@ -32,7 +32,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         TestTemps memory t;
         t.contents = keccak256("123");
         bytes32 hashToSign = toERC1271HashPersonalSign(t.contents, address(ALICE_ACCOUNT));
-        console2.logBytes32(hashToSign);
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
