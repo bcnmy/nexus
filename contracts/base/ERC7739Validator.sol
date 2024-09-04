@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import { EIP712ForModular7739 } from "../utils/EIP712ForModular7739.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 
 /// @title ERC-7739: Nested Typed Data Sign Support for ERC-7579 Validators
 
@@ -175,8 +176,41 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        if (!result) hash = _hashTypedData(hash);
+        if (!result) hash = _hashTypedDataForAccount(msg.sender, hash);
         return (hash, signature);
+    }
+
+    function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
+        (
+            /*bytes1 fields*/,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            /*bytes32 salt*/,
+            /*uint256[] memory extensions*/
+        ) = EIP712(account).eip712Domain();
+
+        bytes32 nameHash = keccak256(bytes(name));
+        bytes32 versionHash = keccak256(bytes(version));
+        
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), nameHash) // Name hash.
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainId)
+            mstore(add(m, 0x80), verifyingContract)
+            digest := keccak256(m, 0xa0) //domain separator
+
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, digest) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
+            digest := keccak256(0x18, 0x42)
+            // Restore the part of the free memory slot that was overwritten.
+            mstore(0x3a, 0)
+        }
     }
 
     /// @dev For use in `_erc1271HashForIsValidSignatureViaNestedEIP712`,
@@ -186,11 +220,10 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
             string memory name,
             string memory version,
             uint256 chainId,
-            /*address verifyingContract*/,
+            address verifyingContract,
             bytes32 salt,
             uint256[] memory extensions
-        ) = eip712Domain();
-        address verifyingContract = msg.sender; // verifyingContract should be the smart account address
+        ) = EIP712(msg.sender).eip712Domain();
         /// @solidity memory-safe-assembly
         assembly {
             m := mload(0x40) // Grab the free memory pointer.

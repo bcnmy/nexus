@@ -31,26 +31,24 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     function test_isValidSignature_PersonalSign_MockValidator_Success() public {
         TestTemps memory t;
         t.contents = keccak256("123");
-        bytes32 hashToSign = toERC1271HashPersonalSignModular(t.contents, address(ALICE_ACCOUNT), address(VALIDATOR_MODULE));
+        bytes32 hashToSign = toERC1271HashPersonalSign(t.contents, address(ALICE_ACCOUNT));
         console2.logBytes32(hashToSign);
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
 
-        /*
         unchecked {
             uint256 vs = uint256(t.s) | (uint256(t.v - 27) << 255);
             signature = abi.encodePacked(t.r, vs);
             assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(VALIDATOR_MODULE), signature)), bytes4(0x1626ba7e));
         }
-        */
     }
 
     /// @notice Tests the validation of an EIP-712 signature using the mock validator.
     function test_isValidSignature_EIP712Sign_MockValidator_Success() public {
         TestTemps memory t;
         t.contents = keccak256("0x1234");
-        bytes32 dataToSign = toERC1271HashModular(t.contents, address(ALICE_ACCOUNT), address(VALIDATOR_MODULE));
+        bytes32 dataToSign = toERC1271Hash(t.contents, address(ALICE_ACCOUNT));
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
@@ -72,7 +70,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     function test_isValidSignature_EIP712Sign_MockValidator_Wrong1271Signer_Fail() public view {
         TestTemps memory t;
         t.contents = keccak256("123");
-        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271HashModular(t.contents, address(ALICE_ACCOUNT), address(VALIDATOR_MODULE)));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
@@ -123,7 +121,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @param contents The contents hash.
     /// @param account The account address.
     /// @return The ERC-1271 hash.
-    function toERC1271HashModular(bytes32 contents, address account, address module) internal view returns (bytes32) {
+    function toERC1271Hash(bytes32 contents, address account) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
                 abi.encode(
@@ -132,7 +130,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                     ),
                     contents
                 ),
-                accountDomainStructFields(account, module)
+                accountDomainStructFields(account)
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, parentStructHash));
@@ -148,16 +146,16 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @notice Generates an ERC-1271 hash for personal sign.
     /// @param childHash The child hash.
     /// @return The ERC-1271 hash for personal sign.
-    function toERC1271HashPersonalSignModular(bytes32 childHash, address account, address module) internal view returns (bytes32) {
+    function toERC1271HashPersonalSign(bytes32 childHash, address account) internal view returns (bytes32) {
         AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(module).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(account).eip712Domain();
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes(t.name)),
                 keccak256(bytes(t.version)),
                 t.chainId,
-                address(account) // veryfingContract should be the account address.
+                t.verifyingContract // veryfingContract should be the account address.
             )
         );
         bytes32 parentStructHash = keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
@@ -177,9 +175,9 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @notice Retrieves the EIP-712 domain struct fields.
     /// @param account The account address.
     /// @return The encoded EIP-712 domain struct fields.
-    function accountDomainStructFields(address account, address module) internal view returns (bytes memory) {
+    function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(module).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(account).eip712Domain();
 
         return
             abi.encode(
@@ -187,7 +185,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                 keccak256(bytes(t.name)),
                 keccak256(bytes(t.version)),
                 t.chainId,
-                account, // Use the account address as the verifying contract.
+                t.verifyingContract, // Use the account address as the verifying contract.
                 t.salt,
                 keccak256(abi.encodePacked(t.extensions))
             );
