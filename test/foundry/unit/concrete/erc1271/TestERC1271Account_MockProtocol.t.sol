@@ -49,7 +49,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271HashModular(t.contents, address(ALICE_ACCOUNT), address(validator)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -61,22 +61,26 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
 
     function testHashTypedData() public {
         bytes32 structHash = keccak256(abi.encodePacked("testStruct"));
-        bytes32 expectedHash = BOB_ACCOUNT.hashTypedData(structHash);
+        bytes32 expectedHash = validator.hashTypedDataModular7739(structHash, address(BOB_ACCOUNT));
 
-        bytes32 domainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
+        bytes32 domainSeparator = validator.DOMAIN_SEPARATOR_MODULAR_7739(address(BOB_ACCOUNT));
         bytes32 actualHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
         assertEq(expectedHash, actualHash);
     }
 
     function testDomainSeparator() public {
-        bytes32 expectedDomainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
+        bytes32 expectedDomainSeparator = validator.DOMAIN_SEPARATOR_MODULAR_7739(address(BOB_ACCOUNT));
+        
+        AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = validator.eip712Domain();
+
         bytes32 calculatedDomainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes("Nexus")),
-                keccak256(bytes("1.0.0-beta")),
-                block.chainid,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
                 address(BOB_ACCOUNT)
             )
         );
@@ -96,7 +100,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271HashModular(t.contents, address(ALICE_ACCOUNT), address(validator)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -120,7 +124,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271HashModular(t.contents, address(ALICE_ACCOUNT), address(validator)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -152,7 +156,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
     /// @param contents The contents hash.
     /// @param account The address of the account.
     /// @return The ERC-1271 hash.
-    function toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
+    function toERC1271HashModular(bytes32 contents, address account, address module) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
                 abi.encode(
@@ -161,7 +165,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                     ),
                     contents
                 ),
-                accountDomainStructFields(account)
+                accountDomainStructFields(account, module)
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domainSepB, parentStructHash));
@@ -170,9 +174,9 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
     /// @notice Retrieves the EIP-712 domain struct fields.
     /// @param account The address of the account.
     /// @return The EIP-712 domain struct fields encoded.
-    function accountDomainStructFields(address payable account) internal view returns (bytes memory) {
+    function accountDomainStructFields(address account, address module) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = Nexus(account).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(module).eip712Domain();
 
         return
             abi.encode(
@@ -180,7 +184,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 keccak256(bytes(t.name)),
                 keccak256(bytes(t.version)),
                 t.chainId,
-                t.verifyingContract,
+                account, // Use the account address as the verifying contract.
                 t.salt,
                 keccak256(abi.encodePacked(t.extensions))
             );

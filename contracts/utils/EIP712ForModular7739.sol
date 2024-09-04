@@ -82,8 +82,8 @@ abstract contract EIP712ForModular7739 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the EIP-712 domain separator.
-    function _domainSeparator() internal view virtual returns (bytes32 separator) {
-        separator = _buildDomainSeparator();
+    function _domainSeparator(address account) internal view virtual returns (bytes32 separator) {
+        separator = _buildDomainSeparator(account);
     }
 
     /// @dev Returns the hash of the fully encoded EIP-712 message for this domain,
@@ -99,9 +99,9 @@ abstract contract EIP712ForModular7739 {
     ///     )));
     ///     address signer = ECDSA.recover(digest, signature);
     /// ```
-    function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
+    function _hashTypedData(bytes32 structHash, address account) internal view virtual returns (bytes32 digest) {
         // We will use `digest` to store the domain separator to save a bit of gas.
-        digest = _buildDomainSeparator();
+        digest = _buildDomainSeparator(account);
         
         /// @solidity memory-safe-assembly
         assembly {
@@ -113,6 +113,10 @@ abstract contract EIP712ForModular7739 {
             // Restore the part of the free memory slot that was overwritten.
             mstore(0x3a, 0)
         }
+    }
+
+    function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32) {
+        return _hashTypedData(structHash, address(msg.sender));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -147,7 +151,7 @@ abstract contract EIP712ForModular7739 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the EIP-712 domain separator.
-    function _buildDomainSeparator() private view returns (bytes32 separator) {
+    function _buildDomainSeparator(address account) private view returns (bytes32 separator) {
         // We will use `separator` to store the name hash to save a bit of gas.
         bytes32 versionHash;
         if (_domainNameAndVersionMayChange()) {
@@ -165,7 +169,7 @@ abstract contract EIP712ForModular7739 {
             mstore(add(m, 0x20), separator) // Name hash.
             mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), caller())
+            mstore(add(m, 0x80), account)
             separator := keccak256(m, 0xa0)
         }
     }

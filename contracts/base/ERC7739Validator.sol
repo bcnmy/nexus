@@ -22,6 +22,17 @@ abstract contract ERC7739Validator is IValidator, EIP712ForModular7739, IERC7739
         result = bytes4(0xd620c85a);
     }
 
+    /// @dev EIP712 domain separator in a modular 7739 flow.
+    // solhint-disable func-name-mixedcase
+    function DOMAIN_SEPARATOR_MODULAR_7739(address account) external view returns (bytes32) {
+        return _domainSeparator(account);
+    }
+
+    /// @dev EIP712 hashTypedData method.
+    function hashTypedDataModular7739(bytes32 structHash, address account) external view returns (bytes32) {
+        return _hashTypedData(structHash, account);
+    }
+
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
     ///
     /// This implementation uses a nested EIP-712 approach to

@@ -290,6 +290,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
     /// with a specific validator.
+    ///
+    /// Temporary implementation, not following ERC-7739 interface.
+    /// See https://ethereum-magicians.org/t/erc-7739-readable-typed-signatures-for-smart-accounts/20513/2 
+    /// for discussions.
+    ///
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
     /// denoting support for the default behavior, as implemented in
     /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
