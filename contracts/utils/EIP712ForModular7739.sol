@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Contract for EIP-712 typed structured data hashing and signing.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EIP712.sol)
-/// @author Modified from Solbase (https://github.com/Sol-DAO/solbase/blob/main/src/utils/EIP712.sol)
-/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
+/// @notice EIP-712 typed structured data hashing and signing.
+//          Modified to work with modules in a ERC-7739 flow.
+/// Shameless fork from (https://github.com/vectorized/solady/blob/main/src/utils/EIP712.sol)
 ///
 /// @dev Note, this implementation:
+/// - ATTENTION: Uses msg.sender instead of address(this) for a verifying contract!
 /// - Uses `address(this)` for the `verifyingContract` field.
 /// - Does NOT use the optional EIP-712 salt.
 /// - Does NOT use any EIP-712 extensions.
 /// This is for simplicity and to save gas.
-/// If you need to customize, please fork / modify accordingly.
 abstract contract EIP712ForModular7739 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  CONSTANTS AND IMMUTABLES                  */

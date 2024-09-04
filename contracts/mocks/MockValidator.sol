@@ -10,8 +10,6 @@ import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
 
-import "forge-std/src/console2.sol";
-
 contract MockValidator is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
@@ -26,7 +24,6 @@ contract MockValidator is ERC7739Validator {
         address owner = smartAccountOwners[msg.sender];
         
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
-        console2.logBytes32(computeHash);
 
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, computeHash, truncatedSignature)) {
             return ERC1271_MAGICVALUE;
