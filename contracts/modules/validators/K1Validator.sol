@@ -15,11 +15,11 @@ pragma solidity ^0.8.26;
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-
-import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -27,12 +27,13 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @dev Implements secure ownership validation by checking signatures against registered
 ///      owners. This module supports ERC-7579 and ERC-4337 standards, ensuring only the
 ///      legitimate owner of a smart account can authorize transactions.
+///      Implements ERC-7739
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract K1Validator is IValidator {
+contract K1Validator is ERC7739Validator {
     using SignatureCheckerLib for address;
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
@@ -116,21 +117,23 @@ contract K1Validator is IValidator {
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
 
+        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data);
+
         // Check if the 's' value is valid
         bytes32 s;
         assembly {
-            let dataOffset := add(data.offset, 0x40)
-            s := calldataload(dataOffset)
+            let offset := add(truncatedSignature.offset, 0x40) //0x20 length + 0x20 r
+            s := calldataload(offset)
         }
         if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
             return ERC1271_INVALID;
         }
 
         // Validate the signature using SignatureCheckerLib
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)) {
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, computeHash, truncatedSignature)) {
             return ERC1271_MAGICVALUE;
         }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), data)) {
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(computeHash), truncatedSignature)) {
             return ERC1271_MAGICVALUE;
         }
         return ERC1271_INVALID;
@@ -171,5 +174,11 @@ contract K1Validator is IValidator {
             size := extcodesize(account)
         }
         return size > 0;
+    }
+
+    /// @dev EIP712 domain name and version.
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        name = "K1Validator";
+        version = "1.0.0";
     }
 }
