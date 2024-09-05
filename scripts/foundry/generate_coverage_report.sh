@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Generate lcov.info
-forge coverage --ir-minimum --report lcov
+yarn coverage:forge --report lcov
 
 # Install lcov if not installed
 if ! command -v lcov &>/dev/null; then
