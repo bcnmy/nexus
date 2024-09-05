@@ -394,7 +394,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // have to try different ways to validate the signature as we do not know for sure what 1271 flavours validator supports
         if (IERC7739(enableModeSigValidator).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) {
             // if the validator supports 7739, we use just the struct hash, as the full hash will be rebuilt inside 7739 flow
-            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), structHash, sig[20:]) == ERC1271_MAGICVALUE) {
+            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
                 return true;
             }
         } else {
@@ -430,9 +430,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     ) internal view returns (bytes32 structHash) {
         //digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
         structHash = keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
+        
         console2.log("pre7739 digest in contract");
         console2.logBytes32(structHash);
-        console2.logBytes32(_hashTypedData(structHash));
+        //console2.logBytes32(_hashTypedData(structHash));
     }
 
     /// @notice Checks if a module is installed on the smart account.

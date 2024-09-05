@@ -43,8 +43,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
 
         (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
-        console2.log("no 7739 flow hash to sign");
-        console2.logBytes32(hashToSign);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
@@ -91,7 +89,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
 
-        (bytes memory multiInstallData, , bytes32 structHash) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        (bytes memory multiInstallData, /*bytes32 eip712ChildHash*/, bytes32 structHash) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
 
         // app is just account itself in this case
         bytes32 appDomainSeparator = _buildDomainSeparator(address(BOB_ACCOUNT));
@@ -417,8 +415,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         ));
         eip712Hash = _hashTypedData(structHash, address(BOB_ACCOUNT));
 
+        console2.log("Struct hash in test");
         console2.logBytes32(structHash);
-        console2.logBytes32(eip712Hash);
+        //console2.logBytes32(eip712Hash);
         //return (multiInstallData, eip712Hash, structHash);
     }
 
@@ -465,7 +464,10 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             abi.encodePacked(
                 abi.encode(
                     keccak256(
-                        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                        abi.encodePacked(
+                            "TypedDataSign(ModuleEnableMode contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
+                            MODULE_ENABLE_MODE_NOTATION
+                        )
                     ),
                     contents
                 ),
