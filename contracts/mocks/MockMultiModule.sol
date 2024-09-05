@@ -7,7 +7,7 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "contracts/types/Constants.sol";
+import "../types/Constants.sol";
 
 contract MockMultiModule is IModule {
     mapping(uint256 moduleTypeId => mapping(address smartAccount => bytes32 initData)) configs;

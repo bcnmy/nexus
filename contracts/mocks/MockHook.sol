@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import "contracts/types/Constants.sol";
+import "../types/Constants.sol";
 
 contract MockHook is IModule {
     event PreCheckCalled();
