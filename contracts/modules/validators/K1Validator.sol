@@ -20,7 +20,6 @@ import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "..
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 
-
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
 ///         based on the K1 curve (secp256k1), a widely used ECDSA algorithm.
@@ -50,6 +49,9 @@ contract K1Validator is ERC7739Validator {
 
     /// @notice Error to indicate that the new owner cannot be a contract address
     error NewOwnerIsContract();
+
+    /// @notice Error to indicate that the data length is invalid
+    error InvalidDataLength();
 
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
@@ -88,26 +90,7 @@ contract K1Validator is ERC7739Validator {
     /// @return The validation result (0 for success, 1 for failure)
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
         address owner = smartAccountOwners[userOp.sender];
-
-        // Extract the signature
-        bytes memory signature = userOp.signature;
-
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            s := mload(add(signature, 0x40))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return VALIDATION_FAILED;
-        }
-
-        if (
-            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
-            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
-        ) {
-            return VALIDATION_SUCCESS;
-        }
-        return VALIDATION_FAILED;
+        return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @notice Validates a signature with the sender's address
@@ -116,27 +99,51 @@ contract K1Validator is ERC7739Validator {
     /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data);
+        return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
+
+    function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+        address owner = smartAccountOwners[msg.sender];
+        return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
+
+    /// @notice ISessionValidator interface for smart session
+    /// @param hash The hash of the data to validate
+    /// @param sig The signature data
+    /// @param data The data to validate against (owner address in this case)
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    )  external
+        view
+        returns (bool validSig)
+    {
+        require(data.length == 20, InvalidDataLength());
+        address owner = address(bytes20(data[0:20]));
+        return _validateSignatureForOwner(owner, hash, sig);
+    }
+
+    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
 
         // Check if the 's' value is valid
         bytes32 s;
         assembly {
-            let offset := add(truncatedSignature.offset, 0x40) //0x20 length + 0x20 r
-            s := calldataload(offset)
+            // same as `s := mload(add(signature, 0x40))` but for calldata
+            s := calldataload(add(signature.offset, 0x20))
         }
         if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return ERC1271_INVALID;
+            return false;
         }
 
-        // Validate the signature using SignatureCheckerLib
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, computeHash, truncatedSignature)) {
-            return ERC1271_MAGICVALUE;
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
+            return true;
         }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(computeHash), truncatedSignature)) {
-            return ERC1271_MAGICVALUE;
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
+            return true;
         }
-        return ERC1271_INVALID;
+        return false;
     }
 
     /// @notice Returns the name of the module
