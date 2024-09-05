@@ -40,9 +40,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         PackedUserOperation memory op = makeDraftOp(opValidator);
         
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
 
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
@@ -87,9 +87,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         PackedUserOperation memory op = makeDraftOp(opValidator);
         
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
 
-        (bytes memory multiInstallData, /*bytes32 eip712ChildHash*/, bytes32 structHash) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        (bytes memory multiInstallData, /*bytes32 eip712ChildHash*/, bytes32 structHash) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         // app is just account itself in this case
         bytes32 appDomainSeparator = _buildDomainSeparator(address(BOB_ACCOUNT));
@@ -131,6 +131,107 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         );
     }
 
+    function test_EnableMode_Success_DeployAccount() public {
+        address moduleToEnable = address(mockMultiModule);
+        address opValidator = address(mockMultiModule);
+
+        //prepare owner
+        Vm.Wallet memory EVE = createAndFundWallet("EVE", 1000 ether);
+        address EVE_ADDRESS = EVE.addr;
+
+        //prepare deployment userOp
+        PackedUserOperation memory userOp;
+        address payable accountAddress = calculateAccountAddress(EVE_ADDRESS, address(VALIDATOR_MODULE));
+        ENTRYPOINT.depositTo{ value: 100 ether }(address(accountAddress));
+        {
+            bytes memory initCode = buildInitCode(EVE_ADDRESS, address(VALIDATOR_MODULE));
+            userOp = buildUserOpWithInitAndCalldata(EVE, initCode, "", address(VALIDATOR_MODULE));
+        }
+
+        // make nonce
+        {
+            uint256 nonce = getNonce(accountAddress, MODE_MODULE_ENABLE, moduleToEnable);
+            assertEq(nonce<<196, 0); // nonce_sequence should be 0 for non-deployed acc
+            userOp.nonce = nonce;
+        }
+
+        //make calldata
+        userOp.callData = prepareERC7579SingleExecuteCallData(
+            EXECTYPE_DEFAULT, 
+            address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector)
+        );
+
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
+        userOp.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED VIA NEWLY INSTALLED (VIA ENABLE MODE) MODULE
+
+        // since the account is not deployed yet, we can't get eip712 domain from it
+        // so we take the structHash and manually convert it to proper 712 typed data hash
+        (bytes memory multiInstallData, /*bytes32 hashToSign*/, bytes32 structHash) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
+
+        bytes32 eip712digest;
+        //everything will be same except address(this)
+        (
+            /*bytes1 fields*/,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            /*address verifyingContract*/,
+            /*bytes32 salt*/,
+            /*uint256[] memory extensions*/
+        ) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
+        
+        /// @solidity memory-safe-assembly
+        assembly {
+            //Rebuild domain separator out of 712 domain
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), keccak256(add(name, 0x20), mload(name))) // Name hash.
+            mstore(add(m, 0x40), keccak256(add(version, 0x20), mload(version))) // Version hash.
+            mstore(add(m, 0x60), chainId)
+            mstore(add(m, 0x80), accountAddress) //use expected EVE account address
+            eip712digest := keccak256(m, 0xa0) //domain separator
+
+            // Hash typed data
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, eip712digest) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
+            eip712digest := keccak256(0x18, 0x42)
+            // Restore the part of the free memory slot that was overwritten.
+            mstore(0x3a, 0)
+        }
+
+        bytes memory enableModeSig = signMessage(EVE, eip712digest); //should be signed by current owner
+        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
+            MODULE_TYPE_MULTI,
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        userOp.signature = abi.encodePacked(enableModeSigPrefix, userOp.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+
+        uint256 counterBefore = counter.getNumber();
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        assertEq(counter.getNumber(), counterBefore+1, "Counter should have been incremented after single execution");
+
+        //Should be deployed at this point
+        Nexus EVE_ACCOUNT = Nexus(accountAddress);
+
+        assertTrue(
+            EVE_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""),
+            "Module should be installed as validator"
+        );
+        assertTrue(
+            EVE_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""),
+            "Module should be installed as executor"
+        );
+    }
+
     function test_EnableMode_FailsWithWrongValidationModuleInEnableModeSig() public {
         address moduleToEnable = address(mockMultiModule);
         address opValidator = address(mockMultiModule);
@@ -138,8 +239,8 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         PackedUserOperation memory op = makeDraftOp(opValidator);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         address invalidValidator = address(0xdeaf);
         enableModeSig = abi.encodePacked(invalidValidator, enableModeSig);
@@ -176,7 +277,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); 
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
         
         bytes memory enableModeSig = signMessage(CHARLIE, hashToSign); // SIGN WITH NOT OWNER
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
@@ -222,7 +323,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); 
 
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); 
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
@@ -264,7 +365,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); 
 
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_EXECUTOR, userOpHash);  // Use EXECUTOR type instead of MULTI
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_EXECUTOR, userOpHash);  // Use EXECUTOR type instead of MULTI
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); 
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
@@ -296,7 +397,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
     // ==========
 
     function makeDraftOp(address moduleToEnable) internal view returns (PackedUserOperation memory op) {
-        uint256 nonce = getNonce(BOB_ADDRESS, MODE_MODULE_ENABLE, moduleToEnable);
+        uint256 nonce = getNonce(address(BOB_ACCOUNT), MODE_MODULE_ENABLE, moduleToEnable);
         op = buildPackedUserOp(address(BOB_ACCOUNT), nonce);
 
         op.callData = prepareERC7579SingleExecuteCallData(
@@ -305,7 +406,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         );
     }
 
-    function makeInstallDataAndHash(uint256 moduleType, bytes32 userOpHash) internal view returns (bytes memory multiInstallData, bytes32 eip712Hash, bytes32 structHash) {
+    function makeInstallDataAndHash(address account, uint256 moduleType, bytes32 userOpHash) internal view returns (bytes memory multiInstallData, bytes32 eip712Hash, bytes32 structHash) {
         // prepare Enable Mode Data
         bytes32 validatorConfig = bytes32(bytes20(ALICE_ADDRESS)); //set Alice as owner via MultiTypeModule
         bytes32 executorConfig = bytes32(uint256(0x2222));
@@ -336,12 +437,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             userOpHash,
             keccak256(multiInstallData)
         ));
-        eip712Hash = _hashTypedData(structHash, address(BOB_ACCOUNT));
-
-        console2.log("Struct hash in test");
-        console2.logBytes32(structHash);
-        //console2.logBytes32(eip712Hash);
-        //return (multiInstallData, eip712Hash, structHash);
+        eip712Hash = _hashTypedData(structHash, account);
     }
 
     function _hashTypedData(
