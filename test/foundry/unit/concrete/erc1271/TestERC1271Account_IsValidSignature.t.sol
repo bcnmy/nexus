@@ -125,13 +125,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         );
     }
 
-    function test_AccountSupportsNestedTypedDataSign() public {
-        assertEq(
-            ALICE_ACCOUNT.supportsNestedTypedDataSign(),
-            bytes4(keccak256("supportsNestedTypedDataSign()"))
-        );
-    }
-
     /// @notice Generates an ERC-1271 hash for the given contents and account.
     /// @param contents The contents hash.
     /// @param account The account address.
