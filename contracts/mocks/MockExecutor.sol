@@ -9,8 +9,8 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 import { ExecLib } from "contracts/lib/ExecLib.sol";
 import { MODE_DEFAULT, ModePayload } from "contracts/lib/ModeLib.sol";
 
-import { IExecutor } from "../../contracts/interfaces/modules/IExecutor.sol";
-import "../../contracts/types/DataTypes.sol";
+import { IExecutor } from "../interfaces/modules/IExecutor.sol";
+import "../types/DataTypes.sol";
 
 contract MockExecutor is IExecutor {
     event ExecutorOnInstallCalled(bytes32 dataFirstWord);
