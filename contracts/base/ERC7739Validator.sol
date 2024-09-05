@@ -5,8 +5,6 @@ import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 
-import "forge-std/src/console2.sol";
-
 /// @title ERC-7739: Nested Typed Data Sign Support for ERC-7579 Validators
 
 abstract contract ERC7739Validator is IValidator, IERC7739 {
@@ -167,11 +165,9 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        if (!result) { 
+        if (!result)
             hash = _hashTypedDataForAccount(msg.sender, hash);
-        } else {
-            console2.log('nested eip712 flow activated in 7739');
-        }
+
         return (hash, signature);
     }
 

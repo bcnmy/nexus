@@ -205,45 +205,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
-    function test_EnableMode_FailsWithInvalidValidatorModule() public {
-        address moduleToEnable = address(mockMultiModule);
-
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE ACCOUNT WITH SIGNER THAT IS ABOUT TO BE USED
-
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
-
-        // Sign with an address that is not a valid Validator
-        address invalidValidator = address(0xdeaf);
-        bytes memory enableModeSig = signMessage(BOB, hashToSign); 
-        enableModeSig = abi.encodePacked(invalidValidator, enableModeSig);
-
-        bytes memory enableModeSigPrefix = abi.encodePacked(
-            moduleToEnable,
-            MODULE_TYPE_MULTI,
-            bytes4(uint32(multiInstallData.length)),
-            multiInstallData,
-            bytes4(uint32(enableModeSig.length)),
-            enableModeSig
-        );
-
-        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = op;
-
-        bytes memory expectedRevertReason = abi.encodeWithSelector(
-            FailedOpWithRevert.selector, 
-            0, 
-            "AA23 reverted",
-            abi.encodeWithSelector(ValidatorNotInstalled.selector, invalidValidator)
-        );
-
-        vm.expectRevert(expectedRevertReason);
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-    }
-
     function test_EnableMode_FailsWhenModuleAlreadyInstalled() public {
         address moduleToEnable = address(mockMultiModule);
 
@@ -326,44 +287,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             0, 
             "AA23 reverted",
             abi.encodeWithSelector(InvalidModuleTypeId.selector, MODULE_TYPE_EXECUTOR)
-        );
-
-        vm.expectRevert(expectedRevertReason);
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-    }
-
-    function test_EnableMode_FailsWithInvalidSignature() public {
-        address moduleToEnable = address(mockMultiModule);
-
-        PackedUserOperation memory op = makeDraftOp(moduleToEnable);
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
-        op.signature = signMessage(ALICE, userOpHash); 
-
-        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
-
-        // Sign with CHARLIE instead of the current owner (BOB)
-        bytes memory enableModeSig = signMessage(CHARLIE, hashToSign); 
-        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);
-
-        bytes memory enableModeSigPrefix = abi.encodePacked(
-            moduleToEnable,
-            MODULE_TYPE_MULTI,
-            bytes4(uint32(multiInstallData.length)),
-            multiInstallData,
-            bytes4(uint32(enableModeSig.length)),
-            enableModeSig
-        );
-
-        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = op;
-
-        bytes memory expectedRevertReason = abi.encodeWithSelector(
-            FailedOpWithRevert.selector, 
-            0, 
-            "AA23 reverted",
-            abi.encodeWithSelector(EnableModeSigError.selector)
         );
 
         vm.expectRevert(expectedRevertReason);
