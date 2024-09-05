@@ -108,10 +108,19 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         // Call isValidSignature and check the result
         ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
     }
-
-    function test_SupportsNestedTypedDataSign() public {
+    
+    /// @notice Tests the supportsNestedTypedDataSignWithValidator function.
+    function test_SupportsNestedTypedDataSignWithValidator() public {
         assertEq(
             ALICE_ACCOUNT.supportsNestedTypedDataSignWithValidator(address(VALIDATOR_MODULE)),
+            bytes4(keccak256("supportsNestedTypedDataSign()"))
+        );
+    }
+
+    /// @notice Tests the supportsNestedTypedDataSign function.
+    function test_SupportsNestedTypedDataSign() public {
+        assertEq(
+            ALICE_ACCOUNT.supportsNestedTypedDataSign(),
             bytes4(keccak256("supportsNestedTypedDataSign()"))
         );
     }

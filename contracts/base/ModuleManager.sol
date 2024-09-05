@@ -408,10 +408,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             return res == ERC1271_MAGICVALUE;
         } catch {}
         return false;    
-
-        /* if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) {
-            revert EnableModeSigError();
-        } */
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -425,8 +421,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         uint256 moduleType,
         bytes32 userOpHash,
         bytes calldata initData
-    ) internal view returns (bytes32 structHash) {
-        structHash = keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
+    ) internal view returns (bytes32) {
+        return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
     }
 
     /// @notice Checks if a module is installed on the smart account.

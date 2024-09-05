@@ -103,6 +103,13 @@ contract K1Validator is ERC7739Validator {
         return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
+    /// @notice Validates a signature with the sender's address
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The magic value if the signature is valid, otherwise an invalid value
+    /// @dev This method is unsafe and should be used with caution
+    ///      Introduced for the cases when nested eip712 via erc-7739 is excessive
+    ///      One example of this is Module Enable Mode in Nexus account
     function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
         return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
@@ -124,9 +131,12 @@ contract K1Validator is ERC7739Validator {
         address owner = address(bytes20(data[0:20]));
         return _validateSignatureForOwner(owner, hash, sig);
     }
-
+    
+    /// @notice Internal method that does the job of validating the signature via ECDSA (secp256k1)
+    /// @param owner The address of the owner
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
-
         // Check if the 's' value is valid
         bytes32 s;
         assembly {

@@ -171,6 +171,10 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
         return (hash, signature);
     }
 
+    /// @notice Hashes typed data according to eip-712
+    ///         Uses account's domain separator
+    /// @param account the smart account, who's domain separator will be used
+    /// @param structHash the typed data struct hash
     function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
         (
             /*bytes1 fields*/,
