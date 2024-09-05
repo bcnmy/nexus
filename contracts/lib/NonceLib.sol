@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import { MODE_MODULE_ENABLE } from "contracts/types/Constants.sol";
+import { MODE_MODULE_ENABLE } from "../types/Constants.sol";
 
 /**
     Nonce structure

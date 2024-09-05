@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import { INexus } from "contracts/interfaces/INexus.sol";
-import { MODULE_TYPE_EXECUTOR } from "contracts/types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "contracts/lib/ModeLib.sol";
-import { ExecLib } from "contracts/lib/ExecLib.sol";
-import { MODE_DEFAULT, ModePayload } from "contracts/lib/ModeLib.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import { INexus } from "../interfaces/INexus.sol";
+import { MODULE_TYPE_EXECUTOR } from "../types/Constants.sol";
+import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../lib/ModeLib.sol";
+import { ExecLib } from "../lib/ExecLib.sol";
+import { MODE_DEFAULT, ModePayload } from "../lib/ModeLib.sol";
 
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import "../types/DataTypes.sol";

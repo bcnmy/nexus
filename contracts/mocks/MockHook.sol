@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import "../types/Constants.sol";
 
 contract MockHook is IModule {

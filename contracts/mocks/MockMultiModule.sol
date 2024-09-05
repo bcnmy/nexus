@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
