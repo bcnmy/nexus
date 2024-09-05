@@ -12,7 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapLib } from "../lib/BootstrapLib.sol";
 import { Bootstrap, BootstrapConfig } from "../utils/RegistryBootstrap.sol";

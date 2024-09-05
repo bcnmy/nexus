@@ -11,8 +11,8 @@ import "forge-std/src/Vm.sol";
 // ==========================
 // Utility Libraries
 // ==========================
-import "solady/src/utils/ECDSA.sol";
-import { EIP712 } from "solady/src/utils/EIP712.sol";
+import "solady/utils/ECDSA.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // ==========================
@@ -76,8 +76,8 @@ import "../../../contracts/mocks/MockToken.sol";
 // ==========================
 // Sentinel List Helper
 // ==========================
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import { SentinelListHelper } from "sentinellist/src/SentinelListHelper.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelListHelper } from "sentinellist/SentinelListHelper.sol";
 
 // ==========================
 // Helper and Struct Imports
