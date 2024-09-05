@@ -14,8 +14,8 @@ pragma solidity ^0.8.27;
 
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
-import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
+import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../..//types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../..//types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 

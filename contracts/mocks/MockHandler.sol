@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { IFallback } from "contracts/interfaces/modules/IFallback.sol";
-import { MODULE_TYPE_FALLBACK } from "../../contracts/types/Constants.sol";
+import { MODULE_TYPE_FALLBACK } from "..//types/Constants.sol";
 
 contract MockHandler is IFallback {
     uint256 public count;
