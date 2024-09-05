@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { Ownable } from "solady/auth/Ownable.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
 import { IStakeable } from "../interfaces/common/IStakeable.sol";
 

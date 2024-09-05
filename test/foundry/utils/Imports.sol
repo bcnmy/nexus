@@ -18,9 +18,9 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 // ==========================
 // Account Abstraction Imports
 // ==========================
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import "account-abstraction/interfaces/PackedUserOperation.sol";
 
 // ==========================
 // ModeLib Import

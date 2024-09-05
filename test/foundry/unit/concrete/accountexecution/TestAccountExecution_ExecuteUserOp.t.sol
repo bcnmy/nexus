@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
-import "account-abstraction/contracts/interfaces/IAccountExecute.sol";
+import "account-abstraction/interfaces/IAccountExecute.sol";
 
 /// @title TestAccountExecution_ExecuteUserOp
 /// @notice Unit tests for the executeUserOp function in the Account contract

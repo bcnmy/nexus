@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 import "./CheatCodes.sol";
 import "./EventsAndErrors.sol";
