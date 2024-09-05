@@ -22,7 +22,7 @@ import { IERC7739 } from "./interfaces/IERC7739.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI } from "./types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
@@ -312,7 +312,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         address next = validators.entries[SENTINEL];
         while (next != ZERO_ADDRESS && next != SENTINEL) {
-            if (IERC7739(next).supportsNestedTypedDataSign() == bytes4(0xd620c85a)) return bytes4(0xd620c85a);
+            if (IERC7739(next).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
             next = validators.entries[next];
         }
         return bytes4(0xffffffff);
