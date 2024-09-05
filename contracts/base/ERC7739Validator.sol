@@ -5,6 +5,8 @@ import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 
+import "forge-std/src/console2.sol";
+
 /// @title ERC-7739: Nested Typed Data Sign Support for ERC-7579 Validators
 
 abstract contract ERC7739Validator is IValidator, IERC7739 {
@@ -170,6 +172,10 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
     }
 
     function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
+
+        console2.log("pre 7339 digest in contract 2");
+        console2.logBytes32(structHash);
+
         (
             /*bytes1 fields*/,
             string memory name,
@@ -179,6 +185,8 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
             /*bytes32 salt*/,
             /*uint256[] memory extensions*/
         ) = EIP712(account).eip712Domain();
+        console2.log(name);
+        console2.log(version);
 
         bytes32 nameHash = keccak256(bytes(name));
         bytes32 versionHash = keccak256(bytes(version));

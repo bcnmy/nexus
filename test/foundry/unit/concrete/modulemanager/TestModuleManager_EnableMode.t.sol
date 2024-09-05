@@ -33,9 +33,16 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         (bytes memory multiInstallData, bytes32 hashToSign) = makeInstallDataAndHash(MODULE_TYPE_MULTI, userOpHash);
 
+        // SHOULD USE NESTED EIP-712 OR PERSONAL_SIGN ? 
+        // IF personal sign, personal sign typehash is missing
+        // but personal sign makes enable data hash unreadable
+        // however using eip-712 is excessive as we now have accounts domain separator twice
+        // and we increase calldata significantly by appending 7739 payload to signature while it is not in fact needed
+
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
         // Enable Mode Sig Prefix
+        // address moduleToEnable
         // uint256 moduleTypeId
         // bytes4 initDataLength
         // initData
@@ -351,6 +358,8 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         ));
         (,string memory name,string memory version,,,,) = EIP712(address(BOB_ACCOUNT)).eip712Domain();
         bytes32 hashToSign = _hashTypedData(structHash, name, version, address(BOB_ACCOUNT));
+        console2.logBytes32(structHash);
+        console2.logBytes32(hashToSign);
         return (multiInstallData, hashToSign);
     }
 

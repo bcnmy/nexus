@@ -28,6 +28,8 @@ import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 
+import 'forge-std/src/console2.sol';
+
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
 /// @dev Implements SentinelList for managing modules via a linked list structure, adhering to ERC-7579.
@@ -404,7 +406,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         bytes32 userOpHash,
         bytes calldata initData
     ) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
+        //digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
+        digest = keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
+        console2.log("pre7739 digest in contract");
+        console2.logBytes32(digest);
+        console2.logBytes32(_hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)))));
     }
 
     /// @notice Checks if a module is installed on the smart account.
