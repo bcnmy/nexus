@@ -6,7 +6,7 @@
   bytecode_hash = "none"
   evm_version = "paris"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
   fuzz = { runs = 1_000 }
-  via-ir = true
+  via-ir = false
   gas_reports = ["*"]
   optimizer = true
   optimizer_runs = 1_000_000
