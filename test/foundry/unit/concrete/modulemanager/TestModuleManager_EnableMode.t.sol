@@ -95,8 +95,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 appDomainSeparator = _buildDomainSeparator(address(BOB_ACCOUNT));
         
         bytes32 hashToSign = toERC1271Hash(structHash, address(BOB_ACCOUNT), appDomainSeparator);
-        console2.log("nested 712 flow hash to sign");
-        console2.logBytes32(hashToSign);
 
         TestTemps memory t;
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, hashToSign); //should be signed by current owner
