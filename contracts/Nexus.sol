@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -47,6 +47,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
     ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
     bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
+
+    /// @dev The timelock period for emergency hook uninstallation.
+    uint256 internal constant _EMERGENCY_TIMELOCK = 1 days;
+
+    /// @dev The event emitted when an emergency hook uninstallation is initiated.
+    event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
 
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
@@ -176,6 +182,29 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             _uninstallFallbackHandler(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _uninstallHook(module, deInitData);
+        }
+    }
+
+    function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
+        AccountStorage storage accountStorage = _getAccountStorage();
+        uint256 hookTimelock = accountStorage.emergencyUninstallTimelock[hook];
+
+        if (hookTimelock == 0) {
+            // if the timelock hasnt been initiated, initiate it
+            accountStorage.emergencyUninstallTimelock[hook] = block.timestamp;
+            emit EmergencyHookUninstallRequest(hook, block.timestamp);
+        } else if (block.timestamp >= hookTimelock + 3 * _EMERGENCY_TIMELOCK) {
+            // if the timelock has been left for too long, reset it
+            accountStorage.emergencyUninstallTimelock[hook] = block.timestamp;
+            emit EmergencyHookUninstallRequest(hook, block.timestamp);
+        } else if (block.timestamp >= hookTimelock + _EMERGENCY_TIMELOCK) {
+            // if the timelock expired, clear it and uninstall the hook
+            accountStorage.emergencyUninstallTimelock[hook] = 0;
+            _uninstallHook(hook, deInitData);
+            emit ModuleUninstalled(MODULE_TYPE_HOOK, hook);
+        } else {
+            // if the timelock is initiated but not expired, revert
+            revert EmergencyTimeLockNotExpired();
         }
     }
 

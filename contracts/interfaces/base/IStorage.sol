@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -35,6 +35,7 @@ interface IStorage {
         SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
         mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
         IHook hook; ///< Current hook module associated with this account.
+        mapping(address hook => uint256) emergencyUninstallTimelock; ///< Mapping of hooks to requested timelocks.
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
