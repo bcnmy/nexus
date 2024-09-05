@@ -11,8 +11,6 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
 import { IERC1271Unsafe } from "../interfaces/modules/IERC1271Unsafe.sol";
 
-import 'forge-std/src/console2.sol';
-
 contract MockValidator is ERC7739Validator, IERC1271Unsafe {
     mapping(address => address) public smartAccountOwners;
 
@@ -25,17 +23,12 @@ contract MockValidator is ERC7739Validator, IERC1271Unsafe {
         address owner = smartAccountOwners[msg.sender];
         
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
-        console2.log('post 7339 digest in contract');
-        console2.logBytes32(computeHash);
 
         return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
     function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-        
-        console2.log('unsafe sig triggered');
-
         return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 

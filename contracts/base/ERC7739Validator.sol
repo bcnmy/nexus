@@ -182,16 +182,13 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
             /*uint256[] memory extensions*/
         ) = EIP712(account).eip712Domain();
         
-        bytes32 nameHash = keccak256(bytes(name));
-        bytes32 versionHash = keccak256(bytes(version));
-        
         /// @solidity memory-safe-assembly
         assembly {
             //Rebuild domain separator out of 712 domain
             let m := mload(0x40) // Load the free memory pointer.
             mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), nameHash) // Name hash.
-            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x20), keccak256(add(name, 0x20), mload(name))) // Name hash.
+            mstore(add(m, 0x40), keccak256(add(version, 0x20), mload(version))) // Version hash.
             mstore(add(m, 0x60), chainId)
             mstore(add(m, 0x80), verifyingContract)
             digest := keccak256(m, 0xa0) //domain separator
