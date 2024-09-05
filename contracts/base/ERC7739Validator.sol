@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
@@ -8,11 +8,10 @@ import { EIP712 } from "solady/src/utils/EIP712.sol";
 /// @title ERC-7739: Nested Typed Data Sign Support for ERC-7579 Validators
 
 abstract contract ERC7739Validator is IValidator, IERC7739 {
-
     /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
     bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
-    
+
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
     /// denoting support for the default behavior, as implemented in
@@ -165,8 +164,7 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        if (!result)
-            hash = _hashTypedDataForAccount(msg.sender, hash);
+        if (!result) hash = _hashTypedDataForAccount(msg.sender, hash);
 
         return (hash, signature);
     }
@@ -177,15 +175,15 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
     /// @param structHash the typed data struct hash
     function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
         (
-            /*bytes1 fields*/,
-            string memory name,
+            ,
+            /*bytes1 fields*/ string memory name,
             string memory version,
             uint256 chainId,
-            address verifyingContract,
-            /*bytes32 salt*/,
-            /*uint256[] memory extensions*/
+            address verifyingContract /*bytes32 salt*/ /*uint256[] memory extensions*/,
+            ,
+
         ) = EIP712(account).eip712Domain();
-        
+
         /// @solidity memory-safe-assembly
         assembly {
             //Rebuild domain separator out of 712 domain
@@ -232,5 +230,4 @@ abstract contract ERC7739Validator is IValidator, IERC7739 {
             mstore(add(m, 0x100), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
         }
     }
-    
 }

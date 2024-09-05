@@ -12,7 +12,6 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
@@ -119,19 +118,31 @@ contract K1Validator is ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
-    function validateSignatureWithData(
-        bytes32 hash,
-        bytes calldata sig,
-        bytes calldata data
-    )  external
-        view
-        returns (bool validSig)
-    {
+    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
         require(data.length == 20, InvalidDataLength());
         address owner = address(bytes20(data[0:20]));
         return _validateSignatureForOwner(owner, hash, sig);
     }
-    
+
+    /// @notice Returns the name of the module
+    /// @return The name of the module
+    function name() external pure returns (string memory) {
+        return "K1Validator";
+    }
+
+    /// @notice Returns the version of the module
+    /// @return The version of the module
+    function version() external pure returns (string memory) {
+        return "1.0.0-beta";
+    }
+
+    /// @notice Checks if the module is of the specified type
+    /// @param typeID The type ID to check
+    /// @return True if the module is of the specified type, false otherwise
+    function isModuleType(uint256 typeID) external pure returns (bool) {
+        return typeID == MODULE_TYPE_VALIDATOR;
+    }
+
     /// @notice Internal method that does the job of validating the signature via ECDSA (secp256k1)
     /// @param owner The address of the owner
     /// @param hash The hash of the data to validate
@@ -154,25 +165,6 @@ contract K1Validator is ERC7739Validator {
             return true;
         }
         return false;
-    }
-
-    /// @notice Returns the name of the module
-    /// @return The name of the module
-    function name() external pure returns (string memory) {
-        return "K1Validator";
-    }
-
-    /// @notice Returns the version of the module
-    /// @return The version of the module
-    function version() external pure returns (string memory) {
-        return "1.0.0-beta";
-    }
-
-    /// @notice Checks if the module is of the specified type
-    /// @param typeID The type ID to check
-    /// @return True if the module is of the specified type, false otherwise
-    function isModuleType(uint256 typeID) external pure returns (bool) {
-        return typeID == MODULE_TYPE_VALIDATOR;
     }
 
     /// @notice Checks if the smart account is initialized with an owner

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 interface IERC1271Unsafe {
     /// @notice Verifies a signature against a hash, using the sender's address as a contextual check.

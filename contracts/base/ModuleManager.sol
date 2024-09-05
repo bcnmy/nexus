@@ -187,7 +187,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature)) revert EnableModeSigError();
+        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature))
+            revert EnableModeSigError();
 
         // Ensure the module type is VALIDATOR or MULTI
         if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModuleTypeId(moduleType);
@@ -397,7 +398,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             }
         } else {
             // if the validator doesn't support 7739 for standard isValidSignatureWithSender, we provide the eip 712 digest
-            if(IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
+            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
                 return true;
             }
         }
@@ -407,7 +408,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         try IERC1271Unsafe(enableModeSigValidator).isValidSignatureWithSenderUnsafe(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
             return res == ERC1271_MAGICVALUE;
         } catch {}
-        return false;    
+        return false;
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -415,13 +416,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param moduleType Type of the module as per EIP-7579
     /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
-    /// @return structHash data hash 
-    function _getEnableModeDataHash(
-        address module,
-        uint256 moduleType,
-        bytes32 userOpHash,
-        bytes calldata initData
-    ) internal view returns (bytes32) {
+    /// @return structHash data hash
+    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32) {
         return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
     }
 

@@ -143,8 +143,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
         bytes calldata callData = userOp.callData[4:];
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
-        if(success) { emit Executed(userOp, innerCallRet); }
-        else revert ExecutionFailed();
+        if (success) {
+            emit Executed(userOp, innerCallRet);
+        } else revert ExecutionFailed();
     }
 
     /// @notice Installs a new module to the smart account.
@@ -322,7 +323,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// with a specific validator.
     ///
     /// Temporary implementation, not following ERC-7739 interface.
-    /// See https://ethereum-magicians.org/t/erc-7739-readable-typed-signatures-for-smart-accounts/20513/2 
+    /// See https://ethereum-magicians.org/t/erc-7739-readable-typed-signatures-for-smart-accounts/20513/2
     /// for discussions.
     ///
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
@@ -331,7 +332,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// Future extensions should return a different non-zero `result` to denote different behavior.
     /// This method intentionally returns bytes32 to allow freedom for future extensions.
     function supportsNestedTypedDataSignWithValidator(address validator) public view virtual returns (bytes32) {
-        return(IERC7739(validator).supportsNestedTypedDataSign());
+        return (IERC7739(validator).supportsNestedTypedDataSign());
     }
 
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
