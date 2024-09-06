@@ -12,14 +12,13 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-
-import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+import { IERC1271Legacy } from "../../interfaces/modules/IERC1271Legacy.sol";
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -27,12 +26,13 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @dev Implements secure ownership validation by checking signatures against registered
 ///      owners. This module supports ERC-7579 and ERC-4337 standards, ensuring only the
 ///      legitimate owner of a smart account can authorize transactions.
+///      Implements ERC-7739
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract K1Validator is IValidator {
+contract K1Validator is ERC7739Validator, IERC1271Legacy {
     using SignatureCheckerLib for address;
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
@@ -49,6 +49,9 @@ contract K1Validator is IValidator {
 
     /// @notice Error to indicate that the new owner cannot be a contract address
     error NewOwnerIsContract();
+
+    /// @notice Error to indicate that the data length is invalid
+    error InvalidDataLength();
 
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
@@ -86,27 +89,7 @@ contract K1Validator is IValidator {
     /// @param userOpHash The hash of the user operation
     /// @return The validation result (0 for success, 1 for failure)
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
-        address owner = smartAccountOwners[userOp.sender];
-
-        // Extract the signature
-        bytes memory signature = userOp.signature;
-
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            s := mload(add(signature, 0x40))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return VALIDATION_FAILED;
-        }
-
-        if (
-            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
-            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
-        ) {
-            return VALIDATION_SUCCESS;
-        }
-        return VALIDATION_FAILED;
+        return _validateSignatureForOwner(smartAccountOwners[userOp.sender], userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @notice Validates a signature with the sender's address
@@ -114,26 +97,29 @@ contract K1Validator is IValidator {
     /// @param data The signature data
     /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
+        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data);
+        return _validateSignatureForOwner(smartAccountOwners[msg.sender], computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
 
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            let dataOffset := add(data.offset, 0x40)
-            s := calldataload(dataOffset)
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return ERC1271_INVALID;
-        }
+    /// @notice Validates a signature with the sender's address
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The magic value if the signature is valid, otherwise an invalid value
+    /// @dev This method is unsafe and should be used with caution
+    ///      Introduced for the cases when nested eip712 via erc-7739 is excessive
+    ///      One example of this is Module Enable Mode in Nexus account
+    function isValidSignatureWithSenderLegacy(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+        return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
 
-        // Validate the signature using SignatureCheckerLib
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)) {
-            return ERC1271_MAGICVALUE;
-        }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), data)) {
-            return ERC1271_MAGICVALUE;
-        }
-        return ERC1271_INVALID;
+    /// @notice ISessionValidator interface for smart session
+    /// @param hash The hash of the data to validate
+    /// @param sig The signature data
+    /// @param data The data to validate against (owner address in this case)
+    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
+        require(data.length == 20, InvalidDataLength());
+        address owner = address(bytes20(data[0:20]));
+        return _validateSignatureForOwner(owner, hash, sig);
     }
 
     /// @notice Returns the name of the module
@@ -153,6 +139,30 @@ contract K1Validator is IValidator {
     /// @return True if the module is of the specified type, false otherwise
     function isModuleType(uint256 typeID) external pure returns (bool) {
         return typeID == MODULE_TYPE_VALIDATOR;
+    }
+
+    /// @notice Internal method that does the job of validating the signature via ECDSA (secp256k1)
+    /// @param owner The address of the owner
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
+        // Check if the 's' value is valid
+        bytes32 s;
+        assembly {
+            // same as `s := mload(add(signature, 0x40))` but for calldata
+            s := calldataload(add(signature.offset, 0x20))
+        }
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return false;
+        }
+
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
+            return true;
+        }
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
+            return true;
+        }
+        return false;
     }
 
     /// @notice Checks if the smart account is initialized with an owner

@@ -2,7 +2,6 @@ import { deployments, ethers } from "hardhat";
 import { deployToMainnet } from "./deployToMainnet";
 
 export async function deployToTestnet() {
-
   const { Nexus } = await deployToMainnet();
 
   const accounts = await ethers.getSigners();
@@ -12,16 +11,30 @@ export async function deployToTestnet() {
     deterministicDeployment: true,
   };
 
-  const MockValidator = await deployments.deploy("MockValidator", deployOptions);
+  const MockValidator = await deployments.deploy(
+    "MockValidator",
+    deployOptions,
+  );
   const MockHook = await deployments.deploy("MockHook", deployOptions);
   const MockHandler = await deployments.deploy("MockHandler", deployOptions);
   const MockExecutor = await deployments.deploy("MockExecutor", deployOptions);
-  const MockToken = await deployments.deploy("MockToken", { ...deployOptions, args: ["Test Token", "TST"] });
+  const MockToken = await deployments.deploy("MockToken", {
+    ...deployOptions,
+    args: ["Test Token", "TST"],
+  });
   const MockCounter = await deployments.deploy("Counter", deployOptions);
-  const Stakeable = await deployments.deploy("Stakeable", { ...deployOptions, args: [deployOptions.from] });
-  const NexusAccountFactory = await deployments.deploy("NexusAccountFactory", { ...deployOptions, args: [Nexus.address, deployOptions.from] });
+  const Stakeable = await deployments.deploy("Stakeable", {
+    ...deployOptions,
+    args: [deployOptions.from],
+  });
+  const NexusAccountFactory = await deployments.deploy("NexusAccountFactory", {
+    ...deployOptions,
+    args: [Nexus.address, deployOptions.from],
+  });
 
-  console.log(`NexusAccountFactory deployed at: ${NexusAccountFactory.address}`);
+  console.log(
+    `NexusAccountFactory deployed at: ${NexusAccountFactory.address}`,
+  );
   console.log(`Stakeable deployed at: ${Stakeable.address}`);
   console.log(`Counter deployed at: ${MockCounter.address}`);
   console.log(`MockToken deployed at: ${MockToken.address}`);
@@ -29,6 +42,4 @@ export async function deployToTestnet() {
   console.log(`MockHandler deployed at: ${MockHandler.address}`);
   console.log(`MockHook deployed at: ${MockHook.address}`);
   console.log(`MockValidator deployed at: ${MockValidator.address}`);
-
 }
-

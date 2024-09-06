@@ -273,7 +273,7 @@ contract TestK1Validator is NexusTest_Base {
         bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
 
         // Sign the message hash with BOB's private key
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, toERC1271HashPersonalSign(originalHash));
 
         // Ensure 's' is in the lower range
         require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "Invalid 's' value");

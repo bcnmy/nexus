@@ -12,6 +12,7 @@ import "forge-std/src/Vm.sol";
 // Utility Libraries
 // ==========================
 import "solady/src/utils/ECDSA.sol";
+import { EIP712 } from "solady/src/utils/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // ==========================
