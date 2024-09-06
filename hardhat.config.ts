@@ -29,6 +29,12 @@ const config: HardhatUserConfig = {
 		hardhat: {
 			allowUnlimitedContractSize: true,
 		},
+		baseSepolia: {
+            url: "https://sepolia.base.org/",
+            accounts: [process.env.PRIVATE_KEY],
+            chainId: 84532,
+            allowUnlimitedContractSize: true,
+        },
 		...dynamicNetworkConfig(),
 	},
 	docgen: {
