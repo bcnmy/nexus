@@ -1,4 +1,4 @@
-import { deployToMainnet } from './deployToMainnet';
+import { deployToMainnet } from "./deployToMainnet";
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.

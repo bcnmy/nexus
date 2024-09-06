@@ -20,7 +20,7 @@
     "visibility-modifier-order": "error",
     "code-complexity": ["error", 9],
     "function-max-lines": ["error", 80],
-    "max-line-length": ["error", 210],
+    "max-line-length": ["error", 240],
     "no-empty-blocks": "off",
     "no-unused-vars": "error",
     "payable-fallback": "off",

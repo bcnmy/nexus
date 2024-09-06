@@ -21,7 +21,7 @@ contract MockValidator is ERC7739Validator, IERC1271Legacy {
 
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-        
+
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
 
         return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
@@ -33,14 +33,7 @@ contract MockValidator is ERC7739Validator, IERC1271Legacy {
     }
 
     // ISessionValidator interface for smart session
-    function validateSignatureWithData(
-        bytes32 hash,
-        bytes calldata sig,
-        bytes calldata data
-    )  external
-        view
-        returns (bool validSig)
-    {
+    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
         address owner = address(bytes20(data[0:20]));
         return _validateSignatureForOwner(owner, hash, sig);
     }
