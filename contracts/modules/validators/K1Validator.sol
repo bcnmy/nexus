@@ -19,6 +19,7 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+import { IERC1271Legacy } from "../../interfaces/modules/IERC1271Legacy.sol";
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -32,7 +33,7 @@ import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract K1Validator is ERC7739Validator {
+contract K1Validator is ERC7739Validator, IERC1271Legacy {
     using SignatureCheckerLib for address;
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
@@ -89,8 +90,7 @@ contract K1Validator is ERC7739Validator {
     /// @param userOpHash The hash of the user operation
     /// @return The validation result (0 for success, 1 for failure)
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256) {
-        address owner = smartAccountOwners[userOp.sender];
-        return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+        return _validateSignatureForOwner(smartAccountOwners[userOp.sender], userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /// @notice Validates a signature with the sender's address
@@ -98,9 +98,8 @@ contract K1Validator is ERC7739Validator {
     /// @param data The signature data
     /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data);
-        return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        return _validateSignatureForOwner(smartAccountOwners[msg.sender], computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
     /// @notice Validates a signature with the sender's address
@@ -110,9 +109,8 @@ contract K1Validator is ERC7739Validator {
     /// @dev This method is unsafe and should be used with caution
     ///      Introduced for the cases when nested eip712 via erc-7739 is excessive
     ///      One example of this is Module Enable Mode in Nexus account
-    function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
-        return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    function isValidSignatureWithSenderLegacy(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+        return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
     /// @notice ISessionValidator interface for smart session

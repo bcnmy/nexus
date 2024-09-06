@@ -9,9 +9,9 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
-import { IERC1271Unsafe } from "../interfaces/modules/IERC1271Unsafe.sol";
+import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
 
-contract MockValidator is ERC7739Validator, IERC1271Unsafe {
+contract MockValidator is ERC7739Validator, IERC1271Legacy {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -27,7 +27,7 @@ contract MockValidator is ERC7739Validator, IERC1271Unsafe {
         return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
-    function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+    function isValidSignatureWithSenderLegacy(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
         return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }

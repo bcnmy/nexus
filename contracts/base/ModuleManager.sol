@@ -28,7 +28,7 @@ import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
-import { IERC1271Unsafe } from "../interfaces/modules/IERC1271Unsafe.sol";
+import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -401,10 +401,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return true;
             }
         }
-        // if none of the above worked, try unsafe mode. this mode can be exposed by 7739-enabled validators for the cases, when 7739 is excessive
+        // if none of the above worked, try legacy mode. this mode can be exposed by 7739-enabled validators for the cases, when 7739 is excessive
         // enable is one of those cases, as eip712digest is already built based on 712Domain of this Smart Account
         // thus 7739 envelope is not required in this case and avoiding it saves some gas
-        try IERC1271Unsafe(enableModeSigValidator).isValidSignatureWithSenderUnsafe(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+        try IERC1271Legacy(enableModeSigValidator).isValidSignatureWithSenderLegacy(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
             return res == ERC1271_MAGICVALUE;
         } catch {}
         return false;    
