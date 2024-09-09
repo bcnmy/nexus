@@ -8,6 +8,10 @@ import {
   BigNumberish,
   toBeHex,
   concat,
+  getBytes,
+  getAddress,
+  hexlify,
+  zeroPadValue,
 } from "ethers";
 import { EntryPoint, Nexus } from "../../../typechain-types";
 import {
@@ -401,17 +405,37 @@ export function findEventInLogs(
 
 export async function generateCallDataForExecuteUserop() {}
 
+// Helper to mimic the `makeNonceKey` function in Solidity
+function makeNonceKey(vMode: BytesLike, validator: AddressLike): string {
+  // Convert the validator address to a Uint8Array
+  const validatorBytes = getBytes(getAddress(validator.toString()));
+
+  // Prepare the validation mode as a 1-byte Uint8Array
+  const validationModeBytes = Uint8Array.from([Number(vMode)]);
+
+  // Create a 24-byte array for the 192-bit key
+  const keyBytes = new Uint8Array(24);
+
+  // Set the validation mode at the beginning (first byte)
+  keyBytes.set(validationModeBytes, 0);
+
+  // Set the validator address starting from the 5th byte
+  keyBytes.set(validatorBytes, 4);
+
+  // Return the key as a hex string
+  return hexlify(keyBytes);
+}
+
+// Adjusted getNonce function
 export async function getNonce(
   entryPoint: EntryPoint,
   accountAddress: AddressLike,
   validationMode: BytesLike,
   validatorModuleAddress: AddressLike,
 ): Promise<bigint> {
-  const vm = validatorModuleAddress.toString();
-  const key = concat(["0x000000", validationMode, vm]);
+  const key = makeNonceKey(validationMode, validatorModuleAddress);
   return await entryPoint.getNonce(accountAddress, key);
 }
-
 export async function getAccountDomainStructFields(
   account: Nexus,
 ): Promise<string> {
@@ -438,6 +462,14 @@ export async function getAccountDomainStructFields(
     ],
   );
 }
-// More functions to be added
-// 1. simulateValidation (using EntryPointSimulations)
-// 2. simulareHandleOps
+
+// Helper to impersonate an account
+export async function impersonateAccount(address: string) {
+  await ethers.provider.send("hardhat_impersonateAccount", [address]);
+  return ethers.getSigner(address);
+}
+
+// Helper to stop impersonating an account
+export async function stopImpersonateAccount(address: string) {
+  await ethers.provider.send("hardhat_stopImpersonatingAccount", [address]);
+}

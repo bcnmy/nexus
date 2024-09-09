@@ -4,8 +4,10 @@ import {
   AddressLike,
   Signer,
   ZeroAddress,
+  ZeroHash,
   keccak256,
   solidityPacked,
+  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -19,18 +21,21 @@ import {
   BootstrapLib,
   MockHook,
   MockRegistry,
+  MockExecutor,
+  RegistryFactory,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
   deployContractsFixture,
 } from "../utils/deployment";
-import { to18 } from "../utils/encoding";
+import { encodeData, to18 } from "../utils/encoding";
 import {
   MODE_VALIDATION,
   buildPackedUserOp,
   getNonce,
 } from "../utils/operationHelpers";
 import { BootstrapConfigStruct } from "../../../typechain-types/contracts/lib/BootstrapLib";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Nexus Factory Tests", function () {
   let factory: K1ValidatorFactory;
@@ -296,6 +301,7 @@ describe("Nexus Factory Tests", function () {
     let factory: NexusAccountFactory;
     let bootstrap: Bootstrap;
     let validatorModule: MockValidator;
+    let executorModule: MockExecutor;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
     let registry: MockRegistry;
@@ -303,6 +309,7 @@ describe("Nexus Factory Tests", function () {
     let smartAccountImplementation: Nexus;
 
     let parsedValidator: BootstrapConfigStruct;
+    let parsedExecutor: BootstrapConfigStruct;
     let parsedHook: BootstrapConfigStruct;
     let ownerAddress: AddressLike;
     let entryPointAddress: AddressLike;
@@ -319,6 +326,7 @@ describe("Nexus Factory Tests", function () {
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
+      executorModule = setup.mockExecutor;
       registry = setup.registry;
       smartAccountImplementation = setup.smartAccountImplementation;
 
@@ -327,6 +335,11 @@ describe("Nexus Factory Tests", function () {
       const validator = await BootstrapLib.createSingleConfig(
         await validatorModule.getAddress(),
         solidityPacked(["address"], [ownerAddress]),
+      );
+
+      const executor = await BootstrapLib.createSingleConfig(
+        await executorModule.getAddress(),
+        "0x",
       );
       const hook = await BootstrapLib.createSingleConfig(
         await hookModule.getAddress(),
@@ -337,6 +350,12 @@ describe("Nexus Factory Tests", function () {
         module: validator[0],
         data: validator[1],
       };
+
+      parsedExecutor = {
+        module: executor[0],
+        data: executor[1],
+      };
+
       parsedHook = {
         module: hook[0],
         data: hook[1],
@@ -383,10 +402,261 @@ describe("Nexus Factory Tests", function () {
         [],
         0,
       );
+
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
         "AccountCreated",
       );
+    });
+
+    it("Should revert with NexusInitializationFailed when delegatecall fails", async function () {
+      // Get the actual bootstrap address
+      const bootstrapAddress = await bootstrap.getAddress();
+
+      // Generate valid initialization data
+      let initData = await bootstrap.getInitNexusScopedCalldata(
+        [parsedValidator],
+        parsedHook,
+        registry,
+        [],
+        0,
+      );
+
+      // Manually corrupt the bootstrapCall data to cause failure
+      const corruptedBootstrapCall = "0x12345678"; // Invalid data
+
+      // Encode the corrupted init data
+      const corruptedInitData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [bootstrapAddress, corruptedBootstrapCall],
+      );
+
+      // Replace the original bootstrapCall with corrupted one in initData
+      const salt = keccak256("0x");
+
+      // Expect the transaction to revert with NexusInitializationFailed due to delegatecall failure
+      await expect(
+        factory.createAccount(corruptedInitData, salt),
+      ).to.be.revertedWithCustomError(
+        smartAccountImplementation,
+        "NexusInitializationFailed",
+      );
+    });
+
+    it("Should revert with NoValidatorInstalled if no validator is installed after initialization", async function () {
+      // Set up a valid bootstrap address but do not include any validators in the initData
+      const validBootstrapAddress = await owner.getAddress();
+      const bootstrapData = "0x"; // Valid but does not install any validators
+
+      const initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [validBootstrapAddress, bootstrapData],
+      );
+
+      const salt = keccak256("0x");
+
+      await expect(
+        factory.createAccount(initData, salt),
+      ).to.be.revertedWithCustomError(
+        smartAccountImplementation,
+        "NoValidatorInstalled",
+      );
+    });
+  });
+
+  describe("RegistryFactory", function () {
+    let smartAccount: Nexus;
+    let entryPoint: EntryPoint;
+    let factory: RegistryFactory;
+    let bootstrap: Bootstrap;
+    let validatorModule: MockValidator;
+    let executorModule: MockExecutor;
+    let BootstrapLib: BootstrapLib;
+    let hookModule: MockHook;
+    let registryFactory: RegistryFactory;
+    let owner: Signer;
+    let mockRegistry: MockRegistry;
+    let smartAccountImplementation: Nexus;
+
+    let parsedValidator: BootstrapConfigStruct;
+    let parsedExecutor: BootstrapConfigStruct;
+    let parsedHook: BootstrapConfigStruct;
+    let ownerAddress: AddressLike;
+    let entryPointAddress: AddressLike;
+    let attester1: Signer;
+    let attester2: Signer;
+    let nonOwner: Signer;
+    const threshold = 1;
+
+    beforeEach(async function () {
+      const setup = await loadFixture(deployContractsAndSAFixture);
+      entryPoint = setup.entryPoint;
+      smartAccount = setup.deployedNexus;
+      owner = setup.accountOwner;
+      entryPointAddress = await setup.entryPoint.getAddress();
+      [, , , , attester1, attester2, nonOwner] = await ethers.getSigners();
+
+      const RegistryFactory =
+        await ethers.getContractFactory("RegistryFactory");
+      bootstrap = setup.bootstrap;
+      validatorModule = setup.mockValidator;
+      BootstrapLib = setup.BootstrapLib;
+      hookModule = setup.mockHook;
+      executorModule = setup.mockExecutor;
+      mockRegistry = setup.registry;
+      smartAccountImplementation = setup.smartAccountImplementation;
+      registryFactory = await RegistryFactory.deploy(
+        await smartAccount.getAddress(),
+        await owner.getAddress(),
+        await mockRegistry.getAddress(),
+        [await attester1.getAddress()],
+        1,
+      );
+
+      registryFactory = registryFactory.connect(owner);
+
+      ownerAddress = await owner.getAddress();
+
+      const validator = await BootstrapLib.createSingleConfig(
+        await validatorModule.getAddress(),
+        solidityPacked(["address"], [ownerAddress]),
+      );
+
+      const executor = await BootstrapLib.createSingleConfig(
+        await executorModule.getAddress(),
+        "0x",
+      );
+      const hook = await BootstrapLib.createSingleConfig(
+        await hookModule.getAddress(),
+        "0x",
+      );
+
+      parsedValidator = {
+        module: validator[0],
+        data: validator[1],
+      };
+
+      parsedExecutor = {
+        module: executor[0],
+        data: executor[1],
+      };
+
+      parsedHook = {
+        module: hook[0],
+        data: hook[1],
+      };
+    });
+
+    describe("Deployment", function () {
+      it("Should set the correct owner, implementation, and registry", async function () {
+        expect(await registryFactory.owner()).to.equal(
+          await owner.getAddress(),
+        );
+        expect(await registryFactory.ACCOUNT_IMPLEMENTATION()).to.equal(
+          await smartAccount.getAddress(),
+        );
+        expect(await registryFactory.REGISTRY()).to.equal(
+          await mockRegistry.getAddress(),
+        );
+      });
+
+      it("Should revert if implementation address is zero", async function () {
+        const RegistryFactory =
+          await ethers.getContractFactory("RegistryFactory");
+        await expect(
+          RegistryFactory.deploy(
+            ethers.ZeroAddress,
+            await owner.getAddress(),
+            await mockRegistry.getAddress(),
+            [await attester1.getAddress()],
+            threshold,
+          ),
+        ).to.be.revertedWithCustomError(
+          registryFactory,
+          "ImplementationAddressCanNotBeZero",
+        );
+      });
+
+      it("Should revert if owner address is zero", async function () {
+        const RegistryFactory =
+          await ethers.getContractFactory("RegistryFactory");
+        await expect(
+          RegistryFactory.deploy(
+            await smartAccount.getAddress(),
+            ethers.ZeroAddress,
+            await mockRegistry.getAddress(),
+            [await attester1.getAddress()],
+            threshold,
+          ),
+        ).to.be.revertedWithCustomError(
+          registryFactory,
+          "ZeroAddressNotAllowed",
+        );
+      });
+
+      it("Should revert if threshold is greater than the number of attesters", async function () {
+        const RegistryFactory =
+          await ethers.getContractFactory("RegistryFactory");
+        await expect(
+          RegistryFactory.deploy(
+            await smartAccount.getAddress(),
+            await owner.getAddress(),
+            await mockRegistry.getAddress(),
+            [await attester1.getAddress()],
+            2,
+          ),
+        )
+          .to.be.revertedWithCustomError(registryFactory, "InvalidThreshold")
+          .withArgs(2, 1);
+      });
+    });
+
+    describe("Attester Management", function () {
+      it("Should allow owner to add an attester", async function () {
+        await registryFactory.addAttester(await attester2.getAddress());
+        const attesters = await registryFactory.getAttesters();
+        expect(attesters).to.include(await attester2.getAddress());
+      });
+
+      it("Should sort attesters after adding", async function () {
+        await registryFactory.addAttester(await attester2.getAddress());
+        const attesters = await registryFactory.getAttesters();
+        expect(attesters).to.deep.equal(
+          [await attester1.getAddress(), await attester2.getAddress()].sort(),
+        );
+      });
+
+      it("Should allow owner to remove an attester", async function () {
+        await registryFactory.removeAttester(await attester1.getAddress());
+        const attesters = await registryFactory.getAttesters();
+        expect(attesters).to.not.include(await attester1.getAddress());
+      });
+
+      it("Should revert if non-owner tries to add or remove attester", async function () {
+        await expect(
+          registryFactory
+            .connect(nonOwner)
+            .addAttester(await attester2.getAddress()),
+        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
+        await expect(
+          registryFactory
+            .connect(nonOwner)
+            .removeAttester(await attester1.getAddress()),
+        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
+      });
+    });
+
+    describe("Threshold Management", function () {
+      it("Should allow owner to set a new threshold", async function () {
+        await registryFactory.setThreshold(2);
+        expect(await registryFactory.threshold()).to.equal(2);
+      });
+
+      it("Should revert if non-owner tries to set a new threshold", async function () {
+        await expect(
+          registryFactory.connect(nonOwner).setThreshold(2),
+        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
+      });
     });
   });
 });

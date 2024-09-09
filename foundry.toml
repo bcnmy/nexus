@@ -23,6 +23,9 @@
   fuzz = { runs = 10_000 }
   verbosity = 4
 
+[profile.coverage]
+  via-ir = false
+
 [etherscan]
   arbitrum = { key = "${API_KEY_ARBISCAN}" }
   avalanche = { key = "${API_KEY_SNOWTRACE}" }

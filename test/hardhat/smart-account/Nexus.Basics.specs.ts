@@ -2,11 +2,14 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
   AddressLike,
+  Provider,
   Signer,
   ZeroAddress,
+  ZeroHash,
   keccak256,
   solidityPacked,
   toBeHex,
+  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -15,6 +18,9 @@ import {
   EntryPoint,
   MockValidator,
   Nexus,
+  MockHook,
+  Nexus__factory,
+  MockV2SmartAccount,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
@@ -26,6 +32,9 @@ import {
   getNonce,
   MODE_VALIDATION,
   getAccountDomainStructFields,
+  impersonateAccount,
+  stopImpersonateAccount,
+  MODE_MODULE_ENABLE,
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -36,6 +45,7 @@ import {
   MODE_DEFAULT,
   MODE_PAYLOAD,
   UNUSED,
+  installModule,
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
@@ -56,6 +66,7 @@ describe("Nexus Basic Specs", function () {
   let validatorModule: MockValidator;
   let deployer: Signer;
   let aliceOwner: Signer;
+  let provider: Provider;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsAndSAFixture);
@@ -69,6 +80,7 @@ describe("Nexus Basic Specs", function () {
     smartAccountOwner = setup.accountOwner;
     deployer = setup.deployer;
     aliceOwner = setup.aliceAccountOwner;
+    provider = ethers.provider;
 
     entryPointAddress = await entryPoint.getAddress();
     smartAccountAddress = await smartAccount.getAddress();
@@ -82,20 +94,17 @@ describe("Nexus Basic Specs", function () {
 
     const saDeploymentIndex = 0;
 
-    const installData = ethers.AbiCoder.defaultAbiCoder().encode(
-      ["address"],
-      [accountOwnerAddress],
-    ); // Example data, customize as needed
-
-    // Read the expected account address
-    const expectedAccountAddress = await factory.computeAccountAddress(
-      accountOwnerAddress,
-      saDeploymentIndex,
-      [],
-      0,
-    );
-
     await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
+
+    const funder = accounts[0];
+    await funder.sendTransaction({
+      to: smartAccountAddress,
+      value: ethers.parseEther("10.0"),
+    });
+    await funder.sendTransaction({
+      to: entryPointAddress,
+      value: ethers.parseEther("10.0"),
+    });
   });
 
   describe("Contract Deployment", function () {
@@ -399,6 +408,22 @@ describe("Nexus Basic Specs", function () {
 
       expect(isValid).to.equal("0x1626ba7e");
     });
+
+    it("Should revert signature validation when the validator is not installed", async function () {
+      const hash = ethers.keccak256("0x1234");
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(hash),
+      );
+
+      const signatureData = ethers.solidityPacked(
+        ["address", "bytes"],
+        [ZeroAddress, signature],
+      );
+
+      await expect(
+        smartAccount.isValidSignature(hash, signatureData),
+      ).to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+    });
   });
 
   describe("Smart Account check Only Entrypoint actions", function () {
@@ -485,6 +510,13 @@ describe("Nexus Basic Specs", function () {
       await entryPoint.handleOps([packedUserOp], bundlerAddress);
     });
 
+    it("should revert if EntryPoint is zero", async function () {
+      const NexusFactory = await ethers.getContractFactory("Nexus");
+      await expect(
+        NexusFactory.deploy(ZeroAddress),
+      ).to.be.revertedWithCustomError(NexusFactory, "EntryPointCanNotBeZero");
+    });
+
     it("Should fail Smart Account deployment with an unauthorized signer", async function () {
       const saDeploymentIndex = 2;
       const initCode = await getInitCode(
@@ -524,6 +556,425 @@ describe("Nexus Basic Specs", function () {
       await expect(entryPoint.handleOps([packedUserOp], bundlerAddress))
         .to.be.revertedWithCustomError(entryPoint, "FailedOp")
         .withArgs(0, "AA24 signature error");
+    });
+  });
+
+  describe("Smart Account Upgrade Authorization", function () {
+    let newImplementation: AddressLike;
+    let impersonatedSmartAccount: Signer;
+    let impersonatedEntryPoint: Signer;
+    let mockHook: MockHook;
+
+    beforeEach(async function () {
+      // Deploy a new Nexus implementation
+      const NewNexusFactory = await ethers.getContractFactory("Nexus");
+      const deployedNewNexusImplementation =
+        await NewNexusFactory.deploy(entryPointAddress);
+      await deployedNewNexusImplementation.waitForDeployment();
+      newImplementation = await deployedNewNexusImplementation.getAddress();
+
+      // Deploy the MockHook contract
+      const MockHookFactory = await ethers.getContractFactory("MockHook");
+      mockHook = await MockHookFactory.deploy();
+      await mockHook.waitForDeployment();
+
+      // Impersonate the smart account and the EntryPoint
+      impersonatedSmartAccount = await impersonateAccount(
+        await smartAccount.getAddress(),
+      );
+
+      impersonatedEntryPoint = await impersonateAccount(
+        await entryPoint.getAddress(),
+      );
+      // Fund the impersonated smart account and EntryPoint with ETH
+      const funder = accounts[0];
+      await funder.sendTransaction({
+        to: smartAccountAddress,
+        value: ethers.parseEther("10.0"),
+      });
+      await funder.sendTransaction({
+        to: entryPointAddress,
+        value: ethers.parseEther("10.0"),
+      });
+
+      // Install the MockHook module on the smart account
+      await installModule({
+        deployedNexus: smartAccount,
+        entryPoint,
+        module: mockHook,
+        validatorModule: validatorModule,
+        moduleType: ModuleType.Hooks,
+        accountOwner: smartAccountOwner,
+        bundler,
+      });
+    });
+
+    afterEach(async function () {
+      // Stop impersonating the accounts after the tests
+      await stopImpersonateAccount(await smartAccount.getAddress());
+      await stopImpersonateAccount(await entryPoint.getAddress());
+    });
+
+    it("Should successfully authorize an upgrade when called by the smart account itself", async function () {
+      // Perform the upgrade using the impersonated smart account
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      // Verify that the implementation was updated
+      const updatedImplementation = await smartAccount.getImplementation();
+      expect(updatedImplementation).to.equal(newImplementation);
+    });
+
+    it("Should revert the upgrade attempt if the new implementation address is invalid", async function () {
+      const invalidImplementation = ethers.ZeroAddress;
+
+      // Attempt upgrade using the impersonated smart account with an invalid address
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(invalidImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "InvalidImplementationAddress",
+      );
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(invalidImplementation);
+    });
+
+    it("Should revert the upgrade attempt if the new implementation address has no code", async function () {
+      // Generate a random address that doesn't have a contract deployed at it
+      const noCodeAddress = ethers.Wallet.createRandom().address;
+
+      // Attempt upgrade using the impersonated smart account with the address that has no code
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(noCodeAddress, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "InvalidImplementationAddress",
+      );
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(noCodeAddress);
+    });
+
+    it("Should trigger pre-function and post-function hooks during the upgrade", async function () {
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      await expect(tx).to.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should allow the function to be called by EntryPoint", async function () {
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.not.be.reverted;
+    });
+
+    it("Should revert the function call when called by an unauthorized address", async function () {
+      await expect(
+        smartAccount
+          .connect(accounts[2])
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+
+    it("Should execute preCheck and postCheck with hook installed", async function () {
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+
+      await expect(tx).to.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should proceed without hooks when no hook is installed", async function () {
+      // Temporarily uninstall the hook if any is installed
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .uninstallModule(ModuleType.Hooks, await mockHook.getAddress(), "0x");
+
+      // Execute the function and ensure no PreCheckCalled or PostCheckCalled event is emitted
+      const tx = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .upgradeToAndCall(newImplementation, "0x");
+      await expect(tx).to.not.emit(mockHook, "PreCheckCalled");
+      await expect(tx).to.not.emit(mockHook, "PostCheckCalled");
+    });
+
+    it("Should revert if msg.value is exactly 1 ether", async function () {
+      // Attempt to upgrade with a value of 1 ether, triggering the revert in preCheck
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(newImplementation, "0x", {
+            value: ethers.parseEther("1"), // 1 ether
+          }),
+      ).to.be.revertedWith("PreCheckFailed");
+
+      // Verify that the implementation was not updated
+      const currentImplementation = await smartAccount.getImplementation();
+      expect(currentImplementation).to.not.equal(newImplementation);
+    });
+
+    it("Should allow upgrade when called by the smart account itself", async function () {
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      // Attempt to upgrade
+      await expect(
+        smartAccount
+          .connect(impersonatedSmartAccount)
+          .upgradeToAndCall(newImplementation, "0x"),
+      )
+        .to.emit(smartAccount, "Upgraded")
+        .withArgs(newImplementation);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+
+    it("Should allow upgrade when called by the EntryPoint", async function () {
+      // Impersonate the EntryPoint
+      const impersonatedEntryPoint = await impersonateAccount(
+        entryPointAddress.toString(),
+      );
+
+      // Attempt to upgrade
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .upgradeToAndCall(newImplementation, "0x"),
+      )
+        .to.emit(smartAccount, "Upgraded")
+        .withArgs(newImplementation);
+
+      // Stop impersonating the EntryPoint
+      await stopImpersonateAccount(entryPointAddress.toString());
+    });
+
+    it("Should revert upgrade attempt when called by an unauthorized address", async function () {
+      // Attempt upgrade using an unauthorized signer
+      await expect(
+        smartAccount
+          .connect(accounts[1])
+          .upgradeToAndCall(newImplementation, "0x"),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+  });
+
+  describe("Nexus ValidateUserOp", function () {
+    it("Should revert if validator is not installed", async function () {
+      // Impersonate the smart account
+      const impersonatedEntryPoint = await impersonateAccount(
+        await entryPoint.getAddress(),
+      );
+
+      // Construct a PackedUserOperation with an arbitrary validator address
+      const invalidValidator = ethers.Wallet.createRandom().address;
+
+      const op = buildPackedUserOp({
+        sender: await smartAccount.getAddress(),
+        nonce: "0x" + "00".repeat(11) + invalidValidator.slice(2), // Encode the invalid validator in the nonce
+        callData: "0x",
+      });
+
+      const userOpHash = await entryPoint.getUserOpHash(op);
+
+      // Stop impersonating the smart account after the test
+      await stopImpersonateAccount(await smartAccount.getAddress());
+
+      await expect(
+        smartAccount
+          .connect(impersonatedEntryPoint)
+          .validateUserOp(op, userOpHash, 0n),
+      ).to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+    });
+
+    it("Should successfully handle prefund payment with sufficient funds", async function () {
+      // Fund the smart account with sufficient ETH
+      await smartAccountOwner.sendTransaction({
+        to: smartAccountAddress,
+        value: ethers.parseEther("1.0"), // Send 1 ETH to the smart account
+      });
+
+      // Prepare a PackedUserOperation
+      const callData = await generateUseropCallData({
+        executionMethod: ExecutionMethod.Execute,
+        targetContract: counter,
+        functionName: "incrementNumber",
+      });
+
+      const userOpNonce = await getNonce(
+        entryPoint,
+        smartAccountAddress,
+        MODE_MODULE_ENABLE,
+        await validatorModule.getAddress(),
+      );
+
+      const userOp = buildPackedUserOp({
+        sender: smartAccountAddress,
+        callData,
+        nonce: userOpNonce,
+      });
+
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+
+      // // Sign the user operation
+      const signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
+      );
+      userOp.signature = signature;
+
+      // Impersonate the EntryPoint
+      const impersonatedEntryPoint = await impersonateAccount(
+        entryPointAddress.toString(),
+      );
+
+      // Validate the user operation with sufficient prefund
+      await smartAccount
+        .connect(impersonatedEntryPoint)
+        .validateUserOp(userOp, userOpHash, ethers.parseEther("0.1"));
+    });
+  });
+
+  // New describe block for Smart Account Registry and Modules
+  describe("Smart Account Registry and Modules", function () {
+    it("Should successfully set the registry", async function () {
+      // Deploy a mock registry
+      const mockRegistryFactory =
+        await ethers.getContractFactory("MockRegistry");
+      const mockRegistry = await mockRegistryFactory.deploy();
+      await mockRegistry.waitForDeployment();
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      const attesters = [await accounts[1].getAddress()];
+      const threshold = 1;
+
+      // Set the registry using the impersonated smart account
+      await smartAccount
+        .connect(impersonatedSmartAccount)
+        .setRegistry(mockRegistry.getAddress(), attesters, threshold);
+
+      // Verify the registry is set
+      const configuredRegistry = await smartAccount.registry();
+      expect(configuredRegistry).to.equal(await mockRegistry.getAddress());
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+
+    it("Should revert when setRegistry is called by an unauthorized account", async function () {
+      // Deploy a mock registry
+      const mockRegistryFactory =
+        await ethers.getContractFactory("MockRegistry");
+      const mockRegistry = await mockRegistryFactory.deploy();
+      await mockRegistry.waitForDeployment();
+
+      const attesters = [await accounts[1].getAddress()];
+      const threshold = 1;
+
+      await expect(
+        smartAccount
+          .connect(accounts[1])
+          .setRegistry(mockRegistry.getAddress(), attesters, threshold),
+      ).to.be.revertedWithCustomError(
+        smartAccount,
+        "AccountAccessUnauthorized",
+      );
+    });
+
+    it("Should return true for supported module types", async function () {
+      const supportedModules = [
+        ModuleType.Validation,
+        ModuleType.Execution,
+        ModuleType.Fallback,
+        ModuleType.Hooks,
+        ModuleType.Multi,
+      ];
+
+      for (const moduleType of supportedModules) {
+        expect(await smartAccount.supportsModule(moduleType)).to.be.true;
+      }
+    });
+
+    it("Should return false for unsupported module types", async function () {
+      const unsupportedModuleType = 999; // An arbitrary module type that is not supported
+      expect(await smartAccount.supportsModule(unsupportedModuleType)).to.be
+        .false;
+    });
+  });
+
+  describe("Smart Account Typed Data Hashing", function () {
+    it("Should correctly hash the structured data", async function () {
+      const structuredDataHash = ethers.keccak256(
+        ethers.toUtf8Bytes("Structured Data"),
+      );
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      // Fetch the domain separator used in the smart contract
+      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
+
+      // Manually compute the expected hash for comparison
+      const expectedHash = ethers.keccak256(
+        ethers.concat([
+          "0x1901", // EIP-191 prefix
+          domainSeparator,
+          structuredDataHash,
+        ]),
+      );
+
+      // Get the actual result from the smart contract
+      const result = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .hashTypedData(structuredDataHash);
+
+      expect(result).to.equal(expectedHash);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
+    });
+
+    it("Should return correct bytes4 value for supportsNestedTypedDataSign", async function () {
+      const expectedValue = ethers.zeroPadBytes("0xd620c85a", 32);
+
+      // Impersonate the smart account
+      const impersonatedSmartAccount = await impersonateAccount(
+        smartAccountAddress.toString(),
+      );
+
+      const result = await smartAccount
+        .connect(impersonatedSmartAccount)
+        .supportsNestedTypedDataSign();
+      expect(result).to.equal(expectedValue);
+
+      // Stop impersonating the smart account
+      await stopImpersonateAccount(smartAccountAddress.toString());
     });
   });
 });
