@@ -57,6 +57,13 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    function test_upgradeImplementation_invalidCaller() public {
+        address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
+        BOB_ACCOUNT.upgradeToAndCall(address(newSmartAccount), "");
+    }
+
     /// @notice Tests the upgrade of the smart account implementation with an invalid address
     function test_upgradeImplementation_InvalidAddress() public {
         /// @note "" means empty calldata. this will just update the implementation but not setup the account.
