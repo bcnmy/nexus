@@ -23,15 +23,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK,
-    MODULE_TYPE_HOOK,
-    MODULE_TYPE_MULTI,
-    MODULE_ENABLE_MODE_TYPE_HASH,
-    ERC1271_MAGICVALUE
-} from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
@@ -86,7 +78,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-    receive() external payable { }
+    receive() external payable {}
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
     fallback() external payable withHook {
@@ -414,7 +406,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
     /// @return digest EIP712 hash
-    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32 digest) {
+    function _getEnableModeDataHash(
+        address module,
+        uint256 moduleType,
+        bytes32 userOpHash,
+        bytes calldata initData
+    ) internal view returns (bytes32 digest) {
         digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
     }
 
@@ -472,7 +469,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return True if there is at least one validator, otherwise false.
     function _hasValidators() internal view returns (bool) {
         return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
+            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) &&
+            _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
     /// @dev Checks if an executor is currently installed.
@@ -505,11 +503,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    )
-        private
-        view
-        returns (address[] memory array, address nextCursor)
-    {
+    ) private view returns (address[] memory array, address nextCursor) {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

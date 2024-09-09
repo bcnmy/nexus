@@ -111,8 +111,8 @@ contract K1Validator is IValidator {
         }
 
         if (
-            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature)
-                || owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
+            owner.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature) ||
+            owner.isValidSignatureNowCalldata(userOpHash, userOp.signature)
         ) {
             return VALIDATION_SUCCESS;
         }

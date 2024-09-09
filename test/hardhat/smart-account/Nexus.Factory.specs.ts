@@ -488,17 +488,16 @@ describe("Nexus Factory Tests", function () {
     let nonOwner: Signer;
     const threshold = 1;
 
-
     beforeEach(async function () {
       const setup = await loadFixture(deployContractsAndSAFixture);
       entryPoint = setup.entryPoint;
       smartAccount = setup.deployedNexus;
       owner = setup.accountOwner;
       entryPointAddress = await setup.entryPoint.getAddress();
-      [,,,,attester1, attester2, nonOwner] = await ethers.getSigners();
-      
-      
-      const RegistryFactory = await ethers.getContractFactory("RegistryFactory");
+      [, , , , attester1, attester2, nonOwner] = await ethers.getSigners();
+
+      const RegistryFactory =
+        await ethers.getContractFactory("RegistryFactory");
       bootstrap = setup.bootstrap;
       validatorModule = setup.mockValidator;
       BootstrapLib = setup.BootstrapLib;
@@ -546,7 +545,7 @@ describe("Nexus Factory Tests", function () {
         module: hook[0],
         data: hook[1],
       };
-    }); 
+    });
 
     describe("Deployment", function () {
       it("Should set the correct owner, implementation, and registry", async function () {
