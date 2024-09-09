@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -53,16 +53,10 @@ contract K1Validator is IValidator {
     /// @notice Called upon module installation to set the owner of the smart account
     /// @param data Encoded address of the owner
     function onInstall(bytes calldata data) external {
-        if (data.length == 0) {
-            revert NoOwnerProvided();
-        }
-        if (_isInitialized(msg.sender)) {
-            revert ModuleAlreadyInitialized();
-        }
+        require(data.length != 0, NoOwnerProvided());
+        require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data));
-        if (_isContract(newOwner)) {
-            revert NewOwnerIsContract();
-        }
+        require(!_isContract(newOwner), NewOwnerIsContract());
         smartAccountOwners[msg.sender] = newOwner;
     }
 
@@ -74,12 +68,8 @@ contract K1Validator is IValidator {
     /// @notice Transfers ownership of the validator to a new owner
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
-        if (newOwner == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        if (_isContract(newOwner)) {
-            revert NewOwnerIsContract();
-        }
+        require(newOwner != address(0), ZeroAddressNotAllowed());
+        require(!_isContract(newOwner), NewOwnerIsContract());
 
         smartAccountOwners[msg.sender] = newOwner;
     }

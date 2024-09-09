@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -43,17 +43,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
-        if (!_getAccountStorage().executors.contains(msg.sender)) {
-            revert InvalidModule(msg.sender);
-        }
+        require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
         _;
     }
 
     /// @notice Ensures the given validator is a registered validator module.
     modifier onlyValidatorModule(address validator) {
-        if (!_getAccountStorage().validators.contains(validator)) {
-            revert InvalidModule(validator);
-        }
+        require(_getAccountStorage().validators.contains(validator), InvalidModule(validator));
         _;
     }
 
@@ -248,9 +244,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         // Sentinel pointing to itself means the list is empty, so check this after removal
         // Below error is very specific to uninstalling validators.
-        if (!_hasValidators()) {
-            revert CanNotRemoveLastValidator();
-        }
+        require(_hasValidators(), CanNotRemoveLastValidator());
         ExcessivelySafeCall.excessivelySafeCall(validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
@@ -278,7 +272,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
         address currentHook = _getHook();
-        if (currentHook != address(0)) revert HookAlreadyInstalled(currentHook);
+        require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
         IHook(hook).onInstall(data);
     }
@@ -308,7 +302,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Extract the call type from the provided parameters.
         CallType calltype = CallType.wrap(bytes1(params[4]));
 
-        if (calltype != CALLTYPE_SINGLE && calltype != CALLTYPE_STATIC) revert FallbackCallTypeInvalid();
+        require(calltype == CALLTYPE_SINGLE || calltype == CALLTYPE_STATIC, FallbackCallTypeInvalid());
 
         // Extract the initialization data from the provided parameters.
         bytes memory initData = params[5:];
@@ -319,13 +313,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // If a validator module is uninstalled and reinstalled without proper authorization, it can compromise
         // the account's security and integrity. By restricting these selectors, we ensure that the fallback handler
         // cannot be manipulated to disrupt the expected behavior and security of the account.
-        if (selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3) || selector == bytes4(0)) {
-            revert FallbackSelectorForbidden();
-        }
+        require(!(selector == bytes4(0x6d61fe70) || selector == bytes4(0x8a91b0e3) || selector == bytes4(0)), FallbackSelectorForbidden());
 
         // Revert if a fallback handler is already installed for the given selector.
         // This check ensures that we do not overwrite an existing fallback handler, which could lead to unexpected behavior.
-        if (_isFallbackHandlerInstalled(selector)) revert FallbackAlreadyInstalledForSelector(selector);
+        require(!_isFallbackHandlerInstalled(selector), FallbackAlreadyInstalledForSelector(selector));
 
         // Store the fallback handler and its call type in the account storage.
         // This maps the function selector to the specified fallback handler and call type.

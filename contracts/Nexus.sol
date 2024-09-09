@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -51,9 +51,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
-        if (address(anEntryPoint) == address(0)) {
-            revert EntryPointCanNotBeZero();
-        }
+        require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
         _initModuleManager();
     }
@@ -85,14 +83,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
             userOp.signature = _enableMode(userOpHash, op.signature);
-            if (!_isValidatorInstalled(validator)) {
-                revert ValidatorNotInstalled(validator);
-            }
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
-            if (!_isValidatorInstalled(validator)) {
-                revert ValidatorNotInstalled(validator);
-            }
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             validationData = IValidator(validator).validateUserOp(op, userOpHash);
         }
     }
@@ -172,9 +166,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
-        if (!_isModuleInstalled(moduleTypeId, module, deInitData)) {
-            revert ModuleNotInstalled(moduleTypeId, module);
-        }
+        require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
         emit ModuleUninstalled(moduleTypeId, module);
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -193,12 +185,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
 
-        if (!success) {
-            revert NexusInitializationFailed();
-        }
-        if (!_hasValidators()) {
-            revert NoValidatorInstalled();
-        }
+        require(success, NexusInitializationFailed());
+        require(_hasValidators(), NoValidatorInstalled());
     }
 
     function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
@@ -214,9 +202,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function isValidSignature(bytes32 hash, bytes calldata data) external view virtual override returns (bytes4) {
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(data[0:20]));
-        if (!_isValidatorInstalled(validator)) {
-            revert ValidatorNotInstalled(validator);
-        }
+        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data[20:]);
         return IValidator(validator).isValidSignatureWithSender(msg.sender, computeHash, truncatedSignature);
     }
@@ -292,16 +278,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
     function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override onlyEntryPointOrSelf withHook {
-        if (newImplementation == address(0)) {
-            revert InvalidImplementationAddress();
-        }
+        require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {
             res := gt(extcodesize(newImplementation), 0)
         }
-        if (!res) {
-            revert InvalidImplementationAddress();
-        }
+        require(res, InvalidImplementationAddress());
         // update the address() storage slot as well.
         assembly {
             sstore(address(), newImplementation)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
 import "account-abstraction/contracts/interfaces/IAccountExecute.sol";

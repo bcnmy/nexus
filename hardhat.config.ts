@@ -13,7 +13,7 @@ const SHOULD_ENABLE_VIA_IR: Boolean = process.env.SHOULD_ENABLE_VIA_IR
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.26",
+    version: "0.8.27",
     settings: {
       viaIR: SHOULD_ENABLE_VIA_IR,
       optimizer: {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -44,17 +44,13 @@ contract BiconomyMetaFactory is Stakeable {
     /// @notice Constructor to set the owner of the contract.
     /// @param owner_ The address of the owner.
     constructor(address owner_) Stakeable(owner_) {
-        if (owner_ == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        require(owner_ != address(0), ZeroAddressNotAllowed());
     }
 
     /// @notice Adds an address to the factory whitelist.
     /// @param factory The address to be whitelisted.
     function addFactoryToWhitelist(address factory) external onlyOwner {
-        if (factory == address(0)) {
-            revert InvalidFactoryAddress();
-        }
+        require(factory != address(0), InvalidFactoryAddress());
         factoryWhitelist[factory] = true;
     }
 
@@ -72,15 +68,11 @@ contract BiconomyMetaFactory is Stakeable {
     /// @param factoryData The encoded data for the method to be called on the Factory.
     /// @return createdAccount The address of the newly created Nexus account.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
-        if (!factoryWhitelist[address(factory)]) {
-            revert FactoryNotWhitelisted();
-        }
+        require(factoryWhitelist[address(factory)], FactoryNotWhitelisted());
         (bool success, bytes memory returnData) = factory.call{ value: msg.value }(factoryData);
 
         // Check if the call was successful
-        if (!success) {
-            revert CallToDeployWithFactoryFailed();
-        }
+        require(success, CallToDeployWithFactoryFailed());
 
         // Decode the returned address
         assembly {

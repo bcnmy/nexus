@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -51,15 +51,9 @@ contract RegistryFactory is Stakeable, INexusFactory {
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_, IERC7484 registry_, address[] memory attesters_, uint8 threshold_) Stakeable(owner_) {
-        if (implementation_ == address(0)) {
-            revert ImplementationAddressCanNotBeZero();
-        }
-        if (owner_ == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        if (threshold_ > attesters_.length) {
-            revert InvalidThreshold(threshold_, attesters_.length);
-        }
+        require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
+        require(owner_ != address(0), ZeroAddressNotAllowed());
+        require(threshold_ <= attesters_.length, InvalidThreshold(threshold_, attesters_.length));
         REGISTRY = registry_;
         attesters = attesters_;
         threshold = threshold_;
@@ -131,25 +125,17 @@ contract RegistryFactory is Stakeable, INexusFactory {
 
         // Ensure that all specified modules are whitelisted and allowed for the account.
         for (uint256 i = 0; i < validators.length; i++) {
-            if (!_isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR)) {
-                revert ModuleNotWhitelisted(validators[i].module);
-            }
+            require(_isModuleAllowed(validators[i].module, MODULE_TYPE_VALIDATOR), ModuleNotWhitelisted(validators[i].module));
         }
 
         for (uint256 i = 0; i < executors.length; i++) {
-            if (!_isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR)) {
-                revert ModuleNotWhitelisted(executors[i].module);
-            }
+            require(_isModuleAllowed(executors[i].module, MODULE_TYPE_EXECUTOR), ModuleNotWhitelisted(executors[i].module));
         }
 
-        if (!_isModuleAllowed(hook.module, MODULE_TYPE_HOOK)) {
-            revert ModuleNotWhitelisted(hook.module);
-        }
+        require(_isModuleAllowed(hook.module, MODULE_TYPE_HOOK), ModuleNotWhitelisted(hook.module));
 
         for (uint256 i = 0; i < fallbacks.length; i++) {
-            if (!_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK)) {
-                revert ModuleNotWhitelisted(fallbacks[i].module);
-            }
+            require(_isModuleAllowed(fallbacks[i].module, MODULE_TYPE_FALLBACK), ModuleNotWhitelisted(fallbacks[i].module));
         }
 
         // Compute the actual salt for deterministic deployment
