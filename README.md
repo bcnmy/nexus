@@ -8,7 +8,7 @@
 
 This repository serves as a comprehensive foundation for smart contract projects, streamlining the development process with a focus on best practices, security, and efficiency.
 
-Documentation: https://github.com/bcnmy/nexus/wiki
+Documentation: (https://github.com/bcnmy/nexus/wiki)
 
 ## 📚 Table of Contents
 
