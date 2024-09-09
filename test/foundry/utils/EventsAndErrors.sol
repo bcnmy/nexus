@@ -17,6 +17,7 @@ contract EventsAndErrors {
     event PostCheckCalled();
     event TryExecuteUnsuccessful(bytes callData, bytes result);
     event TryDelegateCallUnsuccessful(bytes callData, bytes result);
+    event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
 
     // ==========================
     // General Errors
@@ -73,6 +74,7 @@ contract EventsAndErrors {
     error EnableModeSigError();
     error InvalidModule(address module);
     error NoValidatorInstalled();
+    error EmergencyTimeLockNotExpired();
 
     // ==========================
     // Hook Errors

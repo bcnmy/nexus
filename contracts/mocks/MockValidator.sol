@@ -2,36 +2,50 @@
 pragma solidity ^0.8.27;
 
 import { IModule } from "../interfaces/modules/IModule.sol";
-import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR, ERC1271_MAGICVALUE, ERC1271_INVALID } from "../types/Constants.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ERC7739Validator } from "../base/ERC7739Validator.sol";
+import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
 
-contract MockValidator is IValidator {
+contract MockValidator is ERC7739Validator, IERC1271Legacy {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
-        return
-            ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) == smartAccountOwners[msg.sender]
-                ? VALIDATION_SUCCESS
-                : VALIDATION_FAILED;
+        address owner = smartAccountOwners[msg.sender];
+        return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         address owner = smartAccountOwners[msg.sender];
-        // MAYBE SHOULD PREPARE REPLAY RESISTANT HASH BY APPENDING MSG.SENDER
-        // SEE: https://github.com/bcnmy/scw-contracts/blob/3362262dab34fa0f57e2fbe0e57a4bdbd5318165/contracts/smart-account/modules/EcdsaOwnershipRegistryModule.sol#L122-L132
-        // OR USE EIP-712
+
+        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
+
+        return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
+
+    function isValidSignatureWithSenderLegacy(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+        address owner = smartAccountOwners[msg.sender];
+        return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+    }
+
+    // ISessionValidator interface for smart session
+    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
+        address owner = address(bytes20(data[0:20]));
+        return _validateSignatureForOwner(owner, hash, sig);
+    }
+
+    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
-            return ERC1271_MAGICVALUE;
+            return true;
         }
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
-            return ERC1271_MAGICVALUE;
+            return true;
         }
-        return ERC1271_INVALID;
+        return false;
     }
 
     function onInstall(bytes calldata data) external {

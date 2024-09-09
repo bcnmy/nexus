@@ -65,8 +65,8 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         userOps[0].signature = "0x1234"; // Incorrect format, too short
 
         startPrank(address(ENTRYPOINT));
-        vm.expectRevert(InvalidSignature.selector);
-        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
+        assertTrue(res == 1, "Operation with invalid signature format should fail validation");
         stopPrank();
     }
 

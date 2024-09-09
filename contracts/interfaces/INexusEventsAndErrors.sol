@@ -53,4 +53,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when an inner call fails.
     error InnerCallFailed();
+
+    /// @notice Error thrown when attempted to emergency-uninstall a hook
+    error EmergencyTimeLockNotExpired();
 }

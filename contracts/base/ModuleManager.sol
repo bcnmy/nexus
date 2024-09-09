@@ -23,10 +23,12 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
+import { IERC7739 } from "../interfaces/IERC7739.sol";
+import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -185,7 +187,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        _checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature);
+        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature))
+            revert EnableModeSigError();
 
         // Ensure the module type is VALIDATOR or MULTI
         if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModuleTypeId(moduleType);
@@ -379,17 +382,33 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @notice Checks if an enable mode signature is valid.
-    /// @param digest signed digest.
+    /// @param structHash data hash.
     /// @param sig Signature.
-    function _checkEnableModeSignature(bytes32 digest, bytes calldata sig) internal view {
+    function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         if (!_isValidatorInstalled(enableModeSigValidator)) {
             revert ValidatorNotInstalled(enableModeSigValidator);
         }
-
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), digest, sig[20:]) != ERC1271_MAGICVALUE) {
-            revert EnableModeSigError();
+        bytes32 eip712Digest = _hashTypedData(structHash);
+        // have to try different ways to validate the signature as we do not know for sure what 1271 flavours validator supports
+        if (IERC7739(enableModeSigValidator).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) {
+            // if the validator supports 7739, we use just the struct hash, as the full hash will be rebuilt inside 7739 flow
+            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
+                return true;
+            }
+        } else {
+            // if the validator doesn't support 7739 for standard isValidSignatureWithSender, we provide the eip 712 digest
+            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
+                return true;
+            }
         }
+        // if none of the above worked, try legacy mode. this mode can be exposed by 7739-enabled validators for the cases, when 7739 is excessive
+        // enable is one of those cases, as eip712digest is already built based on 712Domain of this Smart Account
+        // thus 7739 envelope is not required in this case and avoiding it saves some gas
+        try IERC1271Legacy(enableModeSigValidator).isValidSignatureWithSenderLegacy(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+            return res == ERC1271_MAGICVALUE;
+        } catch {}
+        return false;
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -397,14 +416,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param moduleType Type of the module as per EIP-7579
     /// @param userOpHash Hash of the User Operation
     /// @param initData Module init data.
-    /// @return digest EIP712 hash
-    function _getEnableModeDataHash(
-        address module,
-        uint256 moduleType,
-        bytes32 userOpHash,
-        bytes calldata initData
-    ) internal view returns (bytes32 digest) {
-        digest = _hashTypedData(keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData))));
+    /// @return structHash data hash
+    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32) {
+        return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
     }
 
     /// @notice Checks if a module is installed on the smart account.
