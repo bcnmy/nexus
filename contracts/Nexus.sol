@@ -40,14 +40,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     using ExecLib for bytes;
     using NonceLib for uint256;
 
-    /// @dev Precomputed `typeHash` used to produce EIP-712 compliant hash when applying the anti
-    ///      cross-account-replay layer.
-    ///
-    ///      The original hash must either be:
-    ///         - An EIP-191 hash: keccak256("\x19Ethereum Signed Message:\n" || len(someMessage) || someMessage)
-    ///         - An EIP-712 hash: keccak256("\x19\x01" || someDomainSeparator || hashStruct(someStruct))
-    bytes32 private constant _MESSAGE_TYPEHASH = keccak256("BiconomyNexusMessage(bytes32 hash)");
-
     /// @dev The timelock period for emergency hook uninstallation.
     uint256 internal constant _EMERGENCY_TIMELOCK = 1 days;
 
