@@ -23,5 +23,5 @@ TestNexusAccountFactory_Deployments
 │   └── it should revert if the entry point address is zero
 ├── when using BootstrapLib.createArrayConfig function for multiple modules
 │   └── it should deploy an account successfully
-└── when using initNexusScoped function in Bootstrap with a hook module
+└── when using initNexusScoped function in RegistryBootstrap with a hook module
     └── it should deploy an account with the hook module installed

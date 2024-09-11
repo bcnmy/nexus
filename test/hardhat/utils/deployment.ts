@@ -12,7 +12,7 @@ import {
   MockValidator,
   K1Validator,
   Nexus,
-  Bootstrap,
+  RegistryBootstrap,
   Stakeable,
   BiconomyMetaFactory,
   NexusAccountFactory,
@@ -384,7 +384,7 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const registry = await getDeployedRegistry();
 
-  const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
+  const bootstrap = await deployContract<RegistryBootstrap>("RegistryBootstrap", deployer);
 
   const nexusFactory = await getDeployedAccountK1Factory(
     await smartAccountImplementation.getAddress(),
@@ -443,7 +443,7 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     deployer,
   );
 
-  const bootstrap = await deployContract<Bootstrap>("Bootstrap", deployer);
+  const bootstrap = await deployContract<RegistryBootstrap>("RegistryBootstrap", deployer);
   const BootstrapLib = await deployContract<BootstrapLib>(
     "BootstrapLib",
     deployer,

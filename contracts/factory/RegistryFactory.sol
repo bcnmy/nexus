@@ -103,14 +103,14 @@ contract RegistryFactory is Stakeable, INexusFactory {
     }
 
     /// @notice Creates a new Nexus account with the provided initialization data.
-    /// @param initData Initialization data that is expected to be compatible with a `Bootstrap` contract's initialization method.
+    /// @param initData Initialization data that is expected to be compatible with a `RegistryBootstrap` contract's initialization method.
     /// @param salt Unique salt used for deterministic deployment of the Nexus smart account.
     /// @return The address of the newly created Nexus account.
     function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
         // Decode the initialization data to extract the target bootstrap contract and the data to be used for initialization.
         (, bytes memory callData) = abi.decode(initData, (address, bytes));
 
-        // Ensure that the initData is structured for the expected Bootstrap.initNexus or similar method.
+        // Ensure that the initData is structured for the expected RegistryBootstrap.initNexus or similar method.
         // This step is crucial for ensuring the proper initialization of the Nexus smart account.
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
         (

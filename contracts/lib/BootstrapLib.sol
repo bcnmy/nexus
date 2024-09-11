@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { BootstrapConfig } from "../utils/RegistryBootstrap.sol";
 
-/// @title Bootstrap Configuration Library
+/// @title RegistryBootstrap Configuration Library
 /// @notice Provides utility functions to create and manage BootstrapConfig structures.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io

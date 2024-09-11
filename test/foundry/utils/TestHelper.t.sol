@@ -19,7 +19,7 @@ import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
-import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/RegistryBootstrap.sol";
+import { RegistryBootstrap, BootstrapConfig } from "../../../contracts/utils/RegistryBootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
@@ -61,7 +61,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
-    Bootstrap internal BOOTSTRAPPER;
+    RegistryBootstrap internal BOOTSTRAPPER;
 
     // -----------------------------------------
     // Setup Functions
@@ -116,7 +116,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new Bootstrap();
+        BOOTSTRAPPER = new RegistryBootstrap();
         REGISTRY = new MockRegistry();
     }
 
