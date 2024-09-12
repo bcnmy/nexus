@@ -18,9 +18,9 @@ export async function deployToTestnet() {
   const MockHook = await deployments.deploy("MockHook", deployOptions);
   const MockHandler = await deployments.deploy("MockHandler", deployOptions);
   const MockExecutor = await deployments.deploy("MockExecutor", deployOptions);
-  const MockTokenWithPermit = await deployments.deploy("MockTokenWithPermit", {
+  const TokenWithPermit = await deployments.deploy("TokenWithPermit", {
     ...deployOptions,
-    args: ["MockPermitToken", "MPT"],
+    args: ["TokenWithPermit", "MPT"],
   });
   const MockToken = await deployments.deploy("MockToken", {
     ...deployOptions,
@@ -43,7 +43,7 @@ export async function deployToTestnet() {
   console.log(`Counter deployed at: ${MockCounter.address}`);
   console.log(`MockToken deployed at: ${MockToken.address}`);
   console.log(`MockExecutor deployed at: ${MockExecutor.address}`);
-  console.log(`MockTokenWithPermit deployed at: ${MockTokenWithPermit.address}`);
+  console.log(`TokenWithPermit deployed at: ${TokenWithPermit.address}`);
   console.log(`MockHandler deployed at: ${MockHandler.address}`);
   console.log(`MockHook deployed at: ${MockHook.address}`);
   console.log(`MockValidator deployed at: ${MockValidator.address}`);
