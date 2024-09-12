@@ -20,7 +20,7 @@ export async function deployToTestnet() {
   const MockExecutor = await deployments.deploy("MockExecutor", deployOptions);
   const TokenWithPermit = await deployments.deploy("TokenWithPermit", {
     ...deployOptions,
-    args: ["MockPermitToken", "MPT"],
+    args: ["TokenWithPermit", "MPT"],
   });
   const MockToken = await deployments.deploy("MockToken", {
     ...deployOptions,
