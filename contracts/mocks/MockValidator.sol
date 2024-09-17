@@ -7,7 +7,7 @@ import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR, ERC1271_M
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
-import { MessageHashUtils } from "@openzeppelin/utils/cryptography/MessageHashUtils.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
 import { IERC1271Unsafe } from "../interfaces/modules/IERC1271Unsafe.sol";
 

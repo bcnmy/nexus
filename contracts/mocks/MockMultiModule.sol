@@ -6,7 +6,7 @@ import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
-import { MessageHashUtils } from "@openzeppelin/utils/cryptography/MessageHashUtils.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "../types/Constants.sol";
 
 contract MockMultiModule is IModule {
