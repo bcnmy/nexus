@@ -4,9 +4,9 @@ pragma solidity ^0.8.27;
 // ==========================
 // Standard Library Imports
 // ==========================
-import "forge-std/src/console2.sol";
-import "forge-std/src/Test.sol";
-import "forge-std/src/Vm.sol";
+import "forge-std/console2.sol";
+import "forge-std/Test.sol";
+import "forge-std/Vm.sol";
 
 // ==========================
 // Utility Libraries
