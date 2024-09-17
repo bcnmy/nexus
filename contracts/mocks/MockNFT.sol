@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.27;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/token/ERC721/ERC721.sol";
 
 contract MockNFT is ERC721 {
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {}

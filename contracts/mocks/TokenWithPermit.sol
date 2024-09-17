@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.27;
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "@openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 
 /// @dev Interface of the ERC1271 standard signature validation method for
 /// contracts as defined in https://eips.ethereum.org/EIPS/eip-1271[ERC-1271].
