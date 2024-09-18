@@ -98,7 +98,13 @@ contract K1Validator is ERC7739Validator, IERC1271Legacy {
     /// @return The magic value if the signature is valid, otherwise an invalid value
     function isValidSignatureWithSender(address, bytes32 hash, bytes calldata data) external view returns (bytes4) {
         (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, data);
-        return _validateSignatureForOwner(smartAccountOwners[msg.sender], computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        if (_validateSignatureForOwner(smartAccountOwners[msg.sender], computeHash, truncatedSignature)) {
+            // try ERC-7739
+            return ERC1271_MAGICVALUE;
+        } else {
+            // try vanilla ERC-1271
+            return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, data) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        }
     }
 
     /// @notice Validates a signature with the sender's address
