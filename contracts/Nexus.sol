@@ -342,7 +342,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         address next = validators.entries[SENTINEL];
         while (next != ZERO_ADDRESS && next != SENTINEL) {
-            if (IERC7739(next).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            try IERC7739(next).supportsNestedTypedDataSign() returns (bytes32 res) {
+                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN)
+                    return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            } catch {}
             next = validators.entries[next];
         }
         return bytes4(0xffffffff);
