@@ -18,6 +18,7 @@ import {
   generateUseropCallData,
   getNonce,
   MODE_VALIDATION,
+  numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { encodeData } from "../utils/encoding";
 import {
@@ -368,6 +369,7 @@ describe("Nexus Module Management Tests", () => {
         userOp.sender,
         MODE_VALIDATION,
         await mockValidator.getAddress(),
+        numberTo3Bytes(1),
       );
       userOp.nonce = nonce;
 
@@ -575,6 +577,7 @@ describe("Nexus Module Management Tests", () => {
         userOp.sender,
         MODE_VALIDATION,
         await mockValidator.getAddress(),
+        numberTo3Bytes(11),
       );
       userOp.nonce = nonce;
 
@@ -774,6 +777,7 @@ describe("Nexus Module Management Tests", () => {
         userOp.sender,
         MODE_VALIDATION,
         await mockValidator.getAddress(),
+        numberTo3Bytes(12),
       );
       userOp.nonce = nonce;
 

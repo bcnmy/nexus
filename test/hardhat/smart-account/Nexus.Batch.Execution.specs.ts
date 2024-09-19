@@ -21,6 +21,7 @@ import {
   buildPackedUserOp,
   getNonce,
   MODE_VALIDATION,
+  numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -178,6 +179,7 @@ describe("Nexus Batch Execution", () => {
         smartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(5),
       );
       userOp.nonce = userOpNonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -291,6 +293,7 @@ describe("Nexus Batch Execution", () => {
         smartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(7),
       );
       userOp.nonce = userOp1Nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -347,6 +350,7 @@ describe("Nexus Batch Execution", () => {
         smartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(9),
       );
       userOp1.nonce = userOp1Nonce;
 
@@ -390,6 +394,7 @@ describe("Nexus Batch Execution", () => {
         aliceSmartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(11),
       );
       userOp2.nonce = userOp2Nonce;
 
@@ -443,6 +448,7 @@ describe("Nexus Batch Execution", () => {
         smartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(13),
       );
       incrementNumberBatchUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -520,6 +526,7 @@ describe("Nexus Batch Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress,
+        numberTo3Bytes(15),
       );
       const userOpHash = await entryPoint.getUserOpHash(userOp);
       userOp.signature = await smartAccountOwner.signMessage(

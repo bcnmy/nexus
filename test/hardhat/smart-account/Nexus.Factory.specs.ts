@@ -33,6 +33,7 @@ import {
   MODE_VALIDATION,
   buildPackedUserOp,
   getNonce,
+  numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { BootstrapConfigStruct } from "../../../typechain-types/contracts/lib/BootstrapLib";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -148,6 +149,7 @@ describe("Nexus Factory Tests", function () {
         expectedAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(1),
       );
       userOp.nonce = userOpNonce;
 
