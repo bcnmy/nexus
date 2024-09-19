@@ -18,7 +18,7 @@ import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Co
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
-import { IERC1271Legacy } from "../../interfaces/modules/IERC1271Legacy.sol";
+import { IERC1271Vanilla } from "../../interfaces/modules/IERC1271Vanilla.sol";
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -32,7 +32,7 @@ import { IERC1271Legacy } from "../../interfaces/modules/IERC1271Legacy.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract K1Validator is ERC7739Validator, IERC1271Legacy {
+contract K1Validator is ERC7739Validator, IERC1271Vanilla {
     using SignatureCheckerLib for address;
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
@@ -113,8 +113,9 @@ contract K1Validator is ERC7739Validator, IERC1271Legacy {
     /// @return The magic value if the signature is valid, otherwise an invalid value
     /// @dev This method is unsafe and should be used with caution
     ///      Introduced for the cases when nested eip712 via erc-7739 is excessive
+    ///      Because the typed data struct is already safe against replay attacks
     ///      One example of this is Module Enable Mode in Nexus account
-    function isValidSignatureWithSenderLegacy(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+    function isValidSignatureWithSenderVanilla(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
     }
 
