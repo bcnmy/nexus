@@ -37,7 +37,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // Initialize the userOps array with one operation
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOps[0].callData = emergencyUninstallCalldata;
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
@@ -74,7 +74,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // Initialize the userOps array with one operation
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOps[0].callData = emergencyUninstallCalldata;
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
@@ -87,7 +87,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 3. Try without waiting for time to pass
         PackedUserOperation[] memory newUserOps = new PackedUserOperation[](1);
-        newUserOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        newUserOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         newUserOps[0].callData = emergencyUninstallCalldata;
         bytes32 newUserOpHash = ENTRYPOINT.getUserOpHash(newUserOps[0]);
         newUserOps[0].signature = signMessage(BOB, newUserOpHash);
@@ -130,7 +130,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // Initialize the userOps array with one operation
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOps[0].callData = emergencyUninstallCalldata;
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash);
@@ -146,7 +146,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         vm.warp(prevTimeStamp + 2 days);
 
         PackedUserOperation[] memory newUserOps = new PackedUserOperation[](1);
-        newUserOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        newUserOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         newUserOps[0].callData = emergencyUninstallCalldata;
         bytes32 newUserOpHash = ENTRYPOINT.getUserOpHash(newUserOps[0]);
         newUserOps[0].signature = signMessage(BOB, newUserOpHash);

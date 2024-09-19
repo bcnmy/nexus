@@ -46,13 +46,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         vm.assume(numOps < 20); // Keep the number of operations manageable
 
         for (uint256 i = 0; i < numOps; i++) {
-            uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
+            uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("incrementNonce()") });
 
             executeBatch(BOB, BOB_ACCOUNT, executions, EXECTYPE_DEFAULT);
 
-            uint256 nonceAfter = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE));
+            uint256 nonceAfter = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
             assertEq(nonceAfter, nonceBefore + 1, "Nonce should increment after each operation");
         }
     }

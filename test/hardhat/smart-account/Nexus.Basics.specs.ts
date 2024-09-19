@@ -19,8 +19,6 @@ import {
   MockValidator,
   Nexus,
   MockHook,
-  Nexus__factory,
-  MockV2SmartAccount,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";

@@ -18,16 +18,16 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
     }
 
     function test_InitialNonce() public {
-        uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKey(vMode, address(VALIDATOR_MODULE)));
+        uint256 nonce = ENTRYPOINT.getNonce(address(BOB_ACCOUNT), makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0)));
         assertEq(
-            BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE))),
+            BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0))),
             nonce,
             "Nonce in the account and EP should be same"
         );
     }
 
     function test_NonceIncrementAfterOperation() public {
-        uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE)));
+        uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
@@ -35,12 +35,12 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), 1, "Counter should have been incremented");
-        uint256 newNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE)));
+        uint256 newNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0)));
         assertEq(newNonce, initialNonce + 1, "Nonce should increment after operation");
     }
 
     function test_NonceIncrementedEvenOnFailedOperation() public {
-        uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE)));
+        uint256 initialNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0)));
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
@@ -55,7 +55,7 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), 0, "Counter should not have been incremented after revert");
-        uint256 newNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE)));
+        uint256 newNonce = BOB_ACCOUNT.nonce(makeNonceKey(vMode, address(VALIDATOR_MODULE), bytes3(0)));
         assertEq(newNonce, initialNonce + 1, "Nonce should change even on failed operation");
     }
 }
