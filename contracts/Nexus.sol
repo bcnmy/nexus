@@ -179,6 +179,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
+        require(_isModuleInstalled(MODULE_TYPE_HOOK, hook, deInitData), ModuleNotInstalled(MODULE_TYPE_HOOK, hook));
         AccountStorage storage accountStorage = _getAccountStorage();
         uint256 hookTimelock = accountStorage.emergencyUninstallTimelock[hook];
 
