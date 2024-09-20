@@ -91,7 +91,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         measureAndLogGas("42::UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
@@ -122,7 +122,8 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             Nexus(preComputedAddress), // Nexus account precomputed address
             EXECTYPE_DEFAULT, // Execution type
             executions, // Execution details
-            address(VALIDATOR_MODULE) // Validator module address
+            address(VALIDATOR_MODULE), // Validator module address
+            0 // Nonce
         );
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE)); // Set initCode for the operation
 
@@ -161,7 +162,8 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -198,7 +200,8 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -235,7 +238,8 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             deployedNexus, // Deployed Nexus account
             EXECTYPE_DEFAULT, // Execution type
             executions, // Execution details
-            address(VALIDATOR_MODULE) // Validator module address
+            address(VALIDATOR_MODULE), // Validator module address
+            0 // Nonce
         );
 
         // Generate and sign paymaster data

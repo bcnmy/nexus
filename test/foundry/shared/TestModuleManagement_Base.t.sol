@@ -39,7 +39,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectEmit(true, true, true, true);
         emit ModuleInstalled(moduleTypeId, moduleAddress);
@@ -54,7 +54,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }

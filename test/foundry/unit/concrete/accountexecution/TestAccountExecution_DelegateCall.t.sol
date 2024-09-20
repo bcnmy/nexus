@@ -34,7 +34,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
          bytes memory userOpCalldata = abi.encodeCall(
             Nexus.execute,
@@ -78,7 +78,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
 
         // Build UserOperation for single execution
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
          bytes memory userOpCalldata = abi.encodeCall(
             Nexus.execute,

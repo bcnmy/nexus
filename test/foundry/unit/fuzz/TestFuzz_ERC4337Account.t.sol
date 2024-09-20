@@ -150,7 +150,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         });
 
         PackedUserOperation[] memory withdrawUserOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE));
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
     }
 }

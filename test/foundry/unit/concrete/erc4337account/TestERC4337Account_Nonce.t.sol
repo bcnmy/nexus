@@ -31,7 +31,7 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
         assertEq(counter.getNumber(), 0, "Counter should start at 0");
 
         Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(counter.getNumber(), 1, "Counter should have been incremented");
@@ -46,7 +46,7 @@ contract TestERC4337Account_Nonce is NexusTest_Base {
         Execution[] memory executions = prepareSingleExecution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         // The method should fail
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
 

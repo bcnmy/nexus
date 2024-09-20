@@ -45,7 +45,7 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
 
         Execution[] memory executions = prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(depositBefore + defaultDepositAmount - (gasUsed * tx.gasprice), ENTRYPOINT.balanceOf(address(BOB_ACCOUNT)), defaultMaxPercentDelta);
@@ -59,7 +59,7 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
 
         Execution memory execution = Execution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         Execution[] memory executions = prepareSeveralIdenticalExecutions(execution, executionsNumber);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(
@@ -75,7 +75,7 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
         uint256 depositBefore = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
 
         Execution[] memory executions = prepareSingleExecution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(depositBefore + defaultDepositAmount - (gasUsed * tx.gasprice), ENTRYPOINT.balanceOf(address(BOB_ACCOUNT)), defaultMaxPercentDelta);
@@ -89,7 +89,7 @@ contract TestERC4337Account_AddDeposit is NexusTest_Base {
 
         Execution memory execution = Execution(address(BOB_ACCOUNT), defaultDepositAmount, abi.encodeWithSignature("addDeposit()"));
         Execution[] memory executions = prepareSeveralIdenticalExecutions(execution, executionsNumber);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         almostEq(
