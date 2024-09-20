@@ -389,21 +389,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             revert ValidatorNotInstalled(enableModeSigValidator);
         }
         bytes32 eip712Digest = _hashTypedData(structHash);
-        // Try different ways to validate the signature as we are not sure what 1271 flavours validator supports
-        // Try standard IERC-1271/ERC-7739 interface first.
+       
+        // Use standard IERC-1271/ERC-7739 interface.
         // Even if the validator doesn't support 7739 under the hood, it is still secure, 
         // as eip712digest is already built based on 712Domain of this Smart Account
         // This interface should always be exposed by validators as per ERC-7579
-        if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) 
-                return true;
-        // If this haven't worked (this can be not only when the sig is incorrect, but also when IValidator.isValidSignatureWithSender only expects 7739 payload,
-        // which haven't been provided), try dedicated vanilla ERC-1271 interface. 
-        // It can be exposed by 7739-enabled validators for the cases, when 7739 is excessive
-        // enable mode is one of those cases (see above)
-        try IERC1271Vanilla(enableModeSigValidator).isValidSignatureWithSenderVanilla(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
             return res == ERC1271_MAGICVALUE;
-        } catch {}
-        return false;
+        } catch {
+            return false;
+        }
     }
 
     /// @notice Builds the enable mode data hash as per eip712

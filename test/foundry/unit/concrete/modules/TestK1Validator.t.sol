@@ -152,10 +152,8 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_Failure() public {
         prank(address(BOB_ACCOUNT));
 
-        bytes4 result =
-            validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
-
-        assertEq(result, ERC1271_INVALID, "Signature should be invalid");
+        vm.expectRevert(); //it should revert as last try to check if it's an RPC call which reverts if called on-chain
+        validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
     }
 
     /// @notice Tests the transferOwnership function to ensure ownership is transferred correctly

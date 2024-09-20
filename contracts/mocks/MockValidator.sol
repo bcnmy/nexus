@@ -9,9 +9,8 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
-import { IERC1271Vanilla } from "../interfaces/modules/IERC1271Vanilla.sol";
 
-contract MockValidator is ERC7739Validator, IERC1271Vanilla {
+contract MockValidator is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -19,23 +18,26 @@ contract MockValidator is ERC7739Validator, IERC1271Vanilla {
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
-
-        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
-
-        if (_validateSignatureForOwner(smartAccountOwners[msg.sender], computeHash, truncatedSignature)) {
-            // try ERC-7739
-            return ERC1271_MAGICVALUE;
-        } else {
-            // try vanilla ERC-1271
-            return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
-        }
-    }
-
-    function isValidSignatureWithSenderVanilla(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
-        return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        external
+        view
+        virtual
+        returns (bytes4 sigValidationResult)
+    {   
+        // can put additional checks based on sender here
+        
+        // check if sig is valid
+        bool success = _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            // We use `0xffffffff` for invalid, in convention with the reference implementation.
+            sigValidationResult := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+        } 
     }
 
     // ISessionValidator interface for smart session
@@ -52,6 +54,37 @@ contract MockValidator is ERC7739Validator, IERC1271Vanilla {
             return true;
         }
         return false;
+    }
+
+    /// @dev Returns whether the `hash` and `signature` are valid.
+    ///      Obtains the authorized signer's credentials and calls some
+    ///      module's specific internal function to validate the signature
+    ///      against credentials.
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        override
+        returns (bool) 
+    {
+        // obtain credentials
+        address owner = smartAccountOwners[msg.sender];
+
+        // call custom internal function to validate the signature against credentials
+        return _validateSignatureForOwner(owner, hash, signature);
+    }
+
+    /// @dev Returns whether the `sender` is considered safe, such
+    /// that we don't need to use the nested EIP-712 workflow.
+    /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
+    // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
+    // is known to include the account in the hash to be signed.
+    // msg.sender = Smart Account
+    // sender = 1271 og request sender        
+    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
+        return ( 
+                    sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
+                    sender == msg.sender 
+                );
     }
 
     function onInstall(bytes calldata data) external {

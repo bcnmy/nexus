@@ -232,7 +232,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]);
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) returns (bytes4 res) {
+            return res;
+        } catch {
+            return bytes4(0xffffffff);
+        }
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
