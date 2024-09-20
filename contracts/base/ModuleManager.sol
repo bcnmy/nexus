@@ -24,7 +24,6 @@ import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManager
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "contracts/types/Constants.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
-import { IERC1271Vanilla } from "../interfaces/modules/IERC1271Vanilla.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
