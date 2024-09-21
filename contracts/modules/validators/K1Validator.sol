@@ -79,6 +79,7 @@ contract K1Validator is IValidator, ERC7739Validator {
      */
     function onUninstall(bytes calldata data) external override {
         delete smartAccountOwners[msg.sender];
+        safeSenders.removeAll(msg.sender);
     }
 
     /**
