@@ -49,20 +49,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         _;
     }
 
-    /// @notice Ensures the given validator is a registered validator module.
-    modifier onlyValidatorModule(address validator) {
-        require(_getAccountStorage().validators.contains(validator), InvalidModule(validator));
-        _;
-    }
-
-    /// @notice Ensures the caller is authorized.
-    modifier onlyAuthorized() {
-        if (msg.sender != _ENTRYPOINT && msg.sender != address(this) && !_getAccountStorage().executors.contains(msg.sender)) {
-            revert UnauthorizedOperation(msg.sender);
-        }
-        _;
-    }
-
     /// @notice Does pre-checks and post-checks using an installed hook on the account.
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
