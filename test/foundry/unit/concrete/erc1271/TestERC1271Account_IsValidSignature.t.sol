@@ -19,7 +19,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         uint256 missingAccountFunds;
     }
 
-    bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     /// @notice Initializes the testing environment.
