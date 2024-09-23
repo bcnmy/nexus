@@ -13,6 +13,8 @@ contract TestK1Validator is NexusTest_Base {
     bytes32 private userOpHash;
     bytes private signature;
 
+    using ModuleInstallLib for bytes;
+
     /// @notice Sets up the testing environment by deploying the contract and initializing variables
     function setUp() public {
         init();
@@ -22,7 +24,7 @@ contract TestK1Validator is NexusTest_Base {
 
         // Prepare the call data for installing the validator module
         bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encodePacked(BOB_ADDRESS));
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), (abi.encodePacked(BOB_ADDRESS)).encodeAsValidatorData());
 
         // Create an execution array with the installation call data
         Execution[] memory execution = new Execution[](1);
@@ -56,7 +58,7 @@ contract TestK1Validator is NexusTest_Base {
     function test_OnInstall_Success() public {
         prank(address(ALICE_ACCOUNT));
 
-        validator.onInstall(abi.encodePacked(ALICE_ADDRESS));
+        validator.onInstall(abi.encodePacked(ALICE_ADDRESS).encodeAsValidatorData());
 
         assertEq(validator.smartAccountOwners(address(ALICE_ACCOUNT)), ALICE_ADDRESS, "Owner should be correctly set");
     }
@@ -75,7 +77,8 @@ contract TestK1Validator is NexusTest_Base {
         address prev = SentinelListHelper.findPrevious(array, remove);
         if (prev == address(0)) prev = address(0x01);
 
-        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encode(prev, ""));
+        bytes memory k1OnUninstallData = bytes("").encodeAsValidatorData();
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encode(prev, k1OnUninstallData));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);

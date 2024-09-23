@@ -14,6 +14,7 @@ import "forge-std/src/Vm.sol";
 import "solady/src/utils/ECDSA.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "contracts/lib/ModuleInstallLib.sol";
 
 // ==========================
 // Account Abstraction Imports

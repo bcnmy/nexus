@@ -9,6 +9,7 @@ import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "..
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ModuleInstallLib } from "../../lib/ModuleInstallLib.sol";
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -27,9 +28,15 @@ contract K1Validator is IValidator, ERC7739Validator {
     using SignatureCheckerLib for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    using ModuleInstallLib for bytes;
+
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
+
+
+    // Module type stateless validator
+    uint256 constant ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = 7;
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
     mapping(address => address) public smartAccountOwners;
@@ -64,11 +71,13 @@ contract K1Validator is IValidator, ERC7739Validator {
     function onInstall(bytes calldata data) external override {
         require(data.length != 0, NoOwnerProvided());
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
-        address newOwner = address(bytes20(data));
-        require(!_isContract(newOwner), NewOwnerIsContract());
-        smartAccountOwners[msg.sender] = newOwner;
-        if (data.length > 20) {
-            _fillSafeSenders(data[20:]);
+        if(data.asValidator()) {
+            address newOwner = address(bytes20(data[1:21]));
+            require(!_isContract(newOwner), NewOwnerIsContract());
+            smartAccountOwners[msg.sender] = newOwner;
+            if (data.length > 21) {
+                _fillSafeSenders(data[21:]);
+            }
         }
     }
 
@@ -78,8 +87,10 @@ contract K1Validator is IValidator, ERC7739Validator {
      * @param data The data to de-initialize the module with
      */
     function onUninstall(bytes calldata data) external override {
-        delete smartAccountOwners[msg.sender];
-        safeSenders.removeAll(msg.sender);
+        if(data.asValidator()) {
+            delete smartAccountOwners[msg.sender];
+            safeSenders.removeAll(msg.sender);
+        }
     }
 
     /**
@@ -271,9 +282,9 @@ contract K1Validator is IValidator, ERC7739Validator {
     }
 
     /// @notice Checks if the module is of the specified type
-    /// @param typeID The type ID to check
+    /// @param typeId The type ID to check
     /// @return True if the module is of the specified type, false otherwise
-    function isModuleType(uint256 typeID) external pure returns (bool) {
-        return typeID == MODULE_TYPE_VALIDATOR;
+    function isModuleType(uint256 typeId) external pure returns (bool) {
+        return typeId == MODULE_TYPE_VALIDATOR || typeId == ERC7579_MODULE_TYPE_STATELESS_VALIDATOR;
     }
 }
