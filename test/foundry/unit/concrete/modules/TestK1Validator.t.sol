@@ -23,9 +23,13 @@ contract TestK1Validator is NexusTest_Base {
         validator = new K1Validator();
         mockSafe1271Caller = new MockSafe1271Caller();
 
+        bytes memory k1ValidatorSetupData = abi.encodePacked(
+            BOB_ADDRESS, //owner
+            address(mockSafe1271Caller) //safe sender
+        );
         // Prepare the call data for installing the validator module
         bytes memory callData1 =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), (abi.encodePacked(BOB_ADDRESS)).encodeAsValidatorData());
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), k1ValidatorSetupData.encodeAsValidatorData());
         bytes memory callData2 =
             abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockSafe1271Caller), "");            
 
@@ -317,9 +321,11 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_SafeCaller_Success() public {
         assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 0);
 
-        // set mockSafe1271Caller as safe sender in k1 validator
         vm.startPrank(address(BOB_ACCOUNT));
-        validator.addSafeSender(address(mockSafe1271Caller));
+       
+       // alternative way of setting mockSafe1271Caller as safe sender in k1 validator
+       // commented out as it was already set at setup
+       // validator.addSafeSender(address(mockSafe1271Caller));
 
         bytes32 mockUserOpHash = keccak256(abi.encodePacked("123"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, mockUserOpHash);
