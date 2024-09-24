@@ -46,6 +46,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev The event emitted when an emergency hook uninstallation is initiated.
     event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
 
+    /// @dev The event emitted when an emergency hook uninstallation request is reset.
+    event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
+
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
@@ -179,6 +182,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
+        require(_isModuleInstalled(MODULE_TYPE_HOOK, hook, deInitData), ModuleNotInstalled(MODULE_TYPE_HOOK, hook));
         AccountStorage storage accountStorage = _getAccountStorage();
         uint256 hookTimelock = accountStorage.emergencyUninstallTimelock[hook];
 
@@ -189,7 +193,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (block.timestamp >= hookTimelock + 3 * _EMERGENCY_TIMELOCK) {
             // if the timelock has been left for too long, reset it
             accountStorage.emergencyUninstallTimelock[hook] = block.timestamp;
-            emit EmergencyHookUninstallRequest(hook, block.timestamp);
+            emit EmergencyHookUninstallRequestReset(hook, block.timestamp);
         } else if (block.timestamp >= hookTimelock + _EMERGENCY_TIMELOCK) {
             // if the timelock expired, clear it and uninstall the hook
             accountStorage.emergencyUninstallTimelock[hook] = 0;
