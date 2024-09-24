@@ -8,7 +8,6 @@ import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTest_Base {
-    using ModuleInstallLib for bytes;
 
     K1Validator private validator;
     struct TestTemps {
@@ -201,7 +200,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
             validator,
-            abi.encodePacked(user.addr).encodeAsValidatorData()
+            abi.encodePacked(user.addr)
         );
 
         // Prepare execution array
