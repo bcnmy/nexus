@@ -87,6 +87,16 @@ contract K1Validator is IValidator, ERC7739Validator {
         smartAccountOwners[msg.sender] = newOwner;
     }
 
+    /// @notice Adds a safe sender to the _safeSenders list for the smart account
+    function addSafeSender(address sender) external {
+        _safeSenders.add(msg.sender, sender);
+    }
+
+    /// @notice Removes a safe sender from the _safeSenders list for the smart account
+    function removeSafeSender(address sender) external {
+        _safeSenders.remove(msg.sender, sender);
+    }
+
     /**
      * Check if the module is initialized
      * @param smartAccount The smart account to check
@@ -157,16 +167,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         require(data.length == 20, InvalidDataLength());
         address owner = address(bytes20(data[0:20]));
         return _validateSignatureForOwner(owner, hash, sig);
-    }
-
-    /// @notice Adds a safe sender to the _safeSenders list for the smart account
-    function addSafeSender(address sender) external {
-        _safeSenders.add(msg.sender, sender);
-    }
-
-    /// @notice Removes a safe sender from the _safeSenders list for the smart account
-    function removeSafeSender(address sender) external {
-        _safeSenders.remove(msg.sender, sender);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
