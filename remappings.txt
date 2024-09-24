@@ -7,3 +7,4 @@ excessively-safe-call/=node_modules/excessively-safe-call
 sentinellist/=node_modules/sentinellist/
 ds-test/=node_modules/ds-test/src/
 solarray/=node_modules/solarray/src/
+enumerableset4337/=node_modules/enumerablemap/src/

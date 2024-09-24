@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
-import { EnumerableSet } from "../../utils/EnumerableSet4337.sol";
+import { EnumerableSet } from "enumerableset4337/EnumerableSet4337.sol";
 import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
