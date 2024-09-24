@@ -264,4 +264,22 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
+
+    function test_onTokenReceived_Success() public {
+        vm.startPrank(address(ENTRYPOINT));
+        //ERC-721
+        (bool success, bytes memory data) = address(BOB_ACCOUNT).call{value: 0}(hex'150b7a02');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'150b7a02')));
+        //ERC-1155 
+        (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'f23a6e61');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e61')));
+        //ERC-1155 Batch
+        (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'bc197c81');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c81')));
+
+        vm.stopPrank();
+    }
 }

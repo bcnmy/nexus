@@ -12,8 +12,6 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -26,9 +24,12 @@ import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManager
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
+
+import "forge-std/src/console2.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -65,11 +66,23 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     receive() external payable {}
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable withHook {
+    fallback() external payable {
+
+        address hook = _getHook();
+        bytes memory hookData;
+        if (hook != address(0)) {
+            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+        }
+
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
+
+        bool success;
+        bytes memory result;
+        
         if (handler != address(0)) {
+            console2.log(handler);
             if (calltype == CALLTYPE_STATIC) {
                 assembly {
                     calldatacopy(0, 0, calldatasize())
@@ -83,10 +96,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                         revert(0, returndatasize())
                     }
                     returndatacopy(0, 0, returndatasize())
-                    return(0, returndatasize())
+                    //return(0, returndatasize())
                 }
             }
+            console2.log("x000");
             if (calltype == CALLTYPE_SINGLE) {
+                console2.log("x001");
                 assembly {
                     calldatacopy(0, 0, calldatasize())
 
@@ -94,27 +109,63 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                     // Then the address without padding is stored right after the calldata
                     mstore(calldatasize(), shl(96, caller()))
 
+                    /*
                     if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
                         returndatacopy(0, 0, returndatasize())
                         revert(0, returndatasize())
                     }
-                    returndatacopy(0, 0, returndatasize())
-                    return(0, returndatasize())
+                    */
+                    //success := call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)
+                    //returndatacopy(0, 0, returndatasize())
+                    //return(0, returndatasize())
+                }
+                console2.log("x002");
+            }
+
+            // Use revert message from fallback handler
+            if (!success) {
+                assembly {
+                    revert(add(result, 0x20), mload(result))
+                }
+            }   
+        } else {
+            bytes32 s;
+        
+            // The call can be one of onERCXXXReceived
+            /// @solidity memory-safe-assembly
+            assembly {
+                s := calldataload(0)
+                // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+                // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+                // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+                if or(
+                    eq(s, 0x150b7a0200000000000000000000000000000000000000000000000000000000), 
+                    or(
+                        eq(s, 0xf23a6e6100000000000000000000000000000000000000000000000000000000), 
+                        eq(s, 0xbc197c8100000000000000000000000000000000000000000000000000000000)
+                    )
+                ) {
+                    success := true // it is one of onERCXXXReceived
+                    result := mload(0x40) //result was set to 0x60 as it was empty, so we need to find a new space for it            
+                    mstore(result, 0x04) //store length
+                    mstore(add(result, 0x20), s) //store calldata
+                    mstore(0x40, add(result, 0x24)) //allocate memory
                 }
             }
+
+            // if there's no handler and it is not the onERCXXXReceived call, revert 
+            require(success, MissingFallbackHandler(msg.sig));
         }
-        /// @solidity memory-safe-assembly
+
+        // Otherwise, do hook post check and return result 
+        // Hook and return
+        if (hook != address(0)) {
+            IHook(hook).postCheck(hookData);
+        }
+        console2.logBytes(result);
         assembly {
-            let s := shr(224, calldataload(0))
-            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
-            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
-            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
-            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
-                mstore(0x20, s) // Store `msg.sig`.
-                return(0x3c, 0x20) // Return `msg.sig`.
-            }
+            return(add(result, 0x20), mload(result))
         }
-        revert MissingFallbackHandler(msg.sig);
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
