@@ -19,6 +19,7 @@ import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
+import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "contracts/types/Constants.sol";
@@ -28,8 +29,6 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { IERC7739 } from "../interfaces/IERC7739.sol";
 import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
-
-import "forge-std/src/console2.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -43,6 +42,8 @@ import "forge-std/src/console2.sol";
 abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
+    using ExecLib for address;
+    using ExcessivelySafeCall for address;
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
@@ -68,70 +69,40 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
     fallback() external payable {
 
+        // get hook
         address hook = _getHook();
         bytes memory hookData;
+
+        // do hook pre check
         if (hook != address(0)) {
             hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
         }
 
+        bool success;
+        bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
-
-        bool success;
-        bytes memory result;
         
         if (handler != address(0)) {
-            console2.log(handler);
+            //if there's a fallback handler, call it 
             if (calltype == CALLTYPE_STATIC) {
-                assembly {
-                    calldatacopy(0, 0, calldatasize())
-
-                    // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                    // Then the address without padding is stored right after the calldata
-                    mstore(calldatasize(), shl(96, caller()))
-
-                    if iszero(staticcall(gas(), handler, 0, add(calldatasize(), 20), 0, 0)) {
-                        returndatacopy(0, 0, returndatasize())
-                        revert(0, returndatasize())
-                    }
-                    returndatacopy(0, 0, returndatasize())
-                    //return(0, returndatasize())
-                }
-            }
-            console2.log("x000");
-            if (calltype == CALLTYPE_SINGLE) {
-                console2.log("x001");
-                assembly {
-                    calldatacopy(0, 0, calldatasize())
-
-                    // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                    // Then the address without padding is stored right after the calldata
-                    mstore(calldatasize(), shl(96, caller()))
-
-                    /*
-                    if iszero(call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)) {
-                        returndatacopy(0, 0, returndatasize())
-                        revert(0, returndatasize())
-                    }
-                    */
-                    //success := call(gas(), handler, callvalue(), 0, add(calldatasize(), 20), 0, 0)
-                    //returndatacopy(0, 0, returndatasize())
-                    //return(0, returndatasize())
-                }
-                console2.log("x002");
+                (success, result) = handler.staticcall(ExecLib.get2771CallData());
+            } else if (calltype == CALLTYPE_SINGLE) {
+                (success, result) = handler.call{value: msg.value}(ExecLib.get2771CallData());
+            } else {
+                revert UnsupportedCallType(calltype);
             }
 
-            // Use revert message from fallback handler
+            // Use revert message from fallback handler if the call was not successful
             if (!success) {
                 assembly {
                     revert(add(result, 0x20), mload(result))
                 }
             }   
         } else {
+            // If there's no handler, the call can be one of onERCXXXReceived()
             bytes32 s;
-        
-            // The call can be one of onERCXXXReceived
             /// @solidity memory-safe-assembly
             assembly {
                 s := calldataload(0)
@@ -152,8 +123,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                     mstore(0x40, add(result, 0x24)) //allocate memory
                 }
             }
-
-            // if there's no handler and it is not the onERCXXXReceived call, revert 
+            // if there was no handler and it is not the onERCXXXReceived call, revert 
             require(success, MissingFallbackHandler(msg.sig));
         }
 
@@ -162,7 +132,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         if (hook != address(0)) {
             IHook(hook).postCheck(hookData);
         }
-        console2.logBytes(result);
         assembly {
             return(add(result, 0x20), mload(result))
         }
@@ -285,7 +254,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Sentinel pointing to itself means the list is empty, so check this after removal
         // Below error is very specific to uninstalling validators.
         require(_hasValidators(), CanNotRemoveLastValidator());
-        ExcessivelySafeCall.excessivelySafeCall(validator, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+        validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
@@ -303,7 +272,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _uninstallExecutor(address executor, bytes calldata data) internal virtual {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
-        ExcessivelySafeCall.excessivelySafeCall(executor, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+        executor.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -322,7 +291,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
-        ExcessivelySafeCall.excessivelySafeCall(hook, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
+        hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -373,7 +342,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The de-initialization data containing the selector.
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
-        ExcessivelySafeCall.excessivelySafeCall(fallbackHandler, gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
+        fallbackHandler.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
     }
 
     /// @notice Installs a module with multiple types in a single operation.
