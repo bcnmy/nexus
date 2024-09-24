@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
+import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 
 /// @title TestK1Validator
 /// @notice Unit tests for the K1Validator contract

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.27;
 
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "enumerableset4337/EnumerableSet4337.sol";
-import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../../contracts/types/Constants.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../../contracts/types/Constants.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
@@ -34,7 +33,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Mapping of smart account addresses to their respective owner addresses
     mapping(address => address) public smartAccountOwners;
 
-    EnumerableSet.AddressSet private safeSenders;
+    EnumerableSet.AddressSet private _safeSenders;
 
     /// @notice Error to indicate that no owner was provided during installation
     error NoOwnerProvided();
@@ -74,12 +73,18 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     /**
      * De-initialize the module with the given data
-     *
-     * @param data The data to de-initialize the module with
      */
-    function onUninstall(bytes calldata data) external override {
+    function onUninstall(bytes calldata) external override {
         delete smartAccountOwners[msg.sender];
-        safeSenders.removeAll(msg.sender);
+        _safeSenders.removeAll(msg.sender);
+    }
+
+    /// @notice Transfers ownership of the validator to a new owner
+    /// @param newOwner The address of the new owner
+    function transferOwnership(address newOwner) external {
+        require(newOwner != address(0), ZeroAddressNotAllowed());
+        require(!_isContract(newOwner), NewOwnerIsContract());
+        smartAccountOwners[msg.sender] = newOwner;
     }
 
     /**
@@ -90,14 +95,6 @@ contract K1Validator is IValidator, ERC7739Validator {
      */
     function isInitialized(address smartAccount) external view returns (bool) {
         return _isInitialized(smartAccount);
-    }
-
-    /// @notice Transfers ownership of the validator to a new owner
-    /// @param newOwner The address of the new owner
-    function transferOwnership(address newOwner) external {
-        require(newOwner != address(0), ZeroAddressNotAllowed());
-        require(!_isContract(newOwner), NewOwnerIsContract());
-        smartAccountOwners[msg.sender] = newOwner;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -162,14 +159,14 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
-    /// @notice Adds a safe sender to the safeSenders list for the smart account
+    /// @notice Adds a safe sender to the _safeSenders list for the smart account
     function addSafeSender(address sender) external {
-        safeSenders.add(msg.sender, sender);
+        _safeSenders.add(msg.sender, sender);
     }
 
-    /// @notice Removes a safe sender from the safeSenders list for the smart account
+    /// @notice Removes a safe sender from the _safeSenders list for the smart account
     function removeSafeSender(address sender) external {
-        safeSenders.remove(msg.sender, sender);
+        _safeSenders.remove(msg.sender, sender);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -201,7 +198,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         return ( 
                     sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
                     sender == msg.sender || // Smart Account. Assume smart account never sends non safe eip-712 struct
-                    safeSenders.contains(msg.sender, sender) // check if sender is in safeSenders for the Smart Account
+                    _safeSenders.contains(msg.sender, sender) // check if sender is in _safeSenders for the Smart Account
                 );
     }
    
@@ -247,10 +244,10 @@ contract K1Validator is IValidator, ERC7739Validator {
         return size > 0;
     }
 
-    // @notice Fills the safeSenders list from the given data
+    // @notice Fills the _safeSenders list from the given data
     function _fillSafeSenders(bytes calldata data) private {
         for (uint256 i; i < data.length / 20; i++) {
-            safeSenders.add(msg.sender, address(bytes20(data[20*i:20*(i+1)])));
+            _safeSenders.add(msg.sender, address(bytes20(data[20*i:20*(i+1)])));
         }
     }
 
