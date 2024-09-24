@@ -9,6 +9,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
     "dotenv": "^16.4.5",
+    "enumerablemap": "https://github.com/erc7579/enumerablemap",
     "solarray": "github:sablier-labs/solarray"
   },
   "devDependencies": {
