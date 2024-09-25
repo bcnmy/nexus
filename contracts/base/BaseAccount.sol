@@ -13,8 +13,6 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-
-import { Storage } from "./Storage.sol";
 import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 
 /// @title Nexus - BaseAccount
@@ -25,9 +23,13 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract BaseAccount is Storage, IBaseAccount {
+contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0-beta";
+
+    /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
+    /// This address is consistent across all supported networks.
+    address internal immutable _ENTRYPOINT;
 
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
