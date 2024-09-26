@@ -282,11 +282,10 @@ abstract contract ERC7739Validator is IERC7739 {
             /*bytes1 fields*/ string memory name,
             string memory version,
             uint256 chainId,
-            address verifyingContract,
+            address verifyingContract /*bytes32 salt*/ /*uint256[] memory extensions*/,
             ,
 
-        ) = /*bytes32 salt*/ /*uint256[] memory extensions*/
-            EIP712(account).eip712Domain();
+        ) = EIP712(account).eip712Domain();
 
         /// @solidity memory-safe-assembly
         assembly {

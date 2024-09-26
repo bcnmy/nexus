@@ -2110,10 +2110,6 @@ enquirer@^2.3.0, enquirer@^2.3.6:
     ansi-colors "^4.1.1"
     strip-ansi "^6.0.1"
 
-"enumerablemap@https://github.com/erc7579/enumerablemap":
-  version "0.0.0"
-  resolved "https://github.com/erc7579/enumerablemap#19601b893043a92facd413fa249ea23734523be2"
-
 env-paths@^2.2.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/env-paths/-/env-paths-2.2.1.tgz#420399d416ce1fbe9bc0a07c62fa68d67fd0f8f2"
