@@ -105,21 +105,22 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             bytes32 s;
             /// @solidity memory-safe-assembly
             assembly {
-                s := calldataload(0)
+                //s := calldataload(0)
+                s := shr(224, calldataload(0))
                 // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
                 // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
                 // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
                 if or(
-                    eq(s, 0x150b7a0200000000000000000000000000000000000000000000000000000000), 
+                    eq(s, 0x150b7a02), 
                     or(
-                        eq(s, 0xf23a6e6100000000000000000000000000000000000000000000000000000000), 
-                        eq(s, 0xbc197c8100000000000000000000000000000000000000000000000000000000)
+                        eq(s, 0xf23a6e61), 
+                        eq(s, 0xbc197c81)
                     )
                 ) {
                     success := true // it is one of onERCXXXReceived
                     result := mload(0x40) //result was set to 0x60 as it was empty, so we need to find a new space for it            
                     mstore(result, 0x04) //store length
-                    mstore(add(result, 0x20), s) //store calldata
+                    mstore(add(result, 0x20), shl(224, s)) //store calldata
                     mstore(0x40, add(result, 0x24)) //allocate memory
                 }
             }
