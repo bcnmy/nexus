@@ -229,7 +229,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]);
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) returns (bytes4 res) {
+            return res;
+        } catch {
+            return bytes4(0xffffffff);
+        }
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
@@ -317,29 +321,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
-    /// with a specific validator.
-    ///
-    /// Temporary implementation, not following ERC-7739 interface.
-    /// See https://ethereum-magicians.org/t/erc-7739-readable-typed-signatures-for-smart-accounts/20513/2
-    /// for discussions.
-    ///
-    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
-    /// denoting support for the default behavior, as implemented in
-    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
-    /// Future extensions should return a different non-zero `result` to denote different behavior.
-    /// This method intentionally returns bytes32 to allow freedom for future extensions.
-    function supportsNestedTypedDataSignWithValidator(address validator) public view virtual returns (bytes32) {
-        return (IERC7739(validator).supportsNestedTypedDataSign());
-    }
-
-    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
     /// Offchain usage only
     /// Iterates over all the validators
     function supportsNestedTypedDataSign() public view virtual returns (bytes32) {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         address next = validators.entries[SENTINEL];
         while (next != ZERO_ADDRESS && next != SENTINEL) {
-            if (IERC7739(next).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            try IERC7739(next).supportsNestedTypedDataSign() returns (bytes32 res) {
+                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            } catch {}
             next = validators.entries[next];
         }
         return bytes4(0xffffffff);
