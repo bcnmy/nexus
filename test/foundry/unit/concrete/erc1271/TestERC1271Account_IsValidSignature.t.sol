@@ -19,7 +19,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         uint256 missingAccountFunds;
     }
 
-    bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     /// @notice Initializes the testing environment.
@@ -78,43 +77,37 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
 
     /// @notice Tests the validation of a signature that involves ERC-6492 unwrapping.
     function test_isValidSignature_ERC6492Unwrapping() public {
-        // Prepare the original data
-        bytes32 originalHash = keccak256(abi.encodePacked("testERC6492Unwrapping"));
+        TestTemps memory t;
+        t.contents = keccak256(abi.encodePacked("testERC6492Unwrapping"));
 
-        // Sign the message using ALICE's private key
-        bytes memory originalSignature = signMessage(ALICE, originalHash);
+        bytes32 dataToSign = toERC1271Hash(t.contents, address(ALICE_ACCOUNT));
+
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
+
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
 
         // Wrap the original signature using the ERC6492 format
-        bytes memory wrappedSignature = erc6492Wrap(originalSignature);
+        bytes memory wrappedSignature = erc6492Wrap(signature);
 
-        // Construct the complete signature with the validator address
-        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), wrappedSignature);
-
-        // Call isValidSignature and check the result
-        ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), wrappedSignature));
+        assertEq(ret, bytes4(0x1626ba7e));
     }
 
     /// @notice Tests the validation of a signature that does not involve ERC-6492 unwrapping.
     function test_isValidSignature_NoERC6492Unwrapping() public view {
-        // Prepare the original data
-        bytes32 originalHash = keccak256(abi.encodePacked("testNoERC6492Unwrapping"));
+        TestTemps memory t;
+        t.contents = keccak256(abi.encodePacked("testERC6492Unwrapping"));
 
-        // Sign the message using ALICE's private key
-        bytes memory originalSignature = signMessage(ALICE, originalHash);
+        bytes32 dataToSign = toERC1271Hash(t.contents, address(ALICE_ACCOUNT));
 
-        // Construct the complete signature with the validator address
-        bytes memory completeSignature = abi.encodePacked(address(VALIDATOR_MODULE), originalSignature);
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
 
-        // Call isValidSignature and check the result
-        ALICE_ACCOUNT.isValidSignature(originalHash, completeSignature);
-    }
-    
-    /// @notice Tests the supportsNestedTypedDataSignWithValidator function.
-    function test_SupportsNestedTypedDataSignWithValidator() public {
-        assertEq(
-            ALICE_ACCOUNT.supportsNestedTypedDataSignWithValidator(address(VALIDATOR_MODULE)),
-            bytes4(keccak256("supportsNestedTypedDataSign()"))
-        );
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(VALIDATOR_MODULE), signature));
+        assertEq(ret, bytes4(0x1626ba7e));
     }
 
     /// @notice Tests the supportsNestedTypedDataSign function.

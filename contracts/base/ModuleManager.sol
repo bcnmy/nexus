@@ -22,13 +22,11 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import { RegistryAdapter } from "./RegistryAdapter.sol";
-import { IERC7739 } from "../interfaces/IERC7739.sol";
-import { IERC1271Legacy } from "../interfaces/modules/IERC1271Legacy.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -180,9 +178,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature))
             revert EnableModeSigError();
-
-        // Ensure the module type is VALIDATOR or MULTI
-        if (moduleType != MODULE_TYPE_VALIDATOR && moduleType != MODULE_TYPE_MULTI) revert InvalidModuleTypeId(moduleType);
 
         _installModule(moduleType, module, moduleInitData);
     }
@@ -381,25 +376,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             revert ValidatorNotInstalled(enableModeSigValidator);
         }
         bytes32 eip712Digest = _hashTypedData(structHash);
-        // have to try different ways to validate the signature as we do not know for sure what 1271 flavours validator supports
-        if (IERC7739(enableModeSigValidator).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) {
-            // if the validator supports 7739, we use just the struct hash, as the full hash will be rebuilt inside 7739 flow
-            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
-                return true;
-            }
-        } else {
-            // if the validator doesn't support 7739 for standard isValidSignatureWithSender, we provide the eip 712 digest
-            if (IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) == ERC1271_MAGICVALUE) {
-                return true;
-            }
-        }
-        // if none of the above worked, try legacy mode. this mode can be exposed by 7739-enabled validators for the cases, when 7739 is excessive
-        // enable is one of those cases, as eip712digest is already built based on 712Domain of this Smart Account
-        // thus 7739 envelope is not required in this case and avoiding it saves some gas
-        try IERC1271Legacy(enableModeSigValidator).isValidSignatureWithSenderLegacy(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+
+        // Use standard IERC-1271/ERC-7739 interface.
+        // Even if the validator doesn't support 7739 under the hood, it is still secure,
+        // as eip712digest is already built based on 712Domain of this Smart Account
+        // This interface should always be exposed by validators as per ERC-7579
+        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
             return res == ERC1271_MAGICVALUE;
-        } catch {}
-        return false;
+        } catch {
+            return false;
+        }
     }
 
     /// @notice Builds the enable mode data hash as per eip712
