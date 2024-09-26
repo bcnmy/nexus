@@ -60,6 +60,7 @@ import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockToken } from "../../../contracts/mocks/MockToken.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
+import { MockSafe1271Caller } from "../../../contracts/mocks/MockSafe1271Caller.sol";
 
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/Counter.sol";

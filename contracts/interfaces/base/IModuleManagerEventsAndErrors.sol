@@ -12,6 +12,8 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
+import { CallType } from "../../lib/ModeLib.sol";
+
 /// @title ERC-7579 Module Manager Events and Errors Interface
 /// @notice Provides event and error definitions for actions related to module management in smart accounts.
 /// @dev Used by IModuleManager to define the events and errors associated with the installation and management of modules.
@@ -90,4 +92,8 @@ interface IModuleManagerEventsAndErrors {
 
     /// @dev Thrown when there is an attempt to install a fallback handler with an invalid calltype for a given selector.
     error FallbackCallTypeInvalid();
+
+    /// @notice Error thrown when an execution with an unsupported CallType was made.
+    /// @param callType The unsupported call type.
+    error UnsupportedCallType(CallType callType);
 }

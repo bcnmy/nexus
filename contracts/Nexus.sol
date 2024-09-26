@@ -46,6 +46,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev The event emitted when an emergency hook uninstallation is initiated.
     event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
 
+    /// @dev The event emitted when an emergency hook uninstallation request is reset.
+    event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
+
     /// @notice Initializes the smart account with the specified entry point.
     constructor(address anEntryPoint) {
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
@@ -149,7 +152,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf withHook {
+    /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -179,6 +183,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
+        require(_isModuleInstalled(MODULE_TYPE_HOOK, hook, deInitData), ModuleNotInstalled(MODULE_TYPE_HOOK, hook));
         AccountStorage storage accountStorage = _getAccountStorage();
         uint256 hookTimelock = accountStorage.emergencyUninstallTimelock[hook];
 
@@ -189,7 +194,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (block.timestamp >= hookTimelock + 3 * _EMERGENCY_TIMELOCK) {
             // if the timelock has been left for too long, reset it
             accountStorage.emergencyUninstallTimelock[hook] = block.timestamp;
-            emit EmergencyHookUninstallRequest(hook, block.timestamp);
+            emit EmergencyHookUninstallRequestReset(hook, block.timestamp);
         } else if (block.timestamp >= hookTimelock + _EMERGENCY_TIMELOCK) {
             // if the timelock expired, clear it and uninstall the hook
             accountStorage.emergencyUninstallTimelock[hook] = 0;
@@ -224,7 +229,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        return IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]);
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) returns (bytes4 res) {
+            return res;
+        } catch {
+            return bytes4(0xffffffff);
+        }
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
@@ -312,29 +321,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
-    /// with a specific validator.
-    ///
-    /// Temporary implementation, not following ERC-7739 interface.
-    /// See https://ethereum-magicians.org/t/erc-7739-readable-typed-signatures-for-smart-accounts/20513/2
-    /// for discussions.
-    ///
-    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
-    /// denoting support for the default behavior, as implemented in
-    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
-    /// Future extensions should return a different non-zero `result` to denote different behavior.
-    /// This method intentionally returns bytes32 to allow freedom for future extensions.
-    function supportsNestedTypedDataSignWithValidator(address validator) public view virtual returns (bytes32) {
-        return (IERC7739(validator).supportsNestedTypedDataSign());
-    }
-
-    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
     /// Offchain usage only
     /// Iterates over all the validators
     function supportsNestedTypedDataSign() public view virtual returns (bytes32) {
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
         address next = validators.entries[SENTINEL];
         while (next != ZERO_ADDRESS && next != SENTINEL) {
-            if (IERC7739(next).supportsNestedTypedDataSign() == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            try IERC7739(next).supportsNestedTypedDataSign() returns (bytes32 res) {
+                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+            } catch {}
             next = validators.entries[next];
         }
         return bytes4(0xffffffff);

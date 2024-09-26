@@ -8,6 +8,7 @@ import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTest_Base {
+
     K1Validator private validator;
     struct TestTemps {
         bytes32 userOpHash;
