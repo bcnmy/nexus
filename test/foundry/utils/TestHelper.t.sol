@@ -235,7 +235,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         returns (PackedUserOperation memory userOp)
     {
         address payable account = calculateAccountAddress(wallet.addr, validator);
-        uint256 nonce = getNonce(account, MODE_VALIDATION, validator);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, validator, bytes3(0));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
@@ -247,19 +247,22 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param account The account address
     /// @param vMode Validation Mode
     /// @param validator The validator address
+    /// @param batchId The batch ID
     /// @return nonce The retrieved nonce
-    function getNonce(address account, bytes1 vMode, address validator) internal view returns (uint256 nonce) {
-        uint192 key = makeNonceKey(vMode, validator);
+    function getNonce(address account, bytes1 vMode, address validator, bytes3 batchId) internal view returns (uint256 nonce) {
+        uint192 key = makeNonceKey(vMode, validator, batchId);
         nonce = ENTRYPOINT.getNonce(address(account), key);
     }
 
     /// @notice Composes the nonce key
     /// @param vMode Validation Mode
     /// @param validator The validator address
+    /// @param batchId The batch ID
     /// @return key The nonce key
-    function makeNonceKey(bytes1 vMode, address validator) internal pure returns (uint192 key) {
+    function makeNonceKey(bytes1 vMode, address validator, bytes3 batchId) internal pure returns (uint192 key) {
         assembly {
             key := or(shr(88, vMode), validator)
+            key := or(shr(64, batchId), key)
         }
     }
 
@@ -366,7 +369,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         Nexus account,
         ExecType execType,
         Execution[] memory executions,
-        address validator
+        address validator,
+        uint256 nonce 
     ) internal view returns (PackedUserOperation[] memory userOps) {
         // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
@@ -374,8 +378,15 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
 
+        uint256 nonceToUse;
+        if(nonce == 0) {
+            nonceToUse = getNonce(address(account), MODE_VALIDATION, validator, bytes3(0));
+        } else {
+            nonceToUse = nonce;
+        }
+
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), MODE_VALIDATION, validator));
+        userOps[0] = buildPackedUserOp(address(account), nonceToUse);
         userOps[0].callData = prepareERC7579ExecuteCallData(execType, executions);
 
         // Sign the operation
@@ -506,13 +517,13 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
     /// @notice Helper function to execute a batch of operations.
     function executeBatch(Vm.Wallet memory user, Nexus userAccount, Execution[] memory executions, ExecType execType) internal {
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 

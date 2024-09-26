@@ -4,6 +4,7 @@ import {
   generateUseropCallData,
   getNonce,
   MODE_VALIDATION,
+  numberTo3Bytes,
 } from "./operationHelpers";
 import { ExecutionMethod, ModuleParams, ModuleType } from "./types";
 
@@ -53,6 +54,7 @@ export const installModule = async (args: ModuleParams) => {
     userOp.sender,
     MODE_VALIDATION,
     await validatorModule.getAddress(),
+    numberTo3Bytes(1),
   );
   userOp.nonce = nonce;
 
@@ -95,6 +97,7 @@ export const uninstallModule = async (args: ModuleParams) => {
     userOp.sender,
     MODE_VALIDATION,
     await validatorModule.getAddress(),
+    numberTo3Bytes(12),
   );
   userOp.nonce = nonce;
 

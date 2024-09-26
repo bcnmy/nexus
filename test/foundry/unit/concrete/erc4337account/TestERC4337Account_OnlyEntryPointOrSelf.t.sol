@@ -17,7 +17,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
     function test_ExecuteUserOp_Valid_FromEntryPoint() public {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -26,7 +26,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
         startPrank(ALICE.addr);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.executeUserOp(userOps[0], bytes32(0));
@@ -110,7 +110,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
         bytes memory callData = abi.encodeWithSelector(BOB_ACCOUNT.withdrawDepositTo.selector, BOB.addr, 0.5 ether);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         uint256 depositAfter = BOB_ACCOUNT.getDeposit();
@@ -123,7 +123,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTest_Base {
         bytes memory callData = abi.encodeWithSelector(BOB_ACCOUNT.installModule.selector, 2, address(EXECUTOR_MODULE), "");
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 }
