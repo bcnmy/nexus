@@ -27,10 +27,6 @@ contract Storage is IStorage {
     /// ERC-7201 namespaced via `keccak256(abi.encode(uint256(keccak256(bytes("biconomy.storage.Nexus"))) - 1)) & ~bytes32(uint256(0xff));`
     bytes32 private constant _STORAGE_LOCATION = 0x0bb70095b32b9671358306b0339b4c06e7cbd8cb82505941fba30d1eb5b82f00;
 
-    /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
-    /// This address is consistent across all supported networks.
-    address internal immutable _ENTRYPOINT;
-
     /// @dev Utilizes ERC-7201's namespaced storage pattern for isolated storage access. This method computes
     /// the storage slot based on a predetermined location, ensuring collision-resistant storage for contract states.
     /// @custom:storage-location ERC-7201 formula applied to "biconomy.storage.Nexus", facilitating unique
