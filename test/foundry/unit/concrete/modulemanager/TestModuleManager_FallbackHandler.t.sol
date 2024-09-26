@@ -11,6 +11,8 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     function setUp() public {
         init();
 
+        Execution[] memory execution = new Execution[](2);
+
         // Custom data for installing the MockHandler with call type STATIC
         bytes memory customData = abi.encode(bytes5(abi.encodePacked(GENERIC_FALLBACK_SELECTOR, CALLTYPE_SINGLE)));
 
@@ -22,13 +24,23 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
             customData
         );
 
-        Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+
+        callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_HOOK,
+            address(HOOK_MODULE),
+            ""
+        );
+
+        execution[1] = Execution(address(BOB_ACCOUNT), 0, callData);
+        
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed
         assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), true, "Fallback handler not installed");
+        assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), true, "Hook not installed");
     }
 
     /// @notice Tests triggering the onGenericFallback function of the fallback handler.
@@ -47,7 +59,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     }
 
     /// @notice Tests that handleOps triggers the generic fallback handler.
-    function test_HandleOpsTriggersGenericFallback() public {
+    function test_HandleOpsTriggersGenericFallback(bool skip) public {
         // Prepare the operation that triggers the fallback handler
         bytes memory dataToTriggerFallback = abi.encodeWithSelector(
             MockHandler(address(0)).onGenericFallback.selector,
@@ -61,12 +73,24 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Prepare UserOperation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
 
-        // Expect the GenericFallbackCalled event from the MockHandler contract
-        vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
-        emit GenericFallbackCalled(address(this), 123, "Example data");
+        if (!skip) {
+            // Expect the GenericFallbackCalled event from the MockHandler contract
+            vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
+            emit GenericFallbackCalled(address(this), 123, "Example data");
+        }
 
         // Call handleOps, which should trigger the fallback handler and emit the event
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// @notice Tests that handleOps triggers the generic fallback handler.
+    function test_HandleOpsTriggersGenericFallback_IsProperlyHooked() public {
+        vm.expectEmit(address(HOOK_MODULE));
+        emit PreCheckCalled();
+        vm.expectEmit(address(HOOK_MODULE));
+        emit PostCheckCalled();
+        // skip fallback emit check as per Matching Sequences section here => https://book.getfoundry.sh/cheatcodes/expect-emit 
+        test_HandleOpsTriggersGenericFallback({skip: true});
     }
 
     /// @notice Tests installing a fallback handler.

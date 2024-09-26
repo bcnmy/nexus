@@ -67,19 +67,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     receive() external payable {}
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable {
+    fallback(bytes calldata callData) external payable withHook() returns (bytes memory) {
+        return _fallback(callData);        
+    }
 
-        // get hook
-        address hook = _getHook();
-        bytes memory hookData;
-
-        // do hook pre check
-        if (hook != address(0)) {
-            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
-        }
-
+    function _fallback(bytes calldata callData) private returns (bytes memory result) {
         bool success;
-        bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
@@ -87,9 +80,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         if (handler != address(0)) {
             //if there's a fallback handler, call it 
             if (calltype == CALLTYPE_STATIC) {
-                (success, result) = handler.staticcall(ExecLib.get2771CallData());
+                (success, result) = handler.staticcall(ExecLib.get2771CallData(callData));
             } else if (calltype == CALLTYPE_SINGLE) {
-                (success, result) = handler.call{value: msg.value}(ExecLib.get2771CallData());
+                (success, result) = handler.call{value: msg.value}(ExecLib.get2771CallData(callData));
             } else {
                 revert UnsupportedCallType(calltype);
             }
@@ -126,15 +119,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             }
             // if there was no handler and it is not the onERCXXXReceived call, revert 
             require(success, MissingFallbackHandler(msg.sig));
-        }
-
-        // Otherwise, do hook post check and return result 
-        // Hook and return
-        if (hook != address(0)) {
-            IHook(hook).postCheck(hookData);
-        }
-        assembly {
-            return(add(result, 0x20), mload(result))
         }
     }
 

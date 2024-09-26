@@ -45,7 +45,7 @@ library ExecLib {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }
 
-    function get2771CallData() internal returns (bytes memory callData) {
+    function get2771CallData(bytes calldata cd) internal returns (bytes memory callData) {
         /// @solidity memory-safe-assembly
         assembly {
             // as per solidity docs
