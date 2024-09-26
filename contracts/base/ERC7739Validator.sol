@@ -11,7 +11,6 @@ abstract contract ERC7739Validator is IERC7739 {
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
     bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
-
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
     /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
     /// denoting support for the default behavior, as implemented in
@@ -22,23 +21,17 @@ abstract contract ERC7739Validator is IERC7739 {
         result = bytes4(0xd620c85a);
     }
 
-
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-
     /// @dev Returns whether the `signature` is valid for the `hash.
     /// Use this in your validator's `isValidSignatureWithSender` implementation.
-    function _erc1271IsValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bool)
-    {
-        return _erc1271IsValidSignatureViaSafeCaller(sender, hash, signature)
-            || _erc1271IsValidSignatureViaNestedEIP712(hash, signature)
-            || _erc1271IsValidSignatureViaRPC(hash, signature);
+    function _erc1271IsValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
+        return
+            _erc1271IsValidSignatureViaSafeCaller(sender, hash, signature) ||
+            _erc1271IsValidSignatureViaNestedEIP712(hash, signature) ||
+            _erc1271IsValidSignatureViaRPC(hash, signature);
     }
 
     /// @dev Returns whether the `msg.sender` is considered safe, such
@@ -56,19 +49,10 @@ abstract contract ERC7739Validator is IERC7739 {
     ///      module's specific internal function to validate the signature
     ///      against credentials.
     /// Override for your module's custom logic.
-    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bool);
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
 
     /// @dev Unwraps and returns the signature.
-    function _erc1271UnwrapSignature(bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bytes calldata result)
-    {
+    function _erc1271UnwrapSignature(bytes calldata signature) internal view virtual returns (bytes calldata result) {
         result = signature;
         /// @solidity memory-safe-assembly
         assembly {
@@ -87,12 +71,11 @@ abstract contract ERC7739Validator is IERC7739 {
 
     /// @dev Performs the signature validation without nested EIP-712 if the caller is
     /// a safe caller. A safe caller must include the address of this account in the hash.
-    function _erc1271IsValidSignatureViaSafeCaller(address sender, bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bool result)
-    {
+    function _erc1271IsValidSignatureViaSafeCaller(
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual returns (bool result) {
         if (_erc1271CallerIsSafe(sender)) result = _erc1271IsValidSignatureNowCalldata(hash, signature);
     }
 
@@ -167,12 +150,7 @@ abstract contract ERC7739Validator is IERC7739 {
     /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
     /// We want to create bazaars, not walled castles.
     /// And we'll use push the Turing Completeness of the EVM to the limits to do so.
-    function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bool result)
-    {
+    function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature) internal view virtual returns (bool result) {
         bytes32 t = _typedDataSignFieldsForAccount(msg.sender);
         /// @solidity memory-safe-assembly
         assembly {
@@ -202,7 +180,11 @@ abstract contract ERC7739Validator is IERC7739 {
                 // `d & 1 == 1` means that `contentsName` is invalid.
                 let d := shr(byte(0, mload(p)), 0x7fffffe000000000000010000000000) // Starts with `[a-z(]`.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
-                for { mstore(add(p, c), 40) } iszero(eq(byte(0, mload(p)), 40)) { p := add(p, 1) } {
+                for {
+                    mstore(add(p, c), 40)
+                } iszero(eq(byte(0, mload(p)), 40)) {
+                    p := add(p, 1)
+                } {
                     d := or(shr(byte(0, mload(p)), 0x120100000001), d) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n") // Store the rest of the encoding.
@@ -230,12 +212,7 @@ abstract contract ERC7739Validator is IERC7739 {
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
     /// This function must always return false or revert if called on-chain.
-    function _erc1271IsValidSignatureViaRPC(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        virtual
-        returns (bool result)
-    {   
+    function _erc1271IsValidSignatureViaRPC(bytes32 hash, bytes calldata signature) internal view virtual returns (bool result) {
         // Non-zero gasprice is a heuristic to check if a call is on-chain,
         // but we can't fully depend on it because it can be manipulated.
         // See: https://x.com/NoahCitron/status/1580359718341484544
@@ -254,7 +231,9 @@ abstract contract ERC7739Validator is IERC7739 {
                     mstore(0x40, 0x40)
                     let gasToBurn := or(add(0xffff, gaslimit()), gaslimit())
                     // Burns gas computationally efficiently. Also, requires that `gas > gasToBurn`.
-                    if or(eq(hash, b), lt(gas(), gasToBurn)) { invalid() }
+                    if or(eq(hash, b), lt(gas(), gasToBurn)) {
+                        invalid()
+                    }
                     // Make a call to this with `b`, efficiently burning the gas provided.
                     // No valid transaction can consume more than the gaslimit.
                     // See: https://ethereum.github.io/yellowpaper/paper.pdf
@@ -299,14 +278,15 @@ abstract contract ERC7739Validator is IERC7739 {
     /// @param structHash the typed data struct hash
     function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
         (
-            /*bytes1 fields*/,
-            string memory name,
+            ,
+            /*bytes1 fields*/ string memory name,
             string memory version,
             uint256 chainId,
             address verifyingContract,
-            /*bytes32 salt*/,
-            /*uint256[] memory extensions*/
-        ) = EIP712(account).eip712Domain();
+            ,
+
+        ) = /*bytes32 salt*/ /*uint256[] memory extensions*/
+            EIP712(account).eip712Domain();
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -328,5 +308,4 @@ abstract contract ERC7739Validator is IERC7739 {
             mstore(0x3a, 0)
         }
     }
-
 }

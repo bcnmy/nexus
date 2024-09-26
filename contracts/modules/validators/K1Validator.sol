@@ -22,7 +22,6 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract K1Validator is IValidator, ERC7739Validator {
-
     using SignatureCheckerLib for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -49,7 +48,6 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
-
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -142,13 +140,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         address sender,
         bytes32 hash,
         bytes calldata signature
-    )
-        external
-        view
-        virtual
-        override
-        returns (bytes4 sigValidationResult)
-    {   
+    ) external view virtual override returns (bytes4 sigValidationResult) {
         // check if sig is valid
         bool success = _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
         /// @solidity memory-safe-assembly
@@ -156,7 +148,7 @@ contract K1Validator is IValidator, ERC7739Validator {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
             // We use `0xffffffff` for invalid, in convention with the reference implementation.
             sigValidationResult := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        } 
+        }
     }
 
     /// @notice ISessionValidator interface for smart session
@@ -170,6 +162,29 @@ contract K1Validator is IValidator, ERC7739Validator {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /// @notice Returns the name of the module
+    /// @return The name of the module
+    function name() external pure returns (string memory) {
+        return "K1Validator";
+    }
+
+    /// @notice Returns the version of the module
+    /// @return The version of the module
+    function version() external pure returns (string memory) {
+        return "1.0.0-beta";
+    }
+
+    /// @notice Checks if the module is of the specified type
+    /// @param typeId The type ID to check
+    /// @return True if the module is of the specified type, false otherwise
+    function isModuleType(uint256 typeId) external pure returns (bool) {
+        return typeId == MODULE_TYPE_VALIDATOR;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -177,12 +192,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
     ///      against credentials.
-    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature)
-        internal
-        view
-        override
-        returns (bool) 
-    {
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
         // call custom internal function to validate the signature against credentials
         return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature);
     }
@@ -193,15 +203,13 @@ contract K1Validator is IValidator, ERC7739Validator {
     // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
     // is known to include the account in the hash to be signed.
     // msg.sender = Smart Account
-    // sender = 1271 og request sender        
+    // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return ( 
-                    sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
-                    sender == msg.sender || // Smart Account. Assume smart account never sends non safe eip-712 struct
-                    _safeSenders.contains(msg.sender, sender) // check if sender is in _safeSenders for the Smart Account
-                );
+        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
+            sender == msg.sender || // Smart Account. Assume smart account never sends non safe eip-712 struct
+            _safeSenders.contains(msg.sender, sender)); // check if sender is in _safeSenders for the Smart Account
     }
-   
+
     /// @notice Internal method that does the job of validating the signature via ECDSA (secp256k1)
     /// @param owner The address of the owner
     /// @param hash The hash of the data to validate
@@ -226,6 +234,13 @@ contract K1Validator is IValidator, ERC7739Validator {
         return false;
     }
 
+    // @notice Fills the _safeSenders list from the given data
+    function _fillSafeSenders(bytes calldata data) private {
+        for (uint256 i; i < data.length / 20; i++) {
+            _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
+        }
+    }
+
     /// @notice Checks if the smart account is initialized with an owner
     /// @param smartAccount The address of the smart account
     /// @return True if the smart account has an owner, false otherwise
@@ -242,35 +257,5 @@ contract K1Validator is IValidator, ERC7739Validator {
             size := extcodesize(account)
         }
         return size > 0;
-    }
-
-    // @notice Fills the _safeSenders list from the given data
-    function _fillSafeSenders(bytes calldata data) private {
-        for (uint256 i; i < data.length / 20; i++) {
-            _safeSenders.add(msg.sender, address(bytes20(data[20*i:20*(i+1)])));
-        }
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     METADATA
-    //////////////////////////////////////////////////////////////////////////*/
-
-    /// @notice Returns the name of the module
-    /// @return The name of the module
-    function name() external pure returns (string memory) {
-        return "K1Validator";
-    }
-
-    /// @notice Returns the version of the module
-    /// @return The version of the module
-    function version() external pure returns (string memory) {
-        return "1.0.0-beta";
-    }
-
-    /// @notice Checks if the module is of the specified type
-    /// @param typeId The type ID to check
-    /// @return True if the module is of the specified type, false otherwise
-    function isModuleType(uint256 typeId) external pure returns (bool) {
-        return typeId == MODULE_TYPE_VALIDATOR;
     }
 }

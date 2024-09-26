@@ -28,4 +28,3 @@ library NonceLib {
         }
     }
 }
-

@@ -370,9 +370,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             revert ValidatorNotInstalled(enableModeSigValidator);
         }
         bytes32 eip712Digest = _hashTypedData(structHash);
-       
+
         // Use standard IERC-1271/ERC-7739 interface.
-        // Even if the validator doesn't support 7739 under the hood, it is still secure, 
+        // Even if the validator doesn't support 7739 under the hood, it is still secure,
         // as eip712digest is already built based on 712Domain of this Smart Account
         // This interface should always be exposed by validators as per ERC-7579
         try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {

@@ -328,8 +328,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         address next = validators.entries[SENTINEL];
         while (next != ZERO_ADDRESS && next != SENTINEL) {
             try IERC7739(next).supportsNestedTypedDataSign() returns (bytes32 res) {
-                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN)
-                    return SUPPORTS_NESTED_TYPED_DATA_SIGN;
+                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
             } catch {}
             next = validators.entries[next];
         }
