@@ -27,6 +27,8 @@ import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SI
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
 
+import "forge-std/src/console2.sol";
+
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
 /// @dev Comprehensive suite of methods for managing smart accounts, integrating module management, execution management, and upgradability via UUPS.
@@ -80,6 +82,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         uint256 missingAccountFunds
     ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
         address validator = op.nonce.getValidator();
+        console2.log("tstored validator address: ", validator);
+        assembly {
+            tstore(0, validator)
+        }
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
             userOp.signature = _enableMode(userOpHash, op.signature);
@@ -97,6 +103,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
+        address validator;
+        assembly {
+            validator := tload(0)
+        }
+        console2.log("tloaded validator address: ", validator);
+        _checkRegistry(validator, MODULE_TYPE_VALIDATOR);
         (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
