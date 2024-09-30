@@ -9,7 +9,8 @@
   "dependencies": {
     "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts/",
     "dotenv": "^16.4.5",
-    "solarray": "github:sablier-labs/solarray"
+    "solarray": "github:sablier-labs/solarray",
+    "viem": "2.7.13"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
