@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import "../../../utils/NexusTest_Base.t.sol";
 import "../../../../../contracts/factory/K1ValidatorFactory.sol";
-import "../../../../../contracts/utils/RegistryBootstrap.sol";
+import "../../../../../contracts/utils/NexusBootstrap.sol";
 import "../../../../../contracts/interfaces/INexus.sol";
 
 /// @title TestK1ValidatorFactory_Deployments
@@ -12,7 +12,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     Vm.Wallet public user;
     bytes initData;
     K1ValidatorFactory public validatorFactory;
-    RegistryBootstrap public bootstrapper;
+    NexusBootstrap public bootstrapper;
 
     /// @notice Sets up the testing environment.
     function setUp() public {
@@ -20,7 +20,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
-        bootstrapper = new RegistryBootstrap();
+        bootstrapper = new NexusBootstrap();
         validatorFactory = new K1ValidatorFactory(
             address(ACCOUNT_IMPLEMENTATION),
             address(FACTORY_OWNER.addr),
@@ -34,7 +34,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesFactory() public {
         address implementation = address(0x123);
         address k1Validator = address(0x456);
-        RegistryBootstrap bootstrapperInstance = new RegistryBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
         K1ValidatorFactory factory = new K1ValidatorFactory(implementation, FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, REGISTRY);
 
         // Verify the implementation address is set correctly
@@ -54,7 +54,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesWithRegistryAddressZero() public {
         IERC7484 registry = IERC7484(address(0));
         address k1Validator = address(0x456);
-        RegistryBootstrap bootstrapperInstance = new RegistryBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
         K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
 
         // Verify the registry address 0
@@ -108,7 +108,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
 
     /// @notice Tests that the constructor reverts if the Bootstrapper address is zero.
     function test_Constructor_RevertIf_BootstrapperIsZero() public {
-        RegistryBootstrap zeroBootstrapper = RegistryBootstrap(payable(0));
+        NexusBootstrap zeroBootstrapper = NexusBootstrap(payable(0));
 
         // Expect the contract deployment to revert with the correct error message
         vm.expectRevert(ZeroAddressNotAllowed.selector);

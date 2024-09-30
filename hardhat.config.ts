@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-foundry";
 import "hardhat-storage-layout";
 import "hardhat-deploy";
 import { dynamicNetworkConfig } from "./scripts/hardhat/dynamicNetworkConfig";
@@ -23,6 +24,7 @@ const config: HardhatUserConfig = {
 					yul: true,
 				},
 			},
+			evmVersion: "cancun",
 		},
 	},
 	networks: {

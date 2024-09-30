@@ -13,7 +13,7 @@ export async function deployToMainnet() {
     ...deployOptions,
     args: [ENTRY_POINT_V7],
   });
-  const RegistryBootstrap = await deployments.deploy("RegistryBootstrap", deployOptions);
+  const NexusBootstrap = await deployments.deploy("NexusBootstrap", deployOptions);
   const K1Validator = await deployments.deploy("K1Validator", deployOptions);
   const BootstrapLib = await deployments.deploy("BootstrapLib", deployOptions);
   const Registry = await deployments.deploy("MockRegistry", deployOptions);
@@ -23,7 +23,7 @@ export async function deployToMainnet() {
       Nexus.address,
       deployOptions.from,
       K1Validator.address,
-      RegistryBootstrap.address,
+      NexusBootstrap.address,
       Registry.address,
     ],
     libraries: {
@@ -42,12 +42,12 @@ export async function deployToMainnet() {
   console.log(`Registry deployed at: ${Registry.address}`);
   console.log(`BootstrapLib deployed at: ${BootstrapLib.address}`);
   console.log(`K1Validator deployed at: ${K1Validator.address}`);
-  console.log(`RegistryBootstrap deployed at: ${RegistryBootstrap.address}`);
+  console.log(`NexusBootstrap deployed at: ${NexusBootstrap.address}`);
   console.log(`Nexus deployed at: ${Nexus.address}`);
 
   return {
     Nexus,
-    RegistryBootstrap,
+    NexusBootstrap,
     K1Validator,
     BootstrapLib,
     Registry,

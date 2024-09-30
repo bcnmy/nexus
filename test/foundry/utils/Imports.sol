@@ -69,7 +69,7 @@ import "../../../contracts/mocks/Counter.sol";
 // Additional Contract Imports
 // ==========================
 import "./../../../contracts/factory/K1ValidatorFactory.sol";
-import "./../../../contracts/utils/RegistryBootstrap.sol";
+import "./../../../contracts/utils/NexusBootstrap.sol";
 import "./../../../contracts/lib/BootstrapLib.sol";
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/MockToken.sol";

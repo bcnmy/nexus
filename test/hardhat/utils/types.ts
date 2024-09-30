@@ -19,7 +19,7 @@ import {
   Stakeable,
   BiconomyMetaFactory,
   NexusAccountFactory,
-  RegistryBootstrap,
+  NexusBootstrap,
   BootstrapLib,
   MockRegistry,
 } from "../../../typechain-types";
@@ -61,7 +61,7 @@ export interface DeploymentFixtureWithSA {
   stakeable: Stakeable;
   metaFactory: BiconomyMetaFactory;
   nexusFactory: NexusAccountFactory;
-  bootstrap: RegistryBootstrap;
+  bootstrap: NexusBootstrap;
   BootstrapLib: BootstrapLib;
   registry: MockRegistry;
 }
