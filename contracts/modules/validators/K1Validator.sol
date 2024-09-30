@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
 //    / | / /__ | |/ /_  _______
@@ -18,7 +17,7 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "../../lib/EnumerableSet4337.sol";
-import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED, ERC1271_MAGICVALUE, ERC1271_INVALID } from "../../types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../types/Constants.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title Nexus - K1Validator (ECDSA)

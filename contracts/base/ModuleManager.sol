@@ -27,8 +27,6 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODU
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
-import { IERC7739 } from "../interfaces/IERC7739.sol";
-
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting

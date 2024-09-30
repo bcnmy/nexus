@@ -384,7 +384,10 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
 
   const registry = await getDeployedRegistry();
 
-  const bootstrap = await deployContract<NexusBootstrap>("NexusBootstrap", deployer);
+  const bootstrap = await deployContract<NexusBootstrap>(
+    "NexusBootstrap",
+    deployer,
+  );
 
   const nexusFactory = await getDeployedAccountK1Factory(
     await smartAccountImplementation.getAddress(),
@@ -443,7 +446,10 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     deployer,
   );
 
-  const bootstrap = await deployContract<NexusBootstrap>("NexusBootstrap", deployer);
+  const bootstrap = await deployContract<NexusBootstrap>(
+    "NexusBootstrap",
+    deployer,
+  );
   const BootstrapLib = await deployContract<BootstrapLib>(
     "BootstrapLib",
     deployer,

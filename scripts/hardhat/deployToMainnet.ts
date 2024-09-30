@@ -13,7 +13,10 @@ export async function deployToMainnet() {
     ...deployOptions,
     args: [ENTRY_POINT_V7],
   });
-  const NexusBootstrap = await deployments.deploy("NexusBootstrap", deployOptions);
+  const NexusBootstrap = await deployments.deploy(
+    "NexusBootstrap",
+    deployOptions,
+  );
   const K1Validator = await deployments.deploy("K1Validator", deployOptions);
   const BootstrapLib = await deployments.deploy("BootstrapLib", deployOptions);
   const Registry = await deployments.deploy("MockRegistry", deployOptions);
