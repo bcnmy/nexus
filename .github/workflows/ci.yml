@@ -152,12 +152,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+         node-version: '22' # Specify the Node.js version you want to use
+
       - name: Run Slither
         uses: crytic/slither-action@v0.4.0
         id: slither
         with:
           slither-version: "0.10.0"
-          node-version: "20"
+          node-version: "22"
           fail-on: "none"
           slither-args: '--exclude "assembly|solc-version|low-level-calls|naming-convention|controlled-delegatecall|write-after-write|divide-before-multiply|incorrect-shift" --exclude-informational --exclude-low --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
 
