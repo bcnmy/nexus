@@ -145,11 +145,10 @@ To generate reports of the storage layout for potential upgrades safety using `h
 
 ## 🔒 Security Audits
 
-| Auditor   | Date       | Final Report Link       |
-| --------- | ---------- | ----------------------- |
-| Firm Name | DD-MM-YYYY | [View Report](./audits) |
-| Firm Name | DD-MM-YYYY | [View Report](./audits) |
-| Firm Name | DD-MM-YYYY | [View Report](./audits) |
+| Auditor          | Date       | Final Report Link       |
+| ---------------- | ---------- | ----------------------- |
+| CodeHawks-Cyfrin | 17-09-2024 | [View Report](./audits/CodeHawks-Cyfrin-17-09-2024.pdf) |
+| Firm Name        | DD-MM-YYYY | [View Report](./audits) |
 
 ## 🏆 Biconomy Champions League 🏆
 
