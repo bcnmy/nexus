@@ -67,7 +67,7 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
         assertEq(address(deployedNexus), calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
         Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         measureAndLogGas("32::ETH::transfer::Nexus::Deployed::WarmAccess", userOps);
     }
@@ -87,7 +87,8 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = initCode;
@@ -122,7 +123,8 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         userOps[0].initCode = initCode;
 
@@ -150,7 +152,8 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -172,7 +175,7 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTest_Base {
         Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Generate and sign paymaster data
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);

@@ -18,6 +18,7 @@ contract EventsAndErrors {
     event TryExecuteUnsuccessful(bytes callData, bytes result);
     event TryDelegateCallUnsuccessful(bytes callData, bytes result);
     event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
+    event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
 
     // ==========================
     // General Errors

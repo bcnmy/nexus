@@ -70,7 +70,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(usdc), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+            buildPackedUserOperation(BOB, Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(usdc.balanceOf(recipient), amount, "USDC transfer failed");
     }
@@ -84,7 +84,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(recipient, amount, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+            buildPackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }

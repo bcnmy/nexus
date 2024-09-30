@@ -3,15 +3,16 @@ pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
+import { ERC1271_MAGICVALUE, ERC1271_INVALID } from "contracts/types/Constants.sol";
 
 /// @title TestK1Validator
 /// @notice Unit tests for the K1Validator contract
 contract TestK1Validator is NexusTest_Base {
     K1Validator private validator;
-    bytes private initData;
     PackedUserOperation private userOp;
     bytes32 private userOpHash;
     bytes private signature;
+    MockSafe1271Caller mockSafe1271Caller;
 
     /// @notice Sets up the testing environment by deploying the contract and initializing variables
     function setUp() public {
@@ -19,23 +20,28 @@ contract TestK1Validator is NexusTest_Base {
 
         // Deploy a new K1Validator instance
         validator = new K1Validator();
+        mockSafe1271Caller = new MockSafe1271Caller();
 
+        bytes memory k1ValidatorSetupData = abi.encodePacked(
+            BOB_ADDRESS, //owner
+            address(mockSafe1271Caller) //safe sender
+        );
         // Prepare the call data for installing the validator module
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encodePacked(BOB_ADDRESS));
+        bytes memory callData1 =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), k1ValidatorSetupData);
+        bytes memory callData2 =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockSafe1271Caller), "");            
 
         // Create an execution array with the installation call data
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        Execution[] memory execution = new Execution[](2);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData1);
+        execution[1] = Execution(address(BOB_ACCOUNT), 0, callData2);
 
         // Build a packed user operation for the installation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
-        // Execute the user operation to install the validator module
+        // Execute the user operation to install the modules
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-
-        // Encode the initialization data with the owner address
-        initData = abi.encodePacked(BOB_ADDRESS);
 
         // Set up a mock PackedUserOperation for testing
         userOp = buildPackedUserOp(address(BOB_ACCOUNT), 0);
@@ -75,12 +81,13 @@ contract TestK1Validator is NexusTest_Base {
         address prev = SentinelListHelper.findPrevious(array, remove);
         if (prev == address(0)) prev = address(0x01);
 
-        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encode(prev, ""));
+        bytes memory k1OnUninstallData = bytes("");
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encode(prev, k1OnUninstallData));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -152,10 +159,8 @@ contract TestK1Validator is NexusTest_Base {
     function test_IsValidSignatureWithSender_Failure() public {
         prank(address(BOB_ACCOUNT));
 
-        bytes4 result =
-            validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
-
-        assertEq(result, ERC1271_INVALID, "Signature should be invalid");
+        vm.expectRevert(); //it should revert as last try to check if it's an RPC call which reverts if called on-chain
+        validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
     }
 
     /// @notice Tests the transferOwnership function to ensure ownership is transferred correctly
@@ -310,6 +315,43 @@ contract TestK1Validator is NexusTest_Base {
         stopPrank();
 
         assertEq(result, ERC1271_INVALID, "Signature with invalid 's' value should be rejected");
+    }
+
+    function test_IsValidSignatureWithSender_SafeCaller_Success() public {
+        assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 0);
+
+        vm.startPrank(address(BOB_ACCOUNT));
+       
+       // alternative way of setting mockSafe1271Caller as safe sender in k1 validator
+       // commented out as it was already set at setup
+       // validator.addSafeSender(address(mockSafe1271Caller));
+
+        bytes32 mockUserOpHash = keccak256(abi.encodePacked("123"));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, mockUserOpHash);
+        bytes memory userOpSig = abi.encodePacked(r, s, v);
+
+        bytes memory verifData = bytes("some data");
+        bytes32 secure1271Hash = keccak256(
+            abi.encode(
+                address(BOB_ACCOUNT),
+                block.chainid,
+                keccak256(verifData)
+            )
+        );
+        (v,r,s) = vm.sign(BOB.privateKey, secure1271Hash);
+
+        userOp.signature = abi.encode(
+            verifData,
+            abi.encodePacked(address(validator), r,s,v), // erc1271sig
+            userOpSig
+        );
+
+        uint256 res = mockSafe1271Caller.validateUserOp(userOp, mockUserOpHash);
+
+        stopPrank();
+
+        assertEq(res, VALIDATION_SUCCESS, "Signature should be valid");
+        assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 1);
     }
 
     /// @notice Generates an ERC-1271 hash for personal sign

@@ -9,7 +9,7 @@
   via-ir = false
   gas_reports = ["*"]
   optimizer = true
-  optimizer_runs = 1_000_000
+  optimizer_runs = 999
   out = "out"
   script = "scripts"
   solc = "0.8.27"
@@ -22,6 +22,9 @@
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4
+
+[profile.coverage]
+  via-ir = false
 
 [etherscan]
   arbitrum = { key = "${API_KEY_ARBISCAN}" }

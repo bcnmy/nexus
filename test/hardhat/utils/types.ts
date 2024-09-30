@@ -102,6 +102,7 @@ export enum ExecutionMethod {
 }
 
 export enum ModuleType {
+  Multi = 0,
   Validation = 1,
   Execution = 2,
   Fallback = 3,

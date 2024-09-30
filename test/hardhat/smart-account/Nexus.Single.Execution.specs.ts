@@ -19,6 +19,7 @@ import {
   buildPackedUserOp,
   MODE_VALIDATION,
   getNonce,
+  numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -104,6 +105,7 @@ describe("Nexus Single Execution", () => {
       userOp.sender,
       MODE_VALIDATION,
       validatorModuleAddress.toString(),
+      numberTo3Bytes(10),
     );
     userOp.nonce = nonce;
 
@@ -149,6 +151,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(155),
       );
 
       userOp.nonce = nonce;
@@ -252,6 +255,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(156),
       );
 
       userOp.nonce = nonce;
@@ -289,6 +293,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(157),
       );
       userOp.nonce = nonce;
 
@@ -327,6 +332,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(158),
       );
       userOp.nonce = nonce;
 
@@ -408,6 +414,7 @@ describe("Nexus Single Execution", () => {
         smartAccountAddress,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(159),
       );
       incrementNumberUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -446,6 +453,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(160),
       );
 
       userOp.nonce = nonce;
@@ -588,6 +596,7 @@ describe("Nexus Single Execution", () => {
         userOp.sender,
         MODE_VALIDATION,
         validatorModuleAddress.toString(),
+        numberTo3Bytes(161),
       );
       userOp.nonce = nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);

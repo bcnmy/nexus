@@ -9,9 +9,8 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
-import { IERC1271Unsafe } from "../interfaces/modules/IERC1271Unsafe.sol";
 
-contract MockValidator is ERC7739Validator, IERC1271Unsafe {
+contract MockValidator is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -19,17 +18,21 @@ contract MockValidator is ERC7739Validator, IERC1271Unsafe {
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    ) external view virtual returns (bytes4 sigValidationResult) {
+        // can put additional checks based on sender here
 
-        (bytes32 computeHash, bytes calldata truncatedSignature) = _erc1271HashForIsValidSignatureViaNestedEIP712(hash, signature);
-
-        return _validateSignatureForOwner(owner, computeHash, truncatedSignature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
-    }
-
-    function isValidSignatureWithSenderUnsafe(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        address owner = smartAccountOwners[msg.sender];
-        return _validateSignatureForOwner(owner, hash, signature) ? ERC1271_MAGICVALUE : ERC1271_INVALID;
+        // check if sig is valid
+        bool success = _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            // We use `0xffffffff` for invalid, in convention with the reference implementation.
+            sigValidationResult := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+        }
     }
 
     // ISessionValidator interface for smart session
@@ -46,6 +49,30 @@ contract MockValidator is ERC7739Validator, IERC1271Unsafe {
             return true;
         }
         return false;
+    }
+
+    /// @dev Returns whether the `hash` and `signature` are valid.
+    ///      Obtains the authorized signer's credentials and calls some
+    ///      module's specific internal function to validate the signature
+    ///      against credentials.
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
+        // obtain credentials
+        address owner = smartAccountOwners[msg.sender];
+
+        // call custom internal function to validate the signature against credentials
+        return _validateSignatureForOwner(owner, hash, signature);
+    }
+
+    /// @dev Returns whether the `sender` is considered safe, such
+    /// that we don't need to use the nested EIP-712 workflow.
+    /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
+    // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
+    // is known to include the account in the hash to be signed.
+    // msg.sender = Smart Account
+    // sender = 1271 og request sender
+    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
+        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
+            sender == msg.sender);
     }
 
     function onInstall(bytes calldata data) external {

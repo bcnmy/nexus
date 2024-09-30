@@ -30,7 +30,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOp.callData = callData;
 
         // Sign the operation
@@ -61,7 +61,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOp.callData = callData;
 
         // Sign the operation
@@ -89,7 +89,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOp.callData = callData;
 
         // Sign the operation
@@ -120,7 +120,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE)));
+        PackedUserOperation memory userOp = buildPackedUserOp(address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         userOp.callData = callData;
 
         // Use an invalid signature

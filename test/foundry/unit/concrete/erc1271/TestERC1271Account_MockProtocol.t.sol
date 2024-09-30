@@ -8,6 +8,7 @@ import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTest_Base {
+
     K1Validator private validator;
     struct TestTemps {
         bytes32 userOpHash;
@@ -207,7 +208,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
         execution[0] = Execution(address(account), 0, callData);
 
         // Build the packed user operation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Handle the user operation through the entry point
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
