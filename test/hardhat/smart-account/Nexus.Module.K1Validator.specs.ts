@@ -76,7 +76,7 @@ describe("K1Validator module tests", () => {
 
     it("should get module version", async () => {
       const version = await k1Validator.version();
-      expect(version).to.equal("1.0.0-beta");
+      expect(version).to.equal("1.0.0-beta.1");
     });
 
     it("should check module type", async () => {

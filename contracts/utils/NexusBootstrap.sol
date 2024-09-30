@@ -160,6 +160,6 @@ contract NexusBootstrap is ModuleManager {
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
-        version = "1.0.0-beta";
+        version = "1.0.0-beta.1";
     }
 }

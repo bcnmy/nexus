@@ -1,7 +1,7 @@
 {
   "name": "nexus",
   "description": "Nexus - ERC7579 Modular Smart Account",
-  "version": "1.0.0-beta",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "Biconomy",
     "url": "https://github.com/bcnmy"
