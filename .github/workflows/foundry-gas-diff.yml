@@ -33,7 +33,7 @@ jobs:
         with:
           version: nightly
       - name: Install dependencies
-        run: yarn cache clean && yarn install --frozen-lockfile
+        run: yarn cache clean && yarn install
 
       # Add any step generating a gas report to a temporary file named gasreport.ansi. For example:
       - name: Run tests
