@@ -12,6 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -22,11 +23,10 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
 import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "contracts/types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "../types/Constants.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
+import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
-import { EIP712 } from "solady/src/utils/EIP712.sol";
-import { ExcessivelySafeCall } from "excessively-safe-call/src/ExcessivelySafeCall.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -36,7 +36,6 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-
 abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;

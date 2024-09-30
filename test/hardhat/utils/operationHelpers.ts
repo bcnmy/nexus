@@ -113,7 +113,7 @@ export async function signAndPackUserOp(
   signer: Signer, // ECDSA signer
   setup: { entryPoint: any; validator: any },
   deposit?: string,
-  batchId: string = '0x000000',
+  batchId: string = "0x000000",
 ): Promise<PackedUserOperation> {
   if (!setup.entryPoint || !setup.validator) {
     throw new Error("Setup object is missing required properties.");
@@ -128,7 +128,7 @@ export async function signAndPackUserOp(
     userOp.sender,
     MODE_VALIDATION,
     validatorAddress,
-    batchId
+    batchId,
   );
 
   userOp.nonce = nonce;
@@ -156,10 +156,12 @@ export async function signAndPackUserOp(
  * @throws Error if the number is out of range
  */
 export function numberTo3Bytes(num: number): string {
-  if (num < 0 || num > 0xFFFFFF) {
-    throw new Error('Number out of range. Must be between 0 and 16777215 inclusive.');
+  if (num < 0 || num > 0xffffff) {
+    throw new Error(
+      "Number out of range. Must be between 0 and 16777215 inclusive.",
+    );
   }
-  return '0x' + num.toString(16).padStart(6, '0');
+  return "0x" + num.toString(16).padStart(6, "0");
 }
 
 export function packPaymasterData(
@@ -184,14 +186,14 @@ export async function fillSignAndPack(
   validationMode: BytesLike,
   validatorAddress: AddressLike, // any validator
   owner: Signer, // ECDSA signer for R1/mock validator
-  batchId: string = '0x000000',
+  batchId: string = "0x000000",
 ): Promise<PackedUserOperation> {
   const nonce = await getNonce(
     entryPoint,
     accountAddress,
     validationMode,
     validatorAddress,
-    batchId
+    batchId,
   );
   const userOp = buildPackedUserOp({
     sender: accountAddress,
@@ -423,7 +425,11 @@ export function findEventInLogs(
 export async function generateCallDataForExecuteUserop() {}
 
 // Helper to mimic the `makeNonceKey` function in Solidity
-function makeNonceKey(vMode: BytesLike, validator: AddressLike, batchId: BytesLike): string {
+function makeNonceKey(
+  vMode: BytesLike,
+  validator: AddressLike,
+  batchId: BytesLike,
+): string {
   // Convert the validator address to a Uint8Array
   const validatorBytes = getBytes(getAddress(validator.toString()));
 
@@ -449,14 +455,13 @@ function makeNonceKey(vMode: BytesLike, validator: AddressLike, batchId: BytesLi
   return hexlify(keyBytes);
 }
 
-
 // Adjusted getNonce function
 export async function getNonce(
   entryPoint: EntryPoint,
   accountAddress: AddressLike,
   validationMode: BytesLike,
   validatorModuleAddress: AddressLike,
-  batchId: BytesLike = '0x000000',
+  batchId: BytesLike = "0x000000",
 ): Promise<bigint> {
   const key = makeNonceKey(validationMode, validatorModuleAddress, batchId);
   return await entryPoint.getNonce(accountAddress, key);

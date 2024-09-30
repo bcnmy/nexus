@@ -185,7 +185,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
     }
 
-    /// @notice Tests initNexusScoped function in Bootstrap and uses it to deploy an account with a hook module.
+    /// @notice Tests initNexusScoped function in NexusBootstrap and uses it to deploy an account with a hook module.
     function test_initNexusScoped_WithHook_DeployAccount() public {
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), abi.encodePacked(user.addr));

@@ -16,7 +16,7 @@ import { ModuleManager } from "../base/ModuleManager.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 
-/// @title Bootstrap Configuration for Nexus
+/// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
@@ -28,9 +28,9 @@ struct BootstrapConfig {
     bytes data;
 }
 
-/// @title Bootstrap
+/// @title NexusBootstrap
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
-contract Bootstrap is ModuleManager {
+contract NexusBootstrap is ModuleManager {
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module.
@@ -159,7 +159,7 @@ contract Bootstrap is ModuleManager {
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
-        name = "Bootstrap";
+        name = "NexusBootstrap";
         version = "1.0.0-beta";
     }
 }

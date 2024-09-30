@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "solady/src/utils/ECDSA.sol";
+import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 import "./CheatCodes.sol";
 import "./EventsAndErrors.sol";
@@ -19,7 +19,7 @@ import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
-import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/RegistryBootstrap.sol";
+import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
@@ -61,7 +61,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
-    Bootstrap internal BOOTSTRAPPER;
+    NexusBootstrap internal BOOTSTRAPPER;
 
     // -----------------------------------------
     // Setup Functions
@@ -116,7 +116,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new Bootstrap();
+        BOOTSTRAPPER = new NexusBootstrap();
         REGISTRY = new MockRegistry();
     }
 

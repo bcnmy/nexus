@@ -7,7 +7,7 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH, MODULE_ENABLE_MODE_NOTATION } from "contracts/types/Constants.sol";
-import "solady/src/utils/EIP712.sol";
+import "solady/utils/EIP712.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 

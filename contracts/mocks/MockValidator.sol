@@ -4,9 +4,9 @@ pragma solidity ^0.8.27;
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR, ERC1271_MAGICVALUE, ERC1271_INVALID } from "../types/Constants.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "../base/ERC7739Validator.sol";
 

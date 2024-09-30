@@ -12,10 +12,10 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapLib } from "../lib/BootstrapLib.sol";
-import { Bootstrap, BootstrapConfig } from "../utils/RegistryBootstrap.sol";
+import { NexusBootstrap, BootstrapConfig } from "../utils/NexusBootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 
@@ -37,7 +37,7 @@ contract K1ValidatorFactory is Stakeable {
 
     /// @notice Stores the Bootstrapper module address.
     /// @dev This address is set once upon deployment and cannot be changed afterwards.
-    Bootstrap public immutable BOOTSTRAPPER;
+    NexusBootstrap public immutable BOOTSTRAPPER;
 
     IERC7484 public immutable REGISTRY;
 
@@ -59,7 +59,7 @@ contract K1ValidatorFactory is Stakeable {
         address implementation,
         address factoryOwner,
         address k1Validator,
-        Bootstrap bootstrapper,
+        NexusBootstrap bootstrapper,
         IERC7484 registry
     ) Stakeable(factoryOwner) {
         require(
@@ -90,7 +90,7 @@ contract K1ValidatorFactory is Stakeable {
         // Deploy the Nexus contract using the computed salt
         (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
 
-        // Create the validator configuration using the Bootstrap library
+        // Create the validator configuration using the NexusBootstrap library
         BootstrapConfig memory validator = BootstrapLib.createSingleConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
         bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator, REGISTRY, attesters, threshold);
 

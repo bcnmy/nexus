@@ -12,7 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - IERC4337Account
 /// @notice This interface defines the necessary validation and execution methods for smart accounts under the ERC-4337 standard.

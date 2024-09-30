@@ -12,11 +12,11 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { LibClone } from "solady/src/utils/LibClone.sol";
-import { LibSort } from "solady/src/utils/LibSort.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
+import { LibSort } from "solady/utils/LibSort.sol";
 import { BytesLib } from "../lib/BytesLib.sol";
 import { INexus } from "../interfaces/INexus.sol";
-import { BootstrapConfig } from "../utils/RegistryBootstrap.sol";
+import { BootstrapConfig } from "../utils/NexusBootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { INexusFactory } from "../interfaces/factory/INexusFactory.sol";
@@ -103,14 +103,14 @@ contract RegistryFactory is Stakeable, INexusFactory {
     }
 
     /// @notice Creates a new Nexus account with the provided initialization data.
-    /// @param initData Initialization data that is expected to be compatible with a `Bootstrap` contract's initialization method.
+    /// @param initData Initialization data that is expected to be compatible with a `NexusBootstrap` contract's initialization method.
     /// @param salt Unique salt used for deterministic deployment of the Nexus smart account.
     /// @return The address of the newly created Nexus account.
     function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
         // Decode the initialization data to extract the target bootstrap contract and the data to be used for initialization.
         (, bytes memory callData) = abi.decode(initData, (address, bytes));
 
-        // Ensure that the initData is structured for the expected Bootstrap.initNexus or similar method.
+        // Ensure that the initData is structured for the expected NexusBootstrap.initNexus or similar method.
         // This step is crucial for ensuring the proper initialization of the Nexus smart account.
         bytes memory innerData = BytesLib.slice(callData, 4, callData.length - 4);
         (

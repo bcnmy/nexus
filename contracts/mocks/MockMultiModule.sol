@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "contracts/types/Constants.sol";
+import "../types/Constants.sol";
 
 contract MockMultiModule is IModule {
     mapping(uint256 moduleTypeId => mapping(address smartAccount => bytes32 initData)) configs;

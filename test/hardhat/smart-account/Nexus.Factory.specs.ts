@@ -17,7 +17,7 @@ import {
   Nexus,
   BiconomyMetaFactory,
   NexusAccountFactory,
-  Bootstrap,
+  NexusBootstrap,
   BootstrapLib,
   MockHook,
   MockRegistry,
@@ -179,7 +179,7 @@ describe("Nexus Factory Tests", function () {
   describe("Biconomy Meta Factory tests", function () {
     let metaFactory: BiconomyMetaFactory;
     let factory: NexusAccountFactory;
-    let bootstrap: Bootstrap;
+    let bootstrap: NexusBootstrap;
     let validatorModule: MockValidator;
     let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
@@ -301,7 +301,7 @@ describe("Nexus Factory Tests", function () {
     let entryPoint: EntryPoint;
     let metaFactory: BiconomyMetaFactory;
     let factory: NexusAccountFactory;
-    let bootstrap: Bootstrap;
+    let bootstrap: NexusBootstrap;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
     let BootstrapLib: BootstrapLib;

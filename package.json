@@ -7,9 +7,10 @@
     "url": "https://github.com/bcnmy"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts/",
     "dotenv": "^16.4.5",
-    "solarray": "github:sablier-labs/solarray"
+    "solarray": "github:sablier-labs/solarray",
+    "viem": "2.7.13"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
@@ -34,7 +35,7 @@
     "hardhat": "^2.22.4",
     "hardhat-deploy": "^0.12.4",
     "hardhat-deploy-ethers": "^0.4.2",
-    "hardhat-gas-reporter": "^2.2.0",
+    "hardhat-gas-reporter": "^1.0.10",
     "hardhat-storage-layout": "^0.1.7",
     "husky": "^9.0.11",
     "modulekit": "github:rhinestonewtf/modulekit",
