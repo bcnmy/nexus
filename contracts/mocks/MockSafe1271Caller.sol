@@ -3,9 +3,9 @@ pragma solidity ^0.8.23;
 
 import { IModule } from "contracts/interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "contracts/types/Constants.sol";
 import { IERC7579Account } from "contracts/interfaces/IERC7579Account.sol";
