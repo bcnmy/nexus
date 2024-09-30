@@ -13,6 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.6
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+         node-version: '22' # Specify the Node.js version you want to use
+
       - name: Get cache key
         id: cache-keys
         run: echo "::set-output name=cache-key::$(echo ${{ runner.os }}-node-$(cat yarn.lock | sha256sum | cut -d' ' -f1))"
