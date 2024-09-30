@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -12,7 +12,7 @@ pragma solidity ^0.8.26;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 
 import { IHook } from "../modules/IHook.sol";
 import { CallType } from "../../lib/ModeLib.sol";
@@ -35,11 +35,12 @@ interface IStorage {
         SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
         mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
         IHook hook; ///< Current hook module associated with this account.
+        mapping(address hook => uint256) emergencyUninstallTimelock; ///< Mapping of hooks to requested timelocks.
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
     struct FallbackHandler {
         address handler; ///< The address of the fallback function handler.
-        CallType calltype; ///< The type of call this handler supports (e.g., static or delegatecall).
+        CallType calltype; ///< The type of call this handler supports (e.g., static or call).
     }
 }

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "./Imports.sol";
-import "./TestHelper.t.sol";
 import "./EventsAndErrors.sol";
 
 /// @title NexusTest_Base - Base contract for testing Nexus smart account functionalities

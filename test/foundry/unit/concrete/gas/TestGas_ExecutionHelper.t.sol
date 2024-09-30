@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
@@ -22,7 +22,8 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
             BOB_ACCOUNT,
             EXECTYPE_DEFAULT,
             execution,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
@@ -32,7 +33,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -44,7 +45,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(0), 0, "");
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -58,7 +59,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
             executions[i] = Execution(address(0), 0, "");
         }
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -72,7 +73,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
             executions[i] = Execution(address(0), 0, "");
         }
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

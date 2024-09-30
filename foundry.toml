@@ -4,15 +4,15 @@
   auto_detect_solc = false
   block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
   bytecode_hash = "none"
-  evm_version = "paris"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
+  evm_version = "cancun"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
   fuzz = { runs = 1_000 }
-  via-ir = true
+  via-ir = false
   gas_reports = ["*"]
   optimizer = true
-  optimizer_runs = 1_000_000
+  optimizer_runs = 999
   out = "out"
   script = "scripts"
-  solc = "0.8.26"
+  solc = "0.8.27"
   src = "contracts"
   test = "test"
   cache_path  = "cache_forge"
@@ -22,6 +22,9 @@
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4
+
+[profile.coverage]
+  via-ir = false
 
 [etherscan]
   arbitrum = { key = "${API_KEY_ARBISCAN}" }
@@ -35,7 +38,7 @@
 [fmt]
   bracket_spacing = true
   int_types = "long"
-  line_length = 150
+  line_length = 160
   multiline_func_header = "all"
   number_underscore = "thousands"
   quote_style = "double"

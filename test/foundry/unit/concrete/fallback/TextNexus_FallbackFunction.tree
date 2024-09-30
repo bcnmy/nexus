@@ -20,5 +20,13 @@ TestNexus_FallbackFunction
     │   └── it should fail
     ├── when making a single call that reverts through the fallback handler
     │   └── it should fail and provide the correct revert reason
-    └── when making a static call that reverts through the fallback handler
+    ├── when making a static call that reverts through the fallback handler
+    │   └── it should fail and provide the correct revert reason
+    ├── when making a call from the authorized entry point through the fallback handler
+    │   └── it should succeed
+    ├── when making a call from the contract itself (BOB_ACCOUNT) through the fallback handler
+    │   └── it should succeed
+    ├── when making a call from the authorized executor module through the fallback handler
+    │   └── it should succeed
+    └── when making a call from an unauthorized entity through the fallback handler
         └── it should fail and provide the correct revert reason

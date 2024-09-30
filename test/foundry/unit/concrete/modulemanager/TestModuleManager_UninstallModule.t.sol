@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../shared/TestModuleManagement_Base.t.sol";
 
@@ -20,7 +20,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for installing the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -164,13 +164,13 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             abi.encode(prev, "")
         );
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CanNotRemoveLastValidator()");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -205,13 +205,13 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         );
 
         // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
+        bytes memory expectedRevertReason = abi.encodeWithSelector(ModuleNotInstalled.selector, MODULE_TYPE_EXECUTOR, address(VALIDATOR_MODULE));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -249,7 +249,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -308,7 +308,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -338,7 +338,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -387,12 +387,12 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CannotRemoveLastValidator()");
+        bytes memory expectedRevertReason = abi.encodeWithSignature("CanNotRemoveLastValidator()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -444,7 +444,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             BOB_ACCOUNT,
             EXECTYPE_DEFAULT,
             executionUninstall,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
@@ -475,7 +476,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             BOB_ACCOUNT,
             EXECTYPE_DEFAULT,
             executionUninstall,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         bytes memory expectedRevertReason = abi.encodeWithSignature(

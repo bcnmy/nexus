@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 /// @title UserOperation
 /// @notice Struct definition for user operations in EntryPoint v0.6

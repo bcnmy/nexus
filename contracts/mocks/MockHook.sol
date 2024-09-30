@@ -1,24 +1,33 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
-import { IModule } from "contracts/interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "contracts/lib/ModuleTypeLib.sol";
-import "contracts/types/Constants.sol";
+import { IModule } from "../interfaces/modules/IModule.sol";
+import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
+import "../types/Constants.sol";
 
 contract MockHook is IModule {
     event PreCheckCalled();
     event PostCheckCalled();
+    event HookOnInstallCalled(bytes32 dataFirstWord);
 
-    function onInstall(bytes calldata) external override {
-        emit PreCheckCalled();
+    function onInstall(bytes calldata data) external override {
+        if (data.length >= 0x20) {
+            emit HookOnInstallCalled(bytes32(data[0:32]));
+        }
     }
 
     function onUninstall(bytes calldata) external override {
         emit PostCheckCalled();
     }
 
-    function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {
+    function preCheck(address sender, uint256 value, bytes calldata data) external returns (bytes memory) {
         emit PreCheckCalled();
+
+        // Add a condition to revert if the sender is the zero address or if the value is 1 ether for testing purposes
+        if (value == 1 ether) {
+            revert("PreCheckFailed");
+        }
+
         return "";
     }
 

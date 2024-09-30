@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -60,10 +60,6 @@ contract BiconomyMetaFactory is Stakeable {
         factoryWhitelist[factory] = false;
     }
 
-    // Note: deploy using only one of the whitelisted factories
-    // these factories could possibly enshrine specific module/s
-    // factory should know how to decode this factoryData
-
     /// @notice Deploys a new Nexus with a specific factory and initialization data.
     /// @dev Uses factory.call(factoryData) to post the encoded data for the method to be called on the Factory.
     ///      These factories could enshrine specific modules to avoid arbitrary execution and prevent griefing.
@@ -73,7 +69,7 @@ contract BiconomyMetaFactory is Stakeable {
     /// @return createdAccount The address of the newly created Nexus account.
     function deployWithFactory(address factory, bytes calldata factoryData) external payable returns (address payable createdAccount) {
         require(factoryWhitelist[address(factory)], FactoryNotWhitelisted());
-        (bool success, bytes memory returnData) = factory.call(factoryData);
+        (bool success, bytes memory returnData) = factory.call{ value: msg.value }(factoryData);
 
         // Check if the call was successful
         require(success, CallToDeployWithFactoryFailed());

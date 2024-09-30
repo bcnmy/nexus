@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
@@ -8,6 +8,7 @@ import { TokenWithPermit } from "../../../../../contracts/mocks/TokenWithPermit.
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTest_Base {
+
     K1Validator private validator;
     struct TestTemps {
         bytes32 userOpHash;
@@ -49,7 +50,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -71,28 +72,20 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
 
     function testDomainSeparator() public {
         bytes32 expectedDomainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
+        
+        AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = BOB_ACCOUNT.eip712Domain();
+
         bytes32 calculatedDomainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes("Nexus")),
-                keccak256(bytes("1.0.0-beta")),
-                block.chainid,
-                address(BOB_ACCOUNT)
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract
             )
         );
         assertEq(expectedDomainSeparator, calculatedDomainSeparator);
-    }
-
-    function testReplaySafeHash() public {
-        bytes32 hash = keccak256(abi.encodePacked("testHash"));
-        bytes32 expectedHash = BOB_ACCOUNT.replaySafeHash(hash);
-
-        bytes32 domainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
-        bytes32 actualHash = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, keccak256(abi.encode(keccak256("BiconomyNexusMessage(bytes32 hash)"), hash)))
-        );
-
-        assertEq(expectedHash, actualHash);
     }
 
     /// @notice Tests the failure of signature validation due to an incorrect signer.
@@ -108,7 +101,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -132,7 +125,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 block.timestamp
             )
         );
-        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, payable(address(ALICE_ACCOUNT))));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
         bytes memory completeSignature = abi.encodePacked(address(validator), signature);
@@ -164,7 +157,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
     /// @param contents The contents hash.
     /// @param account The address of the account.
     /// @return The ERC-1271 hash.
-    function toERC1271Hash(bytes32 contents, address payable account) internal view returns (bytes32) {
+    function toERC1271Hash(bytes32 contents, address account) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
                 abi.encode(
@@ -182,9 +175,9 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
     /// @notice Retrieves the EIP-712 domain struct fields.
     /// @param account The address of the account.
     /// @return The EIP-712 domain struct fields encoded.
-    function accountDomainStructFields(address payable account) internal view returns (bytes memory) {
+    function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = Nexus(account).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(account).eip712Domain();
 
         return
             abi.encode(
@@ -192,7 +185,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
                 keccak256(bytes(t.name)),
                 keccak256(bytes(t.version)),
                 t.chainId,
-                t.verifyingContract,
+                t.verifyingContract, // Use the account address as the verifying contract.
                 t.salt,
                 keccak256(abi.encodePacked(t.extensions))
             );
@@ -215,7 +208,7 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
         execution[0] = Execution(address(account), 0, callData);
 
         // Build the packed user operation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Handle the user operation through the entry point
         ENTRYPOINT.handleOps(userOps, payable(user.addr));

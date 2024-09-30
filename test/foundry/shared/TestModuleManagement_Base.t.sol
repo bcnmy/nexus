@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../utils/Imports.sol";
 import "../utils/NexusTest_Base.t.sol";
@@ -11,6 +11,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
     MockHook public mockHook;
+    MockMultiModule public mockMulti;
 
     address public constant INVALID_MODULE_ADDRESS = address(0);
     uint256 public constant INVALID_MODULE_TYPE = 999;
@@ -26,6 +27,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         mockExecutor = new MockExecutor();
         mockHandler = new MockHandler();
         mockHook = new MockHook();
+        mockMulti = new MockMultiModule();
     }
 
     /// @notice Installs a module on the given account
@@ -37,7 +39,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectEmit(true, true, true, true);
         emit ModuleInstalled(moduleTypeId, moduleAddress);
@@ -52,7 +54,7 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }

@@ -19,7 +19,9 @@ import { deployContractsAndSAFixture } from "../utils/deployment";
 import {
   generateUseropCallData,
   buildPackedUserOp,
-  buildPackedUserOperation,
+  getNonce,
+  MODE_VALIDATION,
+  numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { ethers } from "hardhat";
 import {
@@ -172,9 +174,12 @@ describe("Nexus Batch Execution", () => {
         sender: smartAccountAddress,
         callData: userOpCallData,
       });
-      const userOpNonce = await entryPoint.getNonce(
+      const userOpNonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString(),
+        numberTo3Bytes(5),
       );
       userOp.nonce = userOpNonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -283,9 +288,12 @@ describe("Nexus Batch Execution", () => {
         sender: smartAccountAddress,
         callData: userOpCalldata,
       });
-      const userOp1Nonce = await entryPoint.getNonce(
+      const userOp1Nonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString(),
+        numberTo3Bytes(7),
       );
       userOp.nonce = userOp1Nonce;
       const userOpHash = await entryPoint.getUserOpHash(userOp);
@@ -337,9 +345,12 @@ describe("Nexus Batch Execution", () => {
         callData: data1,
       });
 
-      const userOp1Nonce = await entryPoint.getNonce(
+      const userOp1Nonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString(),
+        numberTo3Bytes(9),
       );
       userOp1.nonce = userOp1Nonce;
 
@@ -378,9 +389,12 @@ describe("Nexus Batch Execution", () => {
         callData: data2,
       });
 
-      const userOp2Nonce = await entryPoint.getNonce(
+      const userOp2Nonce = await getNonce(
+        entryPoint,
         aliceSmartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString(),
+        numberTo3Bytes(11),
       );
       userOp2.nonce = userOp2Nonce;
 
@@ -429,9 +443,12 @@ describe("Nexus Batch Execution", () => {
         callData: data,
       });
 
-      const incrementNumberUserOpNonce = await entryPoint.getNonce(
+      const incrementNumberUserOpNonce = await getNonce(
+        entryPoint,
         smartAccountAddress,
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
+        MODE_VALIDATION,
+        validatorModuleAddress.toString(),
+        numberTo3Bytes(13),
       );
       incrementNumberBatchUserOp.nonce = incrementNumberUserOpNonce;
 
@@ -503,12 +520,17 @@ describe("Nexus Batch Execution", () => {
         sender: smartAccountAddress,
         callData: userOpCallData,
       });
-      userOp = await buildPackedUserOperation(
-        userOp,
+
+      userOp.nonce = await getNonce(
         entryPoint,
+        userOp.sender,
+        MODE_VALIDATION,
         validatorModuleAddress,
-        smartAccountOwner,
-        0,
+        numberTo3Bytes(15),
+      );
+      const userOpHash = await entryPoint.getUserOpHash(userOp);
+      userOp.signature = await smartAccountOwner.signMessage(
+        ethers.getBytes(userOpHash),
       );
 
       const numberBefore = await counter.getNumber();

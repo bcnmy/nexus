@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../utils/Imports.sol";
 import "../../shared/TestModuleManagement_Base.t.sol";
@@ -28,7 +28,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Prepare the module installation operation
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Execute the operation and verify that the module fails to install due to type or address mismatches
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -40,7 +40,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @notice Fuzz test for installing fallback handlers with random function selectors
     /// @param selector The random function selector
     function testFuzz_InstallFallbackHandler_WithRandomSelector(bytes4 selector) public {
-        vm.assume(selector != bytes4(0x6d61fe70) && selector != bytes4(0x8a91b0e3));
+        vm.assume(selector != bytes4(0x6d61fe70) && selector != bytes4(0x8a91b0e3) && selector != bytes4(0)); // Exclude known selectors
         // Prepare data with a random selector to test dynamic input handling
         bytes memory customData = abi.encode(selector);
         bytes memory callData = abi.encodeWithSelector(
@@ -53,7 +53,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Prepare the module installation operation
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Execute and check if the fallback handler installs correctly
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -79,7 +79,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, moduleTypeId, moduleAddress, initData);
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Perform the installation and handle possible mismatches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
@@ -111,7 +111,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // First installation should succeed if the module type matches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
@@ -130,9 +130,17 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
                 BOB_ACCOUNT,
                 EXECTYPE_DEFAULT,
                 executions,
-                address(VALIDATOR_MODULE)
+                address(VALIDATOR_MODULE),
+                0
             );
-            bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleAlreadyInstalled(uint256,address)", moduleTypeId, moduleAddress);
+            
+            bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
+            if(moduleTypeId == MODULE_TYPE_FALLBACK) {
+                expectedRevertReason = abi.encodeWithSignature("FallbackAlreadyInstalledForSelector(bytes4)", bytes4(funcSig));
+            } else if (moduleTypeId == MODULE_TYPE_HOOK) {
+                expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", moduleAddress);
+            }
+
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOpsSecondAttempt[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOpsSecondAttempt[0].nonce, expectedRevertReason);
@@ -181,7 +189,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         // Verify that the module is uninstalled
@@ -233,7 +241,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         // Verify that the module is uninstalled based on the type
@@ -303,11 +311,11 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // If the module type does not match the installation, expect a revert
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSelector(ModuleNotInstalled.selector, moduleTypeId, moduleAddress);
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(
@@ -358,7 +366,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         }
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Expect the uninstallation to fail with a specific revert reason
         bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", moduleTypeId, moduleAddress);

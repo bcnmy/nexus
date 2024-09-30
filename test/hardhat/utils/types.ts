@@ -19,9 +19,9 @@ import {
   Stakeable,
   BiconomyMetaFactory,
   NexusAccountFactory,
-  Bootstrap,
+  NexusBootstrap,
   BootstrapLib,
-  ModuleWhitelistFactory,
+  MockRegistry,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -33,6 +33,7 @@ export interface DeploymentFixture {
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
+  registry: MockRegistry;
   accounts: Signer[];
   addresses: string[];
 }
@@ -60,9 +61,9 @@ export interface DeploymentFixtureWithSA {
   stakeable: Stakeable;
   metaFactory: BiconomyMetaFactory;
   nexusFactory: NexusAccountFactory;
-  bootstrap: Bootstrap;
+  bootstrap: NexusBootstrap;
   BootstrapLib: BootstrapLib;
-  moduleWhitelistFactory: ModuleWhitelistFactory;
+  registry: MockRegistry;
 }
 
 export interface UserOperation {
@@ -101,6 +102,7 @@ export enum ExecutionMethod {
 }
 
 export enum ModuleType {
+  Multi = 0,
   Validation = 1,
   Execution = 2,
   Fallback = 3,

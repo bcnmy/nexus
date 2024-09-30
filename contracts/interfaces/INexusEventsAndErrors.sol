@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -12,8 +12,7 @@ pragma solidity ^0.8.26;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { CallType, ExecType } from "../lib/ModeLib.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - INexus Events and Errors
 /// @notice Defines common errors for the Nexus smart account management interface.
@@ -32,20 +31,8 @@ interface INexusEventsAndErrors {
     /// @param moduleTypeId The ID of the unsupported module type.
     error UnsupportedModuleType(uint256 moduleTypeId);
 
-    /// @notice Error thrown when an execution with an unsupported CallType was made.
-    /// @param callType The unsupported call type.
-    error UnsupportedCallType(CallType callType);
-
-    /// @notice Error thrown when an execution with an unsupported ExecType was made.
-    /// @param execType The unsupported execution type.
-    error UnsupportedExecType(ExecType execType);
-
     /// @notice Error thrown on failed execution.
     error ExecutionFailed();
-
-    /// @notice Error thrown when there is a mismatch between the provided module type ID and the actual module type.
-    /// @param moduleTypeId The mismatched module type ID.
-    error MismatchModuleTypeId(uint256 moduleTypeId);
 
     /// @notice Error thrown when the Factory fails to initialize the account with posted bootstrap data.
     error NexusInitializationFailed();
@@ -61,4 +48,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when an inner call fails.
     error InnerCallFailed();
+
+    /// @notice Error thrown when attempted to emergency-uninstall a hook
+    error EmergencyTimeLockNotExpired();
 }

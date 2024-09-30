@@ -1,17 +1,18 @@
 {
   "name": "nexus",
   "description": "Nexus - ERC7579 Modular Smart Account",
-  "version": "1.0.0-beta",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "Biconomy",
     "url": "https://github.com/bcnmy"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.2",
-    "dotenv": "^16.4.5"
+    "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts/",
+    "dotenv": "^16.4.5",
+    "solarray": "github:sablier-labs/solarray",
+    "viem": "2.7.13"
   },
   "devDependencies": {
-    "@bonadocs/docgen": "^1.0.1-alpha.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.6",
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
@@ -34,7 +35,7 @@
     "hardhat": "^2.22.4",
     "hardhat-deploy": "^0.12.4",
     "hardhat-deploy-ethers": "^0.4.2",
-    "hardhat-gas-reporter": "^2.2.0",
+    "hardhat-gas-reporter": "^1.0.10",
     "hardhat-storage-layout": "^0.1.7",
     "husky": "^9.0.11",
     "modulekit": "github:rhinestonewtf/modulekit",
@@ -47,8 +48,7 @@
     "solidity-coverage": "^0.8.12",
     "ts-node": ">=10.9.2",
     "typechain": "^8.3.2",
-    "typescript": ">=5.4.5",
-    "viem": "^2.12.5"
+    "typescript": ">=5.4.5"
   },
   "keywords": [
     "nexus",
@@ -88,13 +88,14 @@
     "test:gas:hardhat": "REPORT_GAS=true hardhat test",
     "test:gas": "yarn test:gas:hardhat && yarn test:gas:forge",
     "gas-report": "node scripts/foundry/generateGasReport.js",
-    "coverage:forge": "forge coverage --ir-minimum",
-    "coverage:hardhat": "yarn hardhat coverage",
+    "coverage:forge": "FOUNDRY_PROFILE=coverage forge coverage --no-match-coverage 'test|mocks'",
+    "coverage:hardhat": "SHOULD_ENABLE_VIA_IR=false yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
     "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
     "docs": "yarn hardhat docgen",
     "check-storage": "yarn hardhat check",
-    "deploy:hardhat": "yarn hardhat run --network localhost scripts/typescript/deploy.ts",
+    "deploy:hardhat": "yarn hardhat run scripts/hardhat/deploy.ts",
+    "deploy:hardhat:mainnet": "yarn hardhat run scripts/hardhat/deploy:mainnet.ts",
     "deploy:forge": "forge script scripts/solidity/Deploy.s.sol --broadcast --rpc-url http://localhost:8545",
     "lint:sol": "yarn solhint 'contracts/**/*.sol'",
     "lint:sol-fix": "yarn prettier --write 'contracts/**/*.sol' && yarn solhint 'contracts/**/*.sol' --fix --noPrompt",
@@ -110,5 +111,6 @@
       "pre-push": "yarn run check-branch-name && yarn run lint:fix && yarn run generate-and-push-gas-report",
       "post-checkout": "yarn run check-branch-name && yarn install && forge install"
     }
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

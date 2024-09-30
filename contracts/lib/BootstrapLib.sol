@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
-import { BootstrapConfig } from "../utils/Bootstrap.sol";
+import { BootstrapConfig } from "../utils/NexusBootstrap.sol";
 
-/// @title Bootstrap Configuration Library
+/// @title NexusBootstrap Configuration Library
 /// @notice Provides utility functions to create and manage BootstrapConfig structures.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io

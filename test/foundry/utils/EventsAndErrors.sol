@@ -15,12 +15,16 @@ contract EventsAndErrors {
     event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
     event PreCheckCalled();
     event PostCheckCalled();
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryExecuteUnsuccessful(bytes callData, bytes result);
+    event TryDelegateCallUnsuccessful(bytes callData, bytes result);
+    event EmergencyHookUninstallRequest(address hook, uint256 timestamp);
+    event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
 
     // ==========================
     // General Errors
     // ==========================
     error MissingFallbackHandler(bytes4 sig);
+    error FallbackCallTypeInvalid();
     error InvalidImplementationAddress();
     error AccountInitializationFailed();
     error AccountAccessUnauthorized();
@@ -40,11 +44,15 @@ contract EventsAndErrors {
     error InvalidEntryPointAddress();
     error InnerCallFailed();
     error CallToDeployWithFactoryFailed();
+    error NexusInitializationFailed();
+    error InvalidThreshold(uint8 providedThreshold, uint256 attestersCount);
+
 
     // ==========================
     // Operation Errors
     // ==========================
     error FailedOp(uint256 opIndex, string reason);
+    error FailedOpWithRevert(uint256 opIndex, string reason, bytes inner);
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
     error ERC1271InvalidSigner(address signer);
     error InvalidSignature();
@@ -58,12 +66,16 @@ contract EventsAndErrors {
     // ==========================
     // Module Errors
     // ==========================
-    error CannotRemoveLastValidator();
-    error InvalidModule(address module);
+    error CanNotRemoveLastValidator();
+    error ValidatorNotInstalled(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
     error ModuleAddressCanNotBeZero();
+    error EnableModeSigError();
+    error InvalidModule(address module);
+    error NoValidatorInstalled();
+    error EmergencyTimeLockNotExpired();
 
     // ==========================
     // Hook Errors

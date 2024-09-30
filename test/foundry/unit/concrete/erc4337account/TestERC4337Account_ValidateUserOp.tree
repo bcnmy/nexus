@@ -11,4 +11,4 @@ TestERC4337Account_ValidateUserOp
     ├── when validating a user operation with insufficient funds
     │   └── it should fail validation
     └── when validating a user operation with an invalid nonce
-        └── it should fail validation
+        └── it should fail validation with InvalidModule error

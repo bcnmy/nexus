@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../utils/Imports.sol";
 import "../utils/NexusTest_Base.t.sol";
@@ -30,10 +30,8 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-        // bytes32 _ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-        // address newImplementation = address(uint160(uint256(vm.load(address(BOB_ACCOUNT), _ERC1967_IMPLEMENTATION_SLOT))));
         address newImplementation = BOB_ACCOUNT.getImplementation();
         assertEq(newImplementation, address(newSmartAccount), "New implementation address mismatch");
     }
@@ -45,7 +43,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(newSmartAccount), bytes(hex"1234"));
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes memory expectedRevertReason = abi.encodeWithSelector(MissingFallbackHandler.selector, bytes4(hex"1234"));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expect the UserOperationRevertReason event
@@ -59,13 +57,20 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
+    function test_upgradeImplementation_invalidCaller() public {
+        address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
+        BOB_ACCOUNT.upgradeToAndCall(address(newSmartAccount), "");
+    }
+
     /// @notice Tests the upgrade of the smart account implementation with an invalid address
     function test_upgradeImplementation_InvalidAddress() public {
         /// @note "" means empty calldata. this will just update the implementation but not setup the account.
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(0), "");
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidImplementationAddress()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expect the UserOperationRevertReason event
@@ -85,7 +90,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, BOB.addr, "");
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidImplementationAddress()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         // Expect the UserOperationRevertReason event

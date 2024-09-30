@@ -29,5 +29,7 @@ TestModuleManager_InstallModule
 │   └── it should install the hook module
 ├── when reinstalling an already installed hook module
 │   └── it should revert with ModuleAlreadyInstalled error
+├── when installing a Multitype module successfully
+│   └── it should install and properly initialize the Multitype module
 └── when installing a module with an invalid type ID
     └── it should revert with InvalidModuleTypeId error

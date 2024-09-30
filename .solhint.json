@@ -1,7 +1,7 @@
 {
   "extends": "solhint:recommended",
   "rules": {
-    "compiler-version": ["error", "^0.8.26"],
+    "compiler-version": ["error", "^0.8.27"],
     "func-visibility": ["error", { "ignoreConstructors": true }],
     "reentrancy": "error",
     "state-visibility": "error",
@@ -20,7 +20,7 @@
     "visibility-modifier-order": "error",
     "code-complexity": ["error", 9],
     "function-max-lines": ["error", 80],
-    "max-line-length": ["error", 150],
+    "max-line-length": ["error", 240],
     "no-empty-blocks": "off",
     "no-unused-vars": "error",
     "payable-fallback": "off",

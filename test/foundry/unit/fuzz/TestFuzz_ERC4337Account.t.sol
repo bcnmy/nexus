@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../utils/NexusTest_Base.t.sol";
 
@@ -36,8 +36,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         uint256 tolerance = 0.001 ether;
 
         // Check if the deposit balance is updated correctly within the tolerance
-        bool isWithinTolerance = (balanceAfter >= balanceBefore + depositAmount - tolerance) &&
-            (balanceAfter <= balanceBefore + depositAmount + tolerance);
+        bool isWithinTolerance = (balanceAfter >= balanceBefore + depositAmount - tolerance) && (balanceAfter <= balanceBefore + depositAmount + tolerance);
         assertTrue(isWithinTolerance, "Deposit balance should correctly reflect the new deposit amount within tolerance");
     }
 
@@ -47,13 +46,13 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         vm.assume(numOps < 20); // Keep the number of operations manageable
 
         for (uint256 i = 0; i < numOps; i++) {
-            uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
+            uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("incrementNonce()") });
 
             executeBatch(BOB, BOB_ACCOUNT, executions, EXECTYPE_DEFAULT);
 
-            uint256 nonceAfter = getNonce(address(BOB_ACCOUNT), address(VALIDATOR_MODULE));
+            uint256 nonceAfter = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
             assertEq(nonceAfter, nonceBefore + 1, "Nonce should increment after each operation");
         }
     }
@@ -71,10 +70,18 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = randomSignature; // Using fuzzed signature
 
+        address validator;
+
+        assembly {
+            validator := shr(96, shl(32, randomNonce))
+        }
+
+        // Expect revert with ValidatorNotInstalled selector
+        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
+
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        assertTrue(res == 0 || res == 1, "Operation should either pass or fail validation properly");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         stopPrank();
     }
 
@@ -98,11 +105,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
 
         // Withdraw the amount to the 'to' address
         Execution[] memory withdrawExecutions = new Execution[](1);
-        withdrawExecutions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        withdrawExecutions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
         executeBatch(BOB, BOB_ACCOUNT, withdrawExecutions, EXECTYPE_DEFAULT);
 
         assertEq(to.balance, amount, "Withdrawal amount should reflect in the 'to' address balance");
@@ -118,10 +122,16 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         userOps[0] = buildPackedUserOp(userAddress, randomNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = invalidSignature; // Using invalid signature
+        address validator;
+
+        assembly {
+            validator := shr(96, shl(32, randomNonce))
+        }
+        // Expect revert with ValidatorNotInstalled selector
+        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
 
         startPrank(address(ENTRYPOINT));
-        uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        assertTrue(res == 1, "Operation should fail validation with an invalid signature");
+        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
         stopPrank();
     }
 
@@ -139,13 +149,8 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
-        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            withdrawExecutions,
-            address(VALIDATOR_MODULE)
-        );
+        PackedUserOperation[] memory withdrawUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
     }
 }

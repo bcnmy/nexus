@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -12,7 +12,7 @@ pragma solidity ^0.8.26;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 
 /// @title Nexus - BaseAccount
@@ -25,7 +25,7 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0-beta";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0-beta.1";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
@@ -80,14 +80,14 @@ contract BaseAccount is IBaseAccount {
     /// @param amount The amount to withdraw.
     function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
         address entryPointAddress = _ENTRYPOINT;
-        /// @solidity memory-safe-assembly
         assembly {
+            let freeMemPtr := mload(0x40) // Store the free memory pointer.
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
             if iszero(call(gas(), entryPointAddress, 0, 0x10, 0x44, codesize(), 0x00)) {
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
+                returndatacopy(freeMemPtr, 0x00, returndatasize())
+                revert(freeMemPtr, returndatasize())
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }

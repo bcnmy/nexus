@@ -1,0 +1,19 @@
+TestModuleManager_EnableMode
+├── when setting up the testing environment
+│   └── it should set up the environment properly
+├── when using Enable Mode with no 7739 sig it should successfully install and configure the new module
+│   └── it should install the module
+├── when using Enable Mode with 7739-nested712 sig it should successfully install and configure the new module
+│   └── it should install the module
+├── when using Enable Mode with non-deployed account
+│   └── it should successfully deploy account vi userOp signed with a signer from the module yet to be added via enable mode
+├── when trying to use wrong validator to validate enable mode sig
+│   └── it should revert
+├── when trying to use wrong enable mode signature
+│   └── it should revert
+├── when using a valid multi-module
+│   └── it should successfully install and configure the new module
+├── when using an invalid module type
+│   └── it should revert
+└── when using an invalid signature
+    └── it should revert

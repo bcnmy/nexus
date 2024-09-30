@@ -7,8 +7,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 49429,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 49833,
+    "GAS_DIFFERENCE": "🥵 +459"
   },
   {
     "NUMBER": 2,
@@ -18,8 +18,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 24729,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 25133,
+    "GAS_DIFFERENCE": "🥵 +459"
   },
   {
     "NUMBER": 3,
@@ -29,8 +29,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 91671,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 98023,
+    "GAS_DIFFERENCE": "🥵 +6160"
   },
   {
     "NUMBER": 4,
@@ -40,8 +40,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 71771,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 78124,
+    "GAS_DIFFERENCE": "🥵 +6161"
   },
   {
     "NUMBER": 5,
@@ -51,8 +51,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 328180,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 372899,
+    "GAS_DIFFERENCE": "🥵 +12346"
   },
   {
     "NUMBER": 6,
@@ -62,8 +62,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 308280,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 353000,
+    "GAS_DIFFERENCE": "🥵 +12347"
   },
   {
     "NUMBER": 7,
@@ -73,8 +73,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 313048,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 356379,
+    "GAS_DIFFERENCE": "🥵 +11060"
   },
   {
     "NUMBER": 8,
@@ -84,8 +84,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 293148,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 336480,
+    "GAS_DIFFERENCE": "🥵 +11062"
   },
   {
     "NUMBER": 9,
@@ -95,8 +95,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 361075,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 404502,
+    "GAS_DIFFERENCE": "🥵 +11157"
   },
   {
     "NUMBER": 10,
@@ -106,8 +106,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 341175,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 384603,
+    "GAS_DIFFERENCE": "🥵 +11158"
   },
   {
     "NUMBER": 11,
@@ -117,8 +117,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 106454,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 114176,
+    "GAS_DIFFERENCE": "🥵 +7517"
   },
   {
     "NUMBER": 12,
@@ -128,8 +128,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 86554,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 94276,
+    "GAS_DIFFERENCE": "🥵 +7518"
   },
   {
     "NUMBER": 13,
@@ -139,8 +139,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 47632,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 48409,
+    "GAS_DIFFERENCE": "🥵 +824"
   },
   {
     "NUMBER": 14,
@@ -150,8 +150,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 27732,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 28509,
+    "GAS_DIFFERENCE": "🥵 +824"
   },
   {
     "NUMBER": 15,
@@ -161,8 +161,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 94998,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 101486,
+    "GAS_DIFFERENCE": "🥵 +6296"
   },
   {
     "NUMBER": 16,
@@ -172,8 +172,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 75098,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 81586,
+    "GAS_DIFFERENCE": "🥵 +6296"
   },
   {
     "NUMBER": 17,
@@ -183,8 +183,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 326716,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 371590,
+    "GAS_DIFFERENCE": "🥵 +12514"
   },
   {
     "NUMBER": 18,
@@ -194,8 +194,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 306816,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 351690,
+    "GAS_DIFFERENCE": "🥵 +12514"
   },
   {
     "NUMBER": 19,
@@ -205,8 +205,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 311582,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 355085,
+    "GAS_DIFFERENCE": "🥵 +11233"
   },
   {
     "NUMBER": 20,
@@ -216,8 +216,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 291682,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 335185,
+    "GAS_DIFFERENCE": "🥵 +11233"
   },
   {
     "NUMBER": 21,
@@ -227,8 +227,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 359608,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 403209,
+    "GAS_DIFFERENCE": "🥵 +11330"
   },
   {
     "NUMBER": 22,
@@ -238,8 +238,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 339708,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 383309,
+    "GAS_DIFFERENCE": "🥵 +11330"
   },
   {
     "NUMBER": 23,
@@ -249,8 +249,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 109814,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 117692,
+    "GAS_DIFFERENCE": "🥵 +7697"
   },
   {
     "NUMBER": 24,
@@ -260,8 +260,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 89914,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 97792,
+    "GAS_DIFFERENCE": "🥵 +7697"
   },
   {
     "NUMBER": 25,
@@ -271,8 +271,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 52882,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 53062,
+    "GAS_DIFFERENCE": "🥵 +200"
   },
   {
     "NUMBER": 26,
@@ -282,8 +282,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 27882,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 28062,
+    "GAS_DIFFERENCE": "🥵 +200"
   },
   {
     "NUMBER": 27,
@@ -293,8 +293,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 52946,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 53129,
+    "GAS_DIFFERENCE": "🥵 +203"
   },
   {
     "NUMBER": 28,
@@ -304,8 +304,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 27946,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 28129,
+    "GAS_DIFFERENCE": "🥵 +203"
   },
   {
     "NUMBER": 29,
@@ -315,8 +315,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 52955,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 53129,
+    "GAS_DIFFERENCE": "🥵 +203"
   },
   {
     "NUMBER": 30,
@@ -326,8 +326,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 27946,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 28129,
+    "GAS_DIFFERENCE": "🥵 +203"
   },
   {
     "NUMBER": 31,
@@ -337,8 +337,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 99766,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 105888,
+    "GAS_DIFFERENCE": "🥵 +5930"
   },
   {
     "NUMBER": 32,
@@ -348,8 +348,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 74766,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 80888,
+    "GAS_DIFFERENCE": "🥵 +5930"
   },
   {
     "NUMBER": 33,
@@ -359,8 +359,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 331441,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 375904,
+    "GAS_DIFFERENCE": "🥵 +12102"
   },
   {
     "NUMBER": 34,
@@ -370,8 +370,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 306441,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 350904,
+    "GAS_DIFFERENCE": "🥵 +12102"
   },
   {
     "NUMBER": 35,
@@ -381,8 +381,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 316331,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 359455,
+    "GAS_DIFFERENCE": "🥵 +10830"
   },
   {
     "NUMBER": 36,
@@ -392,8 +392,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 291331,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 334455,
+    "GAS_DIFFERENCE": "🥵 +10830"
   },
   {
     "NUMBER": 37,
@@ -403,8 +403,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 364358,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 407578,
+    "GAS_DIFFERENCE": "🥵 +10927"
   },
   {
     "NUMBER": 38,
@@ -414,8 +414,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 339358,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 382578,
+    "GAS_DIFFERENCE": "🥵 +10927"
   },
   {
     "NUMBER": 39,
@@ -425,8 +425,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🧊 ColdAccess",
-    "GAS_USED": 114520,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 122015,
+    "GAS_DIFFERENCE": "🥵 +7316"
   },
   {
     "NUMBER": 40,
@@ -436,8 +436,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "🔥 WarmAccess",
-    "GAS_USED": 89520,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 97015,
+    "GAS_DIFFERENCE": "🥵 +7316"
   },
   {
     "NUMBER": 41,
@@ -447,8 +447,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 148666,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 148742,
+    "GAS_DIFFERENCE": "🥵 +123"
   },
   {
     "NUMBER": 42,
@@ -458,8 +458,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 196378,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 202065,
+    "GAS_DIFFERENCE": "🥵 +5508"
   },
   {
     "NUMBER": 43,
@@ -469,8 +469,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 428194,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 472232,
+    "GAS_DIFFERENCE": "🥵 +11665"
   },
   {
     "NUMBER": 44,
@@ -480,8 +480,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 412962,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 455654,
+    "GAS_DIFFERENCE": "🥵 +10396"
   },
   {
     "NUMBER": 45,
@@ -491,8 +491,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 460988,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 503778,
+    "GAS_DIFFERENCE": "🥵 +10493"
   },
   {
     "NUMBER": 46,
@@ -502,8 +502,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 211244,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 218298,
+    "GAS_DIFFERENCE": "🥵 +6836"
   },
   {
     "NUMBER": 47,
@@ -513,8 +513,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 117590,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 117667,
+    "GAS_DIFFERENCE": "🥵 +104"
   },
   {
     "NUMBER": 48,
@@ -524,8 +524,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 165355,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 170980,
+    "GAS_DIFFERENCE": "🥵 +5434"
   },
   {
     "NUMBER": 49,
@@ -535,8 +535,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 397174,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 441161,
+    "GAS_DIFFERENCE": "🥵 +11625"
   },
   {
     "NUMBER": 50,
@@ -546,8 +546,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 381928,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 424556,
+    "GAS_DIFFERENCE": "🥵 +10333"
   },
   {
     "NUMBER": 51,
@@ -557,8 +557,8 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 197896,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 202090,
+    "GAS_DIFFERENCE": "🥵 +3979"
   },
   {
     "NUMBER": 52,
@@ -568,8 +568,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 429959,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 472458,
+    "GAS_DIFFERENCE": "🥵 +10099"
   },
   {
     "NUMBER": 53,
@@ -579,8 +579,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 414493,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 455669,
+    "GAS_DIFFERENCE": "🥵 +8855"
   },
   {
     "NUMBER": 54,
@@ -590,8 +590,8 @@
     "IS_DEPLOYED": "False",
     "WITH_PAYMASTER": "False",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 462519,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 503793,
+    "GAS_DIFFERENCE": "🥵 +8952"
   },
   {
     "NUMBER": 55,
@@ -601,7 +601,7 @@
     "IS_DEPLOYED": "True",
     "WITH_PAYMASTER": "True",
     "RECEIVER_ACCESS": "N/A",
-    "GAS_USED": 180238,
-    "GAS_DIFFERENCE": "0"
+    "GAS_USED": 187226,
+    "GAS_DIFFERENCE": "🥵 +6783"
   }
 ]

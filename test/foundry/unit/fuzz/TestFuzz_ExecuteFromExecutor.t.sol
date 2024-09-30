@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../utils/NexusTest_Base.t.sol";
 
@@ -33,7 +33,8 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
             BOB_ACCOUNT,
             EXECTYPE_DEFAULT,
             execution,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 

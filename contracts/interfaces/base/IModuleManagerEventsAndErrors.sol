@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -11,6 +11,8 @@ pragma solidity ^0.8.26;
 // ──────────────────────────────────────────────────────────────────────────────
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
+
+import { CallType } from "../../lib/ModeLib.sol";
 
 /// @title ERC-7579 Module Manager Events and Errors Interface
 /// @notice Provides event and error definitions for actions related to module management in smart accounts.
@@ -31,8 +33,14 @@ interface IModuleManagerEventsAndErrors {
     /// @param module The address of the uninstalled module.
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
-    /// @dev Thrown when an attempt is made to uninstall the last validator module, which is prohibited.
-    error CannotRemoveLastValidator();
+    /// @notice Thrown when attempting to remove the last validator.
+    error CanNotRemoveLastValidator();
+
+    /// @dev Thrown when the specified module address is not recognized as valid.
+    error ValidatorNotInstalled(address module);
+
+    /// @dev Thrown when there is no installed validator detected.
+    error NoValidatorInstalled();
 
     /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);
@@ -70,6 +78,22 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when no fallback handler is available for a given selector.
     error MissingFallbackHandler(bytes4 selector);
 
+    /// @dev Thrown when Invalid data is provided for MultiType install flow
+    error InvalidInput();
+
+    /// @dev Thrown when unable to validate Module Enable Mode signature
+    error EnableModeSigError();
+
+    /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
+    error MismatchModuleTypeId(uint256 moduleTypeId);
+
     /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
     error FallbackSelectorForbidden();
+
+    /// @dev Thrown when there is an attempt to install a fallback handler with an invalid calltype for a given selector.
+    error FallbackCallTypeInvalid();
+
+    /// @notice Error thrown when an execution with an unsupported CallType was made.
+    /// @param callType The unsupported call type.
+    error UnsupportedCallType(CallType callType);
 }

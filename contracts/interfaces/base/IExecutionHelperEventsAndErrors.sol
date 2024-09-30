@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -21,7 +21,17 @@ pragma solidity ^0.8.26;
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
+
+import { ExecType } from "../../lib/ModeLib.sol";
+
 interface IExecutionHelperEventsAndErrors {
     /// @notice Event emitted when a transaction fails to execute successfully.
-    event TryExecuteUnsuccessful(uint256 batchExecutionindex, bytes result);
+    event TryExecuteUnsuccessful(bytes callData, bytes result);
+
+    /// @notice Event emitted when a transaction fails to execute successfully.
+    event TryDelegateCallUnsuccessful(bytes callData, bytes result);
+
+    /// @notice Error thrown when an execution with an unsupported ExecType was made.
+    /// @param execType The unsupported execution type.
+    error UnsupportedExecType(ExecType execType);
 }

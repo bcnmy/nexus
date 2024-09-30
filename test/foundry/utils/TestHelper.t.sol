@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "solady/src/utils/ECDSA.sol";
+import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
-import { IEntryPoint } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { PackedUserOperation } from "account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 import "./CheatCodes.sol";
 import "./EventsAndErrors.sol";
@@ -15,12 +15,16 @@ import { Nexus } from "../../../contracts/Nexus.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockHandler } from "../../../contracts/mocks/MockHandler.sol";
 import { MockExecutor } from "../../../contracts/mocks/MockExecutor.sol";
+import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.sol";
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
+import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
-import { Bootstrap, BootstrapConfig } from "../../../contracts/utils/Bootstrap.sol";
+import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
+import { MODE_VALIDATION } from "../../../contracts/types/Constants.sol";
+import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
@@ -39,6 +43,9 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     address internal CHARLIE_ADDRESS;
     address payable internal BUNDLER_ADDRESS;
 
+    address[] internal ATTESTERS;
+    uint8 internal THRESHOLD;
+
     Nexus internal BOB_ACCOUNT;
     Nexus internal ALICE_ACCOUNT;
     Nexus internal CHARLIE_ACCOUNT;
@@ -46,13 +53,15 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     IEntryPoint internal ENTRYPOINT;
     NexusAccountFactory internal FACTORY;
     BiconomyMetaFactory internal META_FACTORY;
+    MockRegistry internal REGISTRY;
     MockHook internal HOOK_MODULE;
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
+    MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
-    Bootstrap internal BOOTSTRAPPER;
+    NexusBootstrap internal BOOTSTRAPPER;
 
     // -----------------------------------------
     // Setup Functions
@@ -87,6 +96,10 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         BUNDLER_ADDRESS = payable(BUNDLER.addr);
 
         FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
+
+        ATTESTERS = new address[](1);
+        ATTESTERS[0] = ALICE.addr;
+        THRESHOLD = 1;
     }
 
     function deployTestContracts() internal {
@@ -102,7 +115,9 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         HANDLER_MODULE = new MockHandler();
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
-        BOOTSTRAPPER = new Bootstrap();
+        MULTI_MODULE = new MockMultiModule();
+        BOOTSTRAPPER = new NexusBootstrap();
+        REGISTRY = new MockRegistry();
     }
 
     // -----------------------------------------
@@ -151,7 +166,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
         bytes32 salt = keccak256(saDeploymentIndex);
 
         account = FACTORY.computeAccountAddress(_initData, salt);
@@ -171,17 +186,15 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook);
+        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
 
         bytes32 salt = keccak256(saDeploymentIndex);
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         // Prepend the factory address to the encoded function call to form the initCode
-        initCode = abi.encodePacked(
-            address(META_FACTORY),
-            abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData)
-        );
+        initCode =
+            abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
     }
 
     /// @notice Prepares a user operation with init code and call data
@@ -195,7 +208,11 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory initCode,
         bytes memory callData,
         address validator
-    ) internal view returns (PackedUserOperation memory userOp) {
+    )
+        internal
+        view
+        returns (PackedUserOperation memory userOp)
+    {
         userOp = buildUserOpWithCalldata(wallet, callData, validator);
         userOp.initCode = initCode;
 
@@ -212,22 +229,41 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         Vm.Wallet memory wallet,
         bytes memory callData,
         address validator
-    ) internal view returns (PackedUserOperation memory userOp) {
+    )
+        internal
+        view
+        returns (PackedUserOperation memory userOp)
+    {
         address payable account = calculateAccountAddress(wallet.addr, validator);
-        uint256 nonce = getNonce(account, validator);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, validator, bytes3(0));
         userOp = buildPackedUserOp(account, nonce);
         userOp.callData = callData;
 
         bytes memory signature = signUserOp(wallet, userOp);
         userOp.signature = signature;
     }
+
     /// @notice Retrieves the nonce for a given account and validator
     /// @param account The account address
+    /// @param vMode Validation Mode
     /// @param validator The validator address
+    /// @param batchId The batch ID
     /// @return nonce The retrieved nonce
-    function getNonce(address account, address validator) internal view returns (uint256 nonce) {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
+    function getNonce(address account, bytes1 vMode, address validator, bytes3 batchId) internal view returns (uint256 nonce) {
+        uint192 key = makeNonceKey(vMode, validator, batchId);
         nonce = ENTRYPOINT.getNonce(address(account), key);
+    }
+
+    /// @notice Composes the nonce key
+    /// @param vMode Validation Mode
+    /// @param validator The validator address
+    /// @param batchId The batch ID
+    /// @return key The nonce key
+    function makeNonceKey(bytes1 vMode, address validator, bytes3 batchId) internal pure returns (uint192 key) {
+        assembly {
+            key := or(shr(88, vMode), validator)
+            key := or(shr(64, batchId), key)
+        }
     }
 
     /// @notice Signs a user operation
@@ -255,18 +291,17 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param nonce The nonce
     /// @return userOp The built user operation
     function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
-        return
-            PackedUserOperation({
-                sender: sender,
-                nonce: nonce,
-                initCode: "",
-                callData: "",
-                accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // verification and call gas limit
-                preVerificationGas: 3e5, // Adjusted preVerificationGas
-                gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // maxFeePerGas and maxPriorityFeePerGas
-                paymasterAndData: "",
-                signature: ""
-            });
+        return PackedUserOperation({
+            sender: sender,
+            nonce: nonce,
+            initCode: "",
+            callData: "",
+            accountGasLimits: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // verification and call gas limit
+            preVerificationGas: 3e5, // Adjusted preVerificationGas
+            gasFees: bytes32(abi.encodePacked(uint128(3e6), uint128(3e6))), // maxFeePerGas and maxPriorityFeePerGas
+            paymasterAndData: "",
+            signature: ""
+        });
     }
 
     /// @notice Signs a message and packs r, s, v into bytes
@@ -279,47 +314,80 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         signature = abi.encodePacked(r, s, v);
     }
 
-    /// @notice Prepares a packed user operation with specified parameters
-    /// @param signer The wallet to sign the operation
-    /// @param account The Nexus account
+    /// @notice Prepares a 7579 execution calldata
     /// @param execType The execution type
     /// @param executions The executions to include
-    /// @param validator The validator address
-    /// @return userOps The prepared packed user operations
-    function buildPackedUserOperation(
-        Vm.Wallet memory signer,
-        Nexus account,
-        ExecType execType,
-        Execution[] memory executions,
-        address validator
-    ) internal view returns (PackedUserOperation[] memory userOps) {
-        // Validate execType
-        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
-
+    /// @return executionCalldata The prepared callData
+    function prepareERC7579ExecuteCallData(
+        ExecType execType, 
+        Execution[] memory executions
+    ) internal virtual view returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
-        bytes memory executionCalldata;
         uint256 length = executions.length;
 
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-            executionCalldata = abi.encodeCall(
-                Nexus.execute,
-                (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData))
-            );
+            executionCalldata =
+                abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
             executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
         } else {
             revert("Executions array cannot be empty");
         }
+    }
+
+    /// @notice Prepares a callData for single execution
+    /// @param execType The execution type
+    /// @param target The call target
+    /// @param value The call value
+    /// @param data The call data
+    /// @return executionCalldata The prepared callData
+    function prepareERC7579SingleExecuteCallData(
+        ExecType execType, 
+        address target,
+        uint256 value,
+        bytes memory data
+    ) internal virtual view returns (bytes memory executionCalldata) {
+        ExecutionMode mode;
+        mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
+        executionCalldata = abi.encodeCall(
+            Nexus.execute,
+            (mode, ExecLib.encodeSingle(target, value, data))
+        );
+    }
+
+    /// @notice Prepares a packed user operation with specified parameters
+    /// @param signer The wallet to sign the operation
+    /// @param account The Nexus account
+    /// @param execType The execution type
+    /// @param executions The executions to include
+    /// @return userOps The prepared packed user operations
+    function buildPackedUserOperation(
+        Vm.Wallet memory signer,
+        Nexus account,
+        ExecType execType,
+        Execution[] memory executions,
+        address validator,
+        uint256 nonce 
+    ) internal view returns (PackedUserOperation[] memory userOps) {
+        // Validate execType
+        require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
         // Initialize the userOps array with one operation
         userOps = new PackedUserOperation[](1);
 
+        uint256 nonceToUse;
+        if(nonce == 0) {
+            nonceToUse = getNonce(address(account), MODE_VALIDATION, validator, bytes3(0));
+        } else {
+            nonceToUse = nonce;
+        }
+
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), getNonce(address(account), validator));
-        userOps[0].callData = executionCalldata;
+        userOps[0] = buildPackedUserOp(address(account), nonceToUse);
+        userOps[0].callData = prepareERC7579ExecuteCallData(execType, executions);
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -373,7 +441,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
             // Do some biased sampling for more robust tests.
             // prettier-ignore
-            for {} 1 {} {
+            for { } 1 { } {
                 let d := byte(0, r)
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2.
                 if iszero(d) {
@@ -409,7 +477,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param sa The smart account address
     /// @param prefundAmount The amount to pre-fund
     function prefundSmartAccountAndAssertSuccess(address sa, uint256 prefundAmount) internal {
-        (bool res, ) = sa.call{ value: prefundAmount }(""); // Pre-funding the account contract
+        (bool res,) = sa.call{ value: prefundAmount }(""); // Pre-funding the account contract
         assertTrue(res, "Pre-funding account should succeed");
     }
 
@@ -443,17 +511,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         uint256 value,
         bytes memory callData,
         ExecType execType
-    ) internal {
+    )
+        internal
+    {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
     /// @notice Helper function to execute a batch of operations.
     function executeBatch(Vm.Wallet memory user, Nexus userAccount, Execution[] memory executions, ExecType execType) internal {
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
@@ -485,10 +555,10 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             }
         }
 
-        uint256 baseGas = 21000;
+        uint256 baseGas = 21_000;
 
         uint256 initialGas = gasleft();
-        (bool res, ) = target.call{ value: value }(callData);
+        (bool res,) = target.call{ value: value }(callData);
         uint256 gasUsed = initialGas - gasleft() + baseGas + calldataCost;
         assertTrue(res);
         emit log_named_uint(description, gasUsed);
@@ -509,7 +579,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             }
         }
 
-        uint256 baseGas = 21000;
+        uint256 baseGas = 21_000;
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BUNDLER.addr));
@@ -537,7 +607,11 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         PackedUserOperation memory userOp,
         Vm.Wallet memory signer,
         MockPaymaster paymaster
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         // Validity timestamps
         uint48 validUntil = uint48(block.timestamp + 1 days);
         uint48 validAfter = uint48(block.timestamp);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -16,4 +16,4 @@ pragma solidity ^0.8.26;
 // To be able to compile any foundry/mocks for typechain and use in hardhat tests
 
 // solhint-disable-next-line no-unused-import
-import { EntryPoint } from "account-abstraction/contracts/core/EntryPoint.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";

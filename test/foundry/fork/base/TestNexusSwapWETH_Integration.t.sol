@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "./BaseSettings.t.sol";
 import "../../utils/Imports.sol";
@@ -111,7 +111,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("48::UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
@@ -140,7 +140,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -184,7 +185,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -212,7 +214,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("51::UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
@@ -242,7 +244,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -283,7 +286,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -322,7 +326,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             Nexus(preComputedAddress),
             EXECTYPE_DEFAULT,
             executions,
-            address(VALIDATOR_MODULE)
+            address(VALIDATOR_MODULE),
+            0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -359,7 +364,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         Nexus deployedNexus = deployNexus(user, 10 ether, address(VALIDATOR_MODULE));
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Generate and sign paymaster data
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);

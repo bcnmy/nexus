@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 // ──────────────────────────────────────────────────────────────────────────────
 //     _   __    _  __
@@ -24,6 +24,9 @@ uint256 constant VALIDATION_SUCCESS = 0;
 // Value indicating failed validation
 uint256 constant VALIDATION_FAILED = 1;
 
+// Module type identifier for Multitype install
+uint256 constant MODULE_TYPE_MULTI = 0;
+
 // Module type identifier for validators
 uint256 constant MODULE_TYPE_VALIDATOR = 1;
 
@@ -35,3 +38,12 @@ uint256 constant MODULE_TYPE_FALLBACK = 3;
 
 // Module type identifier for hooks
 uint256 constant MODULE_TYPE_HOOK = 4;
+
+string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
+bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256(bytes(MODULE_ENABLE_MODE_NOTATION));
+
+// Validation modes
+bytes1 constant MODE_VALIDATION = 0x00;
+bytes1 constant MODE_MODULE_ENABLE = 0x01;
+
+bytes32 constant SUPPORTS_NESTED_TYPED_DATA_SIGN = bytes4(0xd620c85a);

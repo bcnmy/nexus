@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 /// @title ModeLib
 /// @author zeroknots.eth | rhinestone.wtf
@@ -135,10 +135,15 @@ library ModeLib {
 
 using { _eqModeSelector as == } for ModeSelector global;
 using { _eqCallType as == } for CallType global;
+using { _uneqCallType as != } for CallType global;
 using { _eqExecType as == } for ExecType global;
 
 function _eqCallType(CallType a, CallType b) pure returns (bool) {
     return CallType.unwrap(a) == CallType.unwrap(b);
+}
+
+function _uneqCallType(CallType a, CallType b) pure returns (bool) {
+    return CallType.unwrap(a) != CallType.unwrap(b);
 }
 
 function _eqExecType(ExecType a, ExecType b) pure returns (bool) {

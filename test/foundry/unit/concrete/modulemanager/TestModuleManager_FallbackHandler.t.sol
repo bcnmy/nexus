@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
@@ -10,6 +10,8 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     /// @notice Sets up the base module management environment and installs the fallback handler.
     function setUp() public {
         init();
+
+        Execution[] memory execution = new Execution[](2);
 
         // Custom data for installing the MockHandler with call type STATIC
         bytes memory customData = abi.encode(bytes5(abi.encodePacked(GENERIC_FALLBACK_SELECTOR, CALLTYPE_SINGLE)));
@@ -22,13 +24,23 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
             customData
         );
 
-        Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+
+        callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_HOOK,
+            address(HOOK_MODULE),
+            ""
+        );
+
+        execution[1] = Execution(address(BOB_ACCOUNT), 0, callData);
+        
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed
         assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), true, "Fallback handler not installed");
+        assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), true, "Hook not installed");
     }
 
     /// @notice Tests triggering the onGenericFallback function of the fallback handler.
@@ -44,12 +56,10 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
         // Trigger the onGenericFallback directly
         MockHandler(HANDLER_MODULE).onGenericFallback(exampleSender, exampleValue, exampleData);
-
-        // Additional assertions could go here if needed
     }
 
     /// @notice Tests that handleOps triggers the generic fallback handler.
-    function test_HandleOpsTriggersGenericFallback() public {
+    function test_HandleOpsTriggersGenericFallback(bool skip) public {
         // Prepare the operation that triggers the fallback handler
         bytes memory dataToTriggerFallback = abi.encodeWithSelector(
             MockHandler(address(0)).onGenericFallback.selector,
@@ -61,14 +71,26 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, dataToTriggerFallback);
 
         // Prepare UserOperation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
-        // Expect the GenericFallbackCalled event from the MockHandler contract
-        vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
-        emit GenericFallbackCalled(address(this), 123, "Example data");
+        if (!skip) {
+            // Expect the GenericFallbackCalled event from the MockHandler contract
+            vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
+            emit GenericFallbackCalled(address(this), 123, "Example data");
+        }
 
         // Call handleOps, which should trigger the fallback handler and emit the event
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    /// @notice Tests that handleOps triggers the generic fallback handler.
+    function test_HandleOpsTriggersGenericFallback_IsProperlyHooked() public {
+        vm.expectEmit(address(HOOK_MODULE));
+        emit PreCheckCalled();
+        vm.expectEmit(address(HOOK_MODULE));
+        emit PostCheckCalled();
+        // skip fallback emit check as per Matching Sequences section here => https://book.getfoundry.sh/cheatcodes/expect-emit 
+        test_HandleOpsTriggersGenericFallback({skip: true});
     }
 
     /// @notice Tests installing a fallback handler.
@@ -83,7 +105,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed for the given selector
@@ -103,7 +125,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Expected UserOperationRevertReason event due to function selector already used
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -128,7 +150,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Expected UserOperationRevertReason event due to function selector not used
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -155,7 +177,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Expected UserOperationRevertReason event due to function selector not used by this handler
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -183,7 +205,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -203,7 +225,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -232,7 +254,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Expect UserOperationRevertReason event due to forbidden selector
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -255,7 +277,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         );
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE));
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Expect UserOperationRevertReason event due to forbidden selector
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -265,5 +287,23 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+    }
+
+    function test_onTokenReceived_Success() public {
+        vm.startPrank(address(ENTRYPOINT));
+        //ERC-721
+        (bool success, bytes memory data) = address(BOB_ACCOUNT).call{value: 0}(hex'150b7a02');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'150b7a02')));
+        //ERC-1155 
+        (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'f23a6e61');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e61')));
+        //ERC-1155 Batch
+        (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'bc197c81');
+        assertTrue(success);
+        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c81')));
+
+        vm.stopPrank();
     }
 }

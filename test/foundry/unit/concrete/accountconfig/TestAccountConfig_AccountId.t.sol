@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 
@@ -19,7 +19,7 @@ contract TestAccountConfig_AccountId is Test {
 
     /// @notice Tests if the account ID returns the expected value
     function test_WhenCheckingTheAccountID() external givenTheAccountConfiguration {
-        string memory expected = "biconomy.nexus.1.0.0-beta";
+        string memory expected = "biconomy.nexus.1.0.0-beta.1";
         assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
 }

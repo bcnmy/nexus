@@ -1,8 +1,19 @@
 import { ethers } from "hardhat";
 import { toGwei } from "./encoding";
 import { ExecutionMethod, PackedUserOperation, UserOperation } from "./types";
-import { Signer, AddressLike, BytesLike, BigNumberish, toBeHex } from "ethers";
-import { EntryPoint } from "../../../typechain-types";
+import {
+  Signer,
+  AddressLike,
+  BytesLike,
+  BigNumberish,
+  toBeHex,
+  concat,
+  getBytes,
+  getAddress,
+  hexlify,
+  zeroPadValue,
+} from "ethers";
+import { EntryPoint, Nexus } from "../../../typechain-types";
 import {
   CALLTYPE_SINGLE,
   EXECTYPE_DEFAULT,
@@ -28,6 +39,10 @@ export const DefaultsForUserOp: UserOperation = {
   signature: "0x",
 };
 
+export const MODE_VALIDATION = "0x00";
+export const MODE_MODULE_ENABLE = "0x01";
+
+const abiCoder = new ethers.AbiCoder();
 /**
  * Simplifies the creation of a PackedUserOperation object by abstracting repetitive logic and enhancing readability.
  * @param userOp The user operation details.
@@ -98,6 +113,7 @@ export async function signAndPackUserOp(
   signer: Signer, // ECDSA signer
   setup: { entryPoint: any; validator: any },
   deposit?: string,
+  batchId: string = "0x000000",
 ): Promise<PackedUserOperation> {
   if (!setup.entryPoint || !setup.validator) {
     throw new Error("Setup object is missing required properties.");
@@ -107,9 +123,12 @@ export async function signAndPackUserOp(
   }
 
   const validatorAddress = await setup.validator.getAddress();
-  const nonce = await setup.entryPoint.getNonce(
+  const nonce = await getNonce(
+    setup.entryPoint,
     userOp.sender,
-    ethers.zeroPadBytes(validatorAddress, 24),
+    MODE_VALIDATION,
+    validatorAddress,
+    batchId,
   );
 
   userOp.nonce = nonce;
@@ -128,6 +147,21 @@ export async function signAndPackUserOp(
   }
 
   return packedUserOp;
+}
+
+/**
+ * Converts a number to a 3-byte hexadecimal string.
+ * @param num The number to convert (must be between 0 and 16777215 inclusive)
+ * @returns A 3-byte hexadecimal string representation of the number
+ * @throws Error if the number is out of range
+ */
+export function numberTo3Bytes(num: number): string {
+  if (num < 0 || num > 0xffffff) {
+    throw new Error(
+      "Number out of range. Must be between 0 and 16777215 inclusive.",
+    );
+  }
+  return "0x" + num.toString(16).padStart(6, "0");
 }
 
 export function packPaymasterData(
@@ -149,12 +183,17 @@ export async function fillSignAndPack(
   initCode: BytesLike,
   callData: BytesLike,
   entryPoint: EntryPoint,
+  validationMode: BytesLike,
   validatorAddress: AddressLike, // any validator
   owner: Signer, // ECDSA signer for R1/mock validator
+  batchId: string = "0x000000",
 ): Promise<PackedUserOperation> {
-  const nonce = await entryPoint.getNonce(
+  const nonce = await getNonce(
+    entryPoint,
     accountAddress,
-    ethers.zeroPadBytes(validatorAddress.toString(), 24),
+    validationMode,
+    validatorAddress,
+    batchId,
   );
   const userOp = buildPackedUserOp({
     sender: accountAddress,
@@ -196,7 +235,12 @@ export async function getInitCode(
 
   // Encode the createAccount function call with the provided parameters
   const factoryDeploymentData = K1ValidatorFactory.interface
-    .encodeFunctionData("createAccount", [ownerAddress, saDeploymentIndex])
+    .encodeFunctionData("createAccount", [
+      ownerAddress,
+      saDeploymentIndex,
+      [],
+      0,
+    ])
     .slice(2);
 
   return factoryAddress + factoryDeploymentData;
@@ -380,27 +424,82 @@ export function findEventInLogs(
 
 export async function generateCallDataForExecuteUserop() {}
 
-export async function buildPackedUserOperation(
-  userOp: PackedUserOperation,
-  entryPoint: EntryPoint,
-  validatorModuleAddress: string,
-  smartAccountOwner: Signer,
-  nonceIncrement: number,
-): Promise<PackedUserOperation> {
-  const nonce = await entryPoint.getNonce(
-    userOp.sender,
-    ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-  );
-  userOp.nonce = nonce + BigInt(nonceIncrement);
-  const userOpHash = await entryPoint.getUserOpHash(userOp);
-  const signature = await smartAccountOwner.signMessage(
-    ethers.getBytes(userOpHash),
-  );
-  userOp.signature = signature;
+// Helper to mimic the `makeNonceKey` function in Solidity
+function makeNonceKey(
+  vMode: BytesLike,
+  validator: AddressLike,
+  batchId: BytesLike,
+): string {
+  // Convert the validator address to a Uint8Array
+  const validatorBytes = getBytes(getAddress(validator.toString()));
 
-  return userOp;
+  // Prepare the validation mode as a 1-byte Uint8Array
+  const validationModeBytes = Uint8Array.from([Number(vMode)]);
+
+  // Convert the batchId to a Uint8Array (assuming it's 3 bytes)
+  const batchIdBytes = getBytes(batchId);
+
+  // Create a 24-byte array for the 192-bit key
+  const keyBytes = new Uint8Array(24);
+
+  // Set the batchId in the most significant 3 bytes (positions 0, 1, and 2)
+  keyBytes.set(batchIdBytes, 0);
+
+  // Set the validation mode at the 4th byte (position 3)
+  keyBytes.set(validationModeBytes, 3);
+
+  // Set the validator address starting from the 5th byte (position 4)
+  keyBytes.set(validatorBytes, 4);
+
+  // Return the key as a hex string
+  return hexlify(keyBytes);
 }
 
-// More functions to be added
-// 1. simulateValidation (using EntryPointSimulations)
-// 2. simulareHandleOps
+// Adjusted getNonce function
+export async function getNonce(
+  entryPoint: EntryPoint,
+  accountAddress: AddressLike,
+  validationMode: BytesLike,
+  validatorModuleAddress: AddressLike,
+  batchId: BytesLike = "0x000000",
+): Promise<bigint> {
+  const key = makeNonceKey(validationMode, validatorModuleAddress, batchId);
+  return await entryPoint.getNonce(accountAddress, key);
+}
+export async function getAccountDomainStructFields(
+  account: Nexus,
+): Promise<string> {
+  const [fields, name, version, chainId, verifyingContract, salt, extensions] =
+    await account.eip712Domain();
+  return ethers.AbiCoder.defaultAbiCoder().encode(
+    [
+      "bytes1",
+      "bytes32",
+      "bytes32",
+      "uint256",
+      "address",
+      "bytes32",
+      "bytes32",
+    ],
+    [
+      fields, // matches Solidity
+      ethers.keccak256(ethers.toUtf8Bytes(name)), // matches Solidity
+      ethers.keccak256(ethers.toUtf8Bytes(version)), // matches Solidity
+      chainId,
+      verifyingContract,
+      salt,
+      ethers.keccak256(ethers.solidityPacked(["uint256[]"], [extensions])),
+    ],
+  );
+}
+
+// Helper to impersonate an account
+export async function impersonateAccount(address: string) {
+  await ethers.provider.send("hardhat_impersonateAccount", [address]);
+  return ethers.getSigner(address);
+}
+
+// Helper to stop impersonating an account
+export async function stopImpersonateAccount(address: string) {
+  await ethers.provider.send("hardhat_stopImpersonatingAccount", [address]);
+}

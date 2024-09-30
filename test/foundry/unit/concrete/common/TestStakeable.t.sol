@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.27;
 
 import "../../../utils/NexusTest_Base.t.sol";
-import { IEntryPoint, IStakeManager } from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { IEntryPoint, IStakeManager } from "account-abstraction/interfaces/IEntryPoint.sol";
 
 /// @title TestStakeable
 /// @notice Unit tests for the Stakeable contract
