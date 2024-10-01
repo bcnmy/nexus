@@ -161,7 +161,7 @@ jobs:
         uses: crytic/slither-action@v0.4.0
         id: slither
         with:
-          slither-version: "0.10.0"
+          slither-version: "0.10.1"
           node-version: "22"
           fail-on: "none"
           slither-args: '--solc-args="--evm-version cancun" --exclude "assembly|solc-version|low-level-calls|naming-convention|controlled-delegatecall|write-after-write|divide-before-multiply|incorrect-shift" --exclude-informational --exclude-low --filter-paths "contracts/mock|node_modules" --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/contracts/'
