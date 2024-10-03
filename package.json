@@ -7,7 +7,7 @@
     "url": "https://github.com/bcnmy"
   },
   "dependencies": {
-    "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts/",
+    "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts",
     "dotenv": "^16.4.5",
     "solarray": "github:sablier-labs/solarray",
     "viem": "2.7.13"
