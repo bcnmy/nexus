@@ -26,6 +26,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
             0
         );
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "MockExecutor should be installed");
     }
 
     // Execute Tests
@@ -83,11 +84,11 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
 
     // ExecuteFromExecutor Tests
     function test_Gas_ExecuteFromExecutor_Single() public {
-        prank(address(mockExecutor));
-
+        vm.startPrank(address(mockExecutor));
         uint256 initialGas = gasleft();
         BOB_ACCOUNT.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(0), 0, ""));
         uint256 gasUsed = initialGas - gasleft();
+        vm.stopPrank();
         console.log("Gas used for single empty execution from executor: ", gasUsed);
     }
 
