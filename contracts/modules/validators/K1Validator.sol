@@ -12,7 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
@@ -33,7 +33,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract K1Validator is IValidator, ERC7739Validator {
-    using SignatureCheckerLib for address;
+    using ECDSA for bytes32;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -226,22 +226,12 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            // same as `s := mload(add(signature, 0x40))` but for calldata
-            s := calldataload(add(signature.offset, 0x20))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return false;
-        }
-
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
+        if (hash.recover(signature) == owner) {
             return true;
         }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
+        if (hash.toEthSignedMessageHash().recover(signature) == owner) {
             return true;
-        }
+        } 
         return false;
     }
 
