@@ -241,6 +241,17 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
+        // Check if the 's' value is valid
+        bytes32 s;
+        assembly {
+            // same as `s := mload(add(signature, 0x40))` but for calldata
+            s := calldataload(add(signature.offset, 0x20))
+        }
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return false;
+        }
+
+        // verify signer
         try this.recoverSigner(hash, signature) returns (address recoveredSigner) {
             if (recoveredSigner == owner) {
                 return true;
