@@ -25,6 +25,7 @@ describe("K1Validator module tests", () => {
   let k1ModuleAddress: AddressLike;
   let mockExecutor: MockExecutor;
   let accountOwner: Signer;
+  let aliceAccountOwner: Signer;
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let counter: Counter;
@@ -35,6 +36,7 @@ describe("K1Validator module tests", () => {
       ecdsaValidator: k1Validator,
       mockExecutor,
       accountOwner,
+      aliceAccountOwner,
       entryPoint,
       mockValidator,
       counter,
@@ -43,6 +45,7 @@ describe("K1Validator module tests", () => {
     k1ModuleAddress = await k1Validator.getAddress();
     mockExecutor = mockExecutor;
     accountOwner = accountOwner;
+    aliceAccountOwner = aliceAccountOwner;
     entryPoint = entryPoint;
     bundler = ethers.Wallet.createRandom();
 
@@ -264,22 +267,28 @@ describe("K1Validator module tests", () => {
         userOp.sender,
         ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
       );
-
       userOp.nonce = nonce;
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
 
+      const connectedSigner = await ethers.provider.getSigner(
+        await accountOwner.getAddress(),
+      );
+      const signerProvider = connectedSigner.provider;
+
+      // Review: the signer
+      const eth_sign = await signerProvider.send("eth_sign", [
+        await accountOwner.getAddress(),
+        userOpHash,
+      ]);
+      console.log("eth_sign", eth_sign);
+
+      userOp.signature = eth_sign;
+
       const isValid = await k1Validator.validateUserOp(userOp, userOpHash);
 
       // 0 - valid, 1 - invalid
-      expect(isValid).to.equal(1);
-    });
-
-    it("Should check signature using isValidSignatureWithSender", async () => {
-      const message = "Some Message";
-      // const isValid = await k1Validator.isValidSignatureWithSender(await deployedNexus.getAddress(), , );
-      // 0x1626ba7e - valid
-      // 0xffffffff - invalid
+      expect(isValid).to.equal(0);
     });
   });
 });
