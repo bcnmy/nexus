@@ -271,7 +271,9 @@ describe("K1Validator module tests", () => {
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
 
-      const connectedSigner = await ethers.provider.getSigner(await accountOwner.getAddress());
+      const connectedSigner = await ethers.provider.getSigner(
+        await accountOwner.getAddress(),
+      );
       const signerProvider = connectedSigner.provider;
 
       // Review: the signer

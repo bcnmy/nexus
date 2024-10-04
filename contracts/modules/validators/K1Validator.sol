@@ -171,6 +171,22 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
+    /// @notice Recovers the signer from a signature
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    function recoverSigner(bytes32 hash, bytes calldata signature) external view returns (address) {
+        return hash.recover(signature);
+    }
+
+    /// @notice Recovers the signer from an Ethereum signed message
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    function recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) external view returns (address) {
+        return hash.toEthSignedMessageHash().recover(signature);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
@@ -242,22 +258,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         }
 
         return false;
-    }
-
-    /// @notice Recovers the signer from a signature
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    /// @return The recovered signer address
-    function recoverSigner(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return hash.recover(signature);
-    }
-
-    /// @notice Recovers the signer from an Ethereum signed message
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    /// @return The recovered signer address
-    function recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return hash.toEthSignedMessageHash().recover(signature);
     }
 
     // @notice Fills the _safeSenders list from the given data
