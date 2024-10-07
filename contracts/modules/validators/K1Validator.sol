@@ -207,15 +207,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         return hash.tryRecover(signature);
     }
 
-    /// @notice Recovers the signer from an Ethereum signed message
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    /// @return The recovered signer address
-    /// @notice tryRecover returns address(0) on invalid signature
-    function _recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) internal view returns (address) {
-        return hash.toEthSignedMessageHash().tryRecover(signature);
-    }
-
     /// @dev Returns whether the `hash` and `signature` are valid.
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
@@ -256,7 +247,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         // verify signer
         // owner can not be zero address in this contract
         if (_recoverSigner(hash, signature) == owner) return true;
-        if (_recoverSignerFromEthSignedMessage(hash, signature) == owner) return true;
+        if (_recoverSigner(hash.toEthSignedMessageHash(), signature) == owner) return true;
         return false;
     }
 
