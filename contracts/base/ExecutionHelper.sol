@@ -56,10 +56,11 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @notice Executes a call to a target address with specified value and data.
     /// Same as _execute but without return data for gas optimization.
     function _executeNoReturndata(address target, uint256 value, bytes calldata callData) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             let result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
-            if iszero(call(gas(), target, value, result, callData.length, 0, 0)) {
+            if iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -150,6 +151,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @dev Execute a delegatecall with `delegate` on this account.
     /// Same as _executeDelegatecall but without return data for gas optimization.
     function _executeDelegatecallNoReturndata(address delegate, bytes calldata callData) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             let result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
