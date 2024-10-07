@@ -171,22 +171,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
-    /// @notice Recovers the signer from a signature
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    /// @return The recovered signer address
-    function recoverSigner(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return hash.recover(signature);
-    }
-
-    /// @notice Recovers the signer from an Ethereum signed message
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    /// @return The recovered signer address
-    function recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return hash.toEthSignedMessageHash().recover(signature);
-    }
-
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
@@ -213,6 +197,24 @@ contract K1Validator is IValidator, ERC7739Validator {
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
+
+    /// @notice Recovers the signer from a signature
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    /// @notice tryRecover returns address(0) on invalid signature
+    function _recoverSigner(bytes32 hash, bytes calldata signature) internal view returns (address) {
+        return hash.tryRecover(signature);
+    }
+
+    /// @notice Recovers the signer from an Ethereum signed message
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    /// @notice tryRecover returns address(0) on invalid signature
+    function _recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) internal view returns (address) {
+        return hash.toEthSignedMessageHash().tryRecover(signature);
+    }
 
     /// @dev Returns whether the `hash` and `signature` are valid.
     ///      Obtains the authorized signer's credentials and calls some
@@ -252,22 +254,9 @@ contract K1Validator is IValidator, ERC7739Validator {
         }
 
         // verify signer
-        try this.recoverSigner(hash, signature) returns (address recoveredSigner) {
-            if (recoveredSigner == owner) {
-                return true;
-            }
-        } catch {
-            // If recovery fails, we'll continue to the next check
-        }
-
-        try this.recoverSignerFromEthSignedMessage(hash, signature) returns (address recoveredSigner) {
-            if (recoveredSigner == owner) {
-                return true;
-            }
-        } catch {
-            // If recovery fails, we'll return false
-        }
-
+        // owner can not be zero address in this contract
+        if (_recoverSigner(hash, signature) == owner) return true;
+        if (_recoverSignerFromEthSignedMessage(hash, signature) == owner) return true;
         return false;
     }
 
