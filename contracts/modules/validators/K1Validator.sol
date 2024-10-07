@@ -12,13 +12,12 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "../../lib/EnumerableSet4337.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../types/Constants.sol";
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title Nexus - K1Validator (ECDSA)
 /// @notice Validator module for smart accounts, verifying user operation signatures
@@ -33,7 +32,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract K1Validator is IValidator, ERC7739Validator {
-    using SignatureCheckerLib for address;
+    using ECDSA for bytes32;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -172,6 +171,22 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
+    /// @notice Recovers the signer from a signature
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    function recoverSigner(bytes32 hash, bytes calldata signature) external view returns (address) {
+        return hash.recover(signature);
+    }
+
+    /// @notice Recovers the signer from an Ethereum signed message
+    /// @param hash The hash of the data to validate
+    /// @param signature The signature data
+    /// @return The recovered signer address
+    function recoverSignerFromEthSignedMessage(bytes32 hash, bytes calldata signature) external view returns (address) {
+        return hash.toEthSignedMessageHash().recover(signature);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
@@ -236,12 +251,23 @@ contract K1Validator is IValidator, ERC7739Validator {
             return false;
         }
 
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
-            return true;
+        // verify signer
+        try this.recoverSigner(hash, signature) returns (address recoveredSigner) {
+            if (recoveredSigner == owner) {
+                return true;
+            }
+        } catch {
+            // If recovery fails, we'll continue to the next check
         }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
-            return true;
+
+        try this.recoverSignerFromEthSignedMessage(hash, signature) returns (address recoveredSigner) {
+            if (recoveredSigner == owner) {
+                return true;
+            }
+        } catch {
+            // If recovery fails, we'll return false
         }
+
         return false;
     }
 
