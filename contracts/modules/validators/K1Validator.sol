@@ -56,6 +56,9 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Error to indicate that the new owner cannot be a contract address
     error NewOwnerIsContract();
 
+    /// @notice Error to indicate that the owner cannot be the zero address
+    error OwnerCannotBeZeroAddress();
+
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
 
@@ -72,6 +75,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         require(data.length != 0, NoOwnerProvided());
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data[:20]));
+        require(newOwner != address(0), OwnerCannotBeZeroAddress());
         require(!_isContract(newOwner), NewOwnerIsContract());
         smartAccountOwners[msg.sender] = newOwner;
         if (data.length > 20) {
