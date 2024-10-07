@@ -53,6 +53,22 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         }
     }
 
+    /// @notice Executes a call to a target address with specified value and data.
+    /// Same as _execute but without return data for gas optimization.
+    function _executeNoReturndata(address target, uint256 value, bytes calldata callData) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let result := mload(0x40)
+            calldatacopy(result, callData.offset, callData.length)
+            if iszero(call(gas(), target, value, result, callData.length, codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(0x40, add(result, callData.length)) //allocate memory
+        }
+    }
+
     /// @notice Tries to execute a call and captures if it was successful or not.
     /// @dev Similar to _execute but returns a success boolean and catches reverts instead of propagating them.
     /// @notice calls to an EOA should be counted as successful.
@@ -84,6 +100,16 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         for (uint256 i; i < executions.length; i++) {
             exec = executions[i];
             result[i] = _execute(exec.target, exec.value, exec.callData);
+        }
+    }
+
+    /// @notice Executes a batch of calls without returning the result.
+    /// @param executions An array of Execution structs each containing target, value, and calldata.
+    function _executeBatchNoReturndata(Execution[] calldata executions) internal {
+        Execution calldata exec;
+        for (uint256 i; i < executions.length; i++) {
+            exec = executions[i];
+            _executeNoReturndata(exec.target, exec.value, exec.callData);
         }
     }
 
@@ -122,6 +148,22 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         }
     }
 
+    /// @dev Execute a delegatecall with `delegate` on this account.
+    /// Same as _executeDelegatecall but without return data for gas optimization.
+    function _executeDelegatecallNoReturndata(address delegate, bytes calldata callData) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let result := mload(0x40)
+            calldatacopy(result, callData.offset, callData.length)
+            if iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(0x40, add(result, callData.length)) //allocate memory
+        }
+    }
+
     /// @dev Execute a delegatecall with `delegate` on this account and catch reverts.
     /// @return success True if the delegatecall was successful, false otherwise.
     /// @return result The bytes returned from the delegatecall, which contains the returned data from the delegate contract.
@@ -144,7 +186,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleSingleExecution(bytes calldata executionCalldata, ExecType execType) internal {
         (address target, uint256 value, bytes calldata callData) = executionCalldata.decodeSingle();
-        if (execType == EXECTYPE_DEFAULT) _execute(target, value, callData);
+        if (execType == EXECTYPE_DEFAULT) _executeNoReturndata(target, value, callData);
         else if (execType == EXECTYPE_TRY) {
             (bool success, bytes memory result) = _tryExecute(target, value, callData);
             if (!success) emit TryExecuteUnsuccessful(callData, result);
@@ -156,7 +198,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleBatchExecution(bytes calldata executionCalldata, ExecType execType) internal {
         Execution[] calldata executions = executionCalldata.decodeBatch();
-        if (execType == EXECTYPE_DEFAULT) _executeBatch(executions);
+        if (execType == EXECTYPE_DEFAULT) _executeBatchNoReturndata(executions);
         else if (execType == EXECTYPE_TRY) _tryExecuteBatch(executions);
         else revert UnsupportedExecType(execType);
     }
@@ -166,7 +208,7 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     /// @param execType The execution type, which can be DEFAULT (revert on failure) or TRY (return on failure).
     function _handleDelegateCallExecution(bytes calldata executionCalldata, ExecType execType) internal {
         (address delegate, bytes calldata callData) = executionCalldata.decodeDelegateCall();
-        if (execType == EXECTYPE_DEFAULT) _executeDelegatecall(delegate, callData);
+        if (execType == EXECTYPE_DEFAULT) _executeDelegatecallNoReturndata(delegate, callData);
         else if (execType == EXECTYPE_TRY) {
             (bool success, bytes memory result) = _tryExecuteDelegatecall(delegate, callData);
             if (!success) emit TryDelegateCallUnsuccessful(callData, result);
