@@ -59,8 +59,12 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         assembly {
             let result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
-            pop(call(gas(), target, value, result, callData.length, 0, 0))
-            mstore(0x40, add(result, callData.length))
+            if iszero(call(gas(), target, value, result, callData.length, 0, 0)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(0x40, add(result, callData.length)) //allocate memory
         }
     }
 
@@ -149,8 +153,12 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
         assembly {
             let result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
-            pop(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00))
-            mstore(0x40, add(result, callData.length))
+            if iszero(delegatecall(gas(), delegate, result, callData.length, codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(0x40, add(result, callData.length)) //allocate memory
         }
     }
 
