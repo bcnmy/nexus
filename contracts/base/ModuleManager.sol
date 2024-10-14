@@ -179,7 +179,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Perform the removal first
         validators.pop(prev, validator);
 
-        // Sentinel pointing to itself means the list is empty, so check this after removal
+        // Sentinel pointing to itself / zero means the list is empty / uninitialized, so check this after removal
         // Below error is very specific to uninstalling validators.
         require(_hasValidators(), CanNotRemoveLastValidator());
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
