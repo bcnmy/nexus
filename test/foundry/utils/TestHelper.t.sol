@@ -25,6 +25,7 @@ import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFact
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 import { MODE_VALIDATION } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
+import { HelperConfig } from "../../../scripts/foundry/HelperConfig.s.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
     // -----------------------------------------
@@ -103,9 +104,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function deployTestContracts() internal {
-        ENTRYPOINT = new EntryPoint();
-        vm.etch(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032), address(ENTRYPOINT).code);
-        ENTRYPOINT = IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        HelperConfig helperConfig = new HelperConfig();
+        ENTRYPOINT = helperConfig.ENTRYPOINT();
         ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
