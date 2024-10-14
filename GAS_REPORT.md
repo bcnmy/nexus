@@ -2,58 +2,58 @@
 
 | **Protocol** |      **Actions / Function**      | **Account Type** | **Is Deployed** | **With Paymaster?** | **Receiver Access** | **Gas Used** | **Gas Difference** |
 | :----------: | :------------------------------: | :--------------: | :-------------: | :-----------------: | :-----------------: | :----------: | :----------------: |
-|    ERC20     |             transfer             |       EOA        |      False      |        False        |    🧊 ColdAccess    |    49374     |         0          |
-|    ERC20     |             transfer             |       EOA        |      False      |        False        |    🔥 WarmAccess    |    24674     |         0          |
-|    ERC20     |             transfer             |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    91863     |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    71963     |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    360553    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    340653    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    345319    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    325418    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    393345    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    373445    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    106659    |       🥵 +9        |
-|    ERC20     |             transfer             |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    86758     |       🥵 +9        |
-|    ERC721    |           transferFrom           |       EOA        |      False      |        False        |    🧊 ColdAccess    |    47585     |         0          |
-|    ERC721    |           transferFrom           |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27685     |         0          |
-|    ERC721    |           transferFrom           |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    95190     |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    75290     |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    359076    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    339176    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    343852    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    323952    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    391879    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    371979    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    109995    |       🥵 +9        |
-|    ERC721    |           transferFrom           |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    90095     |       🥵 +9        |
-|     ETH      |             transfer             |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52862     |         0          |
-|     ETH      |             transfer             |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27862     |         0          |
-|     ETH      |               call               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52926     |         0          |
-|     ETH      |               call               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27926     |         0          |
-|     ETH      |               send               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    52926     |         0          |
-|     ETH      |               send               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    27926     |         0          |
-|     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    99958     |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    74958     |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    363802    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    338802    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    348625    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    323625    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    396651    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    371651    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    114699    |       🥵 +9        |
-|     ETH      |             transfer             |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    89699     |       🥵 +9        |
-|  UniswapV2   |      swapExactETHForTokens       |       EOA        |      False      |        False        |         N/A         |    148619    |         0          |
-|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      True       |        False        |         N/A         |    196557    |       🥵 +9        |
-|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        True         |         N/A         |    460567    |       🥵 +9        |
-|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        False        |         N/A         |    445258    |       🥵 +9        |
-|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        False        |         N/A         |    493285    |       🥵 +9        |
-|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      True       |        True         |         N/A         |    211462    |       🥵 +9        |
-|  UniswapV2   |     swapExactTokensForTokens     |       EOA        |      False      |        False        |         N/A         |    117563    |         0          |
-|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      True       |        False        |         N/A         |    165546    |       🥵 +9        |
-|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      False      |        True         |         N/A         |    429536    |       🥵 +9        |
-|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      False      |        False        |         N/A         |    414223    |       🥵 +9        |
-|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      True       |        False        |         N/A         |    198111    |       🥵 +42       |
-|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        True         |         N/A         |    462359    |       🥵 +42       |
-|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        False        |         N/A         |    446814    |       🥵 +42       |
-|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        False        |         N/A         |    494841    |       🥵 +42       |
-|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      True       |        True         |         N/A         |    180443    |       🥵 +9        |
+|    ERC20     |             transfer             |       EOA        |      False      |        False        |    🧊 ColdAccess    |    49833     |      🥵 +459       |
+|    ERC20     |             transfer             |       EOA        |      False      |        False        |    🔥 WarmAccess    |    25133     |      🥵 +459       |
+|    ERC20     |             transfer             |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    98023     |      🥵 +6160      |
+|    ERC20     |             transfer             |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    78124     |      🥵 +6161      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    372899    |     🥵 +12346      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    353000    |     🥵 +12347      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    356379    |     🥵 +11060      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    336480    |     🥵 +11062      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    404502    |     🥵 +11157      |
+|    ERC20     |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    384603    |     🥵 +11158      |
+|    ERC20     |             transfer             |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    114176    |      🥵 +7517      |
+|    ERC20     |             transfer             |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    94276     |      🥵 +7518      |
+|    ERC721    |           transferFrom           |       EOA        |      False      |        False        |    🧊 ColdAccess    |    48409     |      🥵 +824       |
+|    ERC721    |           transferFrom           |       EOA        |      False      |        False        |    🔥 WarmAccess    |    28509     |      🥵 +824       |
+|    ERC721    |           transferFrom           |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    101486    |      🥵 +6296      |
+|    ERC721    |           transferFrom           |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    81586     |      🥵 +6296      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    371590    |     🥵 +12514      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    351690    |     🥵 +12514      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    355085    |     🥵 +11233      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    335185    |     🥵 +11233      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    403209    |     🥵 +11330      |
+|    ERC721    |           transferFrom           |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    383309    |     🥵 +11330      |
+|    ERC721    |           transferFrom           |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    117692    |      🥵 +7697      |
+|    ERC721    |           transferFrom           |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    97792     |      🥵 +7697      |
+|     ETH      |             transfer             |       EOA        |      False      |        False        |    🧊 ColdAccess    |    53062     |      🥵 +200       |
+|     ETH      |             transfer             |       EOA        |      False      |        False        |    🔥 WarmAccess    |    28062     |      🥵 +200       |
+|     ETH      |               call               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    53129     |      🥵 +203       |
+|     ETH      |               call               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    28129     |      🥵 +203       |
+|     ETH      |               send               |       EOA        |      False      |        False        |    🧊 ColdAccess    |    53129     |      🥵 +203       |
+|     ETH      |               send               |       EOA        |      False      |        False        |    🔥 WarmAccess    |    28129     |      🥵 +203       |
+|     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🧊 ColdAccess    |    105888    |      🥵 +5930      |
+|     ETH      |             transfer             |  Smart Account   |      True       |        False        |    🔥 WarmAccess    |    80888     |      🥵 +5930      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        True         |    🧊 ColdAccess    |    375904    |     🥵 +12102      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        True         |    🔥 WarmAccess    |    350904    |     🥵 +12102      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    359455    |     🥵 +10830      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    334455    |     🥵 +10830      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🧊 ColdAccess    |    407578    |     🥵 +10927      |
+|     ETH      |             transfer             |  Smart Account   |      False      |        False        |    🔥 WarmAccess    |    382578    |     🥵 +10927      |
+|     ETH      |             transfer             |  Smart Account   |      True       |        True         |    🧊 ColdAccess    |    122015    |      🥵 +7316      |
+|     ETH      |             transfer             |  Smart Account   |      True       |        True         |    🔥 WarmAccess    |    97015     |      🥵 +7316      |
+|  UniswapV2   |      swapExactETHForTokens       |       EOA        |      False      |        False        |         N/A         |    148742    |      🥵 +123       |
+|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      True       |        False        |         N/A         |    202065    |      🥵 +5508      |
+|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        True         |         N/A         |    472232    |     🥵 +11665      |
+|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        False        |         N/A         |    455654    |     🥵 +10396      |
+|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      False      |        False        |         N/A         |    503778    |     🥵 +10493      |
+|  UniswapV2   |      swapExactETHForTokens       |  Smart Account   |      True       |        True         |         N/A         |    218298    |      🥵 +6836      |
+|  UniswapV2   |     swapExactTokensForTokens     |       EOA        |      False      |        False        |         N/A         |    117667    |      🥵 +104       |
+|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      True       |        False        |         N/A         |    170980    |      🥵 +5434      |
+|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      False      |        True         |         N/A         |    441161    |     🥵 +11625      |
+|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      False      |        False        |         N/A         |    424556    |     🥵 +10333      |
+|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      True       |        False        |         N/A         |    202090    |      🥵 +3979      |
+|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        True         |         N/A         |    472458    |     🥵 +10099      |
+|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        False        |         N/A         |    455669    |      🥵 +8855      |
+|  UniswapV2   | approve+swapExactTokensForTokens |  Smart Account   |      False      |        False        |         N/A         |    503793    |      🥵 +8952      |
+|  UniswapV2   |     swapExactTokensForTokens     |  Smart Account   |      True       |        True         |         N/A         |    187226    |      🥵 +6783      |
