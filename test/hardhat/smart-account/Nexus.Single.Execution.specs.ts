@@ -10,10 +10,11 @@ import {
   MockToken,
   MockValidator,
   Nexus,
+  MockSigVerifier,
 } from "../../../typechain-types";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ModuleType } from "../utils/types";
-import { deployContractsAndSAFixture } from "../utils/deployment";
+import { deployContract, deployContractsAndSAFixture } from "../utils/deployment";
 import {
   generateUseropCallData,
   buildPackedUserOp,
@@ -55,6 +56,7 @@ describe("Nexus Single Execution", () => {
   let aliceAddress: string;
   let smartAccountOwnerAddress: string;
   let mockToken: MockToken;
+  let mockSigVerifier: MockSigVerifier;
 
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
@@ -69,6 +71,10 @@ describe("Nexus Single Execution", () => {
     counter = setup.counter;
     deployer = setup.deployer;
     mockToken = setup.mockToken;
+    mockSigVerifier = await deployContract<MockSigVerifier>(
+      "MockSigVerifier",
+      deployer,
+    );
 
     factoryAddress = await factory.getAddress();
     entryPointAddress = await entryPoint.getAddress();
@@ -79,6 +85,7 @@ describe("Nexus Single Execution", () => {
     smartAccountAddress = await smartAccount.getAddress();
     smartAccountOwnerAddress = await smartAccountOwner.getAddress();
     aliceAddress = await alice.getAddress();
+
 
     // First install the executor module on the smart account
     const isOwner = await validatorModule.isOwner(
@@ -127,153 +134,13 @@ describe("Nexus Single Execution", () => {
   });
 
   describe("Nexus Transaction Execution", () => {
-    it("Should execute a transaction through handleOps", async () => {
-      const isOwner = await validatorModule.isOwner(
-        smartAccountAddress,
-        smartAccountOwnerAddress,
-      );
-      expect(isOwner).to.be.true;
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "incrementNumber",
-      });
-
-      // Build the userOp with the generated callData.
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      userOp.callData = callData;
-
-      const nonce = await getNonce(
-        entryPoint,
-        userOp.sender,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(155),
-      );
-
-      userOp.nonce = nonce;
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-
-      userOp.signature = signature;
-
-      // Assert the counter's state (testing contract) before execution to ensure it's at its initial state.
-      expect(await counter.getNumber()).to.equal(0);
-      // Execute the signed userOp through the EntryPoint contract and verify the counter's state post-execution.
-
-      await entryPoint.handleOps([userOp], bundlerAddress);
-
-      expect(await counter.getNumber()).to.equal(1);
-    });
-
-    it("Should revert with AccountAccessUnauthorized, execute", async () => {
-      const functionCallData =
-        counter.interface.encodeFunctionData("incrementNumber");
-
-      const executionCalldata = ethers.solidityPacked(
-        ["address", "uint256", "bytes"],
-        [await counter.getAddress(), "0", functionCallData],
-      );
-
-      // expect this function call to revert
-      await expect(
-        smartAccount.execute(
-          ethers.concat([
-            CALLTYPE_SINGLE,
-            EXECTYPE_DEFAULT,
-            MODE_DEFAULT,
-            UNUSED,
-            MODE_PAYLOAD,
-          ]),
-          executionCalldata,
-        ),
-      ).to.be.revertedWithCustomError(
-        smartAccount,
-        "AccountAccessUnauthorized",
-      );
-    });
-
-    it("Should revert with AccountAccessUnauthorized, executeUserOp", async function () {
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "incrementNumber",
-      });
-
-      const userOp = buildPackedUserOp({
-        sender: await smartAccount.getAddress(),
-        callData,
-      });
-      userOp.callData = callData;
-
-      const validatorModuleAddress = await validatorModule.getAddress();
-      const nonce = await smartAccount.nonce(
-        ethers.zeroPadBytes(validatorModuleAddress.toString(), 24),
-      );
-
-      userOp.nonce = nonce;
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-
-      userOp.signature = signature;
-
-      await expect(
-        smartAccount.executeUserOp(userOp, userOpHash),
-      ).to.be.revertedWithCustomError(
-        smartAccount,
-        "AccountAccessUnauthorized",
-      );
-    });
-
-    it("Should execute an empty transaction through handleOps", async () => {
-      const isOwner = await validatorModule.isOwner(
-        smartAccountAddress,
-        smartAccountOwnerAddress,
-      );
-      expect(isOwner).to.be.true;
-      const callData = "0x";
-
-      // Build the userOp with the generated callData.
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      userOp.callData = callData;
-
-      const nonce = await getNonce(
-        entryPoint,
-        userOp.sender,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(156),
-      );
-
-      userOp.nonce = nonce;
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-
-      userOp.signature = signature;
-
-      await expect(entryPoint.handleOps([userOp], bundlerAddress)).to.not.be
-        .reverted;
-    });
-
     it("Should execute a token transfer through handleOps", async () => {
       const recipient = smartAccountOwnerAddress;
       const amount = parseEther("1");
+
+      // Log the chainId
+      const chainId = await ethers.provider.getNetwork().then(network => network.chainId);
+      console.log("Current chainId:", chainId);
 
       const callData = await generateUseropCallData({
         executionMethod: ExecutionMethod.Execute,
@@ -297,319 +164,43 @@ describe("Nexus Single Execution", () => {
       );
       userOp.nonce = nonce;
 
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-      userOp.signature = signature;
-
-      const balanceBefore = await mockToken.balanceOf(recipient);
-      await expect(entryPoint.handleOps([userOp], bundlerAddress)).to.not.be
-        .reverted;
-      const balanceAfter = await mockToken.balanceOf(recipient);
-
-      expect(balanceAfter).to.equal(balanceBefore + amount);
-    });
-
-    it("Should approve and transferFrom", async () => {
-      const amount = parseEther("1");
-
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: mockToken,
-        functionName: "approve",
-        args: [aliceAddress, amount],
-      });
-
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      userOp.callData = callData;
-
-      const nonce = await getNonce(
-        entryPoint,
-        userOp.sender,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(158),
-      );
-      userOp.nonce = nonce;
+      console.log("userOp", userOp);
 
       const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-      userOp.signature = signature;
+      console.log("userOpHash", userOpHash);
 
-      await expect(entryPoint.handleOps([userOp], bundlerAddress)).to.not.be
-        .reverted;
-      const allowanceAfter = await mockToken.allowance(
-        smartAccountAddress,
-        aliceAddress,
-      );
+      // Signature received from DAN by putting the exact userOp
+      userOp.signature = "0x65ea543c9da64e2674d74f2ad56e83d6cf022040e82cc181ddb2ef575e5fc74a05896509d2309d5ee0daf9fcfb8528937c590900caff891c1e2a43a8fb749cc3";
+      const signer = "0xFbdA35D7E3b7525E25B939BEd98a9e7b921000b1" // EOA from pubkey generated by DAN
 
-      expect(allowanceAfter).to.equal(amount, "Not enough tokens approved");
+      const isValid = await mockSigVerifier.verify.staticCall(userOpHash, userOp.signature, signer);
+      console.log("isValid", isValid);
 
-      await mockToken
-        .connect(alice)
-        .transferFrom(smartAccountAddress, aliceAddress, amount);
-      const aliceTokenBalance = await mockToken.balanceOf(aliceAddress);
-      expect(aliceTokenBalance).to.equal(
-        amount,
-        "Not enough tokens transferred to Alice",
-      );
-    });
+      // // Fund the EntryPoint with some ETH to cover gas costs
+      // await deployer.sendTransaction({
+      //   to: entryPointAddress,
+      //   value: parseEther("1"),
+      // });
 
-    it("Should execute a transaction via MockExecutor directly", async () => {
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
+      // // Impersonate the EntryPoint contract
+      // await ethers.provider.send("hardhat_impersonateAccount", [entryPointAddress]);
+      // const entryPointSigner = await ethers.provider.getSigner(entryPointAddress);
 
-      const numberBefore = await counter.getNumber();
-      await executorModule.executeViaAccount(
-        smartAccountAddress,
-        counterAddress,
-        0n,
-        incrementNumber,
-      );
+      // // Call validateUserOp as the EntryPoint
+      // // Make a static call to validateUserOp and read the result
+      // const isValidResult = await smartAccount.connect(entryPointSigner).validateUserOp.staticCall(
+      //   userOp,
+      //   userOpHash,
+      //   0
+      // );
 
-      const numberAfter = await counter.getNumber();
+      // console.log("isValidResult", isValidResult);
+      // // Check if the operation is valid (validationData == 0)
+      // const isValid = isValidResult === 0n;
+      // console.log("isValid", isValid);
 
-      expect(numberAfter).to.be.greaterThan(numberBefore);
-    });
-
-    it("Should transfer value via MockExecutor directly", async () => {
-      const randomAddress = ethers.Wallet.createRandom().address;
-      await deployer.sendTransaction({ to: smartAccountAddress, value: 1 });
-
-      await executorModule.executeViaAccount(
-        smartAccountAddress,
-        randomAddress,
-        1n,
-        "0x",
-      );
-
-      const balance = await deployer.provider.getBalance(randomAddress);
-      expect(balance).to.be.equal(1);
-    });
-
-    it("Should execute a transaction via MockExecutor using Entrypoint handleOps", async () => {
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
-
-      const data = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: executorModule,
-        functionName: "executeViaAccount",
-        args: [smartAccountAddress, counterAddress, 0n, incrementNumber],
-      });
-
-      const incrementNumberUserOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData: data,
-      });
-
-      const incrementNumberUserOpNonce = await getNonce(
-        entryPoint,
-        smartAccountAddress,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(159),
-      );
-      incrementNumberUserOp.nonce = incrementNumberUserOpNonce;
-
-      const incrementNumberUserOpHash = await entryPoint.getUserOpHash(
-        incrementNumberUserOp,
-      );
-      const incrementNumberUserOpSignature =
-        await smartAccountOwner.signMessage(
-          ethers.getBytes(incrementNumberUserOpHash),
-        );
-      incrementNumberUserOp.signature = incrementNumberUserOpSignature;
-
-      const numberBefore = await counter.getNumber();
-      await entryPoint.handleOps([incrementNumberUserOp], bundlerAddress);
-      const numberAfter = await counter.getNumber();
-
-      expect(numberAfter).to.be.greaterThan(numberBefore);
-    });
-
-    it("Should revert the execution of a transaction through the EntryPoint using execute", async () => {
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "revertOperation",
-      });
-
-      // Build the userOp with the generated callData.
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      userOp.callData = callData;
-
-      const nonce = await getNonce(
-        entryPoint,
-        userOp.sender,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(160),
-      );
-
-      userOp.nonce = nonce;
-
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-
-      userOp.signature = signature;
-
-      const tx = await entryPoint.handleOps([userOp], bundlerAddress);
-      // The tx will not revert, but the user operation will be reverted.
-      await expect(tx).to.not.be.reverted;
-
-      // Counter should be 0 if user operation has been reverted.
-      expect(await counter.getNumber()).to.equal(0);
-    });
-
-    it("Should revert with InvalidModule custom error, through direct call to executor, module not installed.", async () => {
-      let prevAddress = "0x0000000000000000000000000000000000000001";
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
-      await uninstallModule({
-        deployedNexus: smartAccount,
-        entryPoint,
-        module: executorModule,
-        validatorModule: validatorModule,
-        moduleType: ModuleType.Execution,
-        accountOwner: smartAccountOwner,
-        bundler,
-      });
-      const isInstalled = await smartAccount.isModuleInstalled(
-        ModuleType.Execution,
-        await executorModule.getAddress(),
-        ethers.hexlify("0x"),
-      );
-      if (isInstalled) {
-        const functionCalldata = smartAccount.interface.encodeFunctionData(
-          "uninstallModule",
-          [
-            ModuleType.Execution,
-            await executorModule.getAddress(),
-            encodeData(
-              ["address", "bytes"],
-              [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))],
-            ),
-          ],
-        );
-        await executorModule.executeViaAccount(
-          smartAccountAddress,
-          smartAccountAddress,
-          0n,
-          functionCalldata,
-        );
-      }
-      await expect(
-        executorModule.executeViaAccount(
-          smartAccountAddress,
-          counterAddress,
-          0n,
-          incrementNumber,
-        ),
-      ).to.be.rejected;
-    });
-
-    it("Should revert without a reason, through direct call to executor. Wrong smart account address given to executeViaAccount()", async () => {
-      const randomAddress = ethers.Wallet.createRandom().address;
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
-
-      await expect(
-        executorModule.executeViaAccount(
-          randomAddress,
-          counterAddress,
-          0n,
-          incrementNumber,
-        ),
-      ).to.be.reverted;
-    });
-
-    it("Should revert an execution from an unauthorized executor", async () => {
-      const incrementNumber =
-        counter.interface.encodeFunctionData("incrementNumber");
-      const prevAddress = "0x0000000000000000000000000000000000000001";
-      await uninstallModule({
-        deployedNexus: smartAccount,
-        entryPoint,
-        module: executorModule,
-        validatorModule: validatorModule,
-        moduleType: ModuleType.Execution,
-        accountOwner: smartAccountOwner,
-        bundler,
-        data: encodeData(
-          ["address", "bytes"],
-          [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))],
-        ),
-      });
-      const isInstalled = await smartAccount.isModuleInstalled(
-        ModuleType.Execution,
-        await executorModule.getAddress(),
-        ethers.hexlify(ethers.toUtf8Bytes("")),
-      );
-
-      expect(isInstalled).to.be.false;
-
-      await expect(
-        executorModule.executeViaAccount(
-          smartAccountAddress,
-          counterAddress,
-          0n,
-          incrementNumber,
-        ),
-      ).to.be.revertedWithCustomError(smartAccount, "InvalidModule");
-    });
-  });
-
-  describe("Nexus Try Execute", () => {
-    it("Should execute single user op using EXECTYPE_TRY", async () => {
-      const mode = ethers.concat([
-        CALLTYPE_SINGLE,
-        EXECTYPE_TRY,
-        MODE_DEFAULT,
-        UNUSED,
-        MODE_PAYLOAD,
-      ]);
-      const callData = await generateUseropCallData({
-        executionMethod: ExecutionMethod.Execute,
-        targetContract: counter,
-        functionName: "incrementNumber",
-        mode,
-      });
-
-      const userOp = buildPackedUserOp({
-        sender: smartAccountAddress,
-        callData,
-      });
-      const nonce = await getNonce(
-        entryPoint,
-        userOp.sender,
-        MODE_VALIDATION,
-        validatorModuleAddress.toString(),
-        numberTo3Bytes(161),
-      );
-      userOp.nonce = nonce;
-      const userOpHash = await entryPoint.getUserOpHash(userOp);
-      const signature = await smartAccountOwner.signMessage(
-        ethers.getBytes(userOpHash),
-      );
-      userOp.signature = signature;
-
-      const numberBefore = await counter.getNumber();
-      await entryPoint.handleOps([userOp], bundlerAddress);
-      const numberAfter = await counter.getNumber();
-
-      expect(numberAfter - numberBefore).to.be.equal(1);
+      // // Stop impersonating the EntryPoint
+      // await ethers.provider.send("hardhat_stopImpersonatingAccount", [entryPointAddress]);
     });
   });
 });

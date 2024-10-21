@@ -74,6 +74,17 @@ export function buildPackedUserOp(userOp: UserOperation): PackedUserOperation {
     maxPriorityFeePerGas,
   );
 
+  console.log("packedValues", packedValues);
+  console.log("preVerificationGas", preVerificationGas);
+  console.log("paymaster", paymaster);
+  console.log("paymasterData", paymasterData);
+  console.log("paymasterVerificationGasLimit", paymasterVerificationGasLimit);
+  console.log("paymasterPostOpGasLimit", paymasterPostOpGasLimit);
+  console.log("maxFeePerGas", maxFeePerGas);
+  console.log("maxPriorityFeePerGas", maxPriorityFeePerGas);
+  console.log("callGasLimit", callGasLimit);
+  console.log("verificationGasLimit", verificationGasLimit);
+
   // Construct paymasterAndData only if a paymaster is specified
   // paymasterData can be generated before this stage
   let paymasterAndData: BytesLike = "0x";
