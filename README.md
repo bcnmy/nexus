@@ -38,7 +38,6 @@ Documentation: (https://github.com/bcnmy/nexus/wiki)
 ## Getting Started
 
 To kickstart, follow these steps:
-To kickstart, follow these steps:
 
 ### Prerequisites
 
@@ -148,20 +147,7 @@ To generate reports of the storage layout for potential upgrades safety using `h
 | Auditor          | Date       | Final Report Link       |
 | ---------------- | ---------- | ----------------------- |
 | CodeHawks-Cyfrin | 17-09-2024 | [View Report](./audits/CodeHawks-Cyfrin-17-09-2024.pdf) |
-| Firm Name        | DD-MM-YYYY | [View Report](./audits) |
-
-## 🏆 Biconomy Champions League 🏆
-
-Welcome to the Champions League, a place where your contributions to Biconomy are celebrated and immortalized in our Hall of Fame. This elite group showcases individuals who have significantly advanced our mission, from enhancing code efficiency to strengthening security, and enriching our documentation.
-
-### Champions Roster
-
-| 🍊 Contributor | 🛡️ Domain         |
-| -------------- | ----------------- |
-| @user1         | Code Optimization |
-| @user2         | Security          |
-| @user3         | Documentation     |
-| ...            | ...               |
+| Spearbit         | 11-10-2024 | [View Report](./audits/report-cantinacode-biconomy-0708-final.pdf) |
 
 ### Entering the League
 
