@@ -4,10 +4,8 @@ import {
   AddressLike,
   Signer,
   ZeroAddress,
-  ZeroHash,
   keccak256,
   solidityPacked,
-  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
@@ -28,7 +26,7 @@ import {
   deployContractsAndSAFixture,
   deployContractsFixture,
 } from "../utils/deployment";
-import { encodeData, to18 } from "../utils/encoding";
+import { to18 } from "../utils/encoding";
 import {
   MODE_VALIDATION,
   buildPackedUserOp,
@@ -36,7 +34,6 @@ import {
   numberTo3Bytes,
 } from "../utils/operationHelpers";
 import { BootstrapConfigStruct } from "../../../typechain-types/contracts/lib/BootstrapLib";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Nexus Factory Tests", function () {
   let factory: K1ValidatorFactory;
@@ -470,7 +467,7 @@ describe("Nexus Factory Tests", function () {
     let smartAccount: Nexus;
     let entryPoint: EntryPoint;
     let factory: RegistryFactory;
-    let bootstrap: Bootstrap;
+    let bootstrap: NexusBootstrap;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
     let BootstrapLib: BootstrapLib;

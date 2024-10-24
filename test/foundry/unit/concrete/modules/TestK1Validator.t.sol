@@ -102,8 +102,6 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests the validateUserOp function with a valid signature
     function test_ValidateUserOp_toEthSignedMessageHash_Success() public {
-        prank(address(BOB_ACCOUNT));
-
         userOp.signature = signature;
 
         uint256 validationResult = validator.validateUserOp(userOp, userOpHash);
@@ -113,8 +111,6 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests the validateUserOp function with an invalid signature
     function test_ValidateUserOp_Failure() public {
-        prank(address(BOB_ACCOUNT));
-
         userOp.signature = abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid"))));
 
         uint256 validationResult = validator.validateUserOp(userOp, userOpHash);
@@ -124,8 +120,6 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests the isValidSignatureWithSender function with a valid signature
     function test_IsValidSignatureWithSender_Success() public {
-        startPrank(address(BOB_ACCOUNT));
-
         bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, toERC1271HashPersonalSign(originalHash));
         bytes memory signedMessage = abi.encodePacked(r, s, v);
@@ -133,15 +127,11 @@ contract TestK1Validator is NexusTest_Base {
 
         bytes4 result = BOB_ACCOUNT.isValidSignature(originalHash, completeSignature);
 
-        stopPrank();
-
         assertEq(result, ERC1271_MAGICVALUE, "Signature should be valid");
     }
 
     /// @notice Tests the validateUserOp function with a valid signature
     function test_ValidateUserOp_Success() public {
-        startPrank(address(BOB_ACCOUNT));
-
         bytes32 originalHash = keccak256(abi.encodePacked("123"));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
@@ -150,15 +140,12 @@ contract TestK1Validator is NexusTest_Base {
 
         uint256 res = validator.validateUserOp(userOp, originalHash);
 
-        stopPrank();
-
         assertEq(res, VALIDATION_SUCCESS, "Signature should be valid");
     }
 
     /// @notice Tests the isValidSignatureWithSender function with an invalid signature
     function test_IsValidSignatureWithSender_Failure() public {
         prank(address(BOB_ACCOUNT));
-
         vm.expectRevert(); //it should revert as last try to check if it's an RPC call which reverts if called on-chain
         validator.isValidSignatureWithSender(address(BOB_ACCOUNT), userOpHash, abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid")))));
     }
@@ -200,7 +187,7 @@ contract TestK1Validator is NexusTest_Base {
     function test_Version() public {
         string memory contractVersion = validator.version();
 
-        assertEq(contractVersion, "1.0.0-beta.1", "Contract version should be '1.0.0-beta.1'");
+        assertEq(contractVersion, "1.0.0", "Contract version should be '1.0.0'");
     }
 
     /// @notice Tests the isModuleType function to return the correct module type
@@ -232,8 +219,6 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests that a valid signature with a valid 's' value is accepted
     function test_ValidateUserOp_ValidSignature() public {
-        startPrank(address(BOB_ACCOUNT));
-
         bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
 
@@ -244,15 +229,11 @@ contract TestK1Validator is NexusTest_Base {
 
         uint256 res = validator.validateUserOp(userOp, originalHash);
 
-        stopPrank();
-
         assertEq(res, VALIDATION_SUCCESS, "Valid signature should be accepted");
     }
 
     /// @notice Tests that a signature with an invalid 's' value is rejected
     function test_ValidateUserOp_InvalidSValue() public {
-        startPrank(address(BOB_ACCOUNT));
-
         bytes32 originalHash = keccak256(abi.encodePacked("invalid message"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
 
@@ -265,15 +246,12 @@ contract TestK1Validator is NexusTest_Base {
 
         uint256 res = validator.validateUserOp(userOp, originalHash);
 
-        stopPrank();
-
         assertEq(res, VALIDATION_FAILED, "Signature with invalid 's' value should be rejected");
     }
 
     /// @notice Tests that a valid signature with a valid 's' value is accepted for isValidSignatureWithSender
     function test_IsValidSignatureWithSender_ValidSignature() public {
         startPrank(address(BOB_ACCOUNT));
-
         // Generate a valid message hash
         bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
 
@@ -288,17 +266,13 @@ contract TestK1Validator is NexusTest_Base {
 
         // Call isValidSignatureWithSender on the validator contract with the correct parameters
         bytes4 result = validator.isValidSignatureWithSender(address(BOB_ACCOUNT), originalHash, signedMessage);
-
         stopPrank();
-
         // Ensure the result is the expected ERC1271_MAGICVALUE
         assertEq(result, ERC1271_MAGICVALUE, "Valid signature should be accepted");
     }
 
     /// @notice Tests that a signature with an invalid 's' value is rejected for isValidSignatureWithSender
     function test_IsValidSignatureWithSender_InvalidSValue() public {
-        startPrank(address(BOB_ACCOUNT));
-
         bytes32 originalHash = keccak256(abi.encodePacked("invalid message"));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, originalHash);
 
@@ -312,15 +286,11 @@ contract TestK1Validator is NexusTest_Base {
 
         bytes4 result = BOB_ACCOUNT.isValidSignature(originalHash, completeSignature);
 
-        stopPrank();
-
         assertEq(result, ERC1271_INVALID, "Signature with invalid 's' value should be rejected");
     }
 
     function test_IsValidSignatureWithSender_SafeCaller_Success() public {
         assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 0);
-
-        vm.startPrank(address(BOB_ACCOUNT));
        
        // alternative way of setting mockSafe1271Caller as safe sender in k1 validator
        // commented out as it was already set at setup
@@ -348,8 +318,6 @@ contract TestK1Validator is NexusTest_Base {
 
         uint256 res = mockSafe1271Caller.validateUserOp(userOp, mockUserOpHash);
 
-        stopPrank();
-
         assertEq(res, VALIDATION_SUCCESS, "Signature should be valid");
         assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 1);
     }
@@ -362,7 +330,7 @@ contract TestK1Validator is NexusTest_Base {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("Nexus"),
-                keccak256("1.0.0-beta.1"),
+                keccak256("1.0.0"),
                 block.chainid,
                 address(BOB_ACCOUNT)
             )
