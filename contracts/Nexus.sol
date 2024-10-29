@@ -18,11 +18,10 @@ import { ExecLib } from "./lib/ExecLib.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { IERC7484 } from "./interfaces/IERC7484.sol";
-import { IERC7739 } from "./interfaces/IERC7739.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, SUPPORTS_NESTED_TYPED_DATA_SIGN } from "./types/Constants.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, SUPPORTS_ERC7739 } from "./types/Constants.sol";
 import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
@@ -226,6 +225,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// bytes4(keccak256("isValidSignature(bytes32,bytes)") = 0x1626ba7e
     /// @dev Delegates the validation to a validator module specified within the signature data.
     function isValidSignature(bytes32 hash, bytes calldata signature) external view virtual override returns (bytes4) {
+        // Handle potential ERC7739 support detection request
+        if (checkERC7739Support(hash, signature)) return SUPPORTS_ERC7739;
+        // else proceed with normal signature verification
+
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
@@ -320,19 +323,32 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow
-    /// Offchain usage only
-    /// Iterates over all the validators
-    function supportsNestedTypedDataSign() public view virtual returns (bytes32) {
-        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-        address next = validators.entries[SENTINEL];
-        while (next != ZERO_ADDRESS && next != SENTINEL) {
-            try IERC7739(next).supportsNestedTypedDataSign() returns (bytes32 res) {
-                if (res == SUPPORTS_NESTED_TYPED_DATA_SIGN) return SUPPORTS_NESTED_TYPED_DATA_SIGN;
-            } catch {}
-            next = validators.entries[next];
+    /// @dev For automatic detection that the smart account supports the ERC7739 workflow
+    /// Iterates over all the validators but only if this is a detection request
+    /// ERC-7739 spec assumes that if the account doesn't support ERC-7739
+    /// it will try to handle the detection request as it was normal sig verification
+    /// request and will return 0xffffffff since it won't be able to verify the 0x signature
+    /// against 0x7739...7739 hash.
+    /// So this approach is consistent with the ERC-7739 spec.
+    /// If no validator supports ERC-7739, this function returns false 
+    /// thus the account will proceed with normal signature verification
+    /// and return 0xffffffff as a result.
+    function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bool) {
+        unchecked {
+            if (signature.length == uint256(0)) {
+                // Forces the compiler to optimize for smaller bytecode size.
+                if (uint256(hash) == ~signature.length / 0xffff * 0x7739) {
+                    SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+                    address next = validators.entries[SENTINEL];
+                    while (next != ZERO_ADDRESS && next != SENTINEL) { 
+                        if (
+                            IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature) == SUPPORTS_ERC7739
+                        ) return true;
+                    }
+                }
+            }
         }
-        return bytes4(0xffffffff);
+        return false;
     }
 
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
