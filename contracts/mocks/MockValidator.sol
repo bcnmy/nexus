@@ -8,7 +8,7 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { ERC7739Validator } from "../base/ERC7739Validator.sol";
+import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 
 contract MockValidator is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
