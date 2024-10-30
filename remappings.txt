@@ -7,4 +7,4 @@ excessively-safe-call/=node_modules/excessively-safe-call/src/
 sentinellist/=node_modules/sentinellist/src/
 ds-test/=node_modules/ds-test/src/
 solarray/=node_modules/solarray/src/
-erc7739Validator/=node_modules/
+erc7739Validator/=node_modules/@rhinestone/module-template/src/
