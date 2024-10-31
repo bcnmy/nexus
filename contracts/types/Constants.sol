@@ -46,4 +46,4 @@ bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256(bytes(MODULE_ENABLE_MO
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
 
-bytes32 constant SUPPORTS_NESTED_TYPED_DATA_SIGN = bytes4(0xd620c85a);
+bytes4 constant SUPPORTS_ERC7739 = 0x77390001;

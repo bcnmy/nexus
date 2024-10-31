@@ -826,6 +826,19 @@
     prettier "^2.8.8"
     solady "github:vectorized/solady"
 
+"@rhinestone/erc4337-validation@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@rhinestone/erc4337-validation/-/erc4337-validation-0.0.2.tgz#d80c454674be32186dafa930376d4a05fc02113d"
+  integrity sha512-IZi34ngoQeRuf7rPEWVBpokVLKpgd8lBZQ/sQ+bstGSlUHpf/jMcnhPIz1aJFCa9Mx7auzrAz8A/rD0GJj5z7A==
+  dependencies:
+    "@openzeppelin/contracts" "5.0.1"
+    account-abstraction "github:kopy-kat/account-abstraction#develop"
+    account-abstraction-v0.6 "github:eth-infinitism/account-abstraction#v0.6.0"
+    ds-test "github:dapphub/ds-test"
+    forge-std "github:foundry-rs/forge-std#8a225d81aa8e2e013580564588c79abb65eacc9e"
+    prettier "^2.8.8"
+    solady "github:vectorized/solady"
+
 "@rhinestone/module-bases@github:rhinestonewtf/module-bases":
   version "0.0.1"
   resolved "https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/2db71722f939ed7d76315fc94c1a85bcb09ce59b"
@@ -833,6 +846,44 @@
     "@ERC4337/account-abstraction" "github:kopy-kat/account-abstraction#develop"
     erc7579 "github:erc7579/erc7579-implementation"
     forge-std "github:foundry-rs/forge-std"
+
+"@rhinestone/module-bases@github:rhinestonewtf/module-bases#d048ec28c8ea8b4155db3ce4f027bc64cd41f9a7":
+  version "0.0.1"
+  resolved "https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/d048ec28c8ea8b4155db3ce4f027bc64cd41f9a7"
+  dependencies:
+    "@ERC4337/account-abstraction" "github:kopy-kat/account-abstraction#develop"
+    erc7579 "github:erc7579/erc7579-implementation"
+    forge-std "github:foundry-rs/forge-std"
+
+"@rhinestone/module-template@https://github.com/erc7579/erc7739Validator":
+  version "0.4.1"
+  resolved "https://github.com/erc7579/erc7739Validator#d0926bda40b9fe9f7030a0a5dfd4b3eca8e69376"
+  dependencies:
+    "@rhinestone/modulekit" "^0.4.8"
+    enumerablemap "https://github.com/erc7579/enumerablemap"
+    stringutils "github:Arachnid/solidity-stringutils"
+
+"@rhinestone/modulekit@^0.4.8":
+  version "0.4.14"
+  resolved "https://registry.yarnpkg.com/@rhinestone/modulekit/-/modulekit-0.4.14.tgz#f8bff0b06578a791f49787dadd09cf49620c98d3"
+  integrity sha512-VVUEAeEQIYe5tVqs0VnepB1QdZYheXlas/FHjkTol0jWmd9mlh1bVPT4yST78EQzt3ixNGEH74wtva17Pt4iDA==
+  dependencies:
+    "@ERC4337/account-abstraction" "github:kopy-kat/account-abstraction#develop"
+    "@ERC4337/account-abstraction-v0.6" "github:eth-infinitism/account-abstraction#v0.6.0"
+    "@prb/math" "^4.0.2"
+    "@rhinestone/erc4337-validation" "^0.0.2"
+    "@rhinestone/module-bases" "github:rhinestonewtf/module-bases#d048ec28c8ea8b4155db3ce4f027bc64cd41f9a7"
+    "@rhinestone/registry" "github:rhinestonewtf/registry#v1.0"
+    "@rhinestone/safe7579" "github:rhinestonewtf/safe7579#v1.0.0"
+    "@rhinestone/sentinellist" "github:rhinestonewtf/sentinellist"
+    "@safe-global/safe-contracts" "^1.4.1"
+    "@zerodev/kernel" "github:kopy-kat/kernel#patch"
+    ds-test "github:dapphub/ds-test"
+    erc7579 "github:erc7579/erc7579-implementation"
+    excessively-safe-call "github:nomad-xyz/ExcessivelySafeCall"
+    forge-std "github:foundry-rs/forge-std"
+    solady "github:vectorized/solady"
+    solarray "github:sablier-labs/solarray"
 
 "@rhinestone/registry@github:rhinestonewtf/registry#v1.0":
   version "1.0.0"
@@ -2135,6 +2186,10 @@ enquirer@^2.3.0, enquirer@^2.3.6:
     ansi-colors "^4.1.1"
     strip-ansi "^6.0.1"
 
+"enumerablemap@https://github.com/erc7579/enumerablemap":
+  version "0.0.0"
+  resolved "https://github.com/erc7579/enumerablemap#047f4ac64198b2469f3b7c1fcbea771c6d847a62"
+
 env-paths@^2.2.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/env-paths/-/env-paths-2.2.1.tgz#420399d416ce1fbe9bc0a07c62fa68d67fd0f8f2"
@@ -2149,6 +2204,14 @@ env-paths@^2.2.0:
     ds-test "github:dapphub/ds-test"
     forge-std "github:foundry-rs/forge-std"
     solady "github:vectorized/solady"
+
+"erc7739-validator-base@https://github.com/erc7579/erc7739Validator":
+  version "0.1.1"
+  resolved "https://github.com/erc7579/erc7739Validator#dfc03c320672c1851890260cc996f4b8e555fa60"
+  dependencies:
+    "@rhinestone/modulekit" "^0.4.8"
+    enumerablemap "https://github.com/erc7579/enumerablemap"
+    stringutils "github:Arachnid/solidity-stringutils"
 
 error-ex@^1.3.1:
   version "1.3.2"
@@ -2505,6 +2568,10 @@ follow-redirects@^1.12.1, follow-redirects@^1.14.0, follow-redirects@^1.15.6:
 "forge-std@github:foundry-rs/forge-std":
   version "1.9.3"
   resolved "https://codeload.github.com/foundry-rs/forge-std/tar.gz/8f24d6b04c92975e0795b5868aa0d783251cdeaa"
+
+"forge-std@github:foundry-rs/forge-std#8a225d81aa8e2e013580564588c79abb65eacc9e":
+  version "1.9.3"
+  resolved "https://codeload.github.com/foundry-rs/forge-std/tar.gz/8a225d81aa8e2e013580564588c79abb65eacc9e"
 
 "forge-std@github:foundry-rs/forge-std#v1.7.6":
   version "1.7.6"
@@ -4423,6 +4490,10 @@ string_decoder@~1.1.1:
   integrity sha512-n/ShnvDi6FHbbVfviro+WojiFzv+s8MPMHBczVePfUpDJLwoLT0ht1l4YwBCbi8pJAveEEdnkHyPyTP/mzRfwg==
   dependencies:
     safe-buffer "~5.1.0"
+
+"stringutils@github:Arachnid/solidity-stringutils":
+  version "0.0.0"
+  resolved "https://codeload.github.com/Arachnid/solidity-stringutils/tar.gz/4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461"
 
 strip-ansi@^4.0.0:
   version "4.0.0"

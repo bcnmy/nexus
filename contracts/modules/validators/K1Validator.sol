@@ -14,7 +14,7 @@ pragma solidity ^0.8.27;
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "../../lib/EnumerableSet4337.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../types/Constants.sol";
@@ -155,14 +155,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         bytes32 hash,
         bytes calldata signature
     ) external view virtual override returns (bytes4 sigValidationResult) {
-        // check if sig is valid
-        bool success = _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            // We use `0xffffffff` for invalid, in convention with the reference implementation.
-            sigValidationResult := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
+        return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 
     /// @notice ISessionValidator interface for smart session
