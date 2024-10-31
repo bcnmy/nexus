@@ -14,7 +14,7 @@ pragma solidity ^0.8.27;
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "../../lib/EnumerableSet4337.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../types/Constants.sol";

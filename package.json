@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@openzeppelin": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+    "@rhinestone/module-template": "https://github.com/erc7579/erc7739Validator",
     "dotenv": "^16.4.5",
+    "erc7739-validator-base": "https://github.com/erc7579/erc7739Validator",
     "solarray": "github:sablier-labs/solarray",
     "viem": "2.7.13"
   },
