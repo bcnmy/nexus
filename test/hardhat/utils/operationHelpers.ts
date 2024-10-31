@@ -472,23 +472,13 @@ export async function getAccountDomainStructFields(
   const [fields, name, version, chainId, verifyingContract, salt, extensions] =
     await account.eip712Domain();
   return ethers.AbiCoder.defaultAbiCoder().encode(
+    ["bytes32", "bytes32", "uint256", "address", "bytes32"],
     [
-      "bytes1",
-      "bytes32",
-      "bytes32",
-      "uint256",
-      "address",
-      "bytes32",
-      "bytes32",
-    ],
-    [
-      fields, // matches Solidity
       ethers.keccak256(ethers.toUtf8Bytes(name)), // matches Solidity
       ethers.keccak256(ethers.toUtf8Bytes(version)), // matches Solidity
       chainId,
       verifyingContract,
       salt,
-      ethers.keccak256(ethers.solidityPacked(["uint256[]"], [extensions])),
     ],
   );
 }

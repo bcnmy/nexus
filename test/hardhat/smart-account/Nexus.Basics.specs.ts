@@ -350,7 +350,7 @@ describe("Nexus Basic Specs", function () {
 
     it("Should check signature validity using smart account isValidSignature for EIP 712 signature", async function () {
       const PARENT_TYPEHASH =
-        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)";
+        "TypedDataSign(Contents contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)Contents(bytes32 stuff)";
       const APP_DOMAIN_SEPARATOR =
         "0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b";
       const data = "0x1234";
@@ -959,23 +959,6 @@ describe("Nexus Basic Specs", function () {
         .hashTypedData(structuredDataHash);
 
       expect(result).to.equal(expectedHash);
-
-      // Stop impersonating the smart account
-      await stopImpersonateAccount(smartAccountAddress.toString());
-    });
-
-    it("Should return correct bytes4 value for supportsNestedTypedDataSign", async function () {
-      const expectedValue = ethers.zeroPadBytes("0xd620c85a", 32);
-
-      // Impersonate the smart account
-      const impersonatedSmartAccount = await impersonateAccount(
-        smartAccountAddress.toString(),
-      );
-
-      const result = await smartAccount
-        .connect(impersonatedSmartAccount)
-        .supportsNestedTypedDataSign();
-      expect(result).to.equal(expectedValue);
 
       // Stop impersonating the smart account
       await stopImpersonateAccount(smartAccountAddress.toString());
