@@ -141,11 +141,15 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     /**
      * Validates an ERC-1271 signature
+     * @dev implements signature malleability prevention
+     *      see: https://eips.ethereum.org/EIPS/eip-1271#reference-implementation
+     * Please note, that this prevention does not protect against replay attacks in general
+     * So the protocol using ERC-1271 should make sure hash is replay-safe.
      *
      * @param sender The sender of the ERC-1271 call to the account
      * @param hash The hash of the message
      * @param signature The signature of the message
-     *
+     * 
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - EIP1271_SUCCESS if the signature is valid
      *  - EIP1271_FAILED if the signature is invalid
@@ -154,7 +158,18 @@ contract K1Validator is IValidator, ERC7739Validator {
         address sender,
         bytes32 hash,
         bytes calldata signature
-    ) external view virtual override returns (bytes4 sigValidationResult) {
+    ) external view virtual override returns (bytes4) {
+        // sig malleability prevention
+        // only needed here as 4337 flow has nonce
+        bytes32 s;
+        assembly {
+            // same as `s := mload(add(signature, 0x40))` but for calldata
+            s := calldataload(add(signature.offset, 0x20))
+        }
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return 0xffffffff;
+        }
+
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 
@@ -231,16 +246,6 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            // same as `s := mload(add(signature, 0x40))` but for calldata
-            s := calldataload(add(signature.offset, 0x20))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return false;
-        }
-
         // verify signer
         // owner can not be zero address in this contract
         if (_recoverSigner(hash, signature) == owner) return true;
