@@ -345,6 +345,28 @@ contract TestK1Validator is NexusTest_Base {
         assertEq(mockSafe1271Caller.balanceOf(address(BOB_ACCOUNT)), 1);
     }
 
+    /// @notice Tests the addSafeSender function to add a safe sender to the safe senders list
+    function test_addSafeSender_Success() public {
+        prank(address(BOB_ACCOUNT));
+        validator.addSafeSender(address(mockSafe1271Caller));
+        assertTrue(validator.isSafeSender(address(mockSafe1271Caller), address(BOB_ACCOUNT)), "MockSafe1271Caller should be in the safe senders list");
+    }
+
+    /// @notice Tests the removeSafeSender function to remove a safe sender from the safe senders list
+    function test_removeSafeSender_Success() public {
+        prank(address(BOB_ACCOUNT));
+        validator.removeSafeSender(address(mockSafe1271Caller));
+        assertFalse(validator.isSafeSender(address(mockSafe1271Caller), address(BOB_ACCOUNT)), "MockSafe1271Caller should be removed from the safe senders list");
+    }
+
+    /// @notice Tests the fillSafeSenders function to fill the safe senders list
+    function test_fillSafeSenders_Success() public {
+        prank(address(0x03));
+        validator.onInstall(abi.encodePacked(address(0xdecaf0), address(0x01), address(0x02)));
+        assertTrue(validator.isSafeSender(address(0x01), address(0x03)));
+        assertTrue(validator.isSafeSender(address(0x02), address(0x03)));
+    }
+
     /// @notice Generates an ERC-1271 hash for personal sign
     /// @param childHash The child hash
     /// @return The ERC-1271 hash for personal sign

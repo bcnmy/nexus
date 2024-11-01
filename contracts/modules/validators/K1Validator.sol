@@ -109,6 +109,11 @@ contract K1Validator is IValidator, ERC7739Validator {
         _safeSenders.remove(msg.sender, sender);
     }
 
+    /// @notice Checks if a sender is in the _safeSenders list for the smart account
+    function isSafeSender(address sender, address smartAccount) external view returns (bool) {
+        return _safeSenders.contains(smartAccount, sender);
+    }
+
     /**
      * Check if the module is initialized
      * @param smartAccount The smart account to check
