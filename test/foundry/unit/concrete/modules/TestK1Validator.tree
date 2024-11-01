@@ -11,11 +11,12 @@ TestK1Validator
 ├── when testing the validateUserOp function
 │   ├── it should succeed with a valid signature (toEthSignedMessageHash)
 │   └── it should fail with an invalid signature
+│   └── signature malleability should be rejected because of nonce
 ├── when testing the isValidSignatureWithSender function
 │   ├── it should succeed with a valid signature
 │   └── it should fail with an invalid signature
 │   └── it should succeed with a valid signature for isValidSignatureWithSender
-│   └── it should fail with an invalid 's' value for isValidSignatureWithSender
+│   └── it should fail with an inverted 's' value for isValidSignatureWithSender
 ├── when testing the transferOwnership function
 │   ├── it should transfer ownership to a new address
 │   └── it should revert when transferring to the zero address
@@ -27,3 +28,11 @@ TestK1Validator
 └── when testing the isModuleType function
     ├── it should return true for VALIDATOR module type
     └── it should return false for an invalid module type
+├── when testing the addSafeSender function
+│   └── it should add a safe sender to the safe senders list
+├── when testing the removeSafeSender function
+│   └── it should remove a safe sender from the safe senders list
+├── when testing the fillSafeSenders function
+│   └── it should fill the safe senders list
+├── when testing the isSafeSender function
+│   └── it should check if a sender is in the safe senders list

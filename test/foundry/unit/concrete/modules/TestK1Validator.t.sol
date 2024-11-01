@@ -367,6 +367,14 @@ contract TestK1Validator is NexusTest_Base {
         assertTrue(validator.isSafeSender(address(0x02), address(0x03)));
     }
 
+    /// @notice Tests the isSafeSender function to check if a sender is in the safe senders list
+    function test_isSafeSender_Success() public {
+        assertFalse(validator.isSafeSender(address(0x01), address(0x03)));
+        prank(address(0x03));
+        validator.addSafeSender(address(0x01));
+        assertTrue(validator.isSafeSender(address(0x01), address(0x03)));
+    }
+
     /// @notice Generates an ERC-1271 hash for personal sign
     /// @param childHash The child hash
     /// @return The ERC-1271 hash for personal sign
