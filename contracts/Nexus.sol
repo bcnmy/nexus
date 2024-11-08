@@ -38,6 +38,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
     using NonceLib for uint256;
+    using SentinelListLib for SentinelListLib.SentinelList;
 
     /// @dev The timelock period for emergency hook uninstallation.
     uint256 internal constant _EMERGENCY_TIMELOCK = 1 days;
@@ -342,6 +343,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     address next = validators.entries[SENTINEL];
                     while (next != ZERO_ADDRESS && next != SENTINEL) {
                         if (IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature) == SUPPORTS_ERC7739) return true;
+                        next = validators.getNext(next);
                     }
                 }
             }
