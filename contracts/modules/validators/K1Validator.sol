@@ -158,6 +158,8 @@ contract K1Validator is IValidator, ERC7739Validator {
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - EIP1271_SUCCESS if the signature is valid
      *  - EIP1271_FAILED if the signature is invalid
+     *  - 0x7739000X if this is the ERC-7739 support detection request.
+     *  Where X is the version of the ERC-7739 support.
      */
     function isValidSignatureWithSender(
         address sender,

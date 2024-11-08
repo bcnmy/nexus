@@ -227,7 +227,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Delegates the validation to a validator module specified within the signature data.
     function isValidSignature(bytes32 hash, bytes calldata signature) external view virtual override returns (bytes4) {
         // Handle potential ERC7739 support detection request
-        if (checkERC7739Support(hash, signature)) return SUPPORTS_ERC7739;
+        if (signature.length == 0) {
+            if (checkERC7739Support(hash, signature)) return SUPPORTS_ERC7739;
+        }
         // else proceed with normal signature verification
 
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
@@ -336,15 +338,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// and return 0xffffffff as a result.
     function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bool) {
         unchecked {
-            if (signature.length == uint256(0)) {
-                // Forces the compiler to optimize for smaller bytecode size.
-                if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
-                    SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-                    address next = validators.entries[SENTINEL];
-                    while (next != ZERO_ADDRESS && next != SENTINEL) {
-                        if (IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature) == SUPPORTS_ERC7739) return true;
-                        next = validators.getNext(next);
-                    }
+            // Forces the compiler to optimize for smaller bytecode size.
+            if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
+                SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+                address next = validators.entries[SENTINEL];
+                while (next != ZERO_ADDRESS && next != SENTINEL) {
+                    if (IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature) == SUPPORTS_ERC7739) return true;
+                    next = validators.getNext(next);
                 }
             }
         }
