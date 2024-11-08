@@ -166,17 +166,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         bytes32 hash,
         bytes calldata signature
     ) external view virtual override returns (bytes4) {
-        // sig malleability prevention
-        // only needed here as 4337 flow has nonce
-        bytes32 s;
-        assembly {
-            // same as `s := mload(add(signature, 0x40))` but for calldata
-            s := calldataload(add(signature.offset, 0x20))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return 0xffffffff;
-        }
-
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 

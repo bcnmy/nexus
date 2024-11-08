@@ -24,7 +24,6 @@ contract MockValidator is ERC7739Validator {
         bytes calldata signature
     ) external view virtual returns (bytes4 sigValidationResult) {
         // can put additional checks based on sender here
-
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 
