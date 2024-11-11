@@ -228,7 +228,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function isValidSignature(bytes32 hash, bytes calldata signature) external view virtual override returns (bytes4) {
         // Handle potential ERC7739 support detection request
         if (signature.length == 0) {
-            if (checkERC7739Support(hash, signature)) return SUPPORTS_ERC7739;
+            if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
+                return checkERC7739Support(hash, signature);
+            }
         }
         // else proceed with normal signature verification
 
@@ -336,19 +338,21 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// If no validator supports ERC-7739, this function returns false
     /// thus the account will proceed with normal signature verification
     /// and return 0xffffffff as a result.
-    function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bool) {
+    function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
+        bytes4 result; 
         unchecked {
             // Forces the compiler to optimize for smaller bytecode size.
-            if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
-                SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
-                address next = validators.entries[SENTINEL];
-                while (next != ZERO_ADDRESS && next != SENTINEL) {
-                    if (IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature) == SUPPORTS_ERC7739) return true;
-                    next = validators.getNext(next);
+            SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+            address next = validators.entries[SENTINEL];
+            while (next != ZERO_ADDRESS && next != SENTINEL) {
+                bytes4 support = IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature);
+                if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > result) {
+                    result = support;
                 }
+                next = validators.getNext(next);
             }
         }
-        return false;
+        return result == bytes4(0) ? bytes4(0xffffffff) : result;
     }
 
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.

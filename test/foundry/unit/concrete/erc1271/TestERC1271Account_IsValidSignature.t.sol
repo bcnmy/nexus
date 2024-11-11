@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "../../../utils/Imports.sol";
 import "../../../utils/NexusTest_Base.t.sol";
+import "contracts/mocks/MockValidator_7739v2.sol";
 
 /// @title TestERC1271Account_IsValidSignature
 /// @notice This contract tests the ERC1271 signature validation functionality.
@@ -126,12 +127,16 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
 
     /// @notice Tests the ERC7739 support detection request.
     function test_ERC7739SupportDetectionRequest() public {
+        MockValidator_7739v2 validator_7739v2 = new MockValidator_7739v2();
+        vm.prank(address(ENTRYPOINT));
+        ALICE_ACCOUNT.installModule(MODULE_TYPE_VALIDATOR, address(validator_7739v2), abi.encodePacked(ALICE_ADDRESS));
+        assertTrue(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator_7739v2), ""));
         assertEq(
             ALICE_ACCOUNT.isValidSignature(
                 0x7739773977397739773977397739773977397739773977397739773977397739, 
                 ""
             ),
-            SUPPORTS_ERC7739
+            bytes4(0x77390002) // SUPPORTS_ERC7739_V2
         );
     }
 
