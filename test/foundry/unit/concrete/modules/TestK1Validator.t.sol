@@ -308,8 +308,8 @@ contract TestK1Validator is NexusTest_Base {
         // invert signature
         signedMessage = abi.encodePacked(r, s1, v == 27 ? 28 : v);
         vm.prank(address(BOB_ACCOUNT));
-        result = validator.isValidSignatureWithSender(address(this), originalHash, signedMessage);
-        assertEq(result, ERC1271_INVALID, "Signature with invalid 's' value should be rejected");
+        vm.expectRevert(bytes4(keccak256("InvalidSignature()")));
+        validator.isValidSignatureWithSender(address(this), originalHash, signedMessage);
     }
 
     function test_IsValidSignatureWithSender_SafeCaller_Success() public {

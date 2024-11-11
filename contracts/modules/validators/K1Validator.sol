@@ -158,23 +158,14 @@ contract K1Validator is IValidator, ERC7739Validator {
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - EIP1271_SUCCESS if the signature is valid
      *  - EIP1271_FAILED if the signature is invalid
+     *  - 0x7739000X if this is the ERC-7739 support detection request.
+     *  Where X is the version of the ERC-7739 support.
      */
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
         bytes calldata signature
     ) external view virtual override returns (bytes4) {
-        // sig malleability prevention
-        // only needed here as 4337 flow has nonce
-        bytes32 s;
-        assembly {
-            // same as `s := mload(add(signature, 0x40))` but for calldata
-            s := calldataload(add(signature.offset, 0x20))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return 0xffffffff;
-        }
-
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 
