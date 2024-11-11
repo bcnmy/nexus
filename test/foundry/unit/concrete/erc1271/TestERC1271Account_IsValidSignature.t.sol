@@ -136,7 +136,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                 0x7739773977397739773977397739773977397739773977397739773977397739, 
                 ""
             ),
-            bytes4(0x77390002) // SUPPORTS_ERC7739_V2
+            bytes4(0x77390002)g // SUPPORTS_ERC7739_V2
         );
     }
 
