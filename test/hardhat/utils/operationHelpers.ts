@@ -225,12 +225,7 @@ export async function getInitCode(
   BootstrapLib.waitForDeployment();
 
   const K1ValidatorFactory = await ethers.getContractFactory(
-    "K1ValidatorFactory",
-    {
-      libraries: {
-        BootstrapLib: await BootstrapLib.getAddress(),
-      },
-    },
+    "K1ValidatorFactory"
   );
 
   // Encode the createAccount function call with the provided parameters

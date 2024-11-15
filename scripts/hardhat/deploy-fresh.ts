@@ -46,12 +46,7 @@ async function main() {
   await mockRegistry.waitForDeployment();
 
   const K1ValidatorFactory = await ethers.getContractFactory(
-    "K1ValidatorFactory",
-    {
-      libraries: {
-        BootstrapLib: await bootstrapLib.getAddress(),
-      },
-    },
+    "K1ValidatorFactory"
   );
 
   const k1ValidatorFactory = await K1ValidatorFactory.deploy(
