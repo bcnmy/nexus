@@ -28,10 +28,7 @@ export async function deployToMainnet() {
       K1Validator.address,
       NexusBootstrap.address,
       Registry.address,
-    ],
-    libraries: {
-      BootstrapLib: BootstrapLib.address,
-    },
+    ]
   });
   const BiconomyMetaFactory = await deployments.deploy("BiconomyMetaFactory", {
     ...deployOptions,

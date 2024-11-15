@@ -88,12 +88,7 @@ export async function getDeployedAccountK1Factory(
 
   // Get the contract factory for K1ValidatorFactory with linked library
   const K1ValidatorFactory = await ethers.getContractFactory(
-    "K1ValidatorFactory",
-    {
-      libraries: {
-        BootstrapLib: await BootstrapLib.getAddress(),
-      },
-    },
+    "K1ValidatorFactory"
   );
 
   const deterministicAccountFactory = await deployments.deploy(
@@ -102,9 +97,6 @@ export async function getDeployedAccountK1Factory(
       from: addresses[0],
       deterministicDeployment: true,
       args: [implementationAddress, owner, k1Validator, bootstrapper, registry],
-      libraries: {
-        BootstrapLib: await BootstrapLib.getAddress(),
-      },
     },
   );
 

@@ -15,7 +15,7 @@ library BootstrapLib {
     /// @param module The address of the module.
     /// @param data The initialization data for the module.
     /// @return config A BootstrapConfig structure containing the module and its data.
-    function createSingleConfig(address module, bytes memory data) public pure returns (BootstrapConfig memory config) {
+    function createSingleConfig(address module, bytes memory data) internal pure returns (BootstrapConfig memory config) {
         config.module = module;
         config.data = data;
     }
@@ -24,7 +24,7 @@ library BootstrapLib {
     /// @param module The address of the module.
     /// @param data The initialization data for the module.
     /// @return config An array containing a single BootstrapConfig structure.
-    function createArrayConfig(address module, bytes memory data) public pure returns (BootstrapConfig[] memory config) {
+    function createArrayConfig(address module, bytes memory data) internal pure returns (BootstrapConfig[] memory config) {
         config = new BootstrapConfig[](1);
         config[0].module = module;
         config[0].data = data;
@@ -34,7 +34,7 @@ library BootstrapLib {
     /// @param modules An array of module addresses.
     /// @param datas An array of initialization data for each module.
     /// @return configs An array of BootstrapConfig structures.
-    function createMultipleConfigs(address[] memory modules, bytes[] memory datas) public pure returns (BootstrapConfig[] memory configs) {
+    function createMultipleConfigs(address[] memory modules, bytes[] memory datas) internal pure returns (BootstrapConfig[] memory configs) {
         require(modules.length == datas.length, "BootstrapLib: length mismatch");
         configs = new BootstrapConfig[](modules.length);
 
