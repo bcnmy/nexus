@@ -154,7 +154,7 @@ contract K1Validator is IValidator, ERC7739Validator {
      * @param sender The sender of the ERC-1271 call to the account
      * @param hash The hash of the message
      * @param signature The signature of the message
-     * 
+     *
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - EIP1271_SUCCESS if the signature is valid
      *  - EIP1271_FAILED if the signature is invalid
