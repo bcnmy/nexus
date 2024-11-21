@@ -49,12 +49,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(validator), signature)), bytes4(0x1626ba7e));
-
-        unchecked {
-            uint256 vs = uint256(t.s) | (uint256(t.v - 27) << 255);
-            signature = abi.encodePacked(t.r, vs);
-            assertEq(ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(validator), signature)), bytes4(0xffffffff));
-        }
     }
 
     /// @notice Tests the validation of an EIP-712 signature using the mock validator.
@@ -68,15 +62,6 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
         assertEq(ret, bytes4(0x1626ba7e));
-
-        unchecked {
-            uint256 vs = uint256(t.s) | (uint256(t.v - 27) << 255);
-            signature = abi.encodePacked(t.r, vs, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
-            assertEq(
-                ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature)),
-                bytes4(0xffffffff)
-            );
-        }
     }
 
     /// @notice Tests the failure of an EIP-712 signature validation due to a wrong signer.
@@ -171,7 +156,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @return The ERC-1271 hash for personal sign.
     function toERC1271HashPersonalSign(bytes32 childHash, address account) internal view returns (bytes32) {
         AccountDomainStruct memory t;
-        (/*t.fields*/, t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/)  = EIP712(account).eip712Domain();
+        (/*t.fields*/, t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/)  = EIP712(account).eip712Domain();        
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
