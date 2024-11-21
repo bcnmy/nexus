@@ -147,7 +147,7 @@ To generate reports of the storage layout for potential upgrades safety using `h
 | Auditor          | Date       | Final Report Link       |
 | ---------------- | ---------- | ----------------------- |
 | CodeHawks-Cyfrin | 17-09-2024 | [View Report](./audits/CodeHawks-Cyfrin-17-09-2024.pdf) |
-| Spearbit         | 11-10-2024 | [View Report](./audits/report-cantinacode-biconomy-0708-final.pdf) |
+| Spearbit         | 10/11-2024 | [View Report](./audits/report-cantinacode-biconomy-0708-final.pdf) / [View Add-on](./audits/report-cantinacode-biconomy-erc7739-addon-final.pdf) |
 
 ### Entering the League
 
