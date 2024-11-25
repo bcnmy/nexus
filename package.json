@@ -10,7 +10,7 @@
     "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "erc7739-validator-base": "https://github.com/erc7579/erc7739Validator",
     "solarray": "github:sablier-labs/solarray",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "sentinellist": "github:rhinestonewtf/sentinellist",
     "forge-std": "github:foundry-rs/forge-std#v1.8.2",
     "solady": "github:vectorized/solady"
   },
