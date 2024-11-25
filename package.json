@@ -7,14 +7,14 @@
     "url": "https://github.com/bcnmy"
   },
   "dependencies": {
-    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
-    "erc7739-validator-base": "https://github.com/erc7579/erc7739Validator",
-    "solarray": "github:sablier-labs/solarray",
-    "sentinellist": "github:rhinestonewtf/sentinellist",
+    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction#v0.7.0",
+    "erc7739-validator-base": "https://github.com/erc7579/erc7739Validator#v1.0.0",
+    "sentinellist": "github:rhinestonewtf/sentinellist#v1.0.0",
     "forge-std": "github:foundry-rs/forge-std#v1.8.2",
-    "solady": "github:vectorized/solady"
+    "solady": "github:vectorized/solady#v0.0.271"
   },
   "devDependencies": {
+    "solarray": "github:sablier-labs/solarray",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.6",
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
