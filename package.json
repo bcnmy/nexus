@@ -12,7 +12,7 @@
     "solarray": "github:sablier-labs/solarray",
     "sentinellist": "github:zeroknots/sentinellist",
     "forge-std": "github:foundry-rs/forge-std#v1.8.2",
-    "solady": "github:vectorized/solady",
+    "solady": "github:vectorized/solady"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
