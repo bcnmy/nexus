@@ -43,6 +43,9 @@ library ExecLib {
             // Extract the ERC7579 Executions
             executionBatch.offset := add(dataPointer, 32)
             executionBatch.length := calldataload(dataPointer)
+            if slt(sub(callData.length, executionBatch.length), 0) {
+                revert(0, 0)
+            }
         }
     }
 
