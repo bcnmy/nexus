@@ -8,6 +8,8 @@ import { Execution } from "../types/DataTypes.sol";
 /// Helper Library for decoding Execution calldata
 /// malloc for memory allocation is bad for gas. use this assembly instead
 library ExecLib {
+    error InvalidBatchCallData();
+
     function get2771CallData(bytes calldata cd) internal view returns (bytes memory callData) {
         /// @solidity memory-safe-assembly
         (cd);
@@ -29,25 +31,25 @@ library ExecLib {
         }
     }
 
-    function decodeBatch(bytes calldata callData) internal pure returns (Execution[] calldata executionBatch) {
+    function decodeBatch(bytes calldata callData) internal view returns (Execution[] calldata executionBatch) {
         /*
          * Batch Call Calldata Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
          * 0x0                  | 0x4               | bytes4 function selector
-         * 0x4                  | -                 |
-        abi.encode(IERC7579Execution.Execution[])
+         * 0x4                  | -                 | abi.encode(IERC7579Execution.Execution[])
          */
         assembly ("memory-safe") {
             let dataPointer := add(callData.offset, calldataload(callData.offset))
-
             // Extract the ERC7579 Executions
             executionBatch.offset := add(dataPointer, 32)
             executionBatch.length := calldataload(dataPointer)
-            if lt(callData.length, executionBatch.length) {
-                revert(0, 0)
-            }
         }
-    }
+        /*
+        if(callData.length < abi.encode(executionBatch).length) {
+            revert InvalidBatchCallData();
+        }
+        */
+    }   
 
     function encodeBatch(Execution[] memory executions) internal pure returns (bytes memory callData) {
         callData = abi.encode(executions);

@@ -297,7 +297,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap using WETH
-    function test_Gas_Swap_DeployNexusWithPreFundedETH() public checkERC20Balance(preComputedAddress) {
+    function test_Gas_Swap_DeployNexusWithPreFundedETH_WETH() public checkERC20Balance(preComputedAddress) {
         // Send ETH directly to the precomputed address
         vm.deal(preComputedAddress, 1 ether);
         assertEq(address(preComputedAddress).balance, 1 ether, "ETH not sent to precomputed address");

@@ -173,7 +173,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
     }
 
     /// @notice Tests sending ETH to the Nexus account before deployment and then deploy with Uniswap V2 swap
-    function test_Gas_Swap_DeployNexusWithPreFundedETH() public checkERC20Balance(preComputedAddress, SWAP_AMOUNT) {
+    function test_Gas_Swap_DeployNexusWithPreFundedETH_ETH() public checkERC20Balance(preComputedAddress, SWAP_AMOUNT) {
         // Send ETH directly to the precomputed address
         vm.deal(preComputedAddress, 10 ether);
         assertEq(address(preComputedAddress).balance, 10 ether, "ETH not sent to precomputed address");
