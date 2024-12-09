@@ -58,8 +58,7 @@ fi
 }
 
 ### COPY ARTIFACTS ###
-printf "Do you want to rebuild Nexus artifacts from your local sources? \n (y/n): "
-read -r proceed
+read -r -p "Do you want to rebuild Nexus artifacts from your local sources? (y/n): " proceed
 if [ $proceed = "y" ]; then
     ### BUILD ARTIFACTS ###
     printf "Building Nexus artifacts\n"
@@ -68,6 +67,11 @@ if [ $proceed = "y" ]; then
         exit 1
     }
     printf "Copying Nexus artifacts\n"
+    mkdir -p ./artifacts/Nexus
+    mkdir -p ./artifacts/K1Validator
+    mkdir -p ./artifacts/NexusBootstrap
+    mkdir -p ./artifacts/K1ValidatorFactory
+    mkdir -p ./artifacts/NexusAccountFactory
     cp ../../out/Nexus.sol/Nexus.json ./artifacts/Nexus/.
     cp ../../out/K1Validator.sol/K1Validator.json ./artifacts/K1Validator/.
     cp ../../out/NexusBootstrap.sol/NexusBootstrap.json ./artifacts/NexusBootstrap/.
@@ -94,15 +98,29 @@ forge script DeployNexus true --sig "run(bool)" --rpc-url $CHAIN_NAME -vv | grep
 printf "Do you want to proceed with the addresses above? (y/n): "
 read -r proceed
 if [ $proceed = "y" ]; then
-    printf "Proceeding with deployment\n"
-    {
-        forge script DeployNexus false --sig "run(bool)" --rpc-url $CHAIN_NAME --chain $CHAIN_NAME --etherscan-api-key $CHAIN_NAME --private-key $PRIVATE_KEY $VERIFY -v --broadcast --slow 1> ./logs/deploy-nexus.log 2> ./logs/deploy-nexus-errors.log 
+    printf "Do you want to specify gas price? (y/n): "
+    read -r proceed
+    if [ $proceed = "y" ]; then
+        printf "Enter gas prices args: \n For the EIP-1559 chains, enter two args: base fee and priority fee in gwei\n For the legacy chains, enther one argument. \n Example eip-1559: 20 1 \n Example legacy: 20 \n"
+        read -r -a GAS_ARGS
+        if [ ${#GAS_ARGS[@]} -eq 2 ]; then
+            GAS_SUFFIX="--with-gas-price ${GAS_ARGS[0]}gwei --priority-gas-price ${GAS_ARGS[1]}gwei"
+        else 
+            GAS_SUFFIX="--with-gas-price ${GAS_ARGS[0]}gwei"
+        fi
+    else 
+        GAS_SUFFIX=""
+    fi
+    {   
+        printf "Proceeding with deployment \n"
+        mkdir -p ./logs/$CHAIN_NAME
+        forge script DeployNexus false --sig "run(bool)" --rpc-url $CHAIN_NAME --etherscan-api-key $CHAIN_NAME --private-key $PRIVATE_KEY $VERIFY -v --broadcast --slow $GAS_SUFFIX 1> ./logs/$CHAIN_NAME/$CHAIN_NAME-deploy-nexus.log 2> ./logs/$CHAIN_NAME/$CHAIN_NAME-deploy-nexus-errors.log 
     } || {
         printf "Deployment failed\n See logs for more details\n"
         exit 1
     }
     printf "Deployment successful\n"
-    cat ./logs/deploy-nexus.log | grep "deployed at"
+    cat ./logs/$CHAIN_NAME/$CHAIN_NAME-deploy-nexus.log | grep "deployed at"
     
 else 
     printf "Exiting\n"
