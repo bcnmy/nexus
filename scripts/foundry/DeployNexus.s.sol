@@ -102,7 +102,7 @@ contract DeployNexus is Script {
 
         // ======== Nexus ========
 
-        bytes32 salt = vm.envBytes32("NEXUS_SALT");
+        bytes32 salt = NEXUS_SALT;
         bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(address(0x0000000071727De22E5E9d8BAf0edAc6f37da032));
         address nexus = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
@@ -119,7 +119,7 @@ contract DeployNexus is Script {
 
         // ======== K1Validator ========
 
-        salt = vm.envBytes32("K1VALIDATOR_SALT");
+        salt = K1VALIDATOR_SALT;
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1Validator/K1Validator.json");
         address k1validator = DeterministicDeployerLib.computeAddress(bytecode, salt);
         assembly {
@@ -134,7 +134,7 @@ contract DeployNexus is Script {
 
         // ======== NexusBootstrap ========
 
-        salt = vm.envBytes32("NEXUSBOOTSTRAP_SALT");
+        salt = NEXUSBOOTSTRAP_SALT;
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
         address bootstrap = DeterministicDeployerLib.computeAddress(bytecode, salt);
         assembly {
@@ -148,7 +148,7 @@ contract DeployNexus is Script {
         }
 
         // ======== K1ValidatorFactory ========
-        salt = vm.envBytes32("K1VALIDATORFACTORY_SALT");
+        salt = K1VALIDATORFACTORY_SALT;
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1ValidatorFactory/K1ValidatorFactory.json");
         args = abi.encode(
                          nexus, 
@@ -170,7 +170,7 @@ contract DeployNexus is Script {
 
         // ======== NexusAccountFactory ========
 
-        salt = vm.envBytes32("NEXUS_ACCOUNT_FACTORY_SALT");
+        salt = NEXUS_ACCOUNT_FACTORY_SALT;
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
         args = abi.encode(
                          nexus, // implementation
