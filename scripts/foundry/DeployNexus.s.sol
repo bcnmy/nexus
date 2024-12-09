@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {DeterministicDeployerLib} from "./utils/DeterministicDeployerLib.sol";
+import { ResolverUID, IModuleManager } from "./utils/RegisterModule.s.sol";
 
 contract DeployNexus is Script {
 
@@ -130,6 +131,28 @@ contract DeployNexus is Script {
         } else {
             k1validator = DeterministicDeployerLib.broadcastDeploy(bytecode, salt);
             console2.log("Nexus K1 Validator deployed at: ", k1validator);
+        }
+
+        // Register K1Validator on registry
+        bool registryDeployed;
+        assembly {
+            registryDeployed := iszero(iszero(extcodesize(0x000000000069E2a187AEFFb852bF3cCdC95151B2)))
+        }
+        if (registryDeployed) {
+            IModuleManager registry = IModuleManager(0x000000000069E2a187AEFFb852bF3cCdC95151B2);
+            try registry.registerModule(
+                ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f),
+                k1validator,
+                hex"",
+                hex""
+            ) {
+                console2.log("K1Validator registered on registry");
+            } catch (bytes memory reason) {
+                console2.log("K1Validator registration failed");
+                console2.logBytes(reason);
+            }
+        } else {
+            console2.log("Registry not deployed, skipping K1Validator registration");
         }
 
         // ======== NexusBootstrap ========
