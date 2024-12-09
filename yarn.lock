@@ -768,27 +768,6 @@
   resolved "https://registry.yarnpkg.com/@prettier/sync/-/sync-0.3.0.tgz#91f2cfc23490a21586d1cf89c6f72157c000ca1e"
   integrity sha512-3dcmCyAxIcxy036h1I7MQU/uEEBq8oLwf1CE3xeze+MPlgkdlb/+w6rGR/1dhp6Hqi17fRS6nvwnOzkESxEkOw==
 
-"@rhinestone/checknsignatures@github:rhinestonewtf/checknsignatures":
-  version "0.0.1"
-  resolved "https://codeload.github.com/rhinestonewtf/checknsignatures/tar.gz/ef8e54b1df861681059b60be32ef9576030ea984"
-  dependencies:
-    forge-std "github:foundry-rs/forge-std"
-    solady "github:vectorized/solady"
-
-"@rhinestone/erc4337-validation@0.0.1-alpha.2":
-  version "0.0.1-alpha.2"
-  resolved "https://registry.yarnpkg.com/@rhinestone/erc4337-validation/-/erc4337-validation-0.0.1-alpha.2.tgz#9278ca59972e12838e3a25230041cc21d1c8053f"
-  integrity sha512-sxBSHoR0hV0rN2bv5HfINHR3RyBChfd0OWH0TP8nlA9FolJ1EezLByxcyrvAgi2QLQ2Zf2zVcNky1qYdfF4NjQ==
-  dependencies:
-    "@openzeppelin/contracts" "5.0.1"
-    account-abstraction "github:kopy-kat/account-abstraction#develop"
-    account-abstraction-v0.6 "github:eth-infinitism/account-abstraction#v0.6.0"
-    ds-test "github:dapphub/ds-test"
-    forge-std "github:foundry-rs/forge-std"
-    prettier "^2.8.8"
-    solady "github:vectorized/solady"
-    solhint "^4.1.1"
-
 "@rhinestone/erc4337-validation@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@rhinestone/erc4337-validation/-/erc4337-validation-0.0.4.tgz#85d29a8f624c66ae5cbf9eea86c3bbaccbce649f"
@@ -4271,32 +4250,6 @@ solhint-plugin-prettier@^0.1.0:
   dependencies:
     "@prettier/sync" "^0.3.0"
     prettier-linter-helpers "^1.0.0"
-
-solhint@^4.1.1:
-  version "4.5.4"
-  resolved "https://registry.yarnpkg.com/solhint/-/solhint-4.5.4.tgz#171cf33f46c36b8499efe60c0e425f6883a54e50"
-  integrity sha512-Cu1XiJXub2q1eCr9kkJ9VPv1sGcmj3V7Zb76B0CoezDOB9bu3DxKIFFH7ggCl9fWpEPD6xBmRLfZrYijkVmujQ==
-  dependencies:
-    "@solidity-parser/parser" "^0.18.0"
-    ajv "^6.12.6"
-    antlr4 "^4.13.1-patch-1"
-    ast-parents "^0.0.1"
-    chalk "^4.1.2"
-    commander "^10.0.0"
-    cosmiconfig "^8.0.0"
-    fast-diff "^1.2.0"
-    glob "^8.0.3"
-    ignore "^5.2.4"
-    js-yaml "^4.1.0"
-    latest-version "^7.0.0"
-    lodash "^4.17.21"
-    pluralize "^8.0.0"
-    semver "^7.5.2"
-    strip-ansi "^6.0.1"
-    table "^6.8.1"
-    text-table "^0.2.0"
-  optionalDependencies:
-    prettier "^2.8.3"
 
 solhint@^5.0.1:
   version "5.0.3"
