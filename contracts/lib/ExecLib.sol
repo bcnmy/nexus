@@ -44,11 +44,6 @@ library ExecLib {
             executionBatch.offset := add(dataPointer, 32)
             executionBatch.length := calldataload(dataPointer)
         }
-        /*
-        if(callData.length < abi.encode(executionBatch).length) {
-            revert InvalidBatchCallData();
-        }
-        */
     }   
 
     function encodeBatch(Execution[] memory executions) internal pure returns (bytes memory callData) {
