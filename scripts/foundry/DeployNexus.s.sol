@@ -31,6 +31,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Addr: ", nexus, " || >> Code Size: ", codeSize);
+        //console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         salt = vm.envBytes32("K1VALIDATOR_SALT");
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1Validator/K1Validator.json");
@@ -40,6 +41,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus K1 Validator Addr: ", k1validator, " || >> Code Size: ", codeSize);
+        //console2.logBytes32(keccak256(abi.encodePacked(bytecode)));
 
         salt = vm.envBytes32("NEXUSBOOTSTRAP_SALT");
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
@@ -49,6 +51,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Bootstrap Addr: ", bootstrap, " || >> Code Size: ", codeSize);
+        //console2.logBytes32(keccak256(abi.encodePacked(bytecode)));
 
         salt = vm.envBytes32("K1VALIDATORFACTORY_SALT");
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1ValidatorFactory/K1ValidatorFactory.json");
@@ -65,6 +68,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("K1ValidatorFactory Addr: ", k1ValidatorFactory, " || >> Code Size: ", codeSize);
+        //console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         salt = vm.envBytes32("NEXUS_ACCOUNT_FACTORY_SALT");
         bytecode = vm.getCode("scripts/bash-deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
@@ -78,7 +82,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Account Factory Addr: ", nexusAccountFactory, " || >> Code Size: ", codeSize);
-        console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
+        //console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
         console2.log("=====> On this chain we have", deployed, " contracts already deployed out of ", total);
     }
 
