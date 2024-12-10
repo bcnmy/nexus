@@ -12,12 +12,11 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
-import { LibClone } from "solady/utils/LibClone.sol";
-import { INexus } from "../interfaces/INexus.sol";
 import { BootstrapLib } from "../lib/BootstrapLib.sol";
 import { NexusBootstrap, BootstrapConfig } from "../utils/NexusBootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
+import { ProxyLib } from "../lib/ProxyLib.sol";
 
 /// @title K1ValidatorFactory for Nexus Account
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a K1 validator.
@@ -55,13 +54,7 @@ contract K1ValidatorFactory is Stakeable {
     /// @param factoryOwner The address of the factory owner.
     /// @param k1Validator The address of the K1 Validator module to be used for all deployments.
     /// @param bootstrapper The address of the Bootstrapper module to be used for all deployments.
-    constructor(
-        address implementation,
-        address factoryOwner,
-        address k1Validator,
-        NexusBootstrap bootstrapper,
-        IERC7484 registry
-    ) Stakeable(factoryOwner) {
+    constructor(address implementation, address factoryOwner, address k1Validator, NexusBootstrap bootstrapper, IERC7484 registry) Stakeable(factoryOwner) {
         require(
             !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
@@ -78,28 +71,20 @@ contract K1ValidatorFactory is Stakeable {
     /// @param attesters The list of attesters for the Nexus.
     /// @param threshold The threshold for the Nexus.
     /// @return The address of the newly created Nexus.
-    function createAccount(
-        address eoaOwner,
-        uint256 index,
-        address[] calldata attesters,
-        uint8 threshold
-    ) external payable returns (address payable) {
-        // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
-
-        // Deploy the Nexus contract using the computed salt
-        (bool alreadyDeployed, address account) = LibClone.createDeterministicERC1967(msg.value, ACCOUNT_IMPLEMENTATION, actualSalt);
+    function createAccount(address eoaOwner, uint256 index, address[] calldata attesters, uint8 threshold) external payable returns (address payable) {
+        // Compute the salt for deterministic deployment
+        bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
         // Create the validator configuration using the NexusBootstrap library
         BootstrapConfig memory validator = BootstrapLib.createSingleConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
         bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator, REGISTRY, attesters, threshold);
 
-        // Initialize the account if it was not already deployed
+        // Deploy the Nexus account using the ProxyLib
+        (bool alreadyDeployed, address payable account) = ProxyLib.deployProxy(ACCOUNT_IMPLEMENTATION, salt, initData);
         if (!alreadyDeployed) {
-            INexus(account).initializeAccount(initData);
             emit AccountCreated(account, eoaOwner, index);
         }
-        return payable(account);
+        return account;
     }
 
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
@@ -113,11 +98,21 @@ contract K1ValidatorFactory is Stakeable {
         uint256 index,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (address payable expectedAddress) {
-        // Compute the actual salt for deterministic deployment
-        bytes32 actualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
+    )
+        external
+        view
+        returns (address payable expectedAddress)
+    {
+        // Compute the salt for deterministic deployment
+        bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
-        // Predict the deterministic address using the LibClone library
-        expectedAddress = payable(LibClone.predictDeterministicAddressERC1967(ACCOUNT_IMPLEMENTATION, actualSalt, address(this)));
+        // Create the validator configuration using the NexusBootstrap library
+        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
+
+        // Get the initialization data for the Nexus account
+        bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator, REGISTRY, attesters, threshold);
+
+        // Compute the predicted address using the ProxyLib
+        return ProxyLib.predictProxyAddress(ACCOUNT_IMPLEMENTATION, salt, initData);
     }
 }

@@ -18,11 +18,7 @@ contract MockValidator is ERC7739Validator {
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    ) external view virtual returns (bytes4 sigValidationResult) {
+    function isValidSignatureWithSender(address sender, bytes32 hash, bytes calldata signature) external view virtual returns (bytes4 sigValidationResult) {
         // can put additional checks based on sender here
         return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
@@ -63,18 +59,18 @@ contract MockValidator is ERC7739Validator {
     // msg.sender = Smart Account
     // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
-            sender == msg.sender);
+        return (
+            sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
+                || sender == msg.sender
+        );
     }
 
     function onInstall(bytes calldata data) external {
-        require(IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
     function onUninstall(bytes calldata data) external {
         data;
-        require(!IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
         delete smartAccountOwners[msg.sender];
     }
 
