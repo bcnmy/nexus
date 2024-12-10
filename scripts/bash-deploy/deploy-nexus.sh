@@ -101,7 +101,7 @@ if [ $proceed = "y" ]; then
     printf "Do you want to specify gas price? (y/n): "
     read -r proceed
     if [ $proceed = "y" ]; then
-        printf "Enter gas prices args: \n For the EIP-1559 chains, enter two args: base fee and priority fee in gwei\n For the legacy chains, enther one argument. \n Example eip-1559: 20 1 \n Example legacy: 20 \n"
+        printf "Enter gas prices args: \n For the EIP-1559 chains, enter two args: base fee and priority fee in gwei\n For the legacy chains, enter one argument. \n Example eip-1559: 20 1 \n Example legacy: 20 \n"
         read -r -a GAS_ARGS
         if [ ${#GAS_ARGS[@]} -eq 2 ]; then
             GAS_SUFFIX="--with-gas-price ${GAS_ARGS[0]}gwei --priority-gas-price ${GAS_ARGS[1]}gwei"
