@@ -165,10 +165,8 @@ describe("Nexus Factory Tests", function () {
     });
 
     it("Should prevent account reinitialization", async function () {
-      const response = smartAccount.initializeAccount("0x");
-      await expect(response).to.be.revertedWithCustomError(
-        smartAccount,
-        "LinkedList_AlreadyInitialized()",
+      await expect(smartAccount.initializeAccount("0x")).to.be.rejectedWith(
+        "reverted with an unrecognized custom error (return data: 0xaed59595)", // NotInitializable()
       );
     });
   });
@@ -205,12 +203,12 @@ describe("Nexus Factory Tests", function () {
       const validator = {
         module: await validatorModule.getAddress(),
         data: solidityPacked(["address"], [ownerAddress]),
-      }
+      };
 
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator.module,
@@ -334,16 +332,16 @@ describe("Nexus Factory Tests", function () {
 
       const validator = {
         module: await validatorModule.getAddress(),
-        data: solidityPacked(["address"], [ownerAddress]),  
-      }
+        data: solidityPacked(["address"], [ownerAddress]),
+      };
       const executor = {
         module: await executorModule.getAddress(),
         data: "0x",
-      }
+      };
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator.module,
@@ -515,21 +513,21 @@ describe("Nexus Factory Tests", function () {
       registryFactory = registryFactory.connect(owner);
 
       ownerAddress = await owner.getAddress();
-      
+
       const validator = {
         module: await validatorModule.getAddress(),
         data: solidityPacked(["address"], [ownerAddress]),
-      }
+      };
 
       const executor = {
         module: await executorModule.getAddress(),
         data: "0x",
-      }
+      };
 
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator[0],
