@@ -376,26 +376,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         UUPSUpgradeable.upgradeToAndCall(newImplementation, data);
     }
 
-    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
-    /// @param signature The signature to check.
-    /// @param validator The address of the validator module.
-    /// @param userOpHash The hash of the user operation data.
-    /// @return The validation result.
-    function _checkUserOpSignature(bytes calldata signature, address validator, bytes32 userOpHash) internal view returns (uint256) {
-        // If the account is not initialized, check the signature against the account
-        if (!_isAlreadyInitialized()) {
-            // Recover the signer from the signature, if it is the account, return success, otherwise revert
-            address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
-            if (signer != address(this)) {
-                // If the signer is not the account, return validation failure
-                return VALIDATION_FAILED;
-            }
-            return VALIDATION_SUCCESS;
-        }
-        // If the validator is not installed, and the account is initialized, revert
-        revert ValidatorNotInstalled(validator);
-    }
-
     /// @dev For automatic detection that the smart account supports the ERC7739 workflow
     /// Iterates over all the validators but only if this is a detection request
     /// ERC-7739 spec assumes that if the account doesn't support ERC-7739
@@ -426,6 +406,26 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+
+    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
+    /// @param signature The signature to check.
+    /// @param validator The address of the validator module.
+    /// @param userOpHash The hash of the user operation data.
+    /// @return The validation result.
+    function _checkUserOpSignature(bytes calldata signature, address validator, bytes32 userOpHash) internal view returns (uint256) {
+        // If the account is not initialized, check the signature against the account
+        if (!_isAlreadyInitialized()) {
+            // Recover the signer from the signature, if it is the account, return success, otherwise revert
+            address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
+            if (signer != address(this)) {
+                // If the signer is not the account, return validation failure
+                return VALIDATION_FAILED;
+            }
+            return VALIDATION_SUCCESS;
+        }
+        // If the validator is not installed, and the account is initialized, revert
+        revert ValidatorNotInstalled(validator);
+    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
