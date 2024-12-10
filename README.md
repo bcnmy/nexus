@@ -113,7 +113,7 @@ Generate documentation from NatSpec comments.
 Nexus contracts are pre-deployed on most EVM chains.
 Please see the addresses [here](https://docs.biconomy.io/contractsAndAudits).
 
-If you need to deploy Nexus on your own chain or you want to deploy the contracts with different addresses, please see [this](https://github.com/bcnmy/nexus/tree/deploy/scripts/bash-deploy) script.
+If you need to deploy Nexus on your own chain or you want to deploy the contracts with different addresses, please see [this](https://github.com/bcnmy/nexus/tree/deploy-v.1.0.1/scripts/bash-deploy) script. Or the same script on differnet deploy branches.
 
 ### 🎨 Lint Code
 
