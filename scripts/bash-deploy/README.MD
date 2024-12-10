@@ -8,7 +8,7 @@ This script allows for seamless and automated deployment of Nexus contracts.
 ```bash
 git clone https://github.com/nexus-labs/nexus.git
 git fetch --all
-git checkout 'release/nexus-1.0.1'
+git checkout 'deploy'
 ```
 
 This script is using the pre-compiled artifacts from the `v.1.0.1` release tag.
