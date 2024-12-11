@@ -202,22 +202,23 @@ describe("Nexus Factory Tests", function () {
 
       ownerAddress = await owner.getAddress();
 
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
+      const validator = {
+        module: await validatorModule.getAddress(),
+        data: solidityPacked(["address"], [ownerAddress]),
+      }
+
+      const hook = {
+        module: await hookModule.getAddress(),
+        data: "0x",
+      }
 
       parsedValidator = {
-        module: validator[0],
-        data: validator[1],
+        module: validator.module,
+        data: validator.data,
       };
       parsedHook = {
-        module: hook[0],
-        data: hook[1],
+        module: hook.module,
+        data: hook.data,
       };
     });
 
@@ -331,33 +332,32 @@ describe("Nexus Factory Tests", function () {
 
       ownerAddress = await owner.getAddress();
 
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
-
-      const executor = await BootstrapLib.createSingleConfig(
-        await executorModule.getAddress(),
-        "0x",
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
+      const validator = {
+        module: await validatorModule.getAddress(),
+        data: solidityPacked(["address"], [ownerAddress]),  
+      }
+      const executor = {
+        module: await executorModule.getAddress(),
+        data: "0x",
+      }
+      const hook = {
+        module: await hookModule.getAddress(),
+        data: "0x",
+      }
 
       parsedValidator = {
-        module: validator[0],
-        data: validator[1],
+        module: validator.module,
+        data: validator.data,
       };
 
       parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
+        module: executor.module,
+        data: executor.data,
       };
 
       parsedHook = {
-        module: hook[0],
-        data: hook[1],
+        module: hook.module,
+        data: hook.data,
       };
     });
 
@@ -515,20 +515,21 @@ describe("Nexus Factory Tests", function () {
       registryFactory = registryFactory.connect(owner);
 
       ownerAddress = await owner.getAddress();
+      
+      const validator = {
+        module: await validatorModule.getAddress(),
+        data: solidityPacked(["address"], [ownerAddress]),
+      }
 
-      const validator = await BootstrapLib.createSingleConfig(
-        await validatorModule.getAddress(),
-        solidityPacked(["address"], [ownerAddress]),
-      );
+      const executor = {
+        module: await executorModule.getAddress(),
+        data: "0x",
+      }
 
-      const executor = await BootstrapLib.createSingleConfig(
-        await executorModule.getAddress(),
-        "0x",
-      );
-      const hook = await BootstrapLib.createSingleConfig(
-        await hookModule.getAddress(),
-        "0x",
-      );
+      const hook = {
+        module: await hookModule.getAddress(),
+        data: "0x",
+      }
 
       parsedValidator = {
         module: validator[0],

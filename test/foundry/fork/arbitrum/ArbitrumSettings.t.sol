@@ -11,13 +11,14 @@ contract ArbitrumSettings is NexusTest_Base {
     address public constant ENTRYPOINT_ADDRESS = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
     address public constant MODULE_ADDRESS = 0x0000001c5b32F37F5beA87BDD5374eB2aC54eA8e;
     address public constant USDC_ADDRESS = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
-    string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum.meowrpc.com";
+    string public constant DEFAULT_ARBITRUM_RPC_URL = "https://rpc.ankr.com/arbitrum";
     // Backup URLs
     // string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum.blockpi.network/v1/rpc/public";
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://public.stackup.sh/api/v1/node/arbitrum-one";
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arb-pokt.nodies.app";
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://rpc.ankr.com/arbitrum";
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum-one-rpc.publicnode.com";
+    // string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum.meowrpc.com";
     uint constant BLOCK_NUMBER = 209480000;
 
     /// @notice Retrieves the Arbitrum RPC URL from the environment variable or defaults to the hardcoded URL

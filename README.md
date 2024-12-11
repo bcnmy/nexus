@@ -38,7 +38,6 @@ Documentation: (https://github.com/bcnmy/nexus/wiki)
 ## Getting Started
 
 To kickstart, follow these steps:
-To kickstart, follow these steps:
 
 ### Prerequisites
 
@@ -111,11 +110,10 @@ Generate documentation from NatSpec comments.
 
 ### 🚀 Deploy Contracts
 
-```bash
-yarn run deploy:hardhat --network hardhat
-```
+Nexus contracts are pre-deployed on most EVM chains.
+Please see the addresses [here](https://docs.biconomy.io/contractsAndAudits).
 
-Deploys contracts onto the blockchain network.
+If you need to deploy Nexus on your own chain or you want to deploy the contracts with different addresses, please see [this](https://github.com/bcnmy/nexus/tree/deploy-v1.0.1/scripts/bash-deploy) script. Or the same script on differnet deploy branches.
 
 ### 🎨 Lint Code
 
@@ -148,20 +146,7 @@ To generate reports of the storage layout for potential upgrades safety using `h
 | Auditor          | Date       | Final Report Link       |
 | ---------------- | ---------- | ----------------------- |
 | CodeHawks-Cyfrin | 17-09-2024 | [View Report](./audits/CodeHawks-Cyfrin-17-09-2024.pdf) |
-| Firm Name        | DD-MM-YYYY | [View Report](./audits) |
-
-## 🏆 Biconomy Champions League 🏆
-
-Welcome to the Champions League, a place where your contributions to Biconomy are celebrated and immortalized in our Hall of Fame. This elite group showcases individuals who have significantly advanced our mission, from enhancing code efficiency to strengthening security, and enriching our documentation.
-
-### Champions Roster
-
-| 🍊 Contributor | 🛡️ Domain         |
-| -------------- | ----------------- |
-| @user1         | Code Optimization |
-| @user2         | Security          |
-| @user3         | Documentation     |
-| ...            | ...               |
+| Spearbit         | 10/11-2024 | [View Report](./audits/report-cantinacode-biconomy-0708-final.pdf) / [View Add-on](./audits/report-cantinacode-biconomy-erc7739-addon-final.pdf) |
 
 ### Entering the League
 

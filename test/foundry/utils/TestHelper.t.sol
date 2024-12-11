@@ -23,7 +23,7 @@ import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusB
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
-import { MODE_VALIDATION } from "../../../contracts/types/Constants.sol";
+import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { HelperConfig } from "../../../scripts/foundry/HelperConfig.s.sol";
 

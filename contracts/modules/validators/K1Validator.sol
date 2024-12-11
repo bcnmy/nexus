@@ -14,7 +14,7 @@ pragma solidity ^0.8.27;
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { ERC7739Validator } from "../../base/ERC7739Validator.sol";
+import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 import { IValidator } from "../../interfaces/modules/IValidator.sol";
 import { EnumerableSet } from "../../lib/EnumerableSet4337.sol";
 import { MODULE_TYPE_VALIDATOR, VALIDATION_SUCCESS, VALIDATION_FAILED } from "../../types/Constants.sol";
@@ -109,6 +109,11 @@ contract K1Validator is IValidator, ERC7739Validator {
         _safeSenders.remove(msg.sender, sender);
     }
 
+    /// @notice Checks if a sender is in the _safeSenders list for the smart account
+    function isSafeSender(address sender, address smartAccount) external view returns (bool) {
+        return _safeSenders.contains(smartAccount, sender);
+    }
+
     /**
      * Check if the module is initialized
      * @param smartAccount The smart account to check
@@ -141,6 +146,10 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     /**
      * Validates an ERC-1271 signature
+     * @dev implements signature malleability prevention
+     *      see: https://eips.ethereum.org/EIPS/eip-1271#reference-implementation
+     * Please note, that this prevention does not protect against replay attacks in general
+     * So the protocol using ERC-1271 should make sure hash is replay-safe.
      *
      * @param sender The sender of the ERC-1271 call to the account
      * @param hash The hash of the message
@@ -149,20 +158,15 @@ contract K1Validator is IValidator, ERC7739Validator {
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - EIP1271_SUCCESS if the signature is valid
      *  - EIP1271_FAILED if the signature is invalid
+     *  - 0x7739000X if this is the ERC-7739 support detection request.
+     *  Where X is the version of the ERC-7739 support.
      */
     function isValidSignatureWithSender(
         address sender,
         bytes32 hash,
         bytes calldata signature
-    ) external view virtual override returns (bytes4 sigValidationResult) {
-        // check if sig is valid
-        bool success = _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            // We use `0xffffffff` for invalid, in convention with the reference implementation.
-            sigValidationResult := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
+    ) external view virtual override returns (bytes4) {
+        return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
     }
 
     /// @notice ISessionValidator interface for smart session
@@ -188,7 +192,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Returns the version of the module
     /// @return The version of the module
     function version() external pure returns (string memory) {
-        return "1.0.0";
+        return "1.0.1";
     }
 
     /// @notice Checks if the module is of the specified type
@@ -238,16 +242,6 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
-        // Check if the 's' value is valid
-        bytes32 s;
-        assembly {
-            // same as `s := mload(add(signature, 0x40))` but for calldata
-            s := calldataload(add(signature.offset, 0x20))
-        }
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return false;
-        }
-
         // verify signer
         // owner can not be zero address in this contract
         if (_recoverSigner(hash, signature) == owner) return true;

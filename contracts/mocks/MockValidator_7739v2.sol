@@ -10,7 +10,7 @@ import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 
-contract MockValidator is ERC7739Validator {
+contract MockValidator_7739v2 is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -22,9 +22,8 @@ contract MockValidator is ERC7739Validator {
         address sender,
         bytes32 hash,
         bytes calldata signature
-    ) external view virtual returns (bytes4 sigValidationResult) {
-        // can put additional checks based on sender here
-        return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
+    ) external view virtual returns (bytes4) {
+        return 0x77390002;
     }
 
     // ISessionValidator interface for smart session
