@@ -70,6 +70,7 @@ contract MockValidator is ERC7739Validator {
     }
 
     function onUninstall(bytes calldata data) external {
+        require(!IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
         data;
         delete smartAccountOwners[msg.sender];
     }
