@@ -3,12 +3,14 @@ pragma solidity ^0.8.13;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {DeterministicDeployerLib} from "./utils/DeterministicDeployerLib.sol";
-import { ResolverUID, IModuleManager } from "./utils/RegisterModule.s.sol";
+import { ResolverUID, IRegistryModuleManager } from "./utils/RegisterModule.s.sol";
 
 contract DeployNexus is Script {
 
     uint256 deployed;
     uint256 total;
+
+    address public constant REGISTRY_ADDRESS = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
     bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000f2bd6e8e0a8d8b01a83be4c5;
@@ -68,7 +70,7 @@ contract DeployNexus is Script {
                          address(0x129443cA2a9Dec2020808a2868b38dDA457eaCC7), // factory owner
                          k1validator, 
                          bootstrap,
-                         address(0x000000000069E2a187AEFFb852bF3cCdC95151B2) // registry
+                         REGISTRY_ADDRESS // registry
                         );
         address k1ValidatorFactory = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
         assembly {
@@ -136,10 +138,11 @@ contract DeployNexus is Script {
         // Register K1Validator on registry
         bool registryDeployed;
         assembly {
-            registryDeployed := iszero(iszero(extcodesize(0x000000000069E2a187AEFFb852bF3cCdC95151B2)))
+            registryDeployed := iszero(iszero(extcodesize(REGISTRY_ADDRESS)))
         }
         if (registryDeployed) {
-            IModuleManager registry = IModuleManager(0x000000000069E2a187AEFFb852bF3cCdC95151B2);
+            vm.startBroadcast()
+            IRegistryModuleManager registry = IRegistryModuleManager(REGISTRY_ADDRESS);
             try registry.registerModule(
                 ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f),
                 k1validator,
@@ -151,6 +154,7 @@ contract DeployNexus is Script {
                 console2.log("K1Validator registration failed");
                 console2.logBytes(reason);
             }
+            vm.stopBroadcast();
         } else {
             console2.log("Registry not deployed, skipping K1Validator registration");
         }
