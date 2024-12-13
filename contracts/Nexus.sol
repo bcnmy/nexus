@@ -420,11 +420,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function _checkUserOpSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (uint256) {
         // Recover the signer from the signature, if it is the account, return success, otherwise revert
         address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
-        if (signer != address(this)) {
-            // If the signer is not the account, return validation failure
-            return VALIDATION_FAILED;
+        if (signer == address(this)) {
+            return VALIDATION_SUCCESS;
         }
-        return VALIDATION_SUCCESS;
+        return VALIDATION_FAILED;
     }
 
     /// @dev EIP712 domain name and version.
