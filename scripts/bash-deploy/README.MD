@@ -190,6 +190,44 @@ The deployment process may take a while, depending on how busy the network is.
 The script won't display live logs, but you can check the live logs in the `logs/<chain>/<chain>-deploy-nexus.log` file and `logs/<chain>/<chain>-deploy-nexus-errors.log` file.
 Run the script on localhost to see the live logs example.
 
+# Further automation
+
+If you want to achieve even higher degree of automation, you can use the wrapper over the `deploy-nexus.sh` script to deploy to multiple chains with one command.
+To achieve this, you can automate inputs for the script prompts.
+Example of such a wrapper script is below:
+
+```bash
+# TESTNETS
+printf '%s\n' n y n | bash deploy-mee.sh testnet sepolia
+printf '%s\n' n y n | bash deploy-mee.sh testnet base-sepolia
+printf '%s\n' n y n | bash deploy-mee.sh testnet scroll-sepolia
+printf '%s\n' n y n | bash deploy-mee.sh testnet arbitrum-sepolia
+printf '%s\n' n y n | bash deploy-mee.sh testnet bsc-testnet
+{ 
+  (printf '%s\n' n y n | bash deploy-mee.sh testnet gnosis-chiado) 
+} || { 
+  (printf "Gnosis chiado :: probably errors => check logs\n") 
+}
+printf '%s\n' n y n | bash deploy-mee.sh testnet amoy
+printf '%s\n' n y n | bash deploy-mee.sh testnet optimism-sepolia
+{ 
+  (printf '%s\n' n y n | bash deploy-mee.sh testnet berachain-bartio) 
+} || { 
+  (printf "Berachain bartio :: probably errors => check logs\n") 
+}
+
+
+# MAINNETS
+printf '%s\n' n y n | bash deploy-mee.sh mainnet base
+printf '%s\n' n y n | bash deploy-mee.sh mainnet scroll
+printf '%s\n' n y n | bash deploy-mee.sh mainnet gnosis
+printf '%s\n' n y n | bash deploy-mee.sh mainnet bsc
+printf '%s\n' n y n | bash deploy-mee.sh mainnet arbitrum
+printf '%s\n' n y n | bash deploy-mee.sh mainnet polygon
+printf '%s\n' n y n | bash deploy-mee.sh mainnet optimism
+```
+
+This script will answer `n` , `y` and `n` to the prompts on every chain. 
 
 # Troubleshooting
 
