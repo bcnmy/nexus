@@ -21,10 +21,31 @@ import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, SUPPORTS_ERC7739 } from "./types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "./lib/ModeLib.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_MULTI,
+    SUPPORTS_ERC7739,
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED
+} from "./types/Constants.sol";
+import {
+    ModeLib,
+    ExecutionMode,
+    ExecType,
+    CallType,
+    CALLTYPE_BATCH,
+    CALLTYPE_SINGLE,
+    CALLTYPE_DELEGATECALL,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY
+} from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { Initializable } from "./lib/Initializable.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -39,6 +60,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     using ExecLib for bytes;
     using NonceLib for uint256;
     using SentinelListLib for SentinelListLib.SentinelList;
+    using ECDSA for bytes32;
 
     /// @dev The timelock period for emergency hook uninstallation.
     uint256 internal constant _EMERGENCY_TIMELOCK = 1 days;
@@ -78,7 +100,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         PackedUserOperation calldata op,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual payPrefund(missingAccountFunds) onlyEntryPoint returns (uint256 validationData) {
+    )
+        external
+        virtual
+        payPrefund(missingAccountFunds)
+        onlyEntryPoint
+        returns (uint256 validationData)
+    {
         address validator = op.nonce.getValidator();
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
@@ -86,8 +114,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
-            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-            validationData = IValidator(validator).validateUserOp(op, userOpHash);
+            if (_isValidatorInstalled(validator)) {
+                // If the validator is installed, forward the validation task to the validator
+                validationData = IValidator(validator).validateUserOp(op, userOpHash);
+            } else {
+                // If the account is not initialized, check the signature against the account
+                if (!_isAlreadyInitialized()) {
+                    // Check the userOp signature if the validator is not installed (used for EIP7702)
+                    validationData = _checkUserOpSignature(op.signature, userOpHash);
+                } else {
+                    // If the account is initialized, revert as the validator is not installed
+                    revert ValidatorNotInstalled(validator);
+                }
+            }
         }
     }
 
@@ -117,7 +156,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeFromExecutor(
         ExecutionMode mode,
         bytes calldata executionCalldata
-    ) external payable onlyExecutorModule withHook withRegistry(msg.sender, MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
+    )
+        external
+        payable
+        onlyExecutorModule
+        withHook
+        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
+        returns (bytes[] memory returnData)
+    {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         // check if calltype is batch or single or delegate call
         if (callType == CALLTYPE_SINGLE) {
@@ -140,7 +186,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
         if (success) {
             emit Executed(userOp, innerCallRet);
-        } else revert ExecutionFailed();
+        } else {
+            revert ExecutionFailed();
+        }
     }
 
     /// @notice Installs a new module to the smart account.
@@ -207,9 +255,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function initializeAccount(bytes calldata initData) external payable virtual {
+        // Protect this function to only be callable when used with the proxy factory or when
+        // account calls itself
+        if (msg.sender != address(this)) {
+            Initializable.requireInitializable();
+        }
+
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
-        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        (bool success,) = bootstrap.delegatecall(bootstrapCall);
 
         require(success, NexusInitializationFailed());
         require(_hasValidators(), NoValidatorInstalled());
@@ -278,9 +332,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (CallType callType, ExecType execType) = mode.decodeBasic();
 
         // Return true if both the call type and execution type are supported.
-        return
-            (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL) &&
-            (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL)
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -340,7 +393,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// thus the account will proceed with normal signature verification
     /// and return 0xffffffff as a result.
     function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
-        bytes4 result; 
+        bytes4 result;
         unchecked {
             SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
             address next = validators.entries[SENTINEL];
@@ -358,7 +411,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf {}
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+
+    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
+    /// @param signature The signature to check.
+    /// @param userOpHash The hash of the user operation data.
+    /// @return The validation result.
+    function _checkUserOpSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (uint256) {
+        // Recover the signer from the signature, if it is the account, return success, otherwise revert
+        address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
+        if (signer == address(this)) {
+            return VALIDATION_SUCCESS;
+        }
+        return VALIDATION_FAILED;
+    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
