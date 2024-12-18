@@ -19,15 +19,18 @@ import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
+import { MockTarget } from "../../../contracts/mocks/MockTarget.sol";
 import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
-import { HelperConfig } from "../../../scripts/foundry/HelperConfig.s.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
+
+    address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -104,8 +107,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function deployTestContracts() internal {
-        HelperConfig helperConfig = new HelperConfig();
-        ENTRYPOINT = helperConfig.ENTRYPOINT();
+        setupEntrypoint();
         ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
@@ -118,6 +120,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         MULTI_MODULE = new MockMultiModule();
         BOOTSTRAPPER = new NexusBootstrap();
         REGISTRY = new MockRegistry();
+    }
+
+    function setupEntrypoint() internal {
+        if (block.chainid == 31337) {
+            if(address(ENTRYPOINT) != address(0)){
+                return;
+            }
+            ENTRYPOINT = new EntryPoint();
+            vm.etch(address(MAINNET_ENTRYPOINT_ADDRESS), address(ENTRYPOINT).code);
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        } else {
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        }
     }
 
     // -----------------------------------------
@@ -193,8 +208,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         // Prepend the factory address to the encoded function call to form the initCode
-        initCode =
-            abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
+        initCode = abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
     }
 
     /// @notice Prepares a user operation with init code and call data
@@ -318,18 +332,14 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param execType The execution type
     /// @param executions The executions to include
     /// @return executionCalldata The prepared callData
-    function prepareERC7579ExecuteCallData(
-        ExecType execType, 
-        Execution[] memory executions
-    ) internal virtual view returns (bytes memory executionCalldata) {
+    function prepareERC7579ExecuteCallData(ExecType execType, Execution[] memory executions) internal view virtual returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
         uint256 length = executions.length;
 
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-            executionCalldata =
-                abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
+            executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
             executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
@@ -345,17 +355,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param data The call data
     /// @return executionCalldata The prepared callData
     function prepareERC7579SingleExecuteCallData(
-        ExecType execType, 
+        ExecType execType,
         address target,
         uint256 value,
         bytes memory data
-    ) internal virtual view returns (bytes memory executionCalldata) {
+    )
+        internal
+        view
+        virtual
+        returns (bytes memory executionCalldata)
+    {
         ExecutionMode mode;
         mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-        executionCalldata = abi.encodeCall(
-            Nexus.execute,
-            (mode, ExecLib.encodeSingle(target, value, data))
-        );
+        executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(target, value, data)));
     }
 
     /// @notice Prepares a packed user operation with specified parameters
@@ -370,8 +382,12 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         ExecType execType,
         Execution[] memory executions,
         address validator,
-        uint256 nonce 
-    ) internal view returns (PackedUserOperation[] memory userOps) {
+        uint256 nonce
+    )
+        internal
+        view
+        returns (PackedUserOperation[] memory userOps)
+    {
         // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
@@ -379,7 +395,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         userOps = new PackedUserOperation[](1);
 
         uint256 nonceToUse;
-        if(nonce == 0) {
+        if (nonce == 0) {
             nonceToUse = getNonce(address(account), MODE_VALIDATION, validator, bytes3(0));
         } else {
             nonceToUse = nonce;
@@ -504,16 +520,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     /// @notice Helper function to execute a single operation.
-    function executeSingle(
-        Vm.Wallet memory user,
-        Nexus userAccount,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        ExecType execType
-    )
-        internal
-    {
+    function executeSingle(Vm.Wallet memory user, Nexus userAccount, address target, uint256 value, bytes memory callData, ExecType execType) internal {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
