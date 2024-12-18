@@ -25,9 +25,11 @@ import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFact
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
-import { HelperConfig } from "../../../scripts/foundry/HelperConfig.s.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
+
+    address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -104,8 +106,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function deployTestContracts() internal {
-        HelperConfig helperConfig = new HelperConfig();
-        ENTRYPOINT = helperConfig.ENTRYPOINT();
+        setupEntrypoint();
         ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
@@ -118,6 +119,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         MULTI_MODULE = new MockMultiModule();
         BOOTSTRAPPER = new NexusBootstrap();
         REGISTRY = new MockRegistry();
+    }
+
+    function setupEntrypoint() internal {
+        if (block.chainid == 31337) {
+            if(address(ENTRYPOINT) != address(0)){
+                return;
+            }
+            ENTRYPOINT = new EntryPoint();
+            vm.etch(address(MAINNET_ENTRYPOINT_ADDRESS), address(ENTRYPOINT).code);
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        } else {
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        }
     }
 
     // -----------------------------------------
