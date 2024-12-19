@@ -123,7 +123,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 if (!_isAlreadyInitialized()) {
                     if (ECDSA.recover(userOpHash.toEthSignedMessageHash(), op.signature) == address(this)) {
                         // add 7739 storage base
-                        _addStorageBase(_STORAGE_LOCATION);
                         validationData = VALIDATION_SUCCESS;
                     } else {
                         validationData = VALIDATION_FAILED;
@@ -270,7 +269,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
-        _addStorageBase(_STORAGE_LOCATION);
+        // TODO: DO IT FOR 7702 ONLY
+        _addStorageBase(_NEXUS_STORAGE_LOCATION);
 
         require(success, NexusInitializationFailed());
         require(_hasValidators(), NoValidatorInstalled());
