@@ -127,4 +127,14 @@ contract BaseAccount is IBaseAccount {
     function entryPoint() external view returns (address) {
         return _ENTRYPOINT;
     }
+
+    function _amIERC7702() internal view returns (bool res) {
+        assembly {
+            res :=
+                eq(
+                    extcodehash(address()),
+                    0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329 // (keccak256(0xef01))
+                )
+        }
+    }
 }

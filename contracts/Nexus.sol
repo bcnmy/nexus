@@ -269,8 +269,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
-        // TODO: DO IT FOR 7702 ONLY
-        _addStorageBase(_NEXUS_STORAGE_LOCATION);
+        if (_amIERC7702()) {
+            _addStorageBase(_NEXUS_STORAGE_LOCATION);
+        }
 
         require(success, NexusInitializationFailed());
         require(_hasValidators(), NoValidatorInstalled());
