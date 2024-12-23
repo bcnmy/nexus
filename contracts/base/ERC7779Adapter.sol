@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-abstract contract ERC7779Adapter {
+import { IERC7779 } from "../interfaces/IERC7779.sol";
+
+abstract contract ERC7779Adapter is IERC7779 {
     error NonAuthorizedOnRedelegationCaller();
 
     // keccak256(abi.encode(uint256(keccak256(bytes("InteroperableDelegatedAccount.ERC.Storage"))) - 1)) & ~bytes32(uint256(0xff));
@@ -43,18 +45,18 @@ abstract contract ERC7779Adapter {
 
     /*
     * @dev    Function called before redelegation.
-    *         This function should prepare the account for a delegation to a different
-    implementation.
-    *         This function could be triggered by the new wallet that wants to redelegate an already
-    delegated EOA.
-    *         It should uninitialize storages if needed and execute wallet-specific logic to prepare
-    for redelegation.
+    *         This function should prepare the account for a delegation to a different implementation.
+    *         This function could be triggered by the new wallet that wants to redelegate an already delegated EOA.
+    *         It should uninitialize storages if needed and execute wallet-specific logic to prepare for redelegation.
     *         msg.sender should be the owner of the account.
     */
     function onRedelegation() external returns (bool) {
         require(msg.sender == address(this), NonAuthorizedOnRedelegationCaller());
-        // this is not implemented at the moment so that the account can preserve state across
-        // delegations
+        _onRedelegation();
         return true;
     }
+
+    /// @dev This function is called when the account is redelegated.
+    /// @dev This function should be overridden by the account to implement wallet-specific logic.
+    function _onRedelegation() internal virtual;
 }

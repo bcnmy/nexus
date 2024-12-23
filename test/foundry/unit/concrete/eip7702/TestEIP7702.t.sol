@@ -5,6 +5,7 @@ import { NexusTest_Base } from "../../../utils/NexusTest_Base.t.sol";
 import "../../../utils/Imports.sol";
 import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
+import { IHook } from "contracts/interfaces/modules/IHook.sol";
 
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
@@ -235,4 +236,33 @@ contract TestEIP7702 is NexusTest_Base {
         // Assert that the value was set ie that execution was successful
         assertTrue(valueTarget.balance == value);
     }
+
+    function test_erc7702_redelegate() public {
+        address account = test_initializeAndExecSingle();
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+
+        // storage is cleared
+        vm.prank(address(account));
+        INexus(account).onRedelegation();
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+
+        // account is properly initialized to install modules again
+        vm.startPrank(address(ENTRYPOINT));
+        INexus(account).installModule(MODULE_TYPE_VALIDATOR, address(mockValidator), "");
+        INexus(account).installModule(MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        INexus(account).installModule(MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
+        
+        vm.stopPrank();
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""));
+    }
+
+}
+
+interface IModuleInfo {
+    function getValidatorsPaginated(address cursor, uint256 maxCount) external view returns (address[] memory validators, address nextValidator);
+    function getExecutorsPaginated(address cursor, uint256 maxCount) external view returns (address[] memory executors, address nextExecutor);
 }

@@ -21,6 +21,7 @@ import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
+import { IHook } from "./interfaces/modules/IHook.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -269,6 +270,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        
         if (_amIERC7702()) {
             _addStorageBase(_NEXUS_STORAGE_LOCATION);
         }
@@ -420,6 +422,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+
+    /// @dev This function is called when the account is redelegated.
+    function _onRedelegation() internal virtual override {
+        AccountStorage storage $ = _getAccountStorage();
+        $.validators.popAll();
+        $.executors.popAll();
+        $.emergencyUninstallTimelock[address($.hook)] = 0;
+        $.hook = IHook(ZERO_ADDRESS);
+        // reinitialize the module manager
+        _initModuleManager();
+    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
