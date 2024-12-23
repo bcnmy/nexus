@@ -17,6 +17,8 @@ if [ -z $1 ]; then
     exit 1
 fi
 
+source ../../.env
+
 ENVIRONMENT=$1
 VERIFY=""
 
@@ -31,17 +33,12 @@ else
         fi
         CHAIN_NAME=$2
         VERIFY="--verify"
-        if [ $CHAIN_NAME = "vechain" || $CHAIN_NAME = "vechain-testnet" ]; then
-            VERIFY="--verify --verifier sourcify"
-        fi
     else 
         printf "Invalid environment\n"
         printMan
         exit 1
     fi
 fi
-
-source ../../.env
 
 # set private key based on the environment
 if [ $ENVIRONMENT = "mainnet" ]; then
@@ -97,7 +94,8 @@ fi
 
 ### DEPLOY NEXUS SCs ###
 printf "Addresses for Nexus SCs:\n"
-forge script DeployNexus true --sig "run(bool)" --rpc-url $CHAIN_NAME -vv | grep -e "Addr" -e "already deployed"
+forge script DeployNexus true --sig "run(bool)" --rpc-url $CHAIN_NAME -vv > ./logs/$CHAIN_NAME/$CHAIN_NAME-predeploy-nexus.log
+cat ./logs/$CHAIN_NAME/$CHAIN_NAME-predeploy-nexus.log | grep -e "Addr" -e "already deployed"
 printf "Do you want to proceed with the addresses above? (y/n): "
 read -r proceed
 if [ $proceed = "y" ]; then
