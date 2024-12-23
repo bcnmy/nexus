@@ -31,6 +31,9 @@ else
         fi
         CHAIN_NAME=$2
         VERIFY="--verify"
+        if [ $CHAIN_NAME = "vechain" || $CHAIN_NAME = "vechain-testnet" ]; then
+            VERIFY="--verify --verifier sourcify"
+        fi
     else 
         printf "Invalid environment\n"
         printMan
