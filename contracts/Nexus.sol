@@ -426,10 +426,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function is called when the account is redelegated.
     function _onRedelegation() internal virtual override {
         AccountStorage storage $ = _getAccountStorage();
-        $.validators.popAll();
-        $.executors.popAll();
+
+        _tryUninstallValidators();
+        _tryUninstallExecutors();
         $.emergencyUninstallTimelock[address($.hook)] = 0;
-        $.hook = IHook(ZERO_ADDRESS);
+        _tryUninstallHook();
+        
         // reinitialize the module manager
         _initModuleManager();
     }

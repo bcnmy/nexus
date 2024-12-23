@@ -261,8 +261,3 @@ contract TestEIP7702 is NexusTest_Base {
     }
 
 }
-
-interface IModuleInfo {
-    function getValidatorsPaginated(address cursor, uint256 maxCount) external view returns (address[] memory validators, address nextValidator);
-    function getExecutorsPaginated(address cursor, uint256 maxCount) external view returns (address[] memory executors, address nextExecutor);
-}
