@@ -65,7 +65,7 @@ else
                 printf "Network: $CHAIN_NAME\n"
                 printf "Chain ID: "
                 #echo is all good, otherwise hide error msg
-                cast chain-id --rpc-url $CHAIN_NAME 2> /dev/null
+                cast chain-id --rpc-url $CHAIN_NAME # 2> /dev/null
             } || { # catch
                 printf "Can not connect to the network provided\n"
                 exit 64

@@ -121,7 +121,7 @@ if [ $proceed = "y" ]; then
         exit 1
     }
     printf "Deployment successful\n"
-    cat ./logs/$CHAIN_NAME/$CHAIN_NAME-deploy-nexus.log | grep "deployed at"
+    cat ./logs/$CHAIN_NAME/$CHAIN_NAME-deploy-nexus.log | grep -e "deployed at" -e "registered on registry"
     
 else 
     printf "Exiting\n"

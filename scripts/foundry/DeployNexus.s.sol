@@ -139,28 +139,7 @@ contract DeployNexus is Script {
         }
 
         // Register K1Validator on registry
-        bool registryDeployed;
-        assembly {
-            registryDeployed := iszero(iszero(extcodesize(REGISTRY_ADDRESS)))
-        }
-        if (registryDeployed) {
-            vm.startBroadcast();
-            IRegistryModuleManager registry = IRegistryModuleManager(REGISTRY_ADDRESS);
-            try registry.registerModule(
-                ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f),
-                k1validator,
-                hex"",
-                hex""
-            ) {
-                console2.log("K1Validator registered on registry");
-            } catch (bytes memory reason) {
-                console2.log("K1Validator registration failed");
-                console2.logBytes(reason);
-            }
-            vm.stopBroadcast();
-        } else {
-            console2.log("Registry not deployed, skipping K1Validator registration");
-        }
+        _registerModule(k1validator);
 
         // ======== NexusBootstrap ========
 
@@ -223,5 +202,30 @@ contract DeployNexus is Script {
             deployed++;
         }
         total++;
+    }
+
+    function _registerModule(address module) internal {
+        bool registryDeployed;
+        assembly {
+            registryDeployed := iszero(iszero(extcodesize(REGISTRY_ADDRESS)))
+        }
+        if (registryDeployed) {
+            vm.startBroadcast();
+            IRegistryModuleManager registry = IRegistryModuleManager(REGISTRY_ADDRESS);
+            try registry.registerModule(
+                ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f),
+                module,
+                hex"",
+                hex""
+            ) {
+                console2.log("Module registered on registry");
+            } catch (bytes memory reason) {
+                console2.log("Module registration failed");
+                console2.logBytes(reason);
+            }
+            vm.stopBroadcast();
+        } else {
+            console2.log("Registry not deployed, skipping Module registration => module not registered on registry");
+        }
     }
 }
