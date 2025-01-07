@@ -335,53 +335,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-    /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
-    /// @param preValidationHookType The type of the pre-validation hook.
-    /// @return preValidationHook The address of the pre-validation hook.
-    function _getPreValidationHook(uint256 preValidationHookType) internal view returns (address preValidationHook) {
-        preValidationHook = preValidationHookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-            ? address(_getAccountStorage().preValidationHookERC1271)
-            : address(_getAccountStorage().preValidationHookERC4337);
-    }
-
-    /// @dev Calls the pre-validation hook for ERC-1271.
-    /// @param hash The hash of the user operation.
-    /// @param signature The signature to validate.
-    /// @return postHash The updated hash after the pre-validation hook.
-    /// @return postSig The updated signature after the pre-validation hook.
-    function _withPreValidationHook(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32 postHash, bytes memory postSig) {
-        // Get the pre-validation hook for ERC-1271
-        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
-        // If no pre-validation hook is installed, return the original hash and signature
-        if (preValidationHook == address(0)) return (hash, signature);
-        // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(address(this), msg.sender, hash, signature);
-    }
-
-    /// @dev Calls the pre-validation hook for ERC-4337.
-    /// @param hash The hash of the user operation.
-    /// @param userOp The user operation data.
-    /// @param missingAccountFunds The amount of missing account funds.
-    /// @return postHash The updated hash after the pre-validation hook.
-    /// @return postSig The updated signature after the pre-validation hook.
-    function _withPreValidationHook(
-        bytes32 hash,
-        PackedUserOperation memory userOp,
-        uint256 missingAccountFunds
-    )
-        internal
-        view
-        virtual
-        returns (bytes32 postHash, bytes memory postSig)
-    {
-        // Get the pre-validation hook for ERC-4337
-        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337);
-        // If no pre-validation hook is installed, return the original hash and signature
-        if (preValidationHook == address(0)) return (hash, userOp.signature);
-        // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(address(this), userOp, missingAccountFunds, hash);
-    }
-
     /// @notice Installs a module with multiple types in a single operation.
     /// @dev This function handles installing a multi-type module by iterating through each type and initializing it.
     /// The initData should include an ABI-encoded tuple of (uint[] types, bytes[] initDatas).
@@ -430,6 +383,69 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
+    /// @notice Checks if an emergency uninstall signature is valid.
+    /// @param data The emergency uninstall data.
+    /// @param signature The signature to validate.
+    function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
+        address validator = address(bytes20(signature[0:20]));
+        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+        // Hash the data
+        bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
+        // Check if nonce is valid
+        require(!_getAccountStorage().nonces[data.nonce], InvalidNonce());
+        // Mark nonce as used
+        _getAccountStorage().nonces[data.nonce] = true;
+        // Check if the signature is valid
+        require((IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) == bytes4(0x1626ba7e)), EmergencyUninstallSigError());
+    }
+
+    /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
+    /// @param preValidationHookType The type of the pre-validation hook.
+    /// @return preValidationHook The address of the pre-validation hook.
+    function _getPreValidationHook(uint256 preValidationHookType) internal view returns (address preValidationHook) {
+        preValidationHook = preValidationHookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+            ? address(_getAccountStorage().preValidationHookERC1271)
+            : address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @dev Calls the pre-validation hook for ERC-1271.
+    /// @param hash The hash of the user operation.
+    /// @param signature The signature to validate.
+    /// @return postHash The updated hash after the pre-validation hook.
+    /// @return postSig The updated signature after the pre-validation hook.
+    function _withPreValidationHook(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32 postHash, bytes memory postSig) {
+        // Get the pre-validation hook for ERC-1271
+        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
+        // If no pre-validation hook is installed, return the original hash and signature
+        if (preValidationHook == address(0)) return (hash, signature);
+        // Otherwise, call the pre-validation hook and return the updated hash and signature
+        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(address(this), msg.sender, hash, signature);
+    }
+
+    /// @dev Calls the pre-validation hook for ERC-4337.
+    /// @param hash The hash of the user operation.
+    /// @param userOp The user operation data.
+    /// @param missingAccountFunds The amount of missing account funds.
+    /// @return postHash The updated hash after the pre-validation hook.
+    /// @return postSig The updated signature after the pre-validation hook.
+    function _withPreValidationHook(
+        bytes32 hash,
+        PackedUserOperation memory userOp,
+        uint256 missingAccountFunds
+    )
+        internal
+        view
+        virtual
+        returns (bytes32 postHash, bytes memory postSig)
+    {
+        // Get the pre-validation hook for ERC-4337
+        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337);
+        // If no pre-validation hook is installed, return the original hash and signature
+        if (preValidationHook == address(0)) return (hash, userOp.signature);
+        // Otherwise, call the pre-validation hook and return the updated hash and signature
+        else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(address(this), userOp, missingAccountFunds, hash);
+    }
+
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
@@ -449,22 +465,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         } catch {
             return false;
         }
-    }
-
-    /// @notice Checks if an emergency uninstall signature is valid.
-    /// @param data The emergency uninstall data.
-    /// @param signature The signature to validate.
-    function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
-        address validator = address(bytes20(signature[0:20]));
-        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        // Hash the data
-        bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
-        // Check if nonce is valid
-        require(!_getAccountStorage().nonces[data.nonce], InvalidNonce());
-        // Mark nonce as used
-        _getAccountStorage().nonces[data.nonce] = true;
-        // Check if the signature is valid
-        require((IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) == bytes4(0x1626ba7e)), EmergencyUninstallSigError());
     }
 
     /// @notice Builds the enable mode data hash as per eip712
