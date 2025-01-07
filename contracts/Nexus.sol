@@ -27,6 +27,8 @@ import {
     MODULE_TYPE_FALLBACK,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_MULTI,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
@@ -46,6 +48,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
+import { EmergencyUninstall } from "./types/DataTypes.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -112,11 +115,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             PackedUserOperation memory userOp = op;
             userOp.signature = _enableMode(userOpHash, op.signature);
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, userOp, missingAccountFunds);
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
             if (_isValidatorInstalled(validator)) {
+                PackedUserOperation memory userOp;
                 // If the validator is installed, forward the validation task to the validator
-                validationData = IValidator(validator).validateUserOp(op, userOpHash);
+                (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
+                validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
                 // If the account is not initialized, check the signature against the account
                 if (!_isAlreadyInitialized()) {
@@ -197,6 +203,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for 1271 Prevalidation Hook
+    /// - 9 for 4337 Prevalidation Hook
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
@@ -212,6 +220,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for 1271 Prevalidation Hook
+    /// - 9 for 4337 Prevalidation Hook
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
@@ -225,13 +235,27 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             _uninstallExecutor(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             _uninstallFallbackHandler(module, deInitData);
-        } else if (moduleTypeId == MODULE_TYPE_HOOK) {
-            _uninstallHook(module, deInitData);
+        } else if (
+            moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+        ) {
+            _uninstallHook(module, moduleTypeId, deInitData);
         }
     }
 
-    function emergencyUninstallHook(address hook, bytes calldata deInitData) external payable onlyEntryPoint {
-        require(_isModuleInstalled(MODULE_TYPE_HOOK, hook, deInitData), ModuleNotInstalled(MODULE_TYPE_HOOK, hook));
+    function emergencyUninstallHook(EmergencyUninstall calldata data, bytes calldata signature) external payable {
+        // Validate the signature
+        _checkEmergencyUninstallSignature(data, signature);
+        // Parse uninstall data
+        (uint256 hookType, address hook, bytes calldata deInitData) = (data.hookType, data.hook, data.deInitData);
+
+        // Validate the hook is of a supported type and is installed
+        require(
+            hookType == MODULE_TYPE_HOOK || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            UnsupportedModuleType(hookType)
+        );
+        require(_isModuleInstalled(hookType, hook, deInitData), ModuleNotInstalled(hookType, hook));
+
+        // Get the account storage
         AccountStorage storage accountStorage = _getAccountStorage();
         uint256 hookTimelock = accountStorage.emergencyUninstallTimelock[hook];
 
@@ -246,8 +270,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         } else if (block.timestamp >= hookTimelock + _EMERGENCY_TIMELOCK) {
             // if the timelock expired, clear it and uninstall the hook
             accountStorage.emergencyUninstallTimelock[hook] = 0;
-            _uninstallHook(hook, deInitData);
-            emit ModuleUninstalled(MODULE_TYPE_HOOK, hook);
+            _uninstallHook(hook, hookType, deInitData);
+            emit ModuleUninstalled(hookType, hook);
         } else {
             // if the timelock is initiated but not expired, revert
             revert EmergencyTimeLockNotExpired();
@@ -292,7 +316,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) returns (bytes4 res) {
+        bytes memory signature_;
+        (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
             return res;
         } catch {
             return bytes4(0xffffffff);

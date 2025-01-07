@@ -39,8 +39,15 @@ uint256 constant MODULE_TYPE_FALLBACK = 3;
 // Module type identifier for hooks
 uint256 constant MODULE_TYPE_HOOK = 4;
 
+// Module type identifiers for pre-validation hooks
+uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 = 8;
+uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 = 9;
+
 string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
 bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256(bytes(MODULE_ENABLE_MODE_NOTATION));
+
+string constant EMERGENCY_UNINSTALL_NOTATION = "EmergencyUninstall(address hook,uint256 hookType,bytes deInitData,uint256 nonce)";
+bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = keccak256(bytes(EMERGENCY_UNINSTALL_NOTATION));
 
 // Validation modes
 bytes1 constant MODE_VALIDATION = 0x00;
