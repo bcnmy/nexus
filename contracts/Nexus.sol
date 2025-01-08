@@ -119,7 +119,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
             if (_isValidatorInstalled(validator)) {
-                PackedUserOperation memory userOp;
+                PackedUserOperation memory userOp = op;
                 // If the validator is installed, forward the validation task to the validator
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
