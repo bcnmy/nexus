@@ -31,7 +31,7 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     /// @notice Constructor to set the smart account implementation address and the factory owner.
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
-    constructor(address implementation_, address owner_) Stakeable(owner_) {
+    constructor(address implementation_, address owner_, address entryPoint) Stakeable(owner_, entryPoint) {
         require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
         require(owner_ != address(0), ZeroAddressNotAllowed());
         ACCOUNT_IMPLEMENTATION = implementation_;

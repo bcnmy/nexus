@@ -28,33 +28,31 @@ contract Stakeable is Ownable, IStakeable {
     /// @notice Error thrown when an invalid EntryPoint address is provided.
     error InvalidEntryPointAddress();
 
-    constructor(address newOwner) {
+    address public immutable ENTRY_POINT;
+
+    constructor(address newOwner, address entryPoint) {
         _setOwner(newOwner);
+        require(entryPoint != address(0), InvalidEntryPointAddress());
+        ENTRY_POINT = entryPoint;
     }
 
     /// @notice Stakes a certain amount of Ether on an EntryPoint.
     /// @dev The contract should have enough Ether to cover the stake.
-    /// @param epAddress The address of the EntryPoint where the stake is added.
     /// @param unstakeDelaySec The delay in seconds before the stake can be unlocked.
-    function addStake(address epAddress, uint32 unstakeDelaySec) external payable onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
-        IEntryPoint(epAddress).addStake{ value: msg.value }(unstakeDelaySec);
+    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
+        IEntryPoint(ENTRY_POINT).addStake{ value: msg.value }(unstakeDelaySec);
     }
 
     /// @notice Unlocks the stake on an EntryPoint.
     /// @dev This starts the unstaking delay after which funds can be withdrawn.
-    /// @param epAddress The address of the EntryPoint from which the stake is to be unlocked.
-    function unlockStake(address epAddress) external onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
-        IEntryPoint(epAddress).unlockStake();
+    function unlockStake() external onlyOwner {
+        IEntryPoint(ENTRY_POINT).unlockStake();
     }
 
     /// @notice Withdraws the stake from an EntryPoint to a specified address.
     /// @dev This can only be done after the unstaking delay has passed since the unlock.
-    /// @param epAddress The address of the EntryPoint where the stake is withdrawn from.
     /// @param withdrawAddress The address to receive the withdrawn stake.
-    function withdrawStake(address epAddress, address payable withdrawAddress) external onlyOwner {
-        require(epAddress != address(0), InvalidEntryPointAddress());
-        IEntryPoint(epAddress).withdrawStake(withdrawAddress);
+    function withdrawStake(address payable withdrawAddress) external onlyOwner {
+        IEntryPoint(ENTRY_POINT).withdrawStake(withdrawAddress);
     }
 }
