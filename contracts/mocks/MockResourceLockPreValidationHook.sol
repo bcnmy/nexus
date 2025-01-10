@@ -66,7 +66,6 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
     }
 
     function preValidationHookERC4337(
-        address account,
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
@@ -75,6 +74,7 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
         view
         returns (bytes32 hookHash, bytes memory hookSignature)
     {
+        address account = _msgSender();
         require(enoughETHAvailable(account, missingAccountFunds), InsufficientUnlockedETH(missingAccountFunds));
         return (userOpHash, userOp.signature);
     }

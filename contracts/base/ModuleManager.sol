@@ -396,7 +396,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Mark nonce as used
         _getAccountStorage().nonces[data.nonce] = true;
         // Check if the signature is valid
-        require((IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature[20:]) == bytes4(0x1626ba7e)), EmergencyUninstallSigError());
+        require((IValidator(validator).isValidSignatureWithSender(address(this), hash, signature[20:]) == ERC1271_MAGICVALUE), EmergencyUninstallSigError());
     }
 
     /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
@@ -434,7 +434,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         uint256 missingAccountFunds
     )
         internal
-        view
         virtual
         returns (bytes32 postHash, bytes memory postSig)
     {
@@ -443,7 +442,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // If no pre-validation hook is installed, return the original hash and signature
         if (preValidationHook == address(0)) return (hash, userOp.signature);
         // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(address(this), userOp, missingAccountFunds, hash);
+        else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(userOp, missingAccountFunds, hash);
     }
 
     /// @notice Checks if an enable mode signature is valid.

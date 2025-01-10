@@ -31,8 +31,8 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
 
         // Deploy supporting contracts
         accountLocker = new MockAccountLocker();
-        erc7739Hook = new Mock7739PreValidationHook();
         hookMultiplexer = new MockPreValidationHookMultiplexer();
+        erc7739Hook = new Mock7739PreValidationHook(address(hookMultiplexer));
         resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(hookMultiplexer));
         // Deploy the simple validator
         SIMPLE_VALIDATOR = new MockSimpleValidator();
@@ -132,7 +132,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         test_installMultiplePreValidationHooks();
 
         // Lock resources
-        vm.prank(address(accountLocker));
+
         MockAccountLocker(accountLocker).setLockedAmount(address(BOB_ACCOUNT), address(this), 1);
 
         // Prepare test data

@@ -58,7 +58,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         userOps[0] = buildUserOpWithCalldata(BOB, "", address(VALIDATOR_MODULE));
 
         // Set locked amount to block ETH transactions
-        vm.prank(address(accountLocker));
+
         MockAccountLocker(accountLocker).setLockedAmount(address(BOB_ACCOUNT), NATIVE_TOKEN, lockedAmount);
 
         // Ensure account has enough total balance
@@ -96,7 +96,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         userOps[0] = buildUserOpWithCalldata(BOB, "", address(VALIDATOR_MODULE));
 
         // Set locked amount
-        vm.prank(address(accountLocker));
+
         MockAccountLocker(accountLocker).setLockedAmount(address(BOB_ACCOUNT), NATIVE_TOKEN, lockedAmount);
 
         // Ensure account has enough total balance
@@ -153,7 +153,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         bytes memory validatorSignature = abi.encodePacked(address(VALIDATOR_MODULE), signature);
 
         // Set locked amount to block signature validation
-        vm.prank(address(accountLocker));
+
         MockAccountLocker(accountLocker).setLockedAmount(address(BOB_ACCOUNT), address(this), 1);
 
         // Expect revert due to resource lock

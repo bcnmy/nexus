@@ -9,7 +9,7 @@ import { IModule } from "./IModule.sol";
 interface IPreValidationHookERC1271 is IModule {
     /// @notice Performs pre-validation checks for isValidSignature
     /// @dev This method is called before the validation of a signature on a validator within isValidSignature
-    /// @param account The account calling the hook
+    /// @param account The account to validate the signature for
     /// @param sender The original sender of the request
     /// @param hash The hash of signed data
     /// @param data The signature data to validate
@@ -31,19 +31,16 @@ interface IPreValidationHookERC1271 is IModule {
 interface IPreValidationHookERC4337 is IModule {
     /// @notice Performs pre-validation checks for user operations
     /// @dev This method is called before the validation of a user operation
-    /// @param account The account calling the hook
     /// @param userOp The user operation to be validated
     /// @param missingAccountFunds The amount of funds missing in the account
     /// @param userOpHash The hash of the user operation data
     /// @return hookHash The hash after applying the pre-validation hook
     /// @return hookSignature The signature after applying the pre-validation hook
     function preValidationHookERC4337(
-        address account,
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
     )
         external
-        view
         returns (bytes32 hookHash, bytes memory hookSignature);
 }

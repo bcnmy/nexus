@@ -39,7 +39,6 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
     }
 
     function preValidationHookERC4337(
-        address,
         PackedUserOperation calldata userOp,
         uint256,
         bytes32 userOpHash
