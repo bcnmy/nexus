@@ -7,15 +7,18 @@ import { MockResourceLockPreValidationHook } from "../../../contracts/mocks/Mock
 import { Mock7739PreValidationHook } from "../../../contracts/mocks/Mock7739PreValidationHook.sol";
 import { MockAccountLocker } from "../../../contracts/mocks/MockAccountLocker.sol";
 import { MockSimpleValidator } from "../../../contracts/mocks/MockSimpleValidator.sol";
+import { K1Validator } from "../../../contracts/modules/validators/K1Validator.sol";
 
 /// @title TestNexusPreValidation_Integration_HookMultiplexer
 /// @notice This contract tests the integration of the PreValidation hook multiplexer with the PreValidation resource lock hooks
+
 contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagement_Base {
     MockPreValidationHookMultiplexer private hookMultiplexer;
     MockResourceLockPreValidationHook private resourceLockHook;
     Mock7739PreValidationHook private erc7739Hook;
     MockAccountLocker private accountLocker;
     MockSimpleValidator private SIMPLE_VALIDATOR;
+    K1Validator private K1_VALIDATOR;
 
     struct TestTemps {
         bytes32 contents;
@@ -34,6 +37,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         hookMultiplexer = new MockPreValidationHookMultiplexer();
         erc7739Hook = new Mock7739PreValidationHook(address(hookMultiplexer));
         resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(hookMultiplexer));
+        K1_VALIDATOR = new K1Validator();
         // Deploy the simple validator
         SIMPLE_VALIDATOR = new MockSimpleValidator();
         // Format install data with owner
@@ -47,6 +51,11 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         bytes memory accountLockerInstallCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(accountLocker), "");
         // Install account locker
         installModule(accountLockerInstallCallData, MODULE_TYPE_HOOK, address(accountLocker), EXECTYPE_DEFAULT);
+        // Install the K1 validator
+        bytes memory k1ValidatorInstallData = abi.encodePacked(BOB_ADDRESS);
+        bytes memory k1ValidatorInstallCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(K1_VALIDATOR), k1ValidatorInstallData);
+        installModule(k1ValidatorInstallCallData, MODULE_TYPE_VALIDATOR, address(K1_VALIDATOR), EXECTYPE_DEFAULT);
     }
 
     function test_installMultiplePreValidationHooks() public {
@@ -127,12 +136,60 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
     }
 
+    function test_1271_HookChaining_K1Validator_Success() public {
+        // Install hooks and multiplexer
+        test_installMultiplePreValidationHooks();
+
+        // Prepare test data
+        TestTemps memory t;
+        t.contents = keccak256("test message");
+
+        // Create signature data for personal sign
+        bytes32 hashToSign = toERC1271HashPersonalSign(t.contents, address(BOB_ACCOUNT));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, hashToSign);
+
+        // Prepare signature with validator prefix and triggering both hooks
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
+        bytes memory validatorSignature = abi.encodePacked(address(K1_VALIDATOR), bytes1(0x01), signature);
+
+        // Validate signature through hook chain
+        bytes4 result = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature);
+        assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
+    }
+
+    function test_1271_HookChaining_MockSimpleValidator_K1Validator_SameSignature_Success() public {
+        // Install hooks and multiplexer
+        test_installMultiplePreValidationHooks();
+
+        // Prepare test data
+        TestTemps memory t;
+        t.contents = keccak256("test message");
+
+        // Create signature data for personal sign
+        bytes32 hashToSign = toERC1271HashPersonalSign(t.contents, address(BOB_ACCOUNT));
+        (t.v, t.r, t.s) = vm.sign(BOB.privateKey, hashToSign);
+
+        // Prepare signature with validator prefix and triggering both hooks
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
+        bytes memory validatorSignature = abi.encodePacked(address(SIMPLE_VALIDATOR), bytes1(0x00), signature);
+
+        // Validate signature through hook chain
+        bytes4 result = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature);
+        assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
+
+        // Prepare signature with validator prefix and triggering both hooks
+        bytes memory validatorSignature2 = abi.encodePacked(address(K1_VALIDATOR), bytes1(0x01), signature); // Skip 7739 wrap
+
+        // Validate signature through hook chain
+        bytes4 result2 = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature2);
+        assertEq(result2, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
+    }
+
     function test_1271_HookChaining_Fails_WhenResourceLocked() public {
         // Install hooks and multiplexer
         test_installMultiplePreValidationHooks();
 
         // Lock resources
-
         MockAccountLocker(accountLocker).setLockedAmount(address(BOB_ACCOUNT), address(this), 1);
 
         // Prepare test data
