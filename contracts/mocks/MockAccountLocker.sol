@@ -8,11 +8,11 @@ contract MockAccountLocker is IHook {
     mapping(address => mapping(address => uint256)) lockedAmount;
 
     function getLockedAmount(address account, address token) external view returns (uint256) {
-        return lockedAmount[account][token];
+        return lockedAmount[token][account];
     }
 
     function setLockedAmount(address account, address token, uint256 amount) external {
-        lockedAmount[account][token] = amount;
+        lockedAmount[token][account] = amount;
     }
 
     function onInstall(bytes calldata data) external override { }
