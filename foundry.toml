@@ -71,6 +71,9 @@
   sonic-mainnet = "${SONIC_MAINNET_RPC_URL}"
   sonic-blaze-testnet = "${SONIC_TESTNET_RPC_URL}"
 
+  blast = "${BLAST_MAINNET_RPC_URL}"
+  blast-sepolia = "${BLAST_TESTNET_RPC_URL}"
+
 
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
@@ -104,5 +107,8 @@
 
   sonic-mainnet = { key = "${SONICSCAN_API_KEY}", url = "https://api.sonicscan.org/api", chain="146"}
   sonic-blaze-testnet = { key = "${SONICSCAN_API_KEY}", url = "https://api-testnet.sonicscan.org/api", chain="57054"}
+
+  blast = { key = "${BLASTSCAN_API_KEY}", url = "https://api.blastscan.io/api", chain="81457"}
+  blast-sepolia = { key = "${BLASTSCAN_API_KEY}", url = "https://api-sepolia.blastscan.io/api", chain="168587773"}
 
 # [possible values: mainnet, morden, ropsten, rinkeby, goerli, kovan, holesky, sepolia, odyssey, optimism, optimism-kovan, optimism-goerli, optimism-sepolia, arbitrum, arbitrum-testnet, arbitrum-goerli, arbitrum-sepolia, arbitrum-nova, cronos, cronos-testnet, rsk, crab, darwinia, koi, bsc, bsc-testnet, poa, sokol, scroll, scroll-sepolia, metis, cfx-testnet, cfx, xdai, polygon, mumbai, amoy, polygon-zkevm, polygon-zkevm-testnet, fantom, fantom-testnet, moonbeam, moonbeam-dev, moonriver, moonbase, dev, anvil-hardhat, gravity-alpha-mainnet, gravity-alpha-testnet-sepolia, evmos, evmos-testnet, chiado, oasis, emerald, emerald-testnet, filecoin-mainnet, filecoin-calibration-testnet, avalanche, fuji, celo, celo-alfajores, celo-baklava, aurora, aurora-testnet, canto, canto-testnet, boba, base, base-goerli, base-sepolia, syndr, syndr-sepolia, shimmer, ink-sepolia, fraxtal, fraxtal-testnet, blast, blast-sepolia, linea, linea-goerli, linea-sepolia, zksync, zksync-testnet, mantle, mantle-testnet, mantle-sepolia, xai, xai-sepolia, viction, zora, zora-goerli, zora-sepolia, pgn, pgn-sepolia, mode, mode-sepolia, elastos, kakarot-sepolia, etherlink, etherlink-testnet, degen, opbnb-mainnet, opbnb-testnet, ronin, taiko, taiko-hekla, autonomys-nova-testnet, flare, flare-coston2, acala, acala-mandala-testnet, acala-testnet, karura, karura-testnet, pulsechain, pulsechain-testnet, immutable, immutable-testnet, soneium-minato-testnet, world, world-sepolia, iotex, core, merlin, bitlayer, unichain-sepolia, apechain, curtis, sonic-testnet]
