@@ -419,7 +419,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // If no pre-validation hook is installed, return the original hash and signature
         if (preValidationHook == address(0)) return (hash, signature);
         // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(address(this), msg.sender, hash, signature);
+        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
     }
 
     /// @dev Calls the pre-validation hook for ERC-4337.

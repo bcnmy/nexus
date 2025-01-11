@@ -65,6 +65,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         bytes32 userOpHash
     )
         external
+        view
         returns (bytes32 hookHash, bytes memory hookSignature)
     {
         HookConfig storage config = accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC4337][msg.sender];
@@ -79,8 +80,12 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
             bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC4337.preValidationHookERC4337.selector, op, missingAccountFunds, hookHash);
-            (bool success, bytes memory result) = config.hooks[i].call(abi.encodePacked(subHookData, msg.sender));
-            require(success, SubHookFailed(config.hooks[i]));
+            (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
+            if (!success) {
+                assembly {
+                    revert(add(result, 32), mload(result))
+                }
+            }
             (hookHash, hookSignature) = abi.decode(result, (bytes32, bytes));
             op.signature = hookSignature;
         }
@@ -89,7 +94,6 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
     }
 
     function preValidationHookERC1271(
-        address account,
         address sender,
         bytes32 hash,
         bytes calldata signature
@@ -108,7 +112,14 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         hookSignature = signature;
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
-            (hookHash, hookSignature) = IPreValidationHookERC1271(config.hooks[i]).preValidationHookERC1271(account, sender, hookHash, hookSignature);
+            bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC1271.preValidationHookERC1271.selector, sender, hookHash, hookSignature);
+            (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
+            if (!success) {
+                assembly {
+                    revert(add(result, 32), mload(result))
+                }
+            }
+            (hookHash, hookSignature) = abi.decode(result, (bytes32, bytes));
         }
 
         return (hookHash, hookSignature);

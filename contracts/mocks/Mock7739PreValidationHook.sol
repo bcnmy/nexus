@@ -30,16 +30,8 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
         return forwarder == prevalidationHookMultiplexer;
     }
 
-    function preValidationHookERC1271(
-        address account,
-        address,
-        bytes32 hash,
-        bytes calldata data
-    )
-        external
-        view
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    function preValidationHookERC1271(address, bytes32 hash, bytes calldata data) external view returns (bytes32 hookHash, bytes memory hookSignature) {
+        address account = _msgSender();
         // Check flag in first byte
         if (data[0] == 0x00) {
             return wrapFor7739Validation(account, hash, _erc1271UnwrapSignature(data[1:]));

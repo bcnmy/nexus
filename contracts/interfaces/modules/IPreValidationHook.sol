@@ -9,21 +9,12 @@ import { IModule } from "./IModule.sol";
 interface IPreValidationHookERC1271 is IModule {
     /// @notice Performs pre-validation checks for isValidSignature
     /// @dev This method is called before the validation of a signature on a validator within isValidSignature
-    /// @param account The account to validate the signature for
     /// @param sender The original sender of the request
     /// @param hash The hash of signed data
     /// @param data The signature data to validate
     /// @return hookHash The hash after applying the pre-validation hook
     /// @return hookSignature The signature after applying the pre-validation hook
-    function preValidationHookERC1271(
-        address account,
-        address sender,
-        bytes32 hash,
-        bytes calldata data
-    )
-        external
-        view
-        returns (bytes32 hookHash, bytes memory hookSignature);
+    function preValidationHookERC1271(address sender, bytes32 hash, bytes calldata data) external view returns (bytes32 hookHash, bytes memory hookSignature);
 }
 
 /// @title Nexus - IPreValidationHookERC4337 Interface
@@ -42,5 +33,6 @@ interface IPreValidationHookERC4337 is IModule {
         bytes32 userOpHash
     )
         external
+        view
         returns (bytes32 hookHash, bytes memory hookSignature);
 }

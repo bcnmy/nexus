@@ -91,7 +91,6 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
     }
 
     function preValidationHookERC1271(
-        address account,
         address sender,
         bytes32 hash,
         bytes calldata data
@@ -101,6 +100,7 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
         override
         returns (bytes32 hookHash, bytes memory hookSignature)
     {
+        address account = _msgSender();
         require(notResourceLocked(account, sender), SenderIsResourceLocked());
         return (hash, data);
     }

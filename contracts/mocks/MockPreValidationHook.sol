@@ -25,16 +25,7 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
         return true;
     }
 
-    function preValidationHookERC1271(
-        address,
-        address,
-        bytes32 hash,
-        bytes calldata data
-    )
-        external
-        pure
-        returns (bytes32 hookHash, bytes memory hookSignature)
-    {
+    function preValidationHookERC1271(address, bytes32 hash, bytes calldata data) external pure returns (bytes32 hookHash, bytes memory hookSignature) {
         return (hash, data);
     }
 
