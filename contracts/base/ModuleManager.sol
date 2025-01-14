@@ -110,6 +110,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getHook();
     }
 
+    /// @notice Checks if a nonce has been used.
+    /// @param nonce The nonce to check.
+    /// @return bool True if the nonce has been used, false otherwise.
+    function wasNonceUsed(uint256 nonce) external view returns (bool) {
+        return _getAccountStorage().nonces[nonce];
+    }
+
+    /// @notice Fetches the 4337 pre-validation hook.
+    /// @return hook The address of the 4337 pre-validation hook.
+    function get4337PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @notice Fetches the 1271 pre-validation hook.
+    /// @return hook The address of the 1271 pre-validation hook.
+    function get1271PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC1271);
+    }
+
     /// @notice Fetches the fallback handler for a specific selector.
     /// @param selector The function selector to query.
     /// @return calltype The type of call that the handler manages.
@@ -273,13 +292,27 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Uninstalls the hook and emits an event if the hook fails to uninstall.
-    function _tryUninstallHook() internal {
+    function _tryUninstallHooks() internal {
         address hook = _getHook();
         if (hook != address(0)) {
             try IHook(hook).onUninstall("") {} catch (bytes memory reason) {
                 emit HookUninstallFailed(hook, "", reason);
             }
             _setHook(address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC1271);
+        if (hook != address(0)) {
+            try IPreValidationHookERC1271(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC4337);
+        if (hook != address(0)) {
+            try IPreValidationHookERC4337(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(0));
         }
     }
 

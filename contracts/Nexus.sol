@@ -456,7 +456,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _tryUninstallValidators();
         _tryUninstallExecutors();
         $.emergencyUninstallTimelock[address($.hook)] = 0;
-        _tryUninstallHook();
+        _tryUninstallHooks();
         
         // reinitialize the module manager
         _initModuleManager();
