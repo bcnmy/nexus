@@ -70,6 +70,9 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when there is an attempt to install a hook while another is already installed.
     error HookAlreadyInstalled(address currentHook);
 
+    /// @dev Thrown when there is an attempt to install a PreValidationHook while another is already installed.
+    error PrevalidationHookAlreadyInstalled(address currentPreValidationHook);
+
     /// @dev Thrown when there is an attempt to install a fallback handler for a selector already having one.
     error FallbackAlreadyInstalledForSelector(bytes4 selector);
 
@@ -87,6 +90,12 @@ interface IModuleManagerEventsAndErrors {
 
     /// @dev Thrown when unable to validate Module Enable Mode signature
     error EnableModeSigError();
+
+    /// @dev Thrown when unable to validate Emergency Uninstall signature
+    error EmergencyUninstallSigError();
+
+    /// @notice Error thrown when an invalid nonce is used
+    error InvalidNonce();
 
     /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
     error MismatchModuleTypeId(uint256 moduleTypeId);

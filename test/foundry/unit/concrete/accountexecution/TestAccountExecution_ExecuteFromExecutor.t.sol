@@ -61,11 +61,13 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
 
         address valueTarget = makeAddr("valueTarget");
         uint256 value = 1 ether;
-        bytes memory sendValueCallData =
-            abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value);
+        bytes memory sendValueCallData = abi.encodePacked(
+            address(delegateTarget),
+            abi.encodeWithSelector(MockDelegateTarget.sendValue.selector, valueTarget, value)
+        );
         mockExecutor.execDelegatecall(BOB_ACCOUNT, sendValueCallData);
         // Assert that the value was set ie that execution was successful
-        // assertTrue(valueTarget.balance == value);
+        assertTrue(valueTarget.balance == value);
     }
 
     /// @notice Tests batch execution via MockExecutor
