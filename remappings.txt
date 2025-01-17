@@ -1,9 +1,8 @@
-@openzeppelin/=node_modules/@openzeppelin/
-@prb/test/=node_modules/@prb/test/
-forge-std/=node_modules/forge-std/src/
-account-abstraction/=node_modules/account-abstraction/contracts/
-solady/=node_modules/solady/src/
-excessively-safe-call/=node_modules/excessively-safe-call/src/
-sentinellist/=node_modules/sentinellist/src/
-ds-test/=node_modules/ds-test/src/
-solarray/=node_modules/solarray/src/
+@openzeppelin/=dependencies/@openzeppelin/
+forge-std/=dependencies/forge-std/src/
+account-abstraction/=dependencies/account-abstraction/contracts/
+solady/=dependencies/solady/
+excessively-safe-call/=dependencies/excessively-safe-call/
+sentinellist/=dependencies/sentinellist/
+ds-test/=dependencies/ds-test/
+solarray/=dependencies/solarray/
