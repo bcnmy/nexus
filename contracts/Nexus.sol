@@ -46,7 +46,6 @@ import {
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
-import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
 
@@ -63,7 +62,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     using ExecLib for bytes;
     using NonceLib for uint256;
     using SentinelListLib for SentinelListLib.SentinelList;
-    using ECDSA for bytes32;
 
     /// @dev The timelock period for emergency hook uninstallation.
     uint256 internal constant _EMERGENCY_TIMELOCK = 1 days;
@@ -125,9 +123,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
                 // If the account is not initialized, check the signature against the account
-                if (!_isAlreadyInitialized()) {
+                if (!_hasValidators() && !_hasExecutors()) {
                     // Check the userOp signature if the validator is not installed (used for EIP7702)
-                    validationData = _checkUserOpSignature(op.signature, userOpHash);
+                    validationData = _checkSelfSignature(op.signature, userOpHash) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
                 } else {
                     // If the account is initialized, revert as the validator is not installed
                     revert ValidatorNotInstalled(validator);
@@ -210,6 +208,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+        // protection for EIP7702 accounts which were not initialized
+        // and try to install a validator or executor during the first userOp not via initializeAccount()
+        if ((moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR) && !_isAlreadyInitialized()) {
+            _initModuleManager();
+        }
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -278,6 +281,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
+    /// @notice Initializes the smart account with the specified initialization data.
+    /// @param initData The initialization data for the smart account.
+    /// @dev This function can only be called by the account itself or the proxy factory.
+    /// When a 7702 account is created, the first userOp should contain self-call to initialize the account.
     function initializeAccount(bytes calldata initData) external payable virtual {
         // Protect this function to only be callable when used with the proxy factory or when
         // account calls itself
@@ -312,7 +319,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             }
         }
         // else proceed with normal signature verification
-
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
         require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
@@ -438,19 +444,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
-
-    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
-    /// @param signature The signature to check.
-    /// @param userOpHash The hash of the user operation data.
-    /// @return The validation result.
-    function _checkUserOpSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (uint256) {
-        // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
-        if (signer == address(this)) {
-            return VALIDATION_SUCCESS;
-        }
-        return VALIDATION_FAILED;
-    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
