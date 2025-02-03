@@ -467,7 +467,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             }
         } else {
             // If the account is not initialized, check the signature against the account
-            if (!_isAlreadyInitialized()) {
+            if (!_hasValidators() && !_hasExecutors()) {
                 // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
                 return _checkSelfSignature(sig, eip712Digest);
             } else {

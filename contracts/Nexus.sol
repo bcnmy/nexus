@@ -123,7 +123,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
                 // If the account is not initialized, check the signature against the account
-                if (!_isAlreadyInitialized()) {
+                if (!_hasValidators() && !_hasExecutors()) {
                     // Check the userOp signature if the validator is not installed (used for EIP7702)
                     validationData = _checkSelfSignature(op.signature, userOpHash) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
                 } else {
