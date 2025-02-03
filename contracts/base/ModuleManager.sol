@@ -41,6 +41,7 @@ import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.s
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { EmergencyUninstall } from "../types/DataTypes.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -55,7 +56,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
-
+    using ECDSA for bytes32;
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
@@ -450,20 +451,29 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param sig Signature.
     function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
         address enableModeSigValidator = address(bytes20(sig[0:20]));
-        if (!_isValidatorInstalled(enableModeSigValidator)) {
-            revert ValidatorNotInstalled(enableModeSigValidator);
-        }
         bytes32 eip712Digest = _hashTypedData(structHash);
 
-        // Use standard IERC-1271/ERC-7739 interface.
-        // Even if the validator doesn't support 7739 under the hood, it is still secure,
-        // as eip712digest is already built based on 712Domain of this Smart Account
-        // This interface should always be exposed by validators as per ERC-7579
-        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
-            return res == ERC1271_MAGICVALUE;
-        } catch {
-            return false;
+        if (_isValidatorInstalled(enableModeSigValidator)) {
+            // Use standard IERC-1271/ERC-7739 interface.
+            // Even if the validator doesn't support 7739 under the hood, it is still secure,
+            // as eip712digest is already built based on 712Domain of this Smart Account
+            // This interface should always be exposed by validators as per ERC-7579
+            try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+                return res == ERC1271_MAGICVALUE;
+            } catch {
+                return false;
+            }
+        } else {
+            // If the account is not initialized, check the signature against the account
+            if (!_isAlreadyInitialized()) {
+                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
+                return _checkSelfSignature(sig[20:], eip712Digest);
+            } else {
+                // If the account is initialized, revert as the validator is not installed
+                revert ValidatorNotInstalled(enableModeSigValidator);
+            }
         }
+
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -570,6 +580,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return hook The address of the current hook.
     function _getHook() internal view returns (address hook) {
         hook = address(_getAccountStorage().hook);
+    }
+
+    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
+    /// @param signature The signature to check.
+    /// @param userOpHash The hash of the user operation data.
+    /// @return The validation result.
+    function _checkSelfSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (bool) {
+        // Recover the signer from the signature, if it is the account, return success, otherwise revert
+        address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
+        if (signer == address(this)) {
+            return true;
+        }
+        return false;
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {
