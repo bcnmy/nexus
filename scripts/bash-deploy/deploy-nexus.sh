@@ -108,7 +108,7 @@ if [ $proceed = "y" ]; then
         if [ ${#GAS_ARGS[@]} -eq 2 ]; then
             GAS_SUFFIX="--with-gas-price ${GAS_ARGS[0]}gwei --priority-gas-price ${GAS_ARGS[1]}gwei"
         else 
-            GAS_SUFFIX="--with-gas-price ${GAS_ARGS[0]}gwei"
+            GAS_SUFFIX="--legacy --with-gas-price ${GAS_ARGS[0]}gwei"
         fi
     else 
         GAS_SUFFIX=""
