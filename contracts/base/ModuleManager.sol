@@ -142,7 +142,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature)) {
             revert EnableModeSigError();
         }
-
+        if (!_isAlreadyInitialized()) {
+            _initModuleManager();
+        }
         _installModule(moduleType, module, moduleInitData);
     }
 
@@ -182,7 +184,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
-        _getAccountStorage().validators.push(validator);
+         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
@@ -467,7 +469,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             // If the account is not initialized, check the signature against the account
             if (!_isAlreadyInitialized()) {
                 // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig[20:], eip712Digest);
+                return _checkSelfSignature(sig, eip712Digest);
             } else {
                 // If the account is initialized, revert as the validator is not installed
                 revert ValidatorNotInstalled(enableModeSigValidator);
@@ -525,10 +527,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Checks if the validator list is already initialized.
+    ///      In theory it doesn't 100% mean there is a validator or executor installed.
+    ///      Use below functions to check for validators and executors.
     function _isAlreadyInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
-        return ams.validators.alreadyInitialized();
+        return ams.validators.alreadyInitialized() && ams.executors.alreadyInitialized();
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
@@ -562,6 +566,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
     }
 
+    /// @dev Checks if there is at least one executor installed.
+    /// @return True if there is at least one executor, otherwise false.
+    function _hasExecutors() internal view returns (bool) {
+        return
+            _getAccountStorage().executors.getNext(address(0x01)) != address(0x01) && _getAccountStorage().executors.getNext(address(0x01)) != address(0x00);
+    }
+
     /// @dev Checks if an executor is currently installed.
     /// @param executor The address of the executor to check.
     /// @return True if the executor is installed, otherwise false.
@@ -584,14 +595,14 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
     /// @param signature The signature to check.
-    /// @param userOpHash The hash of the user operation data.
+    /// @param dataHash The hash of the data.
     /// @return The validation result.
-    function _checkSelfSignature(bytes calldata signature, bytes32 userOpHash) internal view returns (bool) {
+    function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
         // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(userOpHash.toEthSignedMessageHash(), signature);
-        if (signer == address(this)) {
-            return true;
-        }
+        address signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
+        if (signer == address(this)) return true;
+        signer = ECDSA.recover(dataHash, signature);
+        if (signer == address(this)) return true;
         return false;
     }
 

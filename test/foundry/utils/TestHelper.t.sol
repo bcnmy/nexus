@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
+import "forge-std/console2.sol";
 import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
@@ -323,8 +325,9 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param messageHash The hash of the message to sign
     /// @return signature The packed signature
     function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
-        bytes32 userOpHash = ECDSA.toEthSignedMessageHash(messageHash);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
+        messageHash = ECDSA.toEthSignedMessageHash(messageHash);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
         signature = abi.encodePacked(r, s, v);
     }
 

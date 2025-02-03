@@ -79,6 +79,57 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         );
     }
 
+    function test_EnableMode_Uninitialized_7702_Account() public {
+        address moduleToEnable = address(mockMultiModule);
+        address opValidator = address(mockMultiModule);
+
+        // make the account out of BOB itself
+        uint256 nonce = getNonce(BOB_ADDRESS, MODE_MODULE_ENABLE, moduleToEnable, bytes3(0));
+
+        PackedUserOperation memory op = buildPackedUserOp(BOB_ADDRESS, nonce);
+
+        op.callData = prepareERC7579SingleExecuteCallData(
+            EXECTYPE_DEFAULT, 
+            address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector)
+        );
+        
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
+
+        // simulate uninitialized 7702 account
+        vm.etch(BOB_ADDRESS, address(ACCOUNT_IMPLEMENTATION).code);
+
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(BOB_ADDRESS, MODULE_TYPE_MULTI, userOpHash);
+
+        bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
+        //skip appending validator address, as it is not installed (emulate uninitialized 7702 account)
+
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
+            MODULE_TYPE_MULTI,
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = op;
+
+        uint256 counterBefore = counter.getNumber();
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        assertEq(counter.getNumber(), counterBefore+1, "Counter should have been incremented after single execution");
+        assertTrue(
+            INexus(BOB_ADDRESS).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""),
+            "Module should be installed as validator"
+        );
+        assertTrue(
+            INexus(BOB_ADDRESS).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""),
+            "Module should be installed as executor"
+        );
+    }
+
     // we do not test 7739 personal sign, as with personal sign makes enable data hash is unreadable
     function test_EnableMode_Success_7739_Nested_712() public {
         address moduleToEnable = address(mockMultiModule);
