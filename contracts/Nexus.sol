@@ -335,7 +335,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 // if it was signed by address(this),
                 // we still revert on this, to protect from the following attack vector:
                 // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
-                // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashes in
+                // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashed in
                 // 3. In this case, if we just allow signatures by address(this), this above sig
                 //    over unsafe hash could be replayed here
                 // Thus, we revert here, but we revert with informational message, that
