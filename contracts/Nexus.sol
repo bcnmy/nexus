@@ -334,7 +334,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             if (_checkSelfSignature(signature, hash)) {
                 // if it was signed by address(this),
                 // we still revert on this, to protect from the following attack vector:
-                // 1. This 7702 account being an eoa as wll owns some other Smart Account (Smart Account B)
+                // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
                 // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashes in
                 // 3. In this case, if we just allow signatures by address(this), this above sig
                 //    over unsafe hash could be replayed here
