@@ -128,7 +128,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData);
 
         bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
-        userOps[0].signature = abi.encode(signMessage(signer, userOpHash), MODULE_ADDRESS);
+        userOps[0].signature = abi.encode(signPureHash(signer, userOpHash), MODULE_ADDRESS);
 
         ENTRYPOINT_V_0_6.handleOps(userOps, address(this));
     }
