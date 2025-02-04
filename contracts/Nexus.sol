@@ -458,8 +458,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         $.emergencyUninstallTimelock[address($.hook)] = 0;
         _tryUninstallHooks();
         
-        // reinitialize the module manager
-        _initModuleManager();
+        // account should be properly initialized for the new delegate
+        // use Nexus.initializeAccount() to reinitialize the account
+        // otherwise modules will not be installed as the module manager is not initialized
     }
 
     /// @dev EIP712 domain name and version.
