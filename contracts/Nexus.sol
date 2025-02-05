@@ -51,7 +51,7 @@ import {
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
-import { EmergencyUninstall } from "./types/DataTypes.sol";
+import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -109,9 +109,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         virtual
         payPrefund(missingAccountFunds)
-        onlyEntryPoint
         returns (uint256 validationData)
     {
+        _onlyEntryPoint();
         address validator = op.nonce.getValidator();
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
@@ -186,7 +186,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param userOp The user operation to execute, containing transaction details.
     /// @param - Hash of the user operation.
     /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual withHook {
+        _onlyEntryPoint();
         bytes calldata callData = userOp.callData[4:];
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
         if (success) {
@@ -208,7 +209,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
+        _onlyEntryPointOrSelf();
         // protection for EIP7702 accounts which were not initialized
         // and try to install a validator or executor during the first userOp not via initializeAccount()
         if ((moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR) && !_isAlreadyInitialized()) {
@@ -229,7 +231,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable withHook {
+        _onlyEntryPointOrSelf();
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
         emit ModuleUninstalled(moduleTypeId, module);
 
@@ -301,7 +304,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         require(_hasValidators(), NoValidatorInstalled());
     }
 
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable {
+        _onlyEntryPointOrSelf();
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
@@ -473,6 +477,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (callType == CALLTYPE_BATCH) {
             if (modeSelector == MODE_DEFAULT) {
                 require(msg.sender == address(this), AccountAccessUnauthorized());
+                // ===== move to execution helper =====
                 assembly {
                     let executionFrames := tload(EXECUTION_FRAMES_SLOT)
                     if gt(executionFrames, maxExecutionFrames) {
@@ -481,13 +486,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     }
                     tstore(EXECUTION_FRAMES_SLOT, add(executionFrames, 1))
                 }
+                // ===== move to execution helper =====
                 return (callType, execType, executionCalldata);
             } else if (modeSelector == MODE_BATCH_OPDATA) {
                 (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
 
                 // hash executionData
                 // TODO: make it eip-712
-                bytes32 executionDataHash = keccak256(executionData);
+                Execution[] calldata executionBatch = executionData.decodeBatch();
+                //bytes32 executionDataHash = _getExecutionBatchHash(executionBatch);
+                bytes32 executionDataHash = keccak256(abi.encode(executionBatch));
+
                 address validator = address(bytes20(opData[0:20]));
                 bool res;
                 if(_isValidatorInstalled(validator)) {
@@ -509,7 +518,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) {
+        _onlyEntryPointOrSelf();
+    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {

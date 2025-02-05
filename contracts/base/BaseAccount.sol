@@ -36,16 +36,14 @@ contract BaseAccount is IBaseAccount {
 
     /// @dev Ensures the caller is either the EntryPoint or this account itself.
     /// Reverts with AccountAccessUnauthorized if the check fails.
-    modifier onlyEntryPointOrSelf() {
+    function _onlyEntryPointOrSelf() internal view {
         require(msg.sender == _ENTRYPOINT || msg.sender == address(this), AccountAccessUnauthorized());
-        _;
     }
 
     /// @dev Ensures the caller is the EntryPoint.
     /// Reverts with AccountAccessUnauthorized if the check fails.
-    modifier onlyEntryPoint() {
+    function _onlyEntryPoint() internal view {
         require(msg.sender == _ENTRYPOINT, AccountAccessUnauthorized());
-        _;
     }
 
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
@@ -81,7 +79,8 @@ contract BaseAccount is IBaseAccount {
     /// @notice Withdraws ETH from the EntryPoint to a specified address.
     /// @param to The address to receive the withdrawn funds.
     /// @param amount The amount to withdraw.
-    function withdrawDepositTo(address to, uint256 amount) external payable virtual onlyEntryPointOrSelf {
+    function withdrawDepositTo(address to, uint256 amount) external payable virtual {
+        _onlyEntryPointOrSelf();
         address entryPointAddress = _ENTRYPOINT;
         assembly {
             let freeMemPtr := mload(0x40) // Store the free memory pointer.
