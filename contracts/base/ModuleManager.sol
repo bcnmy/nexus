@@ -466,14 +466,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return false;
             }
         } else {
-            // If the account is not initialized, check the signature against the account
-            if (!_hasValidators() && !_hasExecutors()) {
-                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig, eip712Digest);
-            } else {
-                // If the account is initialized, revert as the validator is not installed
-                revert ValidatorNotInstalled(enableModeSigValidator);
-            }
+            return _eip7702SignatureValidation(eip712Digest, sig, enableModeSigValidator);
         }
 
     }
@@ -591,6 +584,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return hook The address of the current hook.
     function _getHook() internal view returns (address hook) {
         hook = address(_getAccountStorage().hook);
+    }
+
+    function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
+        if (!_hasValidators() && !_hasExecutors()) {
+            // Check the userOp signature if the validator is not installed (used for EIP7702)
+            return _checkSelfSignature(signature, dataHash);
+        } else {
+            // If the account is initialized, revert as the validator is not installed
+            revert ValidatorNotInstalled(validator);
+        }
     }
 
     /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED

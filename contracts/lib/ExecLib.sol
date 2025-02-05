@@ -29,6 +29,15 @@ library ExecLib {
         }
     }
 
+    function cutOpData(bytes calldata executionCalldata) internal pure returns (bytes calldata executionData, bytes calldata opData) {
+        uint256 executionDataLength;
+        assembly {
+            executionDataLength := calldataload(add(executionCalldata.offset, 0x40)) // executioData length
+        }
+        executionData = executionCalldata[0:executionDataLength];
+        opData = executionCalldata[executionDataLength:];
+    }
+
     /**
      * @notice Decode a batch of `Execution` executionBatch from a `bytes` calldata.
      * @dev code is copied from solady's LibERC7579.sol

@@ -31,7 +31,8 @@ import {
     MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739,
     VALIDATION_SUCCESS,
-    VALIDATION_FAILED
+    VALIDATION_FAILED,
+    ERC1271_MAGICVALUE
 } from "./types/Constants.sol";
 import {
     ModeLib,
@@ -125,27 +126,21 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
-                // If the account is not initialized, check the signature against the account
-                if (!_hasValidators() && !_hasExecutors()) {
-                    // Check the userOp signature if the validator is not installed (used for EIP7702)
-                    validationData = _checkSelfSignature(op.signature, userOpHash) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
-                } else {
-                    // If the account is initialized, revert as the validator is not installed
-                    revert ValidatorNotInstalled(validator);
-                }
+                validationData = _eip7702SignatureValidation(userOpHash, op.signature, validator) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
             }
         }
     }
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
-    /// @param executionData The encoded transaction data to execute.
+    /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(ExecutionMode mode, bytes calldata executionData) external payable withHook {
-        (CallType callType, ExecType execType) = _executionGuard({
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable withHook {
+        (CallType callType, ExecType execType, bytes calldata executionData) = _executionGuard({
             mode: mode,
-            maxExecutionFrames: 1
+            maxExecutionFrames: 1,
+            executionCalldata: executionCalldata
         });
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionData, execType);
@@ -466,11 +461,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     ///         and that the account has not self-called more than maxExecutionFrames.
     ///      c) calltype is batch with ERC-7821 opdata, and the sig in opData is by an authorized signer
     /// The execution frames limit is introduced to prevent hiding actions in the self-call loop calldata.
-    function _executionGuard(ExecutionMode mode, uint256 maxExecutionFrames) internal returns (CallType callType, ExecType execType) {
-        ModeSelector modeSelector;
-        (callType, execType, modeSelector,) = mode.decode();
+    function _executionGuard(
+        ExecutionMode mode,
+        uint256 maxExecutionFrames,
+        bytes calldata executionCalldata
+    ) internal returns (CallType, ExecType, bytes calldata) {
+        (CallType callType, ExecType execType, ModeSelector modeSelector,) = mode.decode();
         if (msg.sender == _ENTRYPOINT) {
-            return (callType, execType);
+            return (callType, execType, executionCalldata);
         }
         if (callType == CALLTYPE_BATCH) {
             if (modeSelector == MODE_DEFAULT) {
@@ -483,12 +481,27 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     }
                     tstore(EXECUTION_FRAMES_SLOT, add(executionFrames, 1))
                 }
-                return (callType, execType);
+                return (callType, execType, executionCalldata);
             } else if (modeSelector == MODE_BATCH_OPDATA) {
-                // TODO: Implement sig verification for opdata
+                (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
+
+                // hash executionData
+                // TODO: make it eip-712
+                bytes32 executionDataHash = keccak256(executionData);
+                address validator = address(bytes20(opData[0:20]));
+                bool res;
+                if(_isValidatorInstalled(validator)) {
+                    // we use address(this) as a sender to hit vanilla 1271 flow on erc-7739 compatible validators
+                    // since we know executionDataHash is based on domain separator of the account => it has account address hashed into it
+                    res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
+                } else {
+                    // If this is a fresh, non-initialized 7702 Nexus instance, 
+                    // it will still be able to use erc-7821 batch call with opData initialization
+                   res = _eip7702SignatureValidation(executionDataHash, opData[20:], validator);
+                }
+                if(res) return (callType, execType, executionData);
             }
             // other mode selectors are not supported
-            revert AccountAccessUnauthorized();
         }
         revert AccountAccessUnauthorized();
     }
@@ -501,6 +514,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
-        version = "1.0.1";
+        version = "2.0.0";
     }
 }
