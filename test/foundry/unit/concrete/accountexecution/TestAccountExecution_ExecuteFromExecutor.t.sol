@@ -198,11 +198,8 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     /// @notice Tests execution with an unsupported call type via MockExecutor
     function test_RevertIf_ExecuteFromExecutor_UnsupportedCallType() public {
         ExecutionMode unsupportedMode = ExecutionMode.wrap(bytes32(abi.encodePacked(bytes1(0xee), bytes1(0x00), bytes4(0), bytes22(0))));
-        bytes memory executionCalldata = abi.encodePacked(address(counter), uint256(0), abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         (CallType callType, , , ) = ModeLib.decode(unsupportedMode);
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(mockExecutor), 0, executionCalldata);
 
         vm.expectRevert(abi.encodeWithSelector(UnsupportedCallType.selector, callType));
 
@@ -219,13 +216,10 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     function test_RevertIf_ExecuteFromExecutor_UnsupportedExecType_Batch() public {
         // Create an unsupported execution mode with an invalid execution type
         ExecutionMode unsupportedMode = ExecutionMode.wrap(bytes32(abi.encodePacked(CALLTYPE_BATCH, bytes1(0xff), bytes4(0), bytes22(0))));
-        bytes memory executionCalldata = abi.encodePacked(address(counter), uint256(0), abi.encodeWithSelector(Counter.incrementNumber.selector));
-
+        
         // Decode the mode to extract the execution type for the expected revert
         (, ExecType execType, , ) = ModeLib.decode(unsupportedMode);
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(mockExecutor), 0, executionCalldata);
-
+        
         // Expect the revert with UnsupportedExecType error
         vm.expectRevert(abi.encodeWithSelector(UnsupportedExecType.selector, execType));
 

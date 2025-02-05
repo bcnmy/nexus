@@ -54,15 +54,18 @@ contract MockExecutor is IExecutor {
         address target,
         uint256 value,
         bytes calldata callData
-    ) external returns (bytes[] memory returnData) {
+    ) external returns (bytes[] memory) {
         (CallType callType, ) = ModeLib.decodeBasic(mode);
         bytes memory executionCallData;
         if (callType == CALLTYPE_SINGLE) {
             executionCallData = ExecLib.encodeSingle(target, value, callData);
+            return account.executeFromExecutor(mode, executionCallData);
         } else if (callType == CALLTYPE_BATCH) {
-            Execution[] memory execution = new Execution[](1);
+            Execution[] memory execution = new Execution[](2);
             execution[0] = Execution(target, 0, callData);
+            execution[1] = Execution(address(this), 0, executionCallData);
             executionCallData = ExecLib.encodeBatch(execution);
+            return account.executeFromExecutor(mode, executionCallData);
         }
         return account.executeFromExecutor(mode, ExecLib.encodeSingle(target, value, callData));
     }
