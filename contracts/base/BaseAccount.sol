@@ -24,11 +24,11 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
+    
+    // TODO: UPDATE THIS to 2.0.0
+    
     /// @notice Identifier for this implementation on the network
     string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0";
-
-    // keccak256("biconomy.nexus.execution.frames.slot")
-    uint256 internal constant EXECUTION_FRAMES_SLOT = 0x23ffe89309602a5e9de9aabe3c32da855b75df08ddea116d793a5f458a21588b;
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.

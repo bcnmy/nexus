@@ -477,16 +477,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (callType == CALLTYPE_BATCH) {
             if (modeSelector == MODE_DEFAULT) {
                 require(msg.sender == address(this), AccountAccessUnauthorized());
-                // ===== move to execution helper =====
-                assembly {
-                    let executionFrames := tload(EXECUTION_FRAMES_SLOT)
-                    if gt(executionFrames, maxExecutionFrames) {
-                        mstore(0x00, 0x5a2da10d) // `NoSelfExecutionLoops()`.
-                        revert(0x1c, 0x04)
-                    }
-                    tstore(EXECUTION_FRAMES_SLOT, add(executionFrames, 1))
-                }
-                // ===== move to execution helper =====
+                _checkAndUpdateExecutionFrames(maxExecutionFrames);
                 return (callType, execType, executionCalldata);
             } else if (modeSelector == MODE_BATCH_OPDATA) {
                 (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
