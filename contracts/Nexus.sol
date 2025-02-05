@@ -38,11 +38,14 @@ import {
     ExecutionMode,
     ExecType,
     CallType,
+    ModeSelector,
     CALLTYPE_BATCH,
     CALLTYPE_SINGLE,
     CALLTYPE_DELEGATECALL,
     EXECTYPE_DEFAULT,
-    EXECTYPE_TRY
+    EXECTYPE_TRY,
+    MODE_BATCH_OPDATA,
+    MODE_DEFAULT
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
@@ -136,17 +139,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     /// @notice Executes transactions in single or batch modes as specified by the execution mode.
     /// @param mode The execution mode detailing how transactions should be handled (single, batch, default, try/catch).
-    /// @param executionCalldata The encoded transaction data to execute.
+    /// @param executionData The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
-        (CallType callType, ExecType execType) = mode.decodeBasic();
+    function execute(ExecutionMode mode, bytes calldata executionData) external payable withHook {
+        (CallType callType, ExecType execType) = _executionGuard({
+            mode: mode,
+            maxExecutionFrames: 1
+        });
         if (callType == CALLTYPE_SINGLE) {
-            _handleSingleExecution(executionCalldata, execType);
+            _handleSingleExecution(executionData, execType);
         } else if (callType == CALLTYPE_BATCH) {
-            _handleBatchExecution(executionCalldata, execType);
+            _handleBatchExecution(executionData, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            _handleDelegateCallExecution(executionCalldata, execType);
+            _handleDelegateCallExecution(executionData, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -360,12 +366,26 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @notice Determines if a specific execution mode is supported.
     /// @param mode The execution mode to evaluate.
     /// @return isSupported True if the execution mode is supported, false otherwise.
-    function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
-        (CallType callType, ExecType execType) = mode.decodeBasic();
+    function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool) {
+        (CallType callType, ExecType execType, ModeSelector modeSelector, ) = mode.decode();
 
-        // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL)
-            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        if ((callType == CALLTYPE_SINGLE || callType == CALLTYPE_DELEGATECALL)
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY) 
+            && modeSelector == MODE_DEFAULT)
+        {
+            return true;
+        }
+
+        if (callType == CALLTYPE_BATCH
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY))
+        {
+            if (modeSelector == MODE_BATCH_OPDATA || modeSelector == MODE_DEFAULT) {
+                return true;
+            } 
+            // Do not support batch of batches
+            return false;
+        }
+        return false;
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -438,6 +458,39 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             }
         }
         return result == bytes4(0) ? bytes4(0xffffffff) : result;
+    }
+
+    /// @dev Passes if
+    ///      a) the caller is the EntryPoint 
+    ///      b) calltype is batch, and no ERC-7821 opdata, and the caller is this account itself, 
+    ///         and that the account has not self-called more than maxExecutionFrames.
+    ///      c) calltype is batch with ERC-7821 opdata, and the sig in opData is by an authorized signer
+    /// The execution frames limit is introduced to prevent hiding actions in the self-call loop calldata.
+    function _executionGuard(ExecutionMode mode, uint256 maxExecutionFrames) internal returns (CallType callType, ExecType execType) {
+        ModeSelector modeSelector;
+        (callType, execType, modeSelector,) = mode.decode();
+        if (msg.sender == _ENTRYPOINT) {
+            return (callType, execType);
+        }
+        if (callType == CALLTYPE_BATCH) {
+            if (modeSelector == MODE_DEFAULT) {
+                require(msg.sender == address(this), AccountAccessUnauthorized());
+                assembly {
+                    let executionFrames := tload(EXECUTION_FRAMES_SLOT)
+                    if gt(executionFrames, maxExecutionFrames) {
+                        mstore(0x00, 0x5a2da10d) // `NoSelfExecutionLoops()`.
+                        revert(0x1c, 0x04)
+                    }
+                    tstore(EXECUTION_FRAMES_SLOT, add(executionFrames, 1))
+                }
+                return (callType, execType);
+            } else if (modeSelector == MODE_BATCH_OPDATA) {
+                // TODO: Implement sig verification for opdata
+            }
+            // other mode selectors are not supported
+            revert AccountAccessUnauthorized();
+        }
+        revert AccountAccessUnauthorized();
     }
 
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.

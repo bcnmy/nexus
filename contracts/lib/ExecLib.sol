@@ -50,6 +50,10 @@ library ExecLib {
         callData = abi.encode(executions);
     }
 
+    function encodeBatchWithOpData(Execution[] memory executions, bytes calldata opData) internal pure returns (bytes memory callData) {
+        callData = abi.encode(executions, opData);
+    }
+
     function decodeSingle(bytes calldata executionCalldata) internal pure returns (address target, uint256 value, bytes calldata callData) {
         target = address(bytes20(executionCalldata[0:20]));
         value = uint256(bytes32(executionCalldata[20:52]));
