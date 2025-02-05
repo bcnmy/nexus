@@ -10,8 +10,10 @@ import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 /// malloc for memory allocation is bad for gas. use this assembly instead
 library ExecLib {
 
-    bytes32 constant EXECUTION_TYPEHASH = keccak256("Execution(address target,uint256 value,bytes callData)");
-    bytes32 constant EXECUTION_BATCH_TYPEHASH = keccak256("ExecutionBatch(Execution[] executions)");
+    //keccak256("Execution(address target,uint256 value,bytes callData)");
+    bytes32 constant EXECUTION_TYPEHASH = 0x37fb04e5593580b36bfacc47d8b1a4b9a2acb88a513bf153760f925a6723d4b5;
+    //keccak256("ExecutionBatch(Execution[] executions)");
+    bytes32 constant EXECUTION_BATCH_TYPEHASH = 0x4e8377fd5d52d3a9722198c2631a72d411a112149d2d0974cb3f81a6d2bc013f;
 
     using ExecLib for Execution;
     using EfficientHashLib for *;
@@ -37,6 +39,12 @@ library ExecLib {
         }
     }
 
+    /** 
+     *   @notice Divide execution calldata into execution data and op data
+     *   @param executionCalldata The calldata to divide
+     *   @return executionData The execution data => array of Execution structs
+     *   @return opData The op data
+     */
     function cutOpData(bytes calldata executionCalldata) internal pure returns (bytes calldata executionData, bytes calldata opData) {
         uint256 executionDataLength;
         assembly {
