@@ -482,7 +482,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             } else if (modeSelector == MODE_BATCH_OPDATA) {
                 (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
                 Execution[] calldata executionBatch = executionData.decodeBatch();
-                bytes32 executionDataHash = _hashTypedData(executionBatch.hash());
+                bytes32 executionDataHash = _hashTypedData(executionBatch.hashExecutionBatch());
                 address validator = address(bytes20(opData[0:20]));
                 bool res;
                 if(_isValidatorInstalled(validator)) {

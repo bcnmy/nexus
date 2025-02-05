@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Execution } from "../types/DataTypes.sol";
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 /// @title ExecutionLib
 /// @author zeroknots.eth | rhinestone.wtf
@@ -13,6 +14,7 @@ library ExecLib {
     bytes32 constant EXECUTION_BATCH_TYPEHASH = keccak256("ExecutionBatch(Execution[] executions)");
 
     using ExecLib for Execution;
+    using EfficientHashLib for *;
 
     function get2771CallData(bytes calldata cd) internal view returns (bytes memory callData) {
         /// @solidity memory-safe-assembly
@@ -107,22 +109,23 @@ library ExecLib {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }
 
-    function hash(Execution[] calldata executions) internal pure returns (bytes32) {
+    function hashExecutionBatch(Execution[] calldata executions) internal pure returns (bytes32) {
         uint256 length = executions.length;
-        bytes32[] memory executionHashes = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            executionHashes[i] = executions[i].hash();
+        
+        bytes32[] memory a = EfficientHashLib.malloc(length);
+        for (uint256 i; i < length; i++) {
+            a.set(i, executions[i].hashExecution());
         }
         
         return keccak256(
             abi.encode(
                 EXECUTION_BATCH_TYPEHASH,
-                keccak256(abi.encodePacked(executionHashes))
+                a.hash()
             )
         );
     }
 
-    function hash(Execution calldata execution) internal pure returns (bytes32) {
+    function hashExecution(Execution calldata execution) internal pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 EXECUTION_TYPEHASH,
