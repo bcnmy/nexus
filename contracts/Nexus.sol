@@ -63,7 +63,7 @@ import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
-    using ExecLib for bytes;
+    using ExecLib for *;
     using NonceLib for uint256;
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -481,13 +481,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 return (callType, execType, executionCalldata);
             } else if (modeSelector == MODE_BATCH_OPDATA) {
                 (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
-
-                // hash executionData
-                // TODO: make it eip-712
                 Execution[] calldata executionBatch = executionData.decodeBatch();
-                //bytes32 executionDataHash = _getExecutionBatchHash(executionBatch);
-                bytes32 executionDataHash = keccak256(abi.encode(executionBatch));
-
+                bytes32 executionDataHash = _hashTypedData(executionBatch.hash());
                 address validator = address(bytes20(opData[0:20]));
                 bool res;
                 if(_isValidatorInstalled(validator)) {

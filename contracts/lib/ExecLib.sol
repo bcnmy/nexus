@@ -8,6 +8,12 @@ import { Execution } from "../types/DataTypes.sol";
 /// Helper Library for decoding Execution calldata
 /// malloc for memory allocation is bad for gas. use this assembly instead
 library ExecLib {
+
+    bytes32 constant EXECUTION_TYPEHASH = keccak256("Execution(address target,uint256 value,bytes callData)");
+    bytes32 constant EXECUTION_BATCH_TYPEHASH = keccak256("ExecutionBatch(Execution[] executions)");
+
+    using ExecLib for Execution;
+
     function get2771CallData(bytes calldata cd) internal view returns (bytes memory callData) {
         /// @solidity memory-safe-assembly
         (cd);
@@ -99,5 +105,31 @@ library ExecLib {
 
     function encodeSingle(address target, uint256 value, bytes memory callData) internal pure returns (bytes memory userOpCalldata) {
         userOpCalldata = abi.encodePacked(target, value, callData);
+    }
+
+    function hash(Execution[] calldata executions) internal pure returns (bytes32) {
+        uint256 length = executions.length;
+        bytes32[] memory executionHashes = new bytes32[](length);
+        for (uint256 i = 0; i < length; i++) {
+            executionHashes[i] = executions[i].hash();
+        }
+        
+        return keccak256(
+            abi.encode(
+                EXECUTION_BATCH_TYPEHASH,
+                keccak256(abi.encodePacked(executionHashes))
+            )
+        );
+    }
+
+    function hash(Execution calldata execution) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                EXECUTION_TYPEHASH,
+                execution.target,
+                execution.value,
+                keccak256(execution.callData)
+            )
+        );
     }
 }
