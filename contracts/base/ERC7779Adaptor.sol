@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { IERC7779 } from "../interfaces/IERC7779.sol";
 
-abstract contract ERC7779Adapter is IERC7779 {
+abstract contract ERC7779Adaptor is IERC7779 {
     error NonAuthorizedOnRedelegationCaller();
 
     // keccak256(abi.encode(uint256(keccak256(bytes("InteroperableDelegatedAccount.ERC.Storage"))) - 1)) & ~bytes32(uint256(0xff));

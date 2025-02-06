@@ -51,7 +51,6 @@ import {
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
-import { ERC7779Adapter } from "./base/ERC7779Adapter.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
@@ -64,7 +63,7 @@ import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable, ERC7779Adapter {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
     using ExecLib for *;
     using NonceLib for uint256;
@@ -129,9 +128,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
-                // add 7739 storage base
                 validationData = _eip7702SignatureValidation(userOpHash, op.signature, validator) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
-
             }
         }
     }
@@ -216,9 +213,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
         _onlyEntryPointOrSelf();
-        // protection for EIP7702 accounts which were not initialized
+        // protection for EIP-7702 accounts which were not initialized
         // and try to install a validator or executor during the first userOp not via initializeAccount()
-        if ((moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR) && !_isAlreadyInitialized()) {
+        if (!_isAlreadyInitialized()) {
             _initModuleManager();
         }
         _installModule(moduleTypeId, module, initData);
@@ -304,10 +301,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
-        
-        if (_amIERC7702()) {
-            _addStorageBase(_NEXUS_STORAGE_LOCATION);
-        }
 
         require(success, NexusInitializationFailed());
         require(_hasValidators(), NoValidatorInstalled());
@@ -536,6 +529,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // account should be properly initialized for the new delegate
         // use Nexus.initializeAccount() to reinitialize the account
         // otherwise modules will not be installed as the module manager is not initialized
+    }
 
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) {
         _onlyEntryPointOrSelf();

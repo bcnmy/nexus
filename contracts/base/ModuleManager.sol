@@ -40,6 +40,7 @@ import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
+import { ERC7779Adaptor } from "./ERC7779Adaptor.sol";
 import { EmergencyUninstall } from "../types/DataTypes.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
@@ -51,7 +52,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter, ERC7779Adaptor {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
@@ -147,6 +148,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
         ams.validators.init();
+
+        if (_amIERC7702()) {
+            _addStorageBase(_NEXUS_STORAGE_LOCATION);
+        }
     }
 
     /// @dev Implements Module Enable Mode flow.
@@ -681,6 +686,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
         if (signer == address(this)) return true;
         return false;
+    }
+
+    /// @dev Checks if the account is an ERC7702 account
+    ///      by checking the codehash of the account
+    ///      and comparing it to the known ERC7702 codehash
+    function _amIERC7702() internal view returns (bool res) {
+        assembly {
+            res :=
+                eq(
+                    extcodehash(address()),
+                    0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329 // (keccak256(0xef01))
+                )
+        }
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {
