@@ -31,23 +31,27 @@ import {
     MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739,
     VALIDATION_SUCCESS,
-    VALIDATION_FAILED
+    VALIDATION_FAILED,
+    ERC1271_MAGICVALUE
 } from "./types/Constants.sol";
 import {
     ModeLib,
     ExecutionMode,
     ExecType,
     CallType,
+    ModeSelector,
     CALLTYPE_BATCH,
     CALLTYPE_SINGLE,
     CALLTYPE_DELEGATECALL,
     EXECTYPE_DEFAULT,
-    EXECTYPE_TRY
+    EXECTYPE_TRY,
+    MODE_BATCH_OPDATA,
+    MODE_DEFAULT
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
-import { EmergencyUninstall } from "./types/DataTypes.sol";
+import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -59,7 +63,7 @@ import { EmergencyUninstall } from "./types/DataTypes.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
     using ModeLib for ExecutionMode;
-    using ExecLib for bytes;
+    using ExecLib for *;
     using NonceLib for uint256;
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -105,9 +109,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         virtual
         payPrefund(missingAccountFunds)
-        onlyEntryPoint
         returns (uint256 validationData)
     {
+        _onlyEntryPoint();
         address validator = op.nonce.getValidator();
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
@@ -122,14 +126,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
-                // If the account is not initialized, check the signature against the account
-                if (!_hasValidators() && !_hasExecutors()) {
-                    // Check the userOp signature if the validator is not installed (used for EIP7702)
-                    validationData = _checkSelfSignature(op.signature, userOpHash) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
-                } else {
-                    // If the account is initialized, revert as the validator is not installed
-                    revert ValidatorNotInstalled(validator);
-                }
+                validationData = _eip7702SignatureValidation(userOpHash, op.signature, validator) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
             }
         }
     }
@@ -139,14 +136,18 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
-        (CallType callType, ExecType execType) = mode.decodeBasic();
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable withHook {
+        (CallType callType, ExecType execType, bytes calldata executionData) = _executionGuard({
+            mode: mode,
+            maxExecutionFrames: 1,
+            executionCalldata: executionCalldata
+        });
         if (callType == CALLTYPE_SINGLE) {
-            _handleSingleExecution(executionCalldata, execType);
+            _handleSingleExecution(executionData, execType);
         } else if (callType == CALLTYPE_BATCH) {
-            _handleBatchExecution(executionCalldata, execType);
+            _handleBatchExecution(executionData, execType);
         } else if (callType == CALLTYPE_DELEGATECALL) {
-            _handleDelegateCallExecution(executionCalldata, execType);
+            _handleDelegateCallExecution(executionData, execType);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -185,7 +186,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param userOp The user operation to execute, containing transaction details.
     /// @param - Hash of the user operation.
     /// @dev Only callable by the EntryPoint. Decodes the user operation calldata, skipping the first four bytes, and executes the inner call.
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual withHook {
+        _onlyEntryPoint();
         bytes calldata callData = userOp.callData[4:];
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
         if (success) {
@@ -207,7 +209,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
+        _onlyEntryPointOrSelf();
         // protection for EIP7702 accounts which were not initialized
         // and try to install a validator or executor during the first userOp not via initializeAccount()
         if ((moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR) && !_isAlreadyInitialized()) {
@@ -228,7 +231,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable withHook {
+        _onlyEntryPointOrSelf();
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
         emit ModuleUninstalled(moduleTypeId, module);
 
@@ -300,7 +304,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         require(_hasValidators(), NoValidatorInstalled());
     }
 
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable {
+        _onlyEntryPointOrSelf();
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
@@ -349,23 +354,42 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
-        else if (moduleTypeId == MODULE_TYPE_MULTI) return true;
-        else return false;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR ||
+            moduleTypeId == MODULE_TYPE_EXECUTOR ||
+            moduleTypeId == MODULE_TYPE_FALLBACK ||
+            moduleTypeId == MODULE_TYPE_HOOK ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 ||
+            moduleTypeId == MODULE_TYPE_MULTI)
+        {
+            return true;
+        }
+        return false;
     }
 
     /// @notice Determines if a specific execution mode is supported.
     /// @param mode The execution mode to evaluate.
     /// @return isSupported True if the execution mode is supported, false otherwise.
-    function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool isSupported) {
-        (CallType callType, ExecType execType) = mode.decodeBasic();
+    function supportsExecutionMode(ExecutionMode mode) external view virtual returns (bool) {
+        (CallType callType, ExecType execType, ModeSelector modeSelector, ) = mode.decode();
 
-        // Return true if both the call type and execution type are supported.
-        return (callType == CALLTYPE_SINGLE || callType == CALLTYPE_BATCH || callType == CALLTYPE_DELEGATECALL)
-            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY);
+        if ((callType == CALLTYPE_SINGLE || callType == CALLTYPE_DELEGATECALL)
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY) 
+            && modeSelector == MODE_DEFAULT)
+        {
+            return true;
+        }
+
+        if (callType == CALLTYPE_BATCH
+            && (execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY))
+        {
+            if (modeSelector == MODE_BATCH_OPDATA || modeSelector == MODE_DEFAULT) {
+                return true;
+            } 
+            // Do not support batch of batches
+            return false;
+        }
+        return false;
     }
 
     /// @notice Determines whether a module is installed on the smart account.
@@ -375,17 +399,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @return True if the module is installed, false otherwise.
     function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view returns (bool) {
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
-    }
-
-    /// @dev EIP712 hashTypedData method.
-    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
-        return _hashTypedData(structHash);
-    }
-
-    /// @dev EIP712 domain separator.
-    // solhint-disable func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparator();
     }
 
     /// Returns the account's implementation ID.
@@ -440,14 +453,57 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return result == bytes4(0) ? bytes4(0xffffffff) : result;
     }
 
+    /// @dev Passes if
+    ///      a) the caller is the EntryPoint 
+    ///      b) calltype is batch, and no ERC-7821 opdata, and the caller is this account itself, 
+    ///         and that the account has not self-called more than maxExecutionFrames.
+    ///      c) calltype is batch with ERC-7821 opdata, and the sig in opData is by an authorized signer
+    /// The execution frames limit is introduced to prevent hiding actions in the self-call loop calldata.
+    function _executionGuard(
+        ExecutionMode mode,
+        uint256 maxExecutionFrames,
+        bytes calldata executionCalldata
+    ) internal returns (CallType, ExecType, bytes calldata) {
+        (CallType callType, ExecType execType, ModeSelector modeSelector,) = mode.decode();
+        if (msg.sender == _ENTRYPOINT) {
+            return (callType, execType, executionCalldata);
+        }
+        if (callType == CALLTYPE_BATCH) {
+            if (modeSelector == MODE_DEFAULT) {
+                require(msg.sender == address(this), AccountAccessUnauthorized());
+                _checkAndUpdateExecutionFrames(maxExecutionFrames);
+                return (callType, execType, executionCalldata);
+            } else if (modeSelector == MODE_BATCH_OPDATA) {
+                (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
+                bytes32 executionDataHash = _hashTypedData(executionData.decodeBatch().hashExecutionBatch());
+                address validator = address(bytes20(opData[0:20]));
+                bool res;
+                if(_isValidatorInstalled(validator)) {
+                    // we use address(this) as a sender to hit vanilla 1271 flow on erc-7739 compatible validators
+                    // since we know executionDataHash is based on domain separator of the account => it has account address hashed into it
+                    res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
+                } else {
+                    // If this is a fresh, non-initialized 7702 Nexus instance, 
+                    // it will still be able to use erc-7821 batch call with opData initialization
+                   res = _eip7702SignatureValidation(executionDataHash, opData[20:], validator);
+                }
+                if (res) return (callType, execType, executionData);
+            }
+            // other mode selectors are not supported
+        }
+        revert AccountAccessUnauthorized();
+    }
+
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) onlyEntryPointOrSelf { }
+    function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) {
+        _onlyEntryPointOrSelf();
+    }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
-        version = "1.0.1";
+        version = "2.0.0";
     }
 }

@@ -28,6 +28,10 @@ import { ExecLib } from "../lib/ExecLib.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract ExecutionHelper is IExecutionHelperEventsAndErrors {
+
+    // keccak256("biconomy.nexus.execution.frames.slot")
+    uint256 internal constant EXECUTION_FRAMES_SLOT = 0x23ffe89309602a5e9de9aabe3c32da855b75df08ddea116d793a5f458a21588b;
+
     using ExecLib for bytes;
 
     /// @notice Executes a call to a target address with specified value and data.
@@ -262,5 +266,16 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
             (success, returnData[0]) = _tryExecuteDelegatecall(delegate, callData);
             if (!success) emit TryDelegateCallUnsuccessful(callData, returnData[0]);
         } else revert UnsupportedExecType(execType);
+    }
+
+    function _checkAndUpdateExecutionFrames(uint256 maxExecutionFrames) internal {
+        assembly {
+            let executionFrames := tload(EXECUTION_FRAMES_SLOT)
+            if gt(executionFrames, maxExecutionFrames) {
+                mstore(0x00, 0x5a2da10d) // `NoSelfExecutionLoops()`.
+                        revert(0x1c, 0x04)
+            }
+            tstore(EXECUTION_FRAMES_SLOT, add(executionFrames, 1))
+        }
     }
 }

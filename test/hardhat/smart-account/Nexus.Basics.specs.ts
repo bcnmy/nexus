@@ -34,6 +34,7 @@ import {
   stopImpersonateAccount,
   MODE_MODULE_ENABLE,
   numberTo3Bytes,
+  getDomainSeparator,
 } from "../utils/operationHelpers";
 import {
   CALLTYPE_BATCH,
@@ -133,7 +134,7 @@ describe("Nexus Basic Specs", function () {
 
   describe("Smart Account Basics", function () {
     it("Should correctly return the Nexus's ID", async function () {
-      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.1.0.0");
+      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.2.0.0");
     });
 
     it("Should get implementation address of smart account", async () => {
@@ -157,11 +158,6 @@ describe("Nexus Basic Specs", function () {
     it("Should get entry point", async () => {
       const entryPointFromContract = await smartAccount.entryPoint();
       expect(entryPointFromContract).to.be.equal(entryPoint);
-    });
-
-    it("Should get domain separator", async () => {
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-      expect(domainSeparator).to.not.equal(ZeroAddress);
     });
 
     it("Should verify supported account modes", async function () {
@@ -318,7 +314,7 @@ describe("Nexus Basic Specs", function () {
       const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
 
       // Calculate the domain separator
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
+      const domainSeparator = await getDomainSeparator(smartAccount);
 
       // Calculate the parent struct hash
       const parentStructHash = ethers.keccak256(
@@ -927,41 +923,6 @@ describe("Nexus Basic Specs", function () {
       const unsupportedModuleType = 999; // An arbitrary module type that is not supported
       expect(await smartAccount.supportsModule(unsupportedModuleType)).to.be
         .false;
-    });
-  });
-
-  describe("Smart Account Typed Data Hashing", function () {
-    it("Should correctly hash the structured data", async function () {
-      const structuredDataHash = ethers.keccak256(
-        ethers.toUtf8Bytes("Structured Data"),
-      );
-
-      // Impersonate the smart account
-      const impersonatedSmartAccount = await impersonateAccount(
-        smartAccountAddress.toString(),
-      );
-
-      // Fetch the domain separator used in the smart contract
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-
-      // Manually compute the expected hash for comparison
-      const expectedHash = ethers.keccak256(
-        ethers.concat([
-          "0x1901", // EIP-191 prefix
-          domainSeparator,
-          structuredDataHash,
-        ]),
-      );
-
-      // Get the actual result from the smart contract
-      const result = await smartAccount
-        .connect(impersonatedSmartAccount)
-        .hashTypedData(structuredDataHash);
-
-      expect(result).to.equal(expectedHash);
-
-      // Stop impersonating the smart account
-      await stopImpersonateAccount(smartAccountAddress.toString());
     });
   });
 });

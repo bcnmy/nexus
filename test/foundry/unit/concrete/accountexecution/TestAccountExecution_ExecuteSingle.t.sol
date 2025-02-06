@@ -194,7 +194,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         CallType callType = CALLTYPE_SINGLE;
 
         // Determine mode and calldata based on execType and executions length
-        ExecutionMode mode = ModeLib.encodeCustom(callType, unsupportedExecType);
+        ExecutionMode mode = ModeLib.encodeCustomCallExecTypes(callType, unsupportedExecType);
         bytes memory executionCalldata =
             abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(execution[0].target, execution[0].value, execution[0].callData)));
 

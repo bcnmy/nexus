@@ -83,6 +83,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _fallback(callData);
     }
 
+    // DELETE candidate for removal
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
     /// This utility function is not defined by the ERC-7579 standard and is implemented to facilitate
     /// easier management and retrieval of large sets of validator modules.
@@ -94,6 +95,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         (array, next) = _paginate(_getAccountStorage().validators, cursor, size);
     }
 
+    // DELETE candidate for removal
     /// @dev Retrieves a paginated list of executor addresses from the linked list.
     /// This utility function is not defined by the ERC-7579 standard and is implemented to facilitate
     /// easier management and retrieval of large sets of executor modules.
@@ -362,25 +364,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL EXECUTORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_EXECUTOR) {
+            if (theType == MODULE_TYPE_EXECUTOR) {
                 _installExecutor(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL FALLBACK                     */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_FALLBACK) {
+            if (theType == MODULE_TYPE_FALLBACK) {
                 _installFallbackHandler(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL HOOK (global only, not sig-specific)      */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_HOOK) {
+            if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL PRE-VALIDATION HOOK                       */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            if (theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
                 _installPreValidationHook(theType, module, initDatas[i]);
             }
         }
@@ -466,16 +468,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return false;
             }
         } else {
-            // If the account is not initialized, check the signature against the account
-            if (!_hasValidators() && !_hasExecutors()) {
-                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig, eip712Digest);
-            } else {
-                // If the account is initialized, revert as the validator is not installed
-                revert ValidatorNotInstalled(enableModeSigValidator);
-            }
+            return _eip7702SignatureValidation(eip712Digest, sig, enableModeSigValidator);
         }
-
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -593,6 +587,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         hook = address(_getAccountStorage().hook);
     }
 
+    function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
+        if (!_hasValidators() && !_hasExecutors()) {
+            // Check the userOp signature if the validator is not installed (used for EIP7702)
+            return _checkSelfSignature(signature, dataHash);
+        } else {
+            // If the account is initialized, revert as the validator is not installed
+            revert ValidatorNotInstalled(validator);
+        }
+    }
+
     /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
     /// @param signature The signature to check.
     /// @param dataHash The hash of the data.
@@ -650,6 +654,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
+    // DELETE candidate for removal
     /// @dev Helper function to paginate entries in a SentinelList.
     /// @param list The SentinelList to paginate.
     /// @param cursor The cursor to start paginating from.
