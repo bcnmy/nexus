@@ -7,7 +7,6 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";
-import "solady/utils/EIP712.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
@@ -24,8 +23,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     MockMultiModule mockMultiModule;
     Counter public counter;
-    bytes32 internal constant _DOMAIN_TYPEHASH =
-        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
 
@@ -145,7 +142,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         (bytes memory multiInstallData, /*bytes32 eip712ChildHash*/, bytes32 structHash) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         // app is just account itself in this case
-        bytes32 appDomainSeparator = _buildDomainSeparator(address(BOB_ACCOUNT));
+        bytes32 appDomainSeparator = _getDomainSeparator(address(BOB_ACCOUNT));
         
         bytes32 hashToSign = toERC1271Hash(structHash, address(BOB_ACCOUNT), appDomainSeparator);
 
@@ -489,40 +486,6 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             keccak256(multiInstallData)
         ));
         eip712Hash = _hashTypedData(structHash, account);
-    }
-
-    function _hashTypedData(
-        bytes32 structHash,
-        address account
-    ) internal view virtual returns (bytes32 digest) {
-        digest = _buildDomainSeparator(account);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the digest.
-            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
-            mstore(0x1a, digest) // Store the domain separator.
-            mstore(0x3a, structHash) // Store the struct hash.
-            digest := keccak256(0x18, 0x42)
-            // Restore the part of the free memory slot that was overwritten.
-            mstore(0x3a, 0)
-        }
-    }
-
-    /// @dev Returns the EIP-712 domain separator.
-    function _buildDomainSeparator(address account) private view returns (bytes32 separator) {
-        (,string memory name,string memory version,,address verifyingContract,,) = EIP712(address(account)).eip712Domain();
-        bytes32 nameHash = keccak256(bytes(name));
-        bytes32 versionHash = keccak256(bytes(version));
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40) // Load the free memory pointer.
-            mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), nameHash) // Name hash.
-            mstore(add(m, 0x40), versionHash)
-            mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), verifyingContract)
-            separator := keccak256(m, 0xa0)
-        }
     }
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.

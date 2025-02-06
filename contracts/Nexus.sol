@@ -396,17 +396,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
-    /// @dev EIP712 hashTypedData method.
-    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
-        return _hashTypedData(structHash);
-    }
-
-    /// @dev EIP712 domain separator.
-    // solhint-disable func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparator();
-    }
-
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {

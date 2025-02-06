@@ -46,16 +46,17 @@ library ExecLib {
      *   @return opData The op data
      */
     function cutOpData(bytes calldata executionCalldata) internal pure returns (bytes calldata executionData, bytes calldata opData) {
-        uint256 u;
         assembly {
-            u := calldataload(add(executionCalldata.offset, 0x20))     
+            let u := calldataload(add(executionCalldata.offset, 0x20))
+            // executionData: if we cut it likes this, it will still contain \
+            // the offset of opData at 0x20, but it does no harm
+            executionData.offset := executionCalldata.offset
+            executionData.length := u
+            // opData 
             let s := add(executionCalldata.offset, u)
             opData.offset := add(s, 0x20)
             opData.length := calldataload(s)
         }
-        // it will still contain the offset of opData at 0x20
-        // but it does no harm
-        executionData = executionCalldata[:u];
     }
 
     /**
