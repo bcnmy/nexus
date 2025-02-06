@@ -5,6 +5,10 @@ import { NexusTest_Base } from "../../../utils/NexusTest_Base.t.sol";
 import "../../../utils/Imports.sol";
 import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
+import { IHook } from "contracts/interfaces/modules/IHook.sol";
+import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
+import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
+
 
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
@@ -235,4 +239,60 @@ contract TestEIP7702 is NexusTest_Base {
         // Assert that the value was set ie that execution was successful
         assertTrue(valueTarget.balance == value);
     }
+
+    function test_erc7702_redelegate() public {
+        address account = test_initializeAndExecSingle();
+
+        MockPreValidationHook preValidationHook = new MockPreValidationHook();
+
+        vm.startPrank(address(account));
+        INexus(account).installModule(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "");
+        INexus(account).installModule(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "");
+        vm.stopPrank();
+
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+
+        bytes memory initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeWithSelector(
+                NexusBootstrap.initNexusWithSingleValidator.selector, 
+                mockValidator, 
+                abi.encodePacked(address(0xa11ce)), 
+                IERC7484(address(0)),
+                new address[](0),
+                0
+            )
+        );
+
+        // simulate redelegation flow
+        vm.prank(address(account));
+        INexus(account).onRedelegation(); // storage is cleared
+
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertFalse(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        
+        vm.prank(address(account)); 
+        INexus(account).initializeAccount(initData); // account is reinitialized for the new delegate (sa implementation)
+        
+        // account is properly initialized to install modules again
+        vm.startPrank(address(ENTRYPOINT));
+        // INexus(account).installModule(MODULE_TYPE_VALIDATOR, address(mockValidator), ""); ==> already installed at initialization
+        INexus(account).installModule(MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        INexus(account).installModule(MODULE_TYPE_HOOK, address(HOOK_MODULE), "");
+        INexus(account).installModule(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "");
+        INexus(account).installModule(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "");
+        vm.stopPrank();
+
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+    }
+
 }

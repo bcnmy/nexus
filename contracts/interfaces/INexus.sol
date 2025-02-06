@@ -15,7 +15,7 @@ pragma solidity ^0.8.27;
 import { IERC4337Account } from "./IERC4337Account.sol";
 import { IERC7579Account } from "./IERC7579Account.sol";
 import { INexusEventsAndErrors } from "./INexusEventsAndErrors.sol";
-
+import { IERC7779 } from "./IERC7779.sol";
 /// @title Nexus - INexus Interface
 /// @notice Integrates ERC-4337 and ERC-7579 standards to manage smart accounts within the Nexus suite.
 /// @dev Consolidates ERC-4337 user operations and ERC-7579 configurations into a unified interface for smart account management.
@@ -27,7 +27,7 @@ import { INexusEventsAndErrors } from "./INexusEventsAndErrors.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
+interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors, IERC7779 {
     /// @notice Initializes the smart account with a validator and custom data.
     /// @dev This method sets up the account for operation, linking it with a validator and initializing it with specific data.
     /// Can be called directly or via a factory.

@@ -21,6 +21,7 @@ import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
+import { IHook } from "./interfaces/modules/IHook.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -50,6 +51,8 @@ import {
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
+import { ERC7779Adapter } from "./base/ERC7779Adapter.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 
@@ -61,7 +64,7 @@ import { EmergencyUninstall, Execution } from "./types/DataTypes.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable, ERC7779Adapter {
     using ModeLib for ExecutionMode;
     using ExecLib for *;
     using NonceLib for uint256;
@@ -126,7 +129,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
+                // add 7739 storage base
                 validationData = _eip7702SignatureValidation(userOpHash, op.signature, validator) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+
             }
         }
     }
@@ -298,7 +303,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
-        (bool success,) = bootstrap.delegatecall(bootstrapCall);
+        (bool success, ) = bootstrap.delegatecall(bootstrapCall);
+        
+        if (_amIERC7702()) {
+            _addStorageBase(_NEXUS_STORAGE_LOCATION);
+        }
 
         require(success, NexusInitializationFailed());
         require(_hasValidators(), NoValidatorInstalled());
@@ -514,6 +523,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// @param newImplementation The address of the new implementation to upgrade to.
+
+    /// @dev This function is called when the account is redelegated.
+    function _onRedelegation() internal virtual override {
+        AccountStorage storage $ = _getAccountStorage();
+
+        _tryUninstallValidators();
+        _tryUninstallExecutors();
+        $.emergencyUninstallTimelock[address($.hook)] = 0;
+        _tryUninstallHooks();
+        
+        // account should be properly initialized for the new delegate
+        // use Nexus.initializeAccount() to reinitialize the account
+        // otherwise modules will not be installed as the module manager is not initialized
+
     function _authorizeUpgrade(address newImplementation) internal virtual override(UUPSUpgradeable) {
         _onlyEntryPointOrSelf();
     }

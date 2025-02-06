@@ -12,7 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -113,6 +113,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getHook();
     }
 
+    /// @notice Checks if a nonce has been used.
+    /// @param nonce The nonce to check.
+    /// @return bool True if the nonce has been used, false otherwise.
+    function wasNonceUsed(uint256 nonce) external view returns (bool) {
+        return _getAccountStorage().nonces[nonce];
+    }
+
+    /// @notice Fetches the 4337 pre-validation hook.
+    /// @return hook The address of the 4337 pre-validation hook.
+    function get4337PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @notice Fetches the 1271 pre-validation hook.
+    /// @return hook The address of the 1271 pre-validation hook.
+    function get1271PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC1271);
+    }
+
     /// @notice Fetches the fallback handler for a specific selector.
     /// @param selector The function selector to query.
     /// @return calltype The type of call that the handler manages.
@@ -207,6 +226,21 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
+    /// @dev Uninstalls all validators and emits an event if any validator fails to uninstall.
+    function _tryUninstallValidators() internal {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        address validator = validators.getNext(SENTINEL);
+        // we do not need excessivelySafeCall here as it prevents reversion
+        // we want to know if there's revert and emit the event
+        while (validator != SENTINEL) {
+            try IValidator(validator).onUninstall("") {} catch (bytes memory reason) {
+                emit ValidatorUninstallFailed(validator, "", reason);
+            }
+            validator = validators.getNext(validator);
+        }
+        validators.popAll();
+    }
+
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
@@ -223,6 +257,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
         executor.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+    }
+
+    /// @dev Uninstalls all executors and emits an event if any executor fails to uninstall.
+    function _tryUninstallExecutors() internal {
+        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        address executor = executors.getNext(SENTINEL);
+        while (executor != SENTINEL) {
+            try IExecutor(executor).onUninstall("") {} catch (bytes memory reason) {
+                emit ExecutorUninstallFailed(executor, "", reason);
+            }
+            executor = executors.getNext(executor);
+        }
+        executors.popAll();
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -247,6 +294,31 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             _uninstallPreValidationHook(hook, hookType, data);
         }
         hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
+    }
+
+    /// @dev Uninstalls the hook and emits an event if the hook fails to uninstall.
+    function _tryUninstallHooks() internal {
+        address hook = _getHook();
+        if (hook != address(0)) {
+            try IHook(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setHook(address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC1271);
+        if (hook != address(0)) {
+            try IPreValidationHookERC1271(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC4337);
+        if (hook != address(0)) {
+            try IPreValidationHookERC4337(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(0));
+        }
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
