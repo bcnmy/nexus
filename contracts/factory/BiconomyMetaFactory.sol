@@ -43,7 +43,7 @@ contract BiconomyMetaFactory is Stakeable {
 
     /// @notice Constructor to set the owner of the contract.
     /// @param owner_ The address of the owner.
-    constructor(address owner_) Stakeable(owner_) {
+    constructor(address owner_, address entryPoint) Stakeable(owner_, entryPoint) {
         require(owner_ != address(0), ZeroAddressNotAllowed());
     }
 

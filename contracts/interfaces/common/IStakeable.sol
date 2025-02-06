@@ -23,18 +23,15 @@ pragma solidity ^0.8.27;
 interface IStakeable {
     /// @notice Stakes a certain amount of Ether on an EntryPoint.
     /// @dev The contract should have enough Ether to cover the stake.
-    /// @param epAddress The address of the EntryPoint where the stake is added.
     /// @param unstakeDelaySec The delay in seconds before the stake can be unlocked.
-    function addStake(address epAddress, uint32 unstakeDelaySec) external payable;
+    function addStake(uint32 unstakeDelaySec) external payable;
 
     /// @notice Unlocks the stake on an EntryPoint.
     /// @dev This starts the unstaking delay after which funds can be withdrawn.
-    /// @param epAddress The address of the EntryPoint from which the stake is to be unlocked.
-    function unlockStake(address epAddress) external;
+    function unlockStake() external;
 
     /// @notice Withdraws the stake from an EntryPoint to a specified address.
     /// @dev This can only be done after the unstaking delay has passed since the unlock.
-    /// @param epAddress The address of the EntryPoint where the stake is withdrawn from.
     /// @param withdrawAddress The address to receive the withdrawn stake.
-    function withdrawStake(address epAddress, address payable withdrawAddress) external;
+    function withdrawStake(address payable withdrawAddress) external;
 }

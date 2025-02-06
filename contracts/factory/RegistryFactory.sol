@@ -49,7 +49,9 @@ contract RegistryFactory is Stakeable, INexusFactory {
     /// @notice Constructor to set the smart account implementation address and owner.
     /// @param implementation_ The address of the Nexus implementation to be used for all deployments.
     /// @param owner_ The address of the owner of the factory.
-    constructor(address implementation_, address owner_, IERC7484 registry_, address[] memory attesters_, uint8 threshold_) Stakeable(owner_) {
+    constructor(address implementation_, address owner_, address entryPoint, IERC7484 registry_, address[] memory attesters_, uint8 threshold_)
+        Stakeable(owner_, entryPoint)
+    {
         require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
         require(owner_ != address(0), ZeroAddressNotAllowed());
         require(threshold_ <= attesters_.length, InvalidThreshold(threshold_, attesters_.length));

@@ -46,12 +46,24 @@ contract K1ValidatorFactory is Stakeable {
     /// @notice Error thrown when a zero address is provided for the implementation, K1 validator, or bootstrapper.
     error ZeroAddressNotAllowed();
 
+    /// @notice Error thrown when the createAccount function is called by a non-EntryPoint.
+    error EntryPointOnly();
+
     /// @notice Constructor to set the immutable variables.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     /// @param factoryOwner The address of the factory owner.
     /// @param k1Validator The address of the K1 Validator module to be used for all deployments.
     /// @param bootstrapper The address of the Bootstrapper module to be used for all deployments.
-    constructor(address implementation, address factoryOwner, address k1Validator, NexusBootstrap bootstrapper, IERC7484 registry) Stakeable(factoryOwner) {
+    constructor(
+        address implementation,
+        address factoryOwner,
+        address entryPoint,
+        address k1Validator,
+        NexusBootstrap bootstrapper,
+        IERC7484 registry
+    )
+        Stakeable(factoryOwner, entryPoint)
+    {
         require(
             !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
@@ -62,7 +74,7 @@ contract K1ValidatorFactory is Stakeable {
         REGISTRY = registry;
     }
 
-    /// @notice Creates a new Nexus with a specific validator and initialization data.
+    /// @notice Creates a new Nexus with K1 validator and initialization data.
     /// @param eoaOwner The address of the EOA owner of the Nexus.
     /// @param index The index of the Nexus.
     /// @param attesters The list of attesters for the Nexus.
@@ -84,6 +96,16 @@ contract K1ValidatorFactory is Stakeable {
         return account;
     }
 
+    /// @notice Creates a new Nexus with K1 validator and initialization data by the EntryPoint.
+    /// @dev same as createAccount but should be called by the EntryPoint
+    /// Wallets should use this method to prevent front-running userOp.initcode execution which can lead the whole userOp to fail
+    /// See AA-466 for more details https://github.com/eth-infinitism/account-abstraction/pull/514         
+    function createAccountByEP(address eoaOwner, uint256 index, address[] calldata attesters, uint8 threshold) external payable returns (address payable) {
+        require(msg.sender == IEntryPoint(ENTRY_POINT).senderCreator(), EntryPointOnly());
+        return createAccount(eoaOwner, index, attesters, threshold);
+    }
+
+    /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
     /// @param eoaOwner The address of the EOA owner of the Nexus.
     /// @param index The index of the Nexus.
