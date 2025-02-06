@@ -23,7 +23,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         userOps[0] = buildUserOpWithCalldata(BOB, "", address(VALIDATOR_MODULE));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
+        userOps[0].signature = signPureHash(BOB, userOpHash); // Using a valid signature
 
         // Attempt to validate the user operation
         startPrank(address(ENTRYPOINT));
@@ -66,7 +66,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(BOB.addr, randomNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
+        userOps[0].signature = signPureHash(BOB, userOpHash); // Using a valid signature
 
         prank(BOB.addr);
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
@@ -124,7 +124,7 @@ contract TestFuzz_ValidateUserOp is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, randomNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
+        userOps[0].signature = signPureHash(BOB, userOpHash); // Using a valid signature
 
         address validator;
         assembly {

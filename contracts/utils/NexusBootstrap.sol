@@ -182,4 +182,8 @@ contract NexusBootstrap is ModuleManager {
         name = "NexusBootstrap";
         version = "1.0.0";
     }
+
+    function _onRedelegation() internal override {
+        // do nothing
+    }
 }

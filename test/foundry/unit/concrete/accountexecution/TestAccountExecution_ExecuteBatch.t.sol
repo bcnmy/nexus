@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 import "../../../shared/TestAccountExecution_Base.t.sol";
 
-
 contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
     function setUp() public {
         setUpTestAccountExecution_Base();
@@ -193,7 +192,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         CallType callType = CALLTYPE_BATCH;
 
         // Determine mode and calldata based on execType and executions length
-        ExecutionMode mode = ModeLib.encodeCustom(callType, unsupportedExecType);
+        ExecutionMode mode = ModeLib.encodeCustomCallExecTypes(callType, unsupportedExecType);
         bytes memory executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
 
         // Initialize the userOps array with one operation
@@ -205,7 +204,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         bytes memory expectedRevertReason = abi.encodeWithSelector(UnsupportedExecType.selector, unsupportedExecType);
 
@@ -218,4 +217,32 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         // Asserting the counter did not increment
         assertEq(counter.getNumber(), 0, "Counter should not have been incremented after unsupported exec type revert");
     }
+
+    function test_ERC7821_BatchExecution_with_OpData() public {
+        // Initial state assertion
+        assertEq(counter.getNumber(), 0, "Counter should start at 0");
+
+        // Prepare batch operations
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+        executions[1] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
+
+        ExecutionMode mode = ModeLib.encodeCustom(CALLTYPE_BATCH, EXECTYPE_DEFAULT, MODE_BATCH_OPDATA, ModePayload.wrap(0x00));
+
+        // build opData
+        bytes32 executionsBatchHash = ExecLib.hashExecutionBatch(executions);
+        bytes32 execDataHash = _hashTypedData(executionsBatchHash, address(BOB_ACCOUNT));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(BOB.privateKey, execDataHash);
+        bytes memory opData = abi.encodePacked(address(VALIDATOR_MODULE), r, s, v);
+
+        bytes memory executionCalldata = abi.encode(executions, opData);
+
+        vm.prank(ALICE_ADDRESS); // some random address
+        BOB_ACCOUNT.execute(mode, executionCalldata);
+
+        assertEq(counter.getNumber(), 2, "Counter should have been incremented twice");
+    }
+
+
+
 }

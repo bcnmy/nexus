@@ -35,7 +35,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
-        bytes memory signature = signMessage(BOB, userOpHash);
+        bytes memory signature = signPureHash(BOB, userOpHash);
         userOp.signature = signature;
 
         // Prepare the user operations array
@@ -66,7 +66,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
-        bytes memory signature = signMessage(BOB, userOpHash);
+        bytes memory signature = signPureHash(BOB, userOpHash);
         userOp.signature = signature;
 
         // Prepare the user operations array
@@ -94,7 +94,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
-        bytes memory signature = signMessage(BOB, userOpHash);
+        bytes memory signature = signPureHash(BOB, userOpHash);
         userOp.signature = signature;
 
         // Prepare the user operations array

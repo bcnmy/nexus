@@ -81,6 +81,10 @@ ExecType constant EXECTYPE_TRY = ExecType.wrap(0x01);
 ModeSelector constant MODE_DEFAULT = ModeSelector.wrap(bytes4(0x00000000));
 // Example declaration of a custom mode selector
 ModeSelector constant MODE_OFFSET = ModeSelector.wrap(bytes4(keccak256("default.mode.offset")));
+// ERC-7821 Batch with opData
+ModeSelector constant MODE_BATCH_OPDATA = ModeSelector.wrap(bytes4(0x78210001));
+// ERC-7821 Batch of Batches with opData
+ModeSelector constant MODE_BATCH_OF_BATCHES_OPDATA = ModeSelector.wrap(bytes4(0x78210002));
 
 /// @dev ModeLib is a helper library to encode/decode ModeCodes
 library ModeLib {
@@ -122,8 +126,12 @@ library ModeLib {
         mode = encode(CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function encodeCustom(CallType callType, ExecType execType) internal pure returns (ExecutionMode mode) {
+    function encodeCustomCallExecTypes(CallType callType, ExecType execType) internal pure returns (ExecutionMode mode) {
         mode = encode(callType, execType, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
+    function encodeCustom(CallType callType, ExecType execType, ModeSelector modeSelector, ModePayload modePayload) internal pure returns (ExecutionMode mode) {
+        mode = encode(callType, execType, modeSelector, modePayload);
     }
 
     function getCallType(ExecutionMode mode) internal pure returns (CallType calltype) {

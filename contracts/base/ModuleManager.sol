@@ -12,7 +12,7 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -40,6 +40,7 @@ import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
+import { ERC7779Adaptor } from "./ERC7779Adaptor.sol";
 import { EmergencyUninstall } from "../types/DataTypes.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
@@ -51,7 +52,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter, ERC7779Adaptor {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
@@ -83,6 +84,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _fallback(callData);
     }
 
+    // DELETE candidate for removal
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
     /// This utility function is not defined by the ERC-7579 standard and is implemented to facilitate
     /// easier management and retrieval of large sets of validator modules.
@@ -94,6 +96,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         (array, next) = _paginate(_getAccountStorage().validators, cursor, size);
     }
 
+    // DELETE candidate for removal
     /// @dev Retrieves a paginated list of executor addresses from the linked list.
     /// This utility function is not defined by the ERC-7579 standard and is implemented to facilitate
     /// easier management and retrieval of large sets of executor modules.
@@ -111,6 +114,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getHook();
     }
 
+    /// @notice Checks if a nonce has been used.
+    /// @param nonce The nonce to check.
+    /// @return bool True if the nonce has been used, false otherwise.
+    function wasNonceUsed(uint256 nonce) external view returns (bool) {
+        return _getAccountStorage().nonces[nonce];
+    }
+
+    /// @notice Fetches the 4337 pre-validation hook.
+    /// @return hook The address of the 4337 pre-validation hook.
+    function get4337PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @notice Fetches the 1271 pre-validation hook.
+    /// @return hook The address of the 1271 pre-validation hook.
+    function get1271PreValidationHook() external view returns (address) {
+        return address(_getAccountStorage().preValidationHookERC1271);
+    }
+
     /// @notice Fetches the fallback handler for a specific selector.
     /// @param selector The function selector to query.
     /// @return calltype The type of call that the handler manages.
@@ -126,6 +148,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
         ams.validators.init();
+
+        if (_amIERC7702()) {
+            _addStorageBase(_NEXUS_STORAGE_LOCATION);
+        }
     }
 
     /// @dev Implements Module Enable Mode flow.
@@ -205,6 +231,21 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
+    /// @dev Uninstalls all validators and emits an event if any validator fails to uninstall.
+    function _tryUninstallValidators() internal {
+        SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+        address validator = validators.getNext(SENTINEL);
+        // we do not need excessivelySafeCall here as it prevents reversion
+        // we want to know if there's revert and emit the event
+        while (validator != SENTINEL) {
+            try IValidator(validator).onUninstall("") {} catch (bytes memory reason) {
+                emit ValidatorUninstallFailed(validator, "", reason);
+            }
+            validator = validators.getNext(validator);
+        }
+        validators.popAll();
+    }
+
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
@@ -221,6 +262,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _getAccountStorage().executors.pop(prev, executor);
         executor.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+    }
+
+    /// @dev Uninstalls all executors and emits an event if any executor fails to uninstall.
+    function _tryUninstallExecutors() internal {
+        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        address executor = executors.getNext(SENTINEL);
+        while (executor != SENTINEL) {
+            try IExecutor(executor).onUninstall("") {} catch (bytes memory reason) {
+                emit ExecutorUninstallFailed(executor, "", reason);
+            }
+            executor = executors.getNext(executor);
+        }
+        executors.popAll();
     }
 
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
@@ -245,6 +299,31 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             _uninstallPreValidationHook(hook, hookType, data);
         }
         hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
+    }
+
+    /// @dev Uninstalls the hook and emits an event if the hook fails to uninstall.
+    function _tryUninstallHooks() internal {
+        address hook = _getHook();
+        if (hook != address(0)) {
+            try IHook(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setHook(address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC1271);
+        if (hook != address(0)) {
+            try IPreValidationHookERC1271(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(0));
+        }
+        hook = address(_getAccountStorage().preValidationHookERC4337);
+        if (hook != address(0)) {
+            try IPreValidationHookERC4337(hook).onUninstall("") {} catch (bytes memory reason) {
+                emit HookUninstallFailed(hook, "", reason);
+            }
+            _setPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(0));
+        }
     }
 
     /// @dev Sets the current hook in the storage to the specified address.
@@ -362,25 +441,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL EXECUTORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_EXECUTOR) {
+            if (theType == MODULE_TYPE_EXECUTOR) {
                 _installExecutor(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL FALLBACK                     */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_FALLBACK) {
+            if (theType == MODULE_TYPE_FALLBACK) {
                 _installFallbackHandler(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL HOOK (global only, not sig-specific)      */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_HOOK) {
+            if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL PRE-VALIDATION HOOK                       */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            if (theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
                 _installPreValidationHook(theType, module, initDatas[i]);
             }
         }
@@ -466,16 +545,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 return false;
             }
         } else {
-            // If the account is not initialized, check the signature against the account
-            if (!_hasValidators() && !_hasExecutors()) {
-                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig, eip712Digest);
-            } else {
-                // If the account is initialized, revert as the validator is not installed
-                revert ValidatorNotInstalled(enableModeSigValidator);
-            }
+            return _eip7702SignatureValidation(eip712Digest, sig, enableModeSigValidator);
         }
-
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -593,17 +664,41 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         hook = address(_getAccountStorage().hook);
     }
 
+    function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
+        if (!_hasValidators() && !_hasExecutors()) {
+            // Check the userOp signature if the validator is not installed (used for EIP7702)
+            return _checkSelfSignature(signature, dataHash);
+        } else {
+            // If the account is initialized, revert as the validator is not installed
+            revert ValidatorNotInstalled(validator);
+        }
+    }
+
     /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
     /// @param signature The signature to check.
     /// @param dataHash The hash of the data.
     /// @return The validation result.
     function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
         // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
+        // toEthSignedMessageHash() is now considered fallback as userOpHash is eip-712 since ep v0.8
+        address signer = ECDSA.recover(dataHash, signature);
         if (signer == address(this)) return true;
-        signer = ECDSA.recover(dataHash, signature);
+        signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
         if (signer == address(this)) return true;
         return false;
+    }
+
+    /// @dev Checks if the account is an ERC7702 account
+    ///      by checking the codehash of the account
+    ///      and comparing it to the known ERC7702 codehash
+    function _amIERC7702() internal view returns (bool res) {
+        assembly {
+            res :=
+                eq(
+                    extcodehash(address()),
+                    0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329 // (keccak256(0xef01))
+                )
+        }
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {
@@ -650,6 +745,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
+    // DELETE candidate for removal
     /// @dev Helper function to paginate entries in a SentinelList.
     /// @param list The SentinelList to paginate.
     /// @param cursor The cursor to start paginating from.

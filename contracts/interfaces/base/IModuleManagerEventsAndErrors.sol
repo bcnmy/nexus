@@ -33,6 +33,10 @@ interface IModuleManagerEventsAndErrors {
     /// @param module The address of the uninstalled module.
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
+    event ExecutorUninstallFailed(address executor, bytes data, bytes reason);
+    event ValidatorUninstallFailed(address validator, bytes data, bytes reason);
+    event HookUninstallFailed(address hook, bytes data, bytes reason);
+
     /// @notice Thrown when attempting to remove the last validator.
     error CanNotRemoveLastValidator();
 
