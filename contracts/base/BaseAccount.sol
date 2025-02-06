@@ -27,10 +27,8 @@ contract BaseAccount is IBaseAccount {
 
     error DepositWithdrawalFailed(bytes reason);
     
-    // TODO: UPDATE THIS to 2.0.0
-    
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.0.0";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.2.0.0";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
