@@ -55,6 +55,8 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
 
+import "forge-std/console2.sol";
+
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
 /// @dev Comprehensive suite of methods for managing smart accounts, integrating module management, execution management, and upgradability via UUPS.
@@ -292,13 +294,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function can only be called by the account itself or the proxy factory.
     /// When a 7702 account is created, the first userOp should contain self-call to initialize the account.
     function initializeAccount(bytes calldata initData) external payable virtual {
-        // Protect this function to only be callable when used with the proxy factory or when
-        // account calls itself
-        if (msg.sender == address(this) || _authorizeNicksMethod(initData)) {
-            // do nothing
-        } else {
-            Initializable.requireInitializable();
-        }
+        
+        // if the caller is not the account itself 
+        // and the account is not initializable = current execution frame is not factory deployment
+        if (msg.sender != address(this) && !Initializable.isInitializable()) {
+            // if none of the above, try to authorize the nicks method
+            // reverts if authorization fails
+            _authorizeNicksMethod(initData);
+        } 
+
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
@@ -542,12 +546,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         version = "2.0.0";
     }
 
-    function _authorizeNicksMethod(bytes calldata initData) internal view returns (bool) {
+    function _authorizeNicksMethod(bytes calldata initData) internal view {
         // parse auth hash and signature out of initData
         // TODO: make calldata parsing here, not abi.decode
         (bytes32 authHash, bytes memory signature) = abi.decode(initData, (bytes32, bytes));
         address signer = ECDSA.recover(authHash, signature);
-        return signer == address(this);
+        console2.log("signer", signer);
+        console2.log("address(this)", address(this));
+        assembly {
+            if iszero(eq(signer, address())) {
+                mstore(0x0, 0xaed59595) // NotInitializable()
+                revert(0x1c, 0x04)
+            }
+        }
         // TODO: set tstore nick's method flag for the initModuleManager 
     }
 }
