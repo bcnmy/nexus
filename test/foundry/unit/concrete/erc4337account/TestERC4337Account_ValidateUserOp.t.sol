@@ -24,7 +24,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         Execution[] memory executions = prepareSingleExecution(address(account), 0, "");
         PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(signer, userOpHash);
+        userOps[0].signature = signPureHash(signer, userOpHash);
 
         startPrank(address(ENTRYPOINT));
         account.validateUserOp(userOps[0], userOpHash, 0.1 ether);
@@ -36,7 +36,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         startPrank(address(ENTRYPOINT));
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
@@ -49,7 +49,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(ALICE, userOpHash);
+        userOps[0].signature = signPureHash(ALICE, userOpHash);
 
         startPrank(address(ENTRYPOINT));
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
@@ -75,7 +75,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0.5 ether);

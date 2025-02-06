@@ -603,9 +603,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return The validation result.
     function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
         // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
+        // toEthSignedMessageHash() is now considered fallback as userOpHash is eip-712 since ep v0.8
+        address signer = ECDSA.recover(dataHash, signature);
         if (signer == address(this)) return true;
-        signer = ECDSA.recover(dataHash, signature);
+        signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
         if (signer == address(this)) return true;
         return false;
     }

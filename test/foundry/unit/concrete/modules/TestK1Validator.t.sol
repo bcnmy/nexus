@@ -50,7 +50,7 @@ contract TestK1Validator is NexusTest_Base {
         userOpHash = ENTRYPOINT.getUserOpHash(userOp);
 
         // Generate a signature for the user operation hash
-        signature = signMessage(BOB, userOpHash);
+        signature = signPureHash(BOB, userOpHash);
     }
 
     /// @notice Ensures the setUp function works as expected
@@ -111,7 +111,7 @@ contract TestK1Validator is NexusTest_Base {
 
     /// @notice Tests the validateUserOp function with an invalid signature
     function test_ValidateUserOp_Failure() public {
-        userOp.signature = abi.encodePacked(signMessage(BOB, keccak256(abi.encodePacked("invalid"))));
+        userOp.signature = abi.encodePacked(signPureHash(BOB, keccak256(abi.encodePacked("invalid"))));
 
         uint256 validationResult = validator.validateUserOp(userOp, userOpHash);
 

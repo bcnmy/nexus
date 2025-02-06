@@ -28,7 +28,7 @@ contract TestERC4337Account_PayPrefund is NexusTest_Base {
         // Build a packed user operation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(signer, userOpHash);
+        userOps[0].signature = signPureHash(signer, userOpHash);
 
         startPrank(address(ENTRYPOINT));
         account.validateUserOp(userOps[0], userOpHash, 0.1 ether);

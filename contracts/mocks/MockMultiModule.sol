@@ -14,7 +14,17 @@ contract MockMultiModule is IModule {
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
         address owner = address(bytes20(configs[MODULE_TYPE_VALIDATOR][msg.sender]));
-        return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature) == owner ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+        return _checkSignature(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+    }
+
+    function _checkSignature(address owner, bytes32 userOpHash, bytes calldata signature) internal view returns (bool) {
+        if (ECDSA.recover(userOpHash, signature) == owner) {
+            return true;
+        }
+        if (ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), signature) == owner) {
+            return true;
+        } 
+        return false;
     }
 
     function getConfig(address smartAccount, uint256 moduleTypeId) external view returns (bytes32) {

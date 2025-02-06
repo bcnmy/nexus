@@ -207,7 +207,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         bytes memory expectedRevertReason = abi.encodeWithSelector(UnsupportedExecType.selector, unsupportedExecType);
 

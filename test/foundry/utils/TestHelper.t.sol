@@ -290,7 +290,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @return The signed user operation
     function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
-        return signMessage(wallet, opHash);
+        return signPureHash(wallet, opHash);
     }
 
     // -----------------------------------------
@@ -329,6 +329,11 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
         messageHash = ECDSA.toEthSignedMessageHash(messageHash);
 
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
+        signature = abi.encodePacked(r, s, v);
+    }
+
+    function signPureHash(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
         signature = abi.encodePacked(r, s, v);
     }
@@ -412,7 +417,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(signer, userOpHash);
+        userOps[0].signature = signPureHash(signer, userOpHash);
 
         return userOps;
     }
