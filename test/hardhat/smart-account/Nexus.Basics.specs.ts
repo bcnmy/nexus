@@ -411,12 +411,12 @@ describe("Nexus Basic Specs", function () {
 
       const signatureData = ethers.solidityPacked(
         ["address", "bytes"],
-        [ZeroAddress, signature],
+        [await deployer.getAddress(), signature], // use some random address instead of installed validator
       );
 
       await expect(
         smartAccount.isValidSignature(hash, signatureData),
-      ).to.be.revertedWithCustomError(smartAccount, "ValidatorNotInstalled");
+      ).to.be.revertedWithCustomError(smartAccount, "InvalidSignature"); // sig with address appended will be treated as invalid by the ECDSA library
     });
   });
 

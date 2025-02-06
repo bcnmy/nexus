@@ -326,13 +326,30 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // else proceed with normal signature verification
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
         address validator = address(bytes20(signature[0:20]));
-        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-        bytes memory signature_;
-        (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
-        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
-            return res;
-        } catch {
-            return bytes4(0xffffffff);
+        if (_isValidatorInstalled(validator)) {
+            bytes memory signature_;
+            (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
+            try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
+                return res;
+            } catch {
+                return bytes4(0xffffffff);
+            }
+        } else {
+            // try to check the signature against the account
+            if (_checkSelfSignature(signature, hash)) {
+                // if it was signed by address(this),
+                // we still revert on this, to protect from the following attack vector:
+                // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
+                // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashed in
+                // 3. In this case, if we just allow signatures by address(this), this above sig
+                //    over unsafe hash could be replayed here
+                // Thus, we revert here, but we revert with informational message, that
+                // lets know that the sig is ok, it is just potentially unsafe.
+                revert PotentiallyUnsafeSignature();
+            } else {
+                // othwerwise revert normally
+                revert ValidatorNotInstalled(validator);
+            }
         }
     }
 
