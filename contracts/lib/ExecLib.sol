@@ -46,12 +46,16 @@ library ExecLib {
      *   @return opData The op data
      */
     function cutOpData(bytes calldata executionCalldata) internal pure returns (bytes calldata executionData, bytes calldata opData) {
-        uint256 executionDataLength;
+        uint256 u;
         assembly {
-            executionDataLength := calldataload(add(executionCalldata.offset, 0x40)) // executioData length
+            u := calldataload(add(executionCalldata.offset, 0x20))     
+            let s := add(executionCalldata.offset, u)
+            opData.offset := add(s, 0x20)
+            opData.length := calldataload(s)
         }
-        executionData = executionCalldata[0:executionDataLength];
-        opData = executionCalldata[executionDataLength:];
+        // it will still contain the offset of opData at 0x20
+        // but it does no harm
+        executionData = executionCalldata[:u];
     }
 
     /**
@@ -117,7 +121,7 @@ library ExecLib {
         userOpCalldata = abi.encodePacked(target, value, callData);
     }
 
-    function hashExecutionBatch(Execution[] calldata executions) internal pure returns (bytes32) {
+    function hashExecutionBatch(Execution[] memory executions) internal pure returns (bytes32) {
         uint256 length = executions.length;
         
         bytes32[] memory a = EfficientHashLib.malloc(length);
@@ -133,7 +137,7 @@ library ExecLib {
         );
     }
 
-    function hashExecution(Execution calldata execution) internal pure returns (bytes32) {
+    function hashExecution(Execution memory execution) internal pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 EXECUTION_TYPEHASH,

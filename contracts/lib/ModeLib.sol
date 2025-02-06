@@ -126,8 +126,12 @@ library ModeLib {
         mode = encode(CALLTYPE_BATCH, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(0x00));
     }
 
-    function encodeCustom(CallType callType, ExecType execType) internal pure returns (ExecutionMode mode) {
+    function encodeCustomCallExecTypes(CallType callType, ExecType execType) internal pure returns (ExecutionMode mode) {
         mode = encode(callType, execType, MODE_DEFAULT, ModePayload.wrap(0x00));
+    }
+
+    function encodeCustom(CallType callType, ExecType execType, ModeSelector modeSelector, ModePayload modePayload) internal pure returns (ExecutionMode mode) {
+        mode = encode(callType, execType, modeSelector, modePayload);
     }
 
     function getCallType(ExecutionMode mode) internal pure returns (CallType calltype) {

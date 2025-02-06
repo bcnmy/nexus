@@ -481,8 +481,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 return (callType, execType, executionCalldata);
             } else if (modeSelector == MODE_BATCH_OPDATA) {
                 (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
-                Execution[] calldata executionBatch = executionData.decodeBatch();
-                bytes32 executionDataHash = _hashTypedData(executionBatch.hashExecutionBatch());
+                bytes32 executionDataHash = _hashTypedData(executionData.decodeBatch().hashExecutionBatch());
                 address validator = address(bytes20(opData[0:20]));
                 bool res;
                 if(_isValidatorInstalled(validator)) {
@@ -494,7 +493,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     // it will still be able to use erc-7821 batch call with opData initialization
                    res = _eip7702SignatureValidation(executionDataHash, opData[20:], validator);
                 }
-                if(res) return (callType, execType, executionData);
+                if (res) return (callType, execType, executionData);
             }
             // other mode selectors are not supported
         }
