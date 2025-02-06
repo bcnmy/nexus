@@ -245,6 +245,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         // verify signer
         // owner can not be zero address in this contract
         if (_recoverSigner(hash, signature) == owner) return true;
+        // toEthSignedMessageHash() is now considered fallback as userOpHash is eip-712 since ep v0.8
         if (_recoverSigner(hash.toEthSignedMessageHash(), signature) == owner) return true;
         return false;
     }

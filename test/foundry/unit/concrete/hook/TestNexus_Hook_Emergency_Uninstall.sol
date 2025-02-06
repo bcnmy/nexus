@@ -652,43 +652,4 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, hash);
         return abi.encodePacked(r, s, v);
     }
-
-    function _hashTypedData(bytes32 structHash, address account) internal view virtual returns (bytes32 digest) {
-        // Get the domain separator
-        digest = buildDomainSeparator(account);
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the digest.
-            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
-            mstore(0x1a, digest) // Store the domain separator.
-            mstore(0x3a, structHash) // Store the struct hash.
-            digest := keccak256(0x18, 0x42)
-            // Restore the part of the free memory slot that was overwritten.
-            mstore(0x3a, 0)
-        }
-    }
-
-    /// @notice Builds the domain separator for the account.
-    function buildDomainSeparator(address account) internal view returns (bytes32 separator) {
-        (, string memory name, string memory version,,,,) = EIP712(account).eip712Domain();
-
-        bytes32 _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
-
-        // We will use `separator` to store the name hash to save a bit of gas.
-        bytes32 versionHash;
-        separator = keccak256(bytes(name));
-        versionHash = keccak256(bytes(version));
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40) // Load the free memory pointer.
-            mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), separator) // Name hash.
-            mstore(add(m, 0x40), versionHash)
-            mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), account)
-            separator := keccak256(m, 0xa0)
-        }
-    }
 }

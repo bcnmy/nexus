@@ -69,7 +69,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Sign the user operation
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         // Expect revert due to insufficient unlocked ETH
         vm.expectRevert(abi.encodeWithSelector(MockResourceLockPreValidationHook.InsufficientUnlockedETH.selector, missingAccountFunds));
@@ -107,7 +107,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Sign the user operation
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         // Attempt to validate the user operation when unlocked balance is sufficient
         vm.assume(totalBalance - lockedAmount >= 0);
