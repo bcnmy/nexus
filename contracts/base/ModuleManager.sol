@@ -694,7 +694,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the account is an ERC7702 account
     ///      by checking the codehash of the account
     ///      and comparing it to the known ERC7702 codehash
+
+    /// TODO: Fix it because it changed in 7702,  
+    /// quote:: EXTCODEHASH would return keccak256(0xef0100 || address)
+    /// benchmark it! 
+
     function _amIERC7702() internal view returns (bool res) {
+        // todo: use extcodesize as the first cheapest check
         assembly {
             res :=
                 eq(
