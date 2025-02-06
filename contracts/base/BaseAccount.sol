@@ -24,6 +24,8 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
+
+    error DepositWithdrawalFailed(bytes reason);
     
     // TODO: UPDATE THIS to 2.0.0
     

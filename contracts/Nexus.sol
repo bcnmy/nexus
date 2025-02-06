@@ -354,12 +354,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
-        else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
-        else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
-        else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
-        else if (moduleTypeId == MODULE_TYPE_MULTI) return true;
-        else return false;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR ||
+            moduleTypeId == MODULE_TYPE_EXECUTOR ||
+            moduleTypeId == MODULE_TYPE_FALLBACK ||
+            moduleTypeId == MODULE_TYPE_HOOK ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 ||
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 ||
+            moduleTypeId == MODULE_TYPE_MULTI)
+        {
+            return true;
+        }
+        return false;
     }
 
     /// @notice Determines if a specific execution mode is supported.
