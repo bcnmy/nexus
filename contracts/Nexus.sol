@@ -48,7 +48,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
-
+import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
 /// @dev Comprehensive suite of methods for managing smart accounts, integrating module management, execution management, and upgradability via UUPS.
@@ -288,10 +288,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function initializeAccount(bytes calldata initData) external payable virtual {
         // Protect this function to only be callable when used with the proxy factory or when
         // account calls itself
-        if (msg.sender != address(this)) {
+        if (msg.sender == address(this) || _authorizeNicksMethod(initData)) {
+            // do nothing
+        } else {
             Initializable.requireInitializable();
         }
-
         _initModuleManager();
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
         (bool success,) = bootstrap.delegatecall(bootstrapCall);
@@ -449,5 +450,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
         version = "1.0.1";
+    }
+
+    function _authorizeNicksMethod(bytes calldata initData) internal view returns (bool) {
+        // parse auth hash and signature out of initData
+        // TODO: make calldata parsing here, not abi.decode
+        (bytes32 authHash, bytes memory signature) = abi.decode(initData, (bytes32, bytes));
+        address signer = ECDSA.recover(authHash, signature);
+        return signer == address(this);
+        // TODO: set tstore nick's method flag for the initModuleManager 
     }
 }
