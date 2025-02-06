@@ -534,6 +534,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         bytes32 eip712Digest = _hashTypedData(structHash);
 
+// TODO: HERE AND IN THE SIMILAR LOGIC (validate userOp, 7821 execution guard) => instead of checking isInitialized to understand if it is 7702,
+// just check sig length. if it is 65 only, then validator is not attached, then it can be 7702 if the sig is valid
+
         if (_isValidatorInstalled(enableModeSigValidator)) {
             // Use standard IERC-1271/ERC-7739 interface.
             // Even if the validator doesn't support 7739 under the hood, it is still secure,
@@ -665,7 +668,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
-        if (!_hasValidators() && !_hasExecutors()) {
+        if (!_isAlreadyInitialized()) {
             // Check the userOp signature if the validator is not installed (used for EIP7702)
             return _checkSelfSignature(signature, dataHash);
         } else {
