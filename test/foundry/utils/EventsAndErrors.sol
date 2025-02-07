@@ -62,6 +62,7 @@ contract EventsAndErrors {
     // ==========================
     error LinkedList_AlreadyInitialized();
     error LinkedList_InvalidPage();
+    error NexusSentinelList_AlreadyInitialized();
 
     // ==========================
     // Module Errors

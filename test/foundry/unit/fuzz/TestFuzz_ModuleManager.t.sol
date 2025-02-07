@@ -133,8 +133,12 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
                 address(VALIDATOR_MODULE),
                 0
             );
-            
-            bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
+            bytes memory expectedRevertReason;
+            if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+                expectedRevertReason = abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
+            } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+                expectedRevertReason = abi.encodeWithSignature("NexusSentinelList_EntryAlreadyInList(address)", moduleAddress);
+            } 
             if(moduleTypeId == MODULE_TYPE_FALLBACK) {
                 expectedRevertReason = abi.encodeWithSignature("FallbackAlreadyInstalledForSelector(bytes4)", bytes4(funcSig));
             } else if (moduleTypeId == MODULE_TYPE_HOOK) {

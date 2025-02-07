@@ -47,6 +47,7 @@ import "../../../contracts/factory/NexusAccountFactory.sol";
 import "../../../contracts/factory/RegistryFactory.sol";
 import "./../../../contracts/modules/validators/K1Validator.sol";
 import "../../../contracts/common/Stakeable.sol";
+import "../../../contracts/mocks/ExposedNexus.sol";
 
 // ==========================
 // Mock Contracts for Testing

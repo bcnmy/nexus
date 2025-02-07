@@ -13,6 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
+import { NexusSentinelListLib } from "../lib/NexusSentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -54,6 +55,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter, ERC7779Adaptor {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using NexusSentinelListLib for NexusSentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
@@ -266,7 +268,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @dev Uninstalls all executors and emits an event if any executor fails to uninstall.
     function _tryUninstallExecutors() internal {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        NexusSentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         address executor = executors.getNext(SENTINEL);
         while (executor != SENTINEL) {
             try IExecutor(executor).onUninstall("") {} catch (bytes memory reason) {
@@ -534,6 +536,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         bytes32 eip712Digest = _hashTypedData(structHash);
 
+// TODO: HERE AND IN THE SIMILAR LOGIC (validate userOp, 7821 execution guard) => instead of checking isInitialized to understand if it is 7702,
+// just check sig length. if it is 65 only, then validator is not attached, then it can be 7702 if the sig is valid
+
         if (_isValidatorInstalled(enableModeSigValidator)) {
             // Use standard IERC-1271/ERC-7739 interface.
             // Even if the validator doesn't support 7739 under the hood, it is still secure,
@@ -665,7 +670,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
-        if (!_hasValidators() && !_hasExecutors()) {
+        if (!_isAlreadyInitialized()) {
             // Check the userOp signature if the validator is not installed (used for EIP7702)
             return _checkSelfSignature(signature, dataHash);
         } else {
@@ -691,14 +696,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the account is an ERC7702 account
     ///      by checking the codehash of the account
     ///      and comparing it to the known ERC7702 codehash
-    function _amIERC7702() internal view returns (bool res) {
+    function _amIERC7702() internal view returns (bool) {
+        bytes32 c;
         assembly {
-            res :=
-                eq(
-                    extcodehash(address()),
-                    0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329 // (keccak256(0xef01))
-                )
+            // use extcodesize as the first cheapest check
+            if eq(extcodesize(address()), 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
+                let ptr := mload(0x40)
+                extcodecopy(address(), ptr, 0, 3)
+                c := mload(ptr)
+            }
+            // if it is not 23, we do not even check the code
         }
+        return bytes3(c) == bytes3(0xef0100);
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {
@@ -754,6 +764,18 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return nextCursor The cursor for the next page of entries.
     function _paginate(
         SentinelListLib.SentinelList storage list,
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
+        (array, nextCursor) = list.getEntriesPaginated(cursor, size);
+    }
+
+    function _paginate(
+        NexusSentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
     )
