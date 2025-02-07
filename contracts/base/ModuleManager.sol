@@ -694,20 +694,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the account is an ERC7702 account
     ///      by checking the codehash of the account
     ///      and comparing it to the known ERC7702 codehash
-
-    /// TODO: Fix it because it changed in 7702,  
-    /// quote:: EXTCODEHASH would return keccak256(0xef0100 || address)
-    /// benchmark it! 
-
-    function _amIERC7702() internal view returns (bool res) {
-        // todo: use extcodesize as the first cheapest check
+    function _amIERC7702() internal view returns (bool) {
+        bytes32 c;
         assembly {
-            res :=
-                eq(
-                    extcodehash(address()),
-                    0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329 // (keccak256(0xef01))
-                )
+            // use extcodesize as the first cheapest check
+            if eq(extcodesize(address()), 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
+                let ptr := mload(0x40)
+                extcodecopy(address(), ptr, 0, 3)
+                c := mload(ptr)
+            }
+            // if it is not 23, we do not even check the code
         }
+        return bytes3(c) == bytes3(0xef0100);
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {

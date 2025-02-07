@@ -9,7 +9,6 @@ import { IHook } from "contracts/interfaces/modules/IHook.sol";
 import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
 import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
 
-
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
 
@@ -295,4 +294,49 @@ contract TestEIP7702 is NexusTest_Base {
         assertTrue(INexus(account).isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
     }
 
+    // TODO:  make proper tests when Foundry supports 7702 and etching of 0xef0100xxxx
+    function test_amIERC7702_success()public {
+        ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT));
+        address eip7702account = address(0x7702acc7702acc7702acc7702acc);
+        // vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
+        // assertTrue(IExposedNexus(eip7702account).amIERC7702()); // it doesnt work yet as forge tests can not do proper 7702 atm
+        
+        // can not even etch 0xef0100 as forge considers 00 as end of code and stops etching
+        // using 111111 as a temporary workaround
+        vm.etch(eip7702account, hex'11111196d3f6c20eed2697647f543fe6c08bc2fbf39758');
+        //console2.logBytes(eip7702account.code);
+        
+        (bool res, bool res2) = _isERC7702(eip7702account);
+        assertTrue(res);
+        assertTrue(res2);
+    }
+
+    // HELPER FUNCTION UNTIL FULL 7702 SUPPORT IN TESTS
+    function _isERC7702(address account) internal view returns (bool res, bool res2) {
+        uint256 codeSize;
+        bytes32 code;
+        assembly {
+            // use extcodesize as the first cheapest check
+            codeSize := extcodesize(account)
+            if eq(codeSize, 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100 // 0x111111
+                let ptr := mload(0x40)
+                extcodecopy(account, ptr, 0, 3)
+                code := and(mload(ptr), 0xffffff0000000000000000000000000000000000000000000000000000000000)
+                //if eq(mload(ptr), 0xef0100) {
+                if eq(
+                        code, 
+                        0x1111110000000000000000000000000000000000000000000000000000000000
+                    ) {
+                        res := true
+                }
+                
+            }
+            // if it is not 23, we do not even check the code
+        }
+        bool res2 = bytes3(code) == bytes3(0x111111);
+        //console2.log("codeSize", codeSize);
+        //console2.logBytes32(code);
+        return (res, res2);
+    }
 }
