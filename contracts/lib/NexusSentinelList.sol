@@ -25,10 +25,10 @@ library NexusSentinelListLib {
         mapping(address => address) entries;
     }
 
-    error LinkedList_AlreadyInitialized();
-    error LinkedList_InvalidPage();
-    error LinkedList_InvalidEntry(address entry);
-    error LinkedList_EntryAlreadyInList(address entry);
+    error NexusSentinelList_AlreadyInitialized();
+    error NexusSentinelList_InvalidPage();
+    error NexusSentinelList_InvalidEntry(address entry);
+    error NexusSentinelList_EntryAlreadyInList(address entry);
 
     /**
      * Initialize the linked list
@@ -36,7 +36,7 @@ library NexusSentinelListLib {
      * @param self The linked list
      */
     function init(SentinelList storage self) internal {
-        if (alreadyInitialized(self)) revert LinkedList_AlreadyInitialized();
+        if (alreadyInitialized(self)) revert NexusSentinelList_AlreadyInitialized();
         if (_isNicksMethodInit()) {
             _writeToMapping(self, SENTINEL, NICKS_SENTINEL);
         } else {
@@ -65,7 +65,7 @@ library NexusSentinelListLib {
      */
     function getNext(SentinelList storage self, address entry) internal view returns (address) {
         if (entry == ZERO_ADDRESS) {
-            revert LinkedList_InvalidEntry(entry);
+            revert NexusSentinelList_InvalidEntry(entry);
         }
         return self.entries[entry];
     }
@@ -78,9 +78,9 @@ library NexusSentinelListLib {
      */
     function push(SentinelList storage self, address newEntry) internal {
         if (newEntry == ZERO_ADDRESS || newEntry == SENTINEL) {
-            revert LinkedList_InvalidEntry(newEntry);
+            revert NexusSentinelList_InvalidEntry(newEntry);
         }
-        if (self.entries[newEntry] != ZERO_ADDRESS) revert LinkedList_EntryAlreadyInList(newEntry);
+        if (self.entries[newEntry] != ZERO_ADDRESS) revert NexusSentinelList_EntryAlreadyInList(newEntry);
         // use assembly to get self.entries[SENTINEL] as bytes32
         bytes32 sentinelValue = _readFromMapping(self, SENTINEL);
         self.entries[newEntry] = self.entries[SENTINEL];
@@ -115,9 +115,9 @@ library NexusSentinelListLib {
      */
     function pop(SentinelList storage self, address prevEntry, address popEntry) internal {
         if (popEntry == ZERO_ADDRESS || popEntry == SENTINEL) {
-            revert LinkedList_InvalidEntry(prevEntry);
+            revert NexusSentinelList_InvalidEntry(prevEntry);
         }
-        if (self.entries[prevEntry] != popEntry) revert LinkedList_InvalidEntry(popEntry);
+        if (self.entries[prevEntry] != popEntry) revert NexusSentinelList_InvalidEntry(popEntry);
         // if prevEntry is the sentinel and there is a nicks method flag at msb
         // use assembly to append it to the self.entries[popEntry]
         if (prevEntry == SENTINEL && _isNicksMSB(_readFromMapping(self, SENTINEL))) {
@@ -185,8 +185,8 @@ library NexusSentinelListLib {
         view
         returns (address[] memory array, address next)
     {
-        if (start != SENTINEL && !contains(self, start)) revert LinkedList_InvalidEntry(start);
-        if (pageSize == 0) revert LinkedList_InvalidPage();
+        if (start != SENTINEL && !contains(self, start)) revert NexusSentinelList_InvalidEntry(start);
+        if (pageSize == 0) revert NexusSentinelList_InvalidPage();
         // Init array with max page size
         array = new address[](pageSize);
 

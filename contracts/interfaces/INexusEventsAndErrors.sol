@@ -57,4 +57,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when an invalid signature is detected
     error InvalidSignature();
+
+    /// @notice Error thrown when an invalid nicks method data is detected
+    error InvalidNicksMethodData(bytes32 authHash, bytes32 initDataHash, bytes signature);
 }

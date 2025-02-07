@@ -51,6 +51,7 @@ import {
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
+import { NexusSentinelListLib, NICK_METHOD_FLAG_STORAGE_SLOT } from "./lib/NexusSentinelList.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
@@ -300,11 +301,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (msg.sender != address(this) && !Initializable.isInitializable()) {
             // if none of the above, try to authorize the nicks method
             // reverts if authorization fails
-            _authorizeNicksMethod(initData);
+            initData = _authorizeNicksMethod(initData);
         } 
 
         _initModuleManager();
-        (address bootstrap, bytes memory bootstrapCall) = abi.decode(initData, (address, bytes));
+        address bootstrap;
+        bytes calldata bootstrapCall;
+        assembly {
+            bootstrap := calldataload(initData.offset)
+            let s := calldataload(add(initData.offset, 0x20))
+            let u := add(initData.offset, s)
+            bootstrapCall.offset := add(u, 0x20)
+            bootstrapCall.length := calldataload(u)
+        }
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
 
         require(success, NexusInitializationFailed());
@@ -477,6 +486,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return result == bytes4(0) ? bytes4(0xffffffff) : result;
     }
 
+    function isNicksMethodNexus() external view returns (bool) {
+        return NexusSentinelListLib._isNicksMethodNexus(_getAccountStorage().executors);
+    }
+
     /// @dev Passes if
     ///      a) the caller is the EntryPoint 
     ///      b) calltype is batch, and no ERC-7821 opdata, and the caller is this account itself, 
@@ -546,17 +559,39 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         version = "2.0.0";
     }
 
-    function _authorizeNicksMethod(bytes calldata data) internal view {
+    function _authorizeNicksMethod(bytes calldata data) internal returns (bytes calldata) {
+        bytes32 r;
+        bytes32 s;
+        bytes32 authHash;
+        bytes calldata signature;
+        bytes calldata initData;
         assembly {
             if lt(data.length, 0x61) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
+            authHash := calldataload(data.offset)
+            let p := calldataload(add(data.offset, 0x20))
+            let u := add(data.offset, p)
+            signature.offset := add(u, 0x20)
+            signature.length := calldataload(u)
+            let o:= calldataload(add(data.offset, 0x40))
+            u := add(data.offset, o)
+            initData.offset := add(u, 0x20)
+            initData.length := calldataload(u)
+
+            r := calldataload(signature.offset)
+            s := calldataload(add(signature.offset, 0x20))
         }
-        // parse auth hash and signature and initData out of data
-        // TODO: make calldata parsing here, not abi.decode
-        (bytes32 authHash, bytes memory signature) = abi.decode(data, (bytes32, bytes));
-        // TODO: check initData is hashed into initDataHash living in `r` of signature 
+        
+        // check that signature (r value) is based on the hash of the initData provided 
+        bytes32 initDataHash = keccak256(initData);
+        require(r == initDataHash, InvalidNicksMethodData(authHash, initDataHash, signature));
+
+        // check that signature (s value) matches the expected pattern of having 0s in the 20 leftmost bytes
+        require(s & 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000 == bytes32(0));
+        
+        // check auth hash signed by address(this)
         address signer = ECDSA.recover(authHash, signature);
         console2.log("signer", signer);
         console2.log("address(this)", address(this));
@@ -565,7 +600,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
+            tstore(NICK_METHOD_FLAG_STORAGE_SLOT, 0x01)
         }
-        // TODO: set tstore nick's method flag for the initModuleManager 
+        return initData;
     }
 }
