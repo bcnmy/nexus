@@ -593,6 +593,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         
         // check auth hash signed by address(this)
         address signer = ECDSA.recover(authHash, signature);
+        // TODO: remove this
         console2.log("signer", signer);
         console2.log("address(this)", address(this));
         assembly {
