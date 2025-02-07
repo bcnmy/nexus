@@ -13,6 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
+import { NexusSentinelListLib } from "../lib/NexusSentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
@@ -54,6 +55,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter, ERC7779Adaptor {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using NexusSentinelListLib for NexusSentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
@@ -266,7 +268,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @dev Uninstalls all executors and emits an event if any executor fails to uninstall.
     function _tryUninstallExecutors() internal {
-        SentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
+        NexusSentinelListLib.SentinelList storage executors = _getAccountStorage().executors;
         address executor = executors.getNext(SENTINEL);
         while (executor != SENTINEL) {
             try IExecutor(executor).onUninstall("") {} catch (bytes memory reason) {
@@ -762,6 +764,18 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return nextCursor The cursor for the next page of entries.
     function _paginate(
         SentinelListLib.SentinelList storage list,
+        address cursor,
+        uint256 size
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
+        (array, nextCursor) = list.getEntriesPaginated(cursor, size);
+    }
+
+    function _paginate(
+        NexusSentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
     )

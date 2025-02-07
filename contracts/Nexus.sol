@@ -546,10 +546,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         version = "2.0.0";
     }
 
-    function _authorizeNicksMethod(bytes calldata initData) internal view {
-        // parse auth hash and signature out of initData
+    function _authorizeNicksMethod(bytes calldata data) internal view {
+        assembly {
+            if lt(data.length, 0x61) {
+                mstore(0x0, 0xaed59595) // NotInitializable()
+                revert(0x1c, 0x04)
+            }
+        }
+        // parse auth hash and signature and initData out of data
         // TODO: make calldata parsing here, not abi.decode
-        (bytes32 authHash, bytes memory signature) = abi.decode(initData, (bytes32, bytes));
+        (bytes32 authHash, bytes memory signature) = abi.decode(data, (bytes32, bytes));
+        // TODO: check initData is hashed into initDataHash living in `r` of signature 
         address signer = ECDSA.recover(authHash, signature);
         console2.log("signer", signer);
         console2.log("address(this)", address(this));
