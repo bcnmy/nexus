@@ -308,7 +308,7 @@ contract TestEIP7702 is NexusTest_Base {
         
         (bool res, bool res2) = _isERC7702(eip7702account);
         assertTrue(res);
-        assertTrue(res2);
+        assertTrue(res2);    
     }
 
     // HELPER FUNCTION UNTIL FULL 7702 SUPPORT IN TESTS
@@ -334,7 +334,7 @@ contract TestEIP7702 is NexusTest_Base {
             }
             // if it is not 23, we do not even check the code
         }
-        bool res2 = bytes3(code) == bytes3(0x111111);
+        res2 = bytes3(code) == bytes3(0x111111);
         //console2.log("codeSize", codeSize);
         //console2.logBytes32(code);
         return (res, res2);

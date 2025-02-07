@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/console2.sol";
+
 // Sentinel address
 address constant SENTINEL = address(0x1);
+bytes32 constant NICKS_SENTINEL = bytes32(0x0100000000000000000000000000000000000000000000000000000000000001);
 // Zero address
 address constant ZERO_ADDRESS = address(0x0);
 
@@ -14,7 +17,6 @@ bytes32 constant NICK_METHOD_FLAG_STORAGE_SLOT = 0x3fa30d51722ce05d6eb76e47d8dd9
  * @title Fork of the Rhinestone/SentinelListLib
  * @dev Library for managing a linked list of addresses
  * @dev Has a flag for Nick's method Nexuses
- * @dev TODO: Uses custom hashing functions to divide b/w executors and validators
  */
 library NexusSentinelListLib {
     // Struct to hold the linked list
@@ -35,13 +37,11 @@ library NexusSentinelListLib {
      */
     function init(SentinelList storage self) internal {
         if (alreadyInitialized(self)) revert LinkedList_AlreadyInitialized();
-        if (_isNickMethodNexus()) {
-            assembly {
-                // compose sentinel with 01 in the msb
-                // 0x0100000000000000000000000000000000000000000000000000000000000001
-            }
+        if (_isNicksMethodInit()) {
+            _writeToMapping(self, SENTINEL, NICKS_SENTINEL);
+        } else {
+            self.entries[SENTINEL] = SENTINEL;
         }
-        self.entries[SENTINEL] = SENTINEL;
     }
 
     /**
@@ -81,8 +81,15 @@ library NexusSentinelListLib {
             revert LinkedList_InvalidEntry(newEntry);
         }
         if (self.entries[newEntry] != ZERO_ADDRESS) revert LinkedList_EntryAlreadyInList(newEntry);
+        // use assembly to get self.entries[SENTINEL] as bytes32
+        bytes32 sentinelValue = _readFromMapping(self, SENTINEL);
         self.entries[newEntry] = self.entries[SENTINEL];
-        self.entries[SENTINEL] = newEntry;
+        // if there is a nicks method flag at msb , use assembly to append it to new entry and store it
+        if (_isNicksMSB(sentinelValue)) {
+            _writeToMapping(self, SENTINEL, _appendNicksMSB(bytes32(uint256(uint160(newEntry)))));
+        } else {
+            self.entries[SENTINEL] = newEntry;
+        }   
     }
 
     /**
@@ -111,7 +118,13 @@ library NexusSentinelListLib {
             revert LinkedList_InvalidEntry(prevEntry);
         }
         if (self.entries[prevEntry] != popEntry) revert LinkedList_InvalidEntry(popEntry);
-        self.entries[prevEntry] = self.entries[popEntry];
+        // if prevEntry is the sentinel and there is a nicks method flag at msb
+        // use assembly to append it to the self.entries[popEntry]
+        if (prevEntry == SENTINEL && _isNicksMSB(_readFromMapping(self, SENTINEL))) {
+            _writeToMapping(self, SENTINEL, _appendNicksMSB(_readFromMapping(self, popEntry)));
+        } else {
+            self.entries[prevEntry] = self.entries[popEntry];
+        }
         self.entries[popEntry] = ZERO_ADDRESS;
     }
 
@@ -121,7 +134,19 @@ library NexusSentinelListLib {
      * @param self The linked list
      */
     function popAll(SentinelList storage self) internal {
-        address next = self.entries[SENTINEL];
+        // use assembly to get self.entries[SENTINEL] aas bytes32
+        bytes32 nextBytes32 = _readFromMapping(self, SENTINEL);
+        // if there is a nicks method flag at msb, use assembly to set it to storage 
+        // for the next reinitialization
+        if (_isNicksMSB(nextBytes32)) {
+            assembly {
+                sstore(NICK_METHOD_FLAG_STORAGE_SLOT, 0x01)
+            }
+        }
+        address next;
+        assembly {
+            next := nextBytes32
+        }
         while (next != ZERO_ADDRESS) {
             address current = next;
             next = self.entries[next];
@@ -198,7 +223,50 @@ library NexusSentinelListLib {
         }
     }
 
-    function _isNickMethodNexus() internal view returns (bool) {
+    // To be exposed as external at the using contract
+    function _isNicksMethodNexus(SentinelList storage self) internal view returns (bool res) {
+        if (_isNicksMSB(_readFromMapping(self, SENTINEL))) {
+            res = true; // return early if nicks method flag is at msb
+        } else {
+            assembly {
+                res := sload(NICK_METHOD_FLAG_STORAGE_SLOT)
+            }
+        }
+    }
+
+    function _slot(SentinelList storage self, address key) private pure returns (bytes32 __slot) {
+        bytes32 keyStored;
+        assembly {
+            mstore(0x00, key)
+            mstore(0x20, self.slot)
+            __slot := keccak256(0x00, 0x40)
+            keyStored := mload(0x00)
+        }
+    }
+
+    function _readFromMapping(SentinelList storage self, address key) internal view returns (bytes32 value) {
+        bytes32 slot = _slot(self, key);
+        assembly {
+            value := sload(slot)
+        }
+    }
+
+    function _writeToMapping(SentinelList storage self, address key, bytes32 value) internal {
+        bytes32 slot = _slot(self, key);
+        assembly {
+            sstore(slot, value)
+        }
+    }
+
+    function _isNicksMSB(bytes32 value) internal pure returns (bool) {
+        return value & bytes32(0xff00000000000000000000000000000000000000000000000000000000000000) != 0;
+    }
+
+    function _appendNicksMSB(bytes32 value) internal pure returns (bytes32) {
+        return value | bytes32(0x0100000000000000000000000000000000000000000000000000000000000000);
+    }
+
+    function _isNicksMethodInit() internal view returns (bool) {
         bool flag;
         assembly {
             flag := tload(NICK_METHOD_FLAG_STORAGE_SLOT)
