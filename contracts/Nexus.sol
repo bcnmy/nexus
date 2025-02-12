@@ -365,7 +365,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             }
         } else {
             // try to check the signature against the account
-            if (_checkSelfSignature(signature, hash)) {
+            //if (_checkSelfSignature(signature, hash)) {
+            
+            // This won't be needed.
+            // Because we will basically forward everythng to validator, and if it supports 7739
+            // we will be safe.
+            // If a signature is a pre-issued sig by EOA, and the 1271 request is not coming
+            // from a safe sender, then it will go to 7739 flow and will have to be safe there.
+            // Thus (assuming validator is initialized) we still support safe pre-issued signatures.
+            // See below about potentially unsafe pre-issued sigs. 
+
                 // if it was signed by address(this),
                 // we still revert on this, to protect from the following attack vector:
                 // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
@@ -374,11 +383,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 //    over unsafe hash could be replayed here
                 // Thus, we revert here, but we revert with informational message, that
                 // lets know that the sig is ok, it is just potentially unsafe.
-                revert PotentiallyUnsafeSignature();
-            } else {
+                //revert PotentiallyUnsafeSignature();
+            //} else {
                 // othwerwise revert normally
-                revert ValidatorNotInstalled(validator);
-            }
+                //revert ValidatorNotInstalled(validator);
+            //}
         }
     }
 
