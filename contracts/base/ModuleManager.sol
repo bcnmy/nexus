@@ -536,22 +536,27 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         bytes32 eip712Digest = _hashTypedData(structHash);
 
-// TODO: HERE AND IN THE SIMILAR LOGIC (validate userOp, 7821 execution guard) => instead of checking isInitialized to understand if it is 7702,
-// just check sig length. if it is 65 only, then validator is not attached, then it can be 7702 if the sig is valid
-
         if (_isValidatorInstalled(enableModeSigValidator)) {
-            // Use standard IERC-1271/ERC-7739 interface.
-            // Even if the validator doesn't support 7739 under the hood, it is still secure,
-            // as eip712digest is already built based on 712Domain of this Smart Account
-            // This interface should always be exposed by validators as per ERC-7579
-            try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+            sig = sig[20:];
+        } else {
+            // use default validator
+            // enableModeSigValidator = DEFAULT_VALIDATOR
+
+            // in this case we expect sig to not contain validator address
+
+            // if the sig contains validator address, which is not installed,
+            // then it won't be cut => default validator will return SIG_VALIDATION_FAILED
+        }
+
+        // Use standard IERC-1271/ERC-7739 interface.
+        // Even if the validator doesn't support 7739 under the hood, it is still secure,
+        // as eip712digest is already built based on 712Domain of this Smart Account
+        // This interface should always be exposed by validators as per ERC-7579
+        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
                 return res == ERC1271_MAGICVALUE;
             } catch {
                 return false;
             }
-        } else {
-            return _eip7702SignatureValidation(eip712Digest, sig, enableModeSigValidator);
-        }
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -667,30 +672,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return hook The address of the current hook.
     function _getHook() internal view returns (address hook) {
         hook = address(_getAccountStorage().hook);
-    }
-
-    function _eip7702SignatureValidation(bytes32 dataHash, bytes calldata signature, address validator) internal view returns (bool) {
-        if (!_isAlreadyInitialized()) {
-            // Check the userOp signature if the validator is not installed (used for EIP7702)
-            return _checkSelfSignature(signature, dataHash);
-        } else {
-            // If the account is initialized, revert as the validator is not installed
-            revert ValidatorNotInstalled(validator);
-        }
-    }
-
-    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
-    /// @param signature The signature to check.
-    /// @param dataHash The hash of the data.
-    /// @return The validation result.
-    function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
-        // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        // toEthSignedMessageHash() is now considered fallback as userOpHash is eip-712 since ep v0.8
-        address signer = ECDSA.recover(dataHash, signature);
-        if (signer == address(this)) return true;
-        signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
-        if (signer == address(this)) return true;
-        return false;
     }
 
     /// @dev Checks if the account is an ERC7702 account

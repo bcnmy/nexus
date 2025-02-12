@@ -125,13 +125,21 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, userOp, missingAccountFunds);
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
+
+            // ADD DEFAULT VALIDATOR FLOW
+            // NOTE: Maybe it will be cheaper to use the calldata flag 
+            // instead of doing _isValidatorInstalled() which is SLOAD
+
+            // Since the AA-521 PR we expect that validators are always installed/initialized
+            // even for the freshly delegated 7702 accounts
+
             if (_isValidatorInstalled(validator)) {
                 PackedUserOperation memory userOp = op;
                 // If the validator is installed, forward the validation task to the validator
                 (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
                 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
             } else {
-                validationData = _eip7702SignatureValidation(userOpHash, op.signature, validator) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+                revert ValidatorNotInstalled(validator);
             }
         }
     }
@@ -290,20 +298,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
+    function initializeAccount(bytes calldata initData) external payable virtual {
+        if (!Initializable.isInitializable()) {
+            _onlyEntryPointOrSelf();
+        }
+        _initializeAccount(initData);
+    }
+
+    function initializeKeyless7702Account(bytes calldata initData) external payable virtual {
+        _initializeAccount(_authorizeNicksMethod(initData));
+    }
+
     /// @notice Initializes the smart account with the specified initialization data.
     /// @param initData The initialization data for the smart account.
-    /// @dev This function can only be called by the account itself or the proxy factory.
-    /// When a 7702 account is created, the first userOp should contain self-call to initialize the account.
-    function initializeAccount(bytes calldata initData) external payable virtual {
-        
-        // if the caller is not the account itself 
-        // and the account is not initializable = current execution frame is not factory deployment
-        if (msg.sender != address(this) && !Initializable.isInitializable()) {
-            // if none of the above, try to authorize the nicks method
-            // reverts if authorization fails
-            initData = _authorizeNicksMethod(initData);
-        } 
-
+    function _initializeAccount(bytes calldata initData) internal virtual {
         _initModuleManager();
         address bootstrap;
         bytes calldata bootstrapCall;
@@ -522,7 +530,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 } else {
                     // If this is a fresh, non-initialized 7702 Nexus instance, 
                     // it will still be able to use erc-7821 batch call with opData initialization
-                   res = _eip7702SignatureValidation(executionDataHash, opData[20:], validator);
+                    
+                    // TODO: USE DEFAULT VALIDATOR INSTEAD => CHECK ModuleManager._checkEnableModeSignature()
                 }
                 if (res) return (callType, execType, executionData);
             }
