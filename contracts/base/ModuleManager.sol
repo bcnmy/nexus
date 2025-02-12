@@ -536,11 +536,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         address enableModeSigValidator = address(bytes20(sig[0:20]));
         bytes32 eip712Digest = _hashTypedData(structHash);
 
+        // NOTE: Maybe it will be cheaper to use the calldata flag 
+        // instead of doing _isValidatorInstalled() which is SLOAD
         if (_isValidatorInstalled(enableModeSigValidator)) {
             sig = sig[20:];
         } else {
             // use default validator
-            // enableModeSigValidator = DEFAULT_VALIDATOR
+            // TODO: enableModeSigValidator = DEFAULT_VALIDATOR
 
             // in this case we expect sig to not contain validator address
 

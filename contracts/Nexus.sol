@@ -349,6 +349,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
         // else proceed with normal signature verification
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
+
+        // TODO: ADD DEFAULT VALIDATOR FLOW
+        // NOTE: Maybe it will be cheaper to use the calldata flag 
+        // instead of doing _isValidatorInstalled() which is SLOAD
+
         address validator = address(bytes20(signature[0:20]));
         if (_isValidatorInstalled(validator)) {
             bytes memory signature_;
@@ -532,6 +537,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     // it will still be able to use erc-7821 batch call with opData initialization
                     
                     // TODO: USE DEFAULT VALIDATOR INSTEAD => CHECK ModuleManager._checkEnableModeSignature()
+                    // NOTE: Maybe it will be cheaper to use the calldata flag 
+                    // instead of doing _isValidatorInstalled() which is SLOAD
                 }
                 if (res) return (callType, execType, executionData);
             }
