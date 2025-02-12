@@ -686,7 +686,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             if eq(extcodesize(address()), 23) {
                 // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
                 let ptr := mload(0x40)
-                extcodecopy(address(), ptr, 0, 3)
+                codecopy(ptr, 0, 3)
                 c := mload(ptr)
             }
             // if it is not 23, we do not even check the code
