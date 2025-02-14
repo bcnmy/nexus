@@ -152,7 +152,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable withHook {
         (CallType callType, ExecType execType, bytes calldata executionData) = _executionGuard({
             mode: mode,
-            maxExecutionFrames: 1,
+            maxSelfExecutionFrames: 1,
             executionCalldata: executionCalldata
         });
         if (callType == CALLTYPE_SINGLE) {
@@ -520,39 +520,39 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// The execution frames limit is introduced to prevent hiding actions in the self-call loop calldata.
     function _executionGuard(
         ExecutionMode mode,
-        uint256 maxExecutionFrames,
+        uint256 maxSelfExecutionFrames,
         bytes calldata executionCalldata
     ) internal returns (CallType, ExecType, bytes calldata) {
         (CallType callType, ExecType execType, ModeSelector modeSelector,) = mode.decode();
         if (msg.sender == _ENTRYPOINT) {
             return (callType, execType, executionCalldata);
         }
-        if (callType == CALLTYPE_BATCH) {
-            if (modeSelector == MODE_DEFAULT) {
-                require(msg.sender == address(this), AccountAccessUnauthorized());
-                _checkAndUpdateExecutionFrames(maxExecutionFrames);
-                return (callType, execType, executionCalldata);
-            } else if (modeSelector == MODE_BATCH_OPDATA) {
-                (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
-                bytes32 executionDataHash = _hashTypedData(executionData.decodeBatch().hashExecutionBatch());
-                address validator = address(bytes20(opData[0:20]));
-                bool res;
-                if(_isValidatorInstalled(validator)) {
-                    // we use address(this) as a sender to hit vanilla 1271 flow on erc-7739 compatible validators
-                    // since we know executionDataHash is based on domain separator of the account => it has account address hashed into it
-                    res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
-                } else {
-                    // If this is a fresh, non-initialized 7702 Nexus instance, 
-                    // it will still be able to use erc-7821 batch call with opData initialization
-                    
-                    // TODO: USE DEFAULT VALIDATOR INSTEAD => CHECK ModuleManager._checkEnableModeSignature()
-                    // NOTE: Maybe it will be cheaper to use the calldata flag 
-                    // instead of doing _isValidatorInstalled() which is SLOAD
-                }
-                if (res) return (callType, execType, executionData);
-            }
-            // other mode selectors are not supported
+        // all calltypes are supported for self-calls not deeper than maxSelfExecutionFrames
+        if (msg.sender == address(this)) {
+            require(modeSelector == MODE_DEFAULT, AccountAccessUnauthorized());
+            _checkAndUpdateExecutionFrames(maxSelfExecutionFrames);
+            return (callType, execType, executionCalldata);
         }
+        if (callType == CALLTYPE_BATCH && modeSelector == MODE_BATCH_OPDATA) {
+            (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
+            bytes32 executionDataHash = _hashTypedData(executionData.decodeBatch().hashExecutionBatch());
+            address validator = address(bytes20(opData[0:20]));
+            bool res;
+            if(_isValidatorInstalled(validator)) {
+                // we use address(this) as a sender to hit vanilla 1271 flow on erc-7739 compatible validators
+                // since we know executionDataHash is based on domain separator of the account => it has account address hashed into it
+                res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
+            } else {
+                // If this is a fresh, non-initialized 7702 Nexus instance, 
+                // it will still be able to use erc-7821 batch call with opData initialization
+                
+                // TODO: USE DEFAULT VALIDATOR INSTEAD => CHECK ModuleManager._checkEnableModeSignature()
+                // NOTE: Maybe it will be cheaper to use the calldata flag 
+                // instead of doing _isValidatorInstalled() which is SLOAD
+            }
+            if (res) return (callType, execType, executionData);
+        }
+        // other mode selectors are not supported
         revert AccountAccessUnauthorized();
     }
 
