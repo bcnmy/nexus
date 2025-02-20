@@ -548,6 +548,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
             // if the sig contains validator address, which is not installed,
             // then it won't be cut => default validator will return SIG_VALIDATION_FAILED
+            // addiitonally every validator knows which sig.length to expect so it
+            // can even revert with a custom message, and can even call account.isModuleInstalled()
+            // to check if the validator is installed. So this check is only applied to unhappy path and
+            // doesnt consume gas for happy paths
         }
 
         // Use standard IERC-1271/ERC-7739 interface.
