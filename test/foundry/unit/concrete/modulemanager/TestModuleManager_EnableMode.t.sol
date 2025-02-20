@@ -6,7 +6,7 @@ import "../../../utils/NexusTest_Base.t.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH, MODULE_ENABLE_MODE_NOTATION } from "contracts/types/Constants.sol";
+import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";
 import "solady/utils/EIP712.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
@@ -26,6 +26,8 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
     Counter public counter;
     bytes32 internal constant _DOMAIN_TYPEHASH =
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+    string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
 
     function setUp() public {
         setUpModuleManagement_Base();
