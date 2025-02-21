@@ -20,7 +20,13 @@ contract TestBiconomyMetaFactory_Deployments is NexusTest_Base {
         vm.deal(user.addr, 1 ether);
         metaFactory = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         mockFactory = address(
-            new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), new NexusBootstrap(), REGISTRY)
+            new K1ValidatorFactory(
+                address(ACCOUNT_IMPLEMENTATION), 
+                address(FACTORY_OWNER.addr), 
+                address(VALIDATOR_MODULE), 
+                new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0))), 
+                REGISTRY
+            )
         );
     }
 

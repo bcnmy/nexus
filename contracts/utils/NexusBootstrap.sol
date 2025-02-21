@@ -32,11 +32,19 @@ struct BootstrapConfig {
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
 contract NexusBootstrap is ModuleManager {
 
+    constructor(address defaultValidator, bytes memory initData) ModuleManager(defaultValidator, initData) {}
+
     modifier _withInitSentinelLists() {
         _initSentinelLists();
         _;
     }
 
+    /// @notice Initializes the Nexus account with the default validator.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param data The initialization data for the default validator module.
+    /// @param registry The registry for the Nexus account.
+    /// @param attesters The attesters for the Nexus account.
+    /// @param threshold The threshold for the Nexus account.
     function initNexusWithDefaultValidator(
         bytes calldata data,
         IERC7484 registry,
@@ -47,7 +55,7 @@ contract NexusBootstrap is ModuleManager {
         payable
     {
         _configureRegistry(registry, attesters, threshold);
-        IValidator(_DEFAULT_VALIDATOR).onInstall(data);
+        IModule(_DEFAULT_VALIDATOR).onInstall(data);
     }
 
     /// @notice Initializes the Nexus account with a single validator.

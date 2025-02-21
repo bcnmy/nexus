@@ -65,7 +65,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
     /// @notice The flag to indicate the default validator mode for enable mode signature
-    bytes20 internal constant _DEFAULT_VALIDATOR_FLAG = 0x0000000000000000000000000000000000000088;
+    address internal constant _DEFAULT_VALIDATOR_FLAG = 0x0000000000000000000000000000000000000088;
     
     /// @dev initData should block the implementation from being used as a Smart Account
     constructor(address _defaultValidator, bytes memory _initData) {
@@ -242,6 +242,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
+        if(validator == _DEFAULT_VALIDATOR) revert DefaultValidatorCanNotBeInstalled();
          _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
@@ -257,10 +258,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Perform the removal first
         validators.pop(prev, validator);
 
-        // Sentinel pointing to itself / zero means the list is empty / uninitialized, so check this after removal
-        // Below error is very specific to uninstalling validators.
-        require(_hasValidators(), CanNotRemoveLastValidator());
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
+        // no check for removing the last validator, as with 7702 and DEFAULT_VALIDATOR,
+        // it doesn't necessarily mean the account is unusable
     }
 
     /// @dev Uninstalls all validators and emits an event if any validator fails to uninstall.
@@ -660,11 +660,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getAccountStorage().validators.contains(validator);
     }
 
-    /// @dev Checks if there is at least one validator installed.
-    /// @return True if there is at least one validator, otherwise false.
-    function _hasValidators() internal view returns (bool) {
-        return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
+    /// @dev Checks if an executor is currently installed.
+    /// @param executor The address of the executor to check.
+    /// @return True if the executor is installed, otherwise false.
+    function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
+        return _getAccountStorage().executors.contains(executor);
     }
 
     /// @dev Checks if a hook is currently installed.
