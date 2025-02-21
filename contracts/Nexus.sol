@@ -626,6 +626,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 revert(0x1c, 0x04)
             }
         }
+        emit KeylessNexusInitialized(address(this));
         return initData;
     }
 }
