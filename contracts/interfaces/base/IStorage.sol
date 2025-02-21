@@ -13,7 +13,6 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
-import { NexusSentinelListLib } from "../../lib/NexusSentinelList.sol";
 import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "../modules/IPreValidationHook.sol";
 import { IHook } from "../modules/IHook.sol";
 import { CallType } from "../../lib/ModeLib.sol";
@@ -35,7 +34,7 @@ interface IStorage {
         ///< List of validators, initialized upon contract deployment.
         SentinelListLib.SentinelList validators;
         ///< List of executors, similarly initialized.
-        NexusSentinelListLib.SentinelList executors;
+        SentinelListLib.SentinelList executors;
         ///< Mapping of selectors to their respective fallback handlers.
         mapping(bytes4 => FallbackHandler) fallbacks;
         ///< Current hook module associated with this account.

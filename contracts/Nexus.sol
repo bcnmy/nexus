@@ -51,7 +51,6 @@ import {
 } from "./lib/ModeLib.sol";
 import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
-import { NexusSentinelListLib, NICK_METHOD_FLAG_STORAGE_SLOT } from "./lib/NexusSentinelList.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
@@ -507,10 +506,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return result == bytes4(0) ? bytes4(0xffffffff) : result;
     }
 
-    function isNicksMethodNexus() external view returns (bool) {
-        return NexusSentinelListLib._isNicksMethodNexus(_getAccountStorage().executors);
-    }
-
     /// @dev Passes if
     ///      a) the caller is the EntryPoint 
     ///      b) calltype is batch, and no ERC-7821 opdata, and the caller is this account itself, 
@@ -630,7 +625,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
-            tstore(NICK_METHOD_FLAG_STORAGE_SLOT, 0x01)
         }
         return initData;
     }
