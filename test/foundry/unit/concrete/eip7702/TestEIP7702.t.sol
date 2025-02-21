@@ -26,7 +26,8 @@ contract TestEIP7702 is NexusTest_Base {
     }
 
     function _doEIP7702(address account) internal {
-        vm.etch(account, address(ACCOUNT_IMPLEMENTATION).code);
+        //vm.etch(account, address(ACCOUNT_IMPLEMENTATION).code);
+        vm.etch(account, abi.encodePacked(bytes3(0xef0100), bytes20(address(ACCOUNT_IMPLEMENTATION))));
     }
 
     function _getInitData() internal view returns (bytes memory) {
