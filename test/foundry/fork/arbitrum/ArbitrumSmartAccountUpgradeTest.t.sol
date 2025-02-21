@@ -45,7 +45,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     /// @notice Validates the account ID after the upgrade process.
     function test_AccountIdValidationAfterUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();
-        string memory expectedAccountId = "biconomy.nexus.1.0.0";
+        string memory expectedAccountId = "biconomy.nexus.2.0.0";
         string memory actualAccountId = IAccountConfig(payable(address(smartAccountV2))).accountId();
         assertEq(actualAccountId, expectedAccountId, "Account ID does not match after upgrade.");
     }
@@ -128,7 +128,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData);
 
         bytes32 userOpHash = ENTRYPOINT_V_0_6.getUserOpHash(userOps[0]);
-        userOps[0].signature = abi.encode(signMessage(signer, userOpHash), MODULE_ADDRESS);
+        userOps[0].signature = abi.encode(signPureHash(signer, userOpHash), MODULE_ADDRESS);
 
         ENTRYPOINT_V_0_6.handleOps(userOps, address(this));
     }

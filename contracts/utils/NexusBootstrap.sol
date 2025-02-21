@@ -41,7 +41,10 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+    {
         _configureRegistry(registry, attesters, threshold);
         _installValidator(address(validator), data);
     }
@@ -60,7 +63,10 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+    {
         _configureRegistry(registry, attesters, threshold);
 
         // Initialize validators
@@ -96,7 +102,10 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+    {
         _configureRegistry(registry, attesters, threshold);
 
         // Initialize validators
@@ -124,7 +133,11 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(address(this), abi.encodeCall(this.initNexus, (validators, executors, hook, fallbacks, registry, attesters, threshold)));
     }
 
@@ -138,7 +151,11 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, (validators, hook, registry, attesters, threshold)));
     }
 
@@ -150,10 +167,13 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(
-            address(this),
-            abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
+            address(this), abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
         );
     }
 
@@ -161,5 +181,9 @@ contract NexusBootstrap is ModuleManager {
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
         version = "1.0.0";
+    }
+
+    function _onRedelegation() internal override {
+        // do nothing
     }
 }

@@ -83,7 +83,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.1.0.0", "Not deployed properly");
+        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.2.0.0", "Not deployed properly");
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
@@ -113,7 +113,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(LinkedList_AlreadyInitialized.selector);
+        vm.expectRevert(NexusSentinelList_AlreadyInitialized.selector);
         INexus(firstAccountAddress).initializeAccount(factoryData);
     }
 

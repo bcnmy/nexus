@@ -23,7 +23,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Sign operation with valid signer
+        userOps[0].signature = signPureHash(BOB, userOpHash); // Sign operation with valid signer
 
         startPrank(address(ENTRYPOINT));
         // Attempt to validate the user operation, expecting success
@@ -38,7 +38,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(ALICE, userOpHash); // Incorrect signer simulated
+        userOps[0].signature = signPureHash(ALICE, userOpHash); // Incorrect signer simulated
 
         startPrank(address(ENTRYPOINT));
         // Attempt to validate the user operation, expecting failure due to invalid signature
@@ -53,7 +53,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash); // Still correctly signed
+        userOps[0].signature = signPureHash(BOB, userOpHash); // Still correctly signed
 
         startPrank(address(BOB_ACCOUNT));
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
@@ -66,7 +66,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTest_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = buildPackedUserOp(userAddress, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0)));
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(ALICE, userOpHash); // Incorrect signer
+        userOps[0].signature = signPureHash(ALICE, userOpHash); // Incorrect signer
 
         startPrank(address(ENTRYPOINT));
         uint256 res = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);

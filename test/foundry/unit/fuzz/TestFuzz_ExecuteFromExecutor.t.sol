@@ -45,7 +45,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
     /// @param target The target address for the execution
     /// @param value The value to be transferred in the execution
     function testFuzz_ExecuteSingleFromExecutor(address target, uint256 value) public {
-        vm.assume(uint160(address(target)) > 10);
+        vm.assume(uint160(address(target)) > 255); // do not hit precompiles
         vm.assume(!isContract(target));
         vm.assume(value < 1_000_000_000 ether);
         vm.deal(address(BOB_ACCOUNT), value);

@@ -51,4 +51,13 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when attempted to emergency-uninstall a hook
     error EmergencyTimeLockNotExpired();
+
+    /// @notice Error thrown when a valid, though potentially unsafe signature is detected
+    error PotentiallyUnsafeSignature();
+
+    /// @notice Error thrown when an invalid signature is detected
+    error InvalidSignature();
+
+    /// @notice Error thrown when an invalid nicks method data is detected
+    error InvalidNicksMethodData(bytes32 authHash, bytes32 initDataHash, bytes signature);
 }

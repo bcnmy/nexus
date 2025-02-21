@@ -41,6 +41,7 @@ export const DefaultsForUserOp: UserOperation = {
 
 export const MODE_VALIDATION = "0x00";
 export const MODE_MODULE_ENABLE = "0x01";
+export const _DOMAIN_TYPEHASH = '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f';
 
 const abiCoder = new ethers.AbiCoder();
 /**
@@ -487,4 +488,23 @@ export async function impersonateAccount(address: string) {
 // Helper to stop impersonating an account
 export async function stopImpersonateAccount(address: string) {
   await ethers.provider.send("hardhat_stopImpersonatingAccount", [address]);
+}
+
+export async function getDomainSeparator(account: Nexus) {
+  // reimplement calculating domain separator
+  const [fields, name, version, chainId, verifyingContract, salt, extensions] =
+    await account.eip712Domain();
+  //convert chainId to hex
+  const chainIdBytes = ethers.toBeHex(chainId, 32);
+  // manually calculate domain separator
+  const domainSeparator = ethers.keccak256(
+    ethers.concat([
+      _DOMAIN_TYPEHASH,
+      ethers.keccak256(ethers.toUtf8Bytes(name)),
+      ethers.keccak256(ethers.toUtf8Bytes(version)),
+      chainIdBytes,
+      ethers.zeroPadValue(verifyingContract, 32),
+    ]),
+  );
+  return domainSeparator;
 }

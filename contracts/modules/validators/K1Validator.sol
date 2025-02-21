@@ -62,6 +62,9 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
 
+    /// @notice Error to indicate that the safe senders data length is invalid
+    error InvalidSafeSendersLength();
+
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
@@ -245,12 +248,14 @@ contract K1Validator is IValidator, ERC7739Validator {
         // verify signer
         // owner can not be zero address in this contract
         if (_recoverSigner(hash, signature) == owner) return true;
+        // toEthSignedMessageHash() is now considered fallback as userOpHash is eip-712 since ep v0.8
         if (_recoverSigner(hash.toEthSignedMessageHash(), signature) == owner) return true;
         return false;
     }
 
     // @notice Fills the _safeSenders list from the given data
     function _fillSafeSenders(bytes calldata data) private {
+        require(data.length % 20 == 0, InvalidSafeSendersLength());
         for (uint256 i; i < data.length / 20; i++) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }

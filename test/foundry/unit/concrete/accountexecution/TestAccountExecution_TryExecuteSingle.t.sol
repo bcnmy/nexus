@@ -175,7 +175,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Sign the operation
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = signMessage(BOB, userOpHash);
+        userOps[0].signature = signPureHash(BOB, userOpHash);
 
         // Expect the TryDelegateCallUnsuccessful event to be emitted
         vm.expectEmit(true, true, true, true);

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "../../../utils/NexusTest_Base.t.sol";
+import { NexusProxy } from "../../../../../contracts/utils/NexusProxy.sol";
 
 /// @title TestAccountFactory_Deployments
 /// @notice Tests for deploying accounts using the AccountFactory and various methods.
@@ -72,7 +73,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.1.0.0", "Not deployed properly");
+        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.2.0.0", "Not deployed properly");
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
@@ -102,7 +103,7 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(LinkedList_AlreadyInitialized.selector);
+        vm.expectRevert(NexusSentinelList_AlreadyInitialized.selector);
         INexus(firstAccountAddress).initializeAccount(factoryData);
     }
 
@@ -204,18 +205,14 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
 
         // Verify that the validators and hook were installed
+        assertTrue(INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Validator should be installed");
         assertTrue(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Validator should be installed"
-        );
-        assertTrue(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
-            "Hook should be installed"
+            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)), "Hook should be installed"
         );
     }
 
     /// @notice Tests that the manually computed address matches the one from computeAccountAddress.
-    function test_ComputeAccountAddress_ManualComparison() public {
+    function test_ComputeAccountAddress_ManualComparison() public view {
         // Prepare the initial data and salt
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
@@ -225,14 +222,30 @@ contract TestAccountFactory_Deployments is NexusTest_Base {
         // Create initcode and salt to be sent to Factory
         bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
 
-        // Manually compute the actual salt
-        bytes32 actualSalt = keccak256(abi.encodePacked(_initData, salt));
         // Compute the expected address using the factory's function
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Manually compute the expected address
         address payable manualExpectedAddress = payable(
-            LibClone.predictDeterministicAddressERC1967(FACTORY.ACCOUNT_IMPLEMENTATION(), actualSalt, address(FACTORY))
+            address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(FACTORY),
+                                salt,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(NexusProxy).creationCode,
+                                        abi.encode(FACTORY.ACCOUNT_IMPLEMENTATION(), abi.encodeCall(INexus.initializeAccount, _initData))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         );
 
         // Validate that both addresses match
