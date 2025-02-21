@@ -60,6 +60,21 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     using ExecLib for address;
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
+
+    /// @dev The default validator address.
+    /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    address internal immutable _DEFAULT_VALIDATOR;
+    /// @notice The flag to indicate the default validator mode for enable mode signature
+    bytes20 internal constant _DEFAULT_VALIDATOR_FLAG = 0x0000000000000000000000000000000000000088;
+    
+    /// @dev initData should block the implementation from being used as a Smart Account
+    constructor(address _defaultValidator, bytes memory _initData) {
+        if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
+            revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR); 
+        IValidator(_defaultValidator).onInstall(_initData);
+        _DEFAULT_VALIDATOR = _defaultValidator;
+    }
+    
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
@@ -145,7 +160,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Initializes the module manager by setting up default states for validators and executors.
-    function _initModuleManager() internal virtual {
+    function _initSentinelLists() internal virtual {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
@@ -167,11 +182,23 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature)) {
+        address enableModeSigValidator = address(bytes20(enableModeSignature[0:20]));
+        if (enableModeSigValidator == _DEFAULT_VALIDATOR_FLAG) {
+            enableModeSigValidator = _DEFAULT_VALIDATOR;
+        } else {
+            require(_isValidatorInstalled(enableModeSigValidator), ValidatorNotInstalled(enableModeSigValidator));
+        }
+        enableModeSignature = enableModeSignature[20:];
+        
+        if (!_checkEnableModeSignature({
+            structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), 
+            sig: enableModeSignature,
+            validator: enableModeSigValidator
+        })) {
             revert EnableModeSigError();
         }
-        if (!_isAlreadyInitialized()) {
-            _initModuleManager();
+        if (!_areSentinelListsInitialized()) {
+            _initSentinelLists();
         }
         _installModule(moduleType, module, moduleInitData);
     }
@@ -189,6 +216,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
     function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+        if (!_areSentinelListsInitialized()) {
+            _initSentinelLists();
+        }
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
@@ -532,37 +562,21 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
-    function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
+    function _checkEnableModeSignature(
+        bytes32 structHash,
+        bytes calldata sig,
+        address validator
+    ) internal view returns (bool) {
         bytes32 eip712Digest = _hashTypedData(structHash);
-
-        // NOTE: Maybe it will be cheaper to use the calldata flag 
-        // instead of doing _isValidatorInstalled() which is SLOAD
-        if (_isValidatorInstalled(enableModeSigValidator)) {
-            sig = sig[20:];
-        } else {
-            // use default validator
-            // TODO: enableModeSigValidator = DEFAULT_VALIDATOR
-
-            // in this case we expect sig to not contain validator address
-
-            // if the sig contains validator address, which is not installed,
-            // then it won't be cut => default validator will return SIG_VALIDATION_FAILED
-            // addiitonally every validator knows which sig.length to expect so it
-            // can even revert with a custom message, and can even call account.isModuleInstalled()
-            // to check if the validator is installed. So this check is only applied to unhappy path and
-            // doesnt consume gas for happy paths
-        }
-
         // Use standard IERC-1271/ERC-7739 interface.
         // Even if the validator doesn't support 7739 under the hood, it is still secure,
         // as eip712digest is already built based on 712Domain of this Smart Account
         // This interface should always be exposed by validators as per ERC-7579
-        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
+        try IValidator(validator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
                 return res == ERC1271_MAGICVALUE;
-            } catch {
-                return false;
-            }
+        } catch {
+            return false;
+        }
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -616,7 +630,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the validator list is already initialized.
     ///      In theory it doesn't 100% mean there is a validator or executor installed.
     ///      Use below functions to check for validators and executors.
-    function _isAlreadyInitialized() internal view virtual returns (bool) {
+    function _areSentinelListsInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized() && ams.executors.alreadyInitialized();
@@ -651,20 +665,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _hasValidators() internal view returns (bool) {
         return
             _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
-    }
-
-    /// @dev Checks if there is at least one executor installed.
-    /// @return True if there is at least one executor, otherwise false.
-    function _hasExecutors() internal view returns (bool) {
-        return
-            _getAccountStorage().executors.getNext(address(0x01)) != address(0x01) && _getAccountStorage().executors.getNext(address(0x01)) != address(0x00);
-    }
-
-    /// @dev Checks if an executor is currently installed.
-    /// @param executor The address of the executor to check.
-    /// @return True if the executor is installed, otherwise false.
-    function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
-        return _getAccountStorage().executors.contains(executor);
     }
 
     /// @dev Checks if a hook is currently installed.

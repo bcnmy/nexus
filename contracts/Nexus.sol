@@ -82,10 +82,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     event EmergencyHookUninstallRequestReset(address hook, uint256 timestamp);
 
     /// @notice Initializes the smart account with the specified entry point.
-    constructor(address anEntryPoint) {
+    constructor(
+        address anEntryPoint,
+        address defaultValidator,
+        bytes memory initData
+    )
+        ModuleManager(defaultValidator, initData)
+    {
         require(address(anEntryPoint) != address(0), EntryPointCanNotBeZero());
         _ENTRYPOINT = anEntryPoint;
-        _initModuleManager();
     }
 
     /// @notice Validates a user operation against a specified validator, extracted from the operation's nonce.
@@ -117,30 +122,24 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         returns (uint256 validationData)
     {
         _onlyEntryPoint();
-        address validator = op.nonce.getValidator();
+        address validator;
+        if (op.nonce.isDefaultValidatorMode()) {
+            validator = _DEFAULT_VALIDATOR;
+        } else {
+            validator = op.nonce.getValidator();
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+        }
         if (op.nonce.isModuleEnableMode()) {
             PackedUserOperation memory userOp = op;
             userOp.signature = _enableMode(userOpHash, op.signature);
-            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, userOp, missingAccountFunds);
             validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         } else {
-
-            // ADD DEFAULT VALIDATOR FLOW
-            // NOTE: Maybe it will be cheaper to use the calldata flag 
-            // instead of doing _isValidatorInstalled() which is SLOAD
-
-            // Since the AA-521 PR we expect that validators are always installed/initialized
-            // even for the freshly delegated 7702 accounts
-
-            if (_isValidatorInstalled(validator)) {
-                PackedUserOperation memory userOp = op;
-                // If the validator is installed, forward the validation task to the validator
-                (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
-                validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
-            } else {
-                revert ValidatorNotInstalled(validator);
-            }
+            // With EP v0.8 we expect that validators are always installed/initialized
+            PackedUserOperation memory userOp = op;
+            // If the validator is installed, forward the validation task to the validator
+            (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, op, missingAccountFunds);
+            validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
         }
     }
 
@@ -222,13 +221,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
+    /// @dev Unitialized accounts are not allowed to install modules. Freshly delegated 7702 accounts 
+    ///      SHOULD use initializeAccount() instead.
     function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable {
         _onlyEntryPointOrSelf();
-        // protection for EIP-7702 accounts which were not initialized
-        // and try to install a validator or executor during the first userOp not via initializeAccount()
-        if (!_isAlreadyInitialized()) {
-            _initModuleManager();
-        }
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -312,7 +308,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @notice Initializes the smart account with the specified initialization data.
     /// @param initData The initialization data for the smart account.
     function _initializeAccount(bytes calldata initData) internal virtual {
-        _initModuleManager();
         address bootstrap;
         bytes calldata bootstrapCall;
         assembly {
@@ -325,7 +320,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
 
         require(success, NexusInitializationFailed());
-        require(_hasValidators(), NoValidatorInstalled());
+
+        // _hasValidators check removed as with 7702 even if there's no validator installed,
+        // the account is still initializeable.
+        // Checking all the possible cases of whether account is initializeable or initialized
+        // is too gas heavy, so it's initializing party responsibility to provide valid initData.
     }
 
     function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable {
@@ -617,6 +616,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         require(s & 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000 == bytes32(0));
         
         // check auth hash signed by address(this)
+        // we just use authHash provided in the `data` instead of recomputing it
+        // because it is computationally unlikely to find another hash that 
+        // combined with another `r` (which means another initdata) 
+        // and another `s` that matches the pattern of having 0s in the 20 leftmost bytes
+        // would result in the same recovered signer (address(this)).
         address signer = ECDSA.recover(authHash, signature);
         // TODO: remove this
         console2.log("signer", signer);

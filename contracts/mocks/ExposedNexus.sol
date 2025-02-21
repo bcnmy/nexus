@@ -9,7 +9,7 @@ interface IExposedNexus is INexus {
 
 contract ExposedNexus is Nexus, IExposedNexus {
 
-    constructor(address anEntryPoint) Nexus(anEntryPoint) {}
+    constructor(address anEntryPoint, address defaultValidator) Nexus(anEntryPoint, defaultValidator) {}
 
     function amIERC7702() external view returns (bool) {
         return _amIERC7702();
