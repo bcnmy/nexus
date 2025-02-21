@@ -694,8 +694,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Checks if the account is an ERC7702 account
-    ///      by checking the codehash of the account
-    ///      and comparing it to the known ERC7702 codehash
     function _amIERC7702() internal view returns (bool) {
         bytes32 c;
         assembly {
@@ -706,7 +704,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 extcodecopy(address(), ptr, 0, 3)
                 c := mload(ptr)
             }
-            // if it is not 23, we do not even check the code
+            // if it is not 23, we do not even check the first 3 bytes
         }
         return bytes3(c) == bytes3(0xef0100);
     }
