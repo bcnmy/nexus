@@ -66,6 +66,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
+    MockValidator internal DEFAULT_VALIDATOR_MODULE;
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
@@ -112,7 +113,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
     function deployTestContracts() internal {
         setupEntrypoint();
-        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
+        DEFAULT_VALIDATOR_MODULE = new MockValidator();
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
@@ -122,7 +124,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new NexusBootstrap();
+        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         REGISTRY = new MockRegistry();
     }
 

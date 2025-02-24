@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import { MODE_MODULE_ENABLE } from "../types/Constants.sol";
+import { MODE_MODULE_ENABLE, MODE_DEFAULT_VALIDATOR } from "../types/Constants.sol";
 
 /**
     Nonce structure
@@ -25,6 +25,13 @@ library NonceLib {
         assembly {
             let vmode := byte(3, nonce)
             res := eq(shl(248, vmode), MODE_MODULE_ENABLE)
+        }
+    }
+
+    function isDefaultValidatorMode(uint256 nonce) internal pure returns (bool res) {
+        assembly {
+            let vmode := byte(3, nonce)
+            res := eq(shl(248, vmode), MODE_DEFAULT_VALIDATOR)
         }
     }
 }
