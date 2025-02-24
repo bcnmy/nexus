@@ -347,46 +347,40 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
         // else proceed with normal signature verification
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
-
-        // TODO: ADD DEFAULT VALIDATOR FLOW
-        // NOTE: Maybe it will be cheaper to use the calldata flag 
-        // instead of doing _isValidatorInstalled() which is SLOAD
-
-        address validator = address(bytes20(signature[0:20]));
-        if (_isValidatorInstalled(validator)) {
-            bytes memory signature_;
-            (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
-            try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
-                return res;
-            } catch {
-                return bytes4(0xffffffff);
-            }
-        } else {
-            // try to check the signature against the account
-            //if (_checkSelfSignature(signature, hash)) {
-            
-            // This won't be needed.
-            // Because we will basically forward everythng to validator, and if it supports 7739
-            // we will be safe.
-            // If a signature is a pre-issued sig by EOA, and the 1271 request is not coming
-            // from a safe sender, then it will go to 7739 flow and will have to be safe there.
-            // Thus (assuming validator is initialized) we still support safe pre-issued signatures.
-            // See below about potentially unsafe pre-issued sigs. 
-
-                // if it was signed by address(this),
-                // we still revert on this, to protect from the following attack vector:
-                // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
-                // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashed in
-                // 3. In this case, if we just allow signatures by address(this), this above sig
-                //    over unsafe hash could be replayed here
-                // Thus, we revert here, but we revert with informational message, that
-                // lets know that the sig is ok, it is just potentially unsafe.
-                //revert PotentiallyUnsafeSignature();
-            //} else {
-                // othwerwise revert normally
-                //revert ValidatorNotInstalled(validator);
-            //}
+        address validator = _handleSigValidator(address(bytes20(signature[0:20])));        
+        bytes memory signature_;
+        (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
+            return res;
+        } catch {
+            return bytes4(0xffffffff);
         }
+        // TODO: Review this again against official EP v0.8 release notes
+        // As this scenario with pre-issued 1271 signatures was described in the pre-release notes
+        // for EP v0.8 only, and it could have changed after the audit.
+
+        // What if there is a signature over some EIP-712 data structure signed by EOA
+        // when this EOA was not delegated to this account yet?
+        
+        // We are passing the sig validation flow to validator.
+        // If validator supports self-signing by the SmartAccount (which becomes possible
+        // with EIP-7702) and ERC-7739, then we are safe.
+        // If a signature is a pre-issued sig by EOA, and the 1271 request is not coming
+        // from a safe sender, then it will go to ERC-7739 flow and will have to be safe there.
+        // If the request is coming from a safe sender, then it will go to vanilla 1271 flow
+        // and will be successfully validated again.
+        // Thus we still support pre-issued signatures if they are safe.
+
+        // If the validator does not support ERC-7739, then there is a potential issue:
+        // Imagine the following scenario:
+        // 1. This 7702 account (being an eoa as well) owns some other Smart Account (Smart Account B)
+        // 2. It signs some unsafe hash: the one that doesn't have Smart Account B address hashed in
+        // 3. Then this signature is sent to this account, it goes to a non-7739 validator.
+        //     and is successfully validated.
+        // This issue however is not specific to a given account implementation, but rather
+        // to the fact that 1271 sig validation flow is not protected by default => thus ERC-7739.
+        // So unrelated to EIP-7702 and signatures pre-issued by EOA, ERC-7739 is the only way
+        // to protect from `same owner, two accounts` attacks.
     }
 
     /// @notice Retrieves the address of the current implementation from the EIP-1967 slot.
@@ -527,23 +521,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             _checkAndUpdateExecutionFrames(maxSelfExecutionFrames);
             return (callType, execType, executionCalldata);
         }
+        // ERC-7821 batch call with opData
         if (callType == CALLTYPE_BATCH && modeSelector == MODE_BATCH_OPDATA) {
             (bytes calldata executionData, bytes calldata opData) = executionCalldata.cutOpData();
             bytes32 executionDataHash = _hashTypedData(executionData.decodeBatch().hashExecutionBatch());
-            address validator = address(bytes20(opData[0:20]));
-            bool res;
-            if(_isValidatorInstalled(validator)) {
-                // we use address(this) as a sender to hit vanilla 1271 flow on erc-7739 compatible validators
-                // since we know executionDataHash is based on domain separator of the account => it has account address hashed into it
-                res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
-            } else {
-                // If this is a fresh, non-initialized 7702 Nexus instance, 
-                // it will still be able to use erc-7821 batch call with opData initialization
-                
-                // TODO: USE DEFAULT VALIDATOR INSTEAD => CHECK ModuleManager._checkEnableModeSignature()
-                // NOTE: Maybe it will be cheaper to use the calldata flag 
-                // instead of doing _isValidatorInstalled() which is SLOAD
-            }
+            address validator = _handleSigValidator(address(bytes20(opData[0:20])));
+            bool res = IValidator(validator).isValidSignatureWithSender(address(this), executionDataHash, opData[20:]) == ERC1271_MAGICVALUE;
             if (res) return (callType, execType, executionData);
         }
         // other mode selectors are not supported

@@ -180,12 +180,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        address enableModeSigValidator = address(bytes20(enableModeSignature[0:20]));
-        if (enableModeSigValidator == _DEFAULT_VALIDATOR_FLAG) {
-            enableModeSigValidator = _DEFAULT_VALIDATOR;
-        } else {
-            require(_isValidatorInstalled(enableModeSigValidator), ValidatorNotInstalled(enableModeSigValidator));
-        }
+        address enableModeSigValidator = _handleSigValidator(address(bytes20(enableModeSignature[0:20])));
+        
         enableModeSignature = enableModeSignature[20:];
         
         if (!_checkEnableModeSignature({
@@ -694,6 +690,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             // if it is not 23, we do not even check the code
         }
         return bytes3(c) == bytes3(0xef0100);
+    }
+
+    function _handleSigValidator(address validator) internal view returns (address) {
+        if (validator == _DEFAULT_VALIDATOR_FLAG) {
+            return _DEFAULT_VALIDATOR;
+        } else {
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            return validator;
+        }
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {
