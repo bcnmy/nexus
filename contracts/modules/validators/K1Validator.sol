@@ -182,6 +182,16 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
+    /**
+     * Get the owner of the smart account
+     * @param smartAccount The address of the smart account
+     * @return The owner of the smart account
+     */
+    function getOwner(address smartAccount) public view returns (address) {
+        address owner = smartAccountOwners[smartAccount];
+        return owner == address(0) ? smartAccount : owner;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
@@ -224,7 +234,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     ///      against credentials.
     function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
         // call custom internal function to validate the signature against credentials
-        return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature);
+        return _validateSignatureForOwner(getOwner(msg.sender), hash, signature);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
