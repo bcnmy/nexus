@@ -27,6 +27,9 @@ interface INexusEventsAndErrors {
     /// @param innerCallRet The return data from the inner call execution.
     event Executed(PackedUserOperation userOp, bytes innerCallRet);
 
+    /// @notice Emitted when a keyless Nexus is initialized.
+    event KeylessNexusInitialized(address indexed keylessNexus);
+
     /// @notice Error thrown when an unsupported ModuleType is requested.
     /// @param moduleTypeId The ID of the unsupported module type.
     error UnsupportedModuleType(uint256 moduleTypeId);
