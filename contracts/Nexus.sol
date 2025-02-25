@@ -630,6 +630,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             }
         }
         emit KeylessNexusInitialized(address(this));
-        return initData;
+        return initData[1:]; // first byte is the index, so we are able to have multiple PREPs for the same initialization config
     }
 }
