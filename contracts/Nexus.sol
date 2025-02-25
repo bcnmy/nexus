@@ -293,11 +293,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
+    /// @notice Initializes the smart account with the specified initialization data.
+    /// @param initData The initialization data for the smart account.
+    /// @dev This function should be called by the factory during the new Nexus deployment.
     function initializeAccount(bytes calldata initData) external payable virtual {
         require(Initializable.isInitializable(), Initializable.NotInitializable());
         _initializeAccount(initData);
     }
 
+    /// @notice Initializes the PREP account with the specified initialization data.
+    /// @param initData The initialization data for the smart account.
+    /// @dev This function can be called directly or by the SenderCreator contract
+    ///      when userOp.initcode is EIP-7702 initData (ep v0.8) 
+    ///      so a freshly created PREP can be initialized within the first userOp.
+    /// @dev The proper access control happens in the _validatePrepInitData function.
     function initializePREPAccount(bytes calldata initData) external payable virtual {
         if (isInitialized()) {
             _initializeAccount(_validatePrepInitData(initData));
