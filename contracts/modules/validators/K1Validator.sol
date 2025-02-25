@@ -225,7 +225,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @return The recovered signer address
     /// @notice tryRecover returns address(0) on invalid signature
     function _recoverSigner(bytes32 hash, bytes calldata signature) internal view returns (address) {
-        return hash.tryRecover(signature);
+        return hash.tryRecoverCalldata(signature);
     }
 
     /// @dev Returns whether the `hash` and `signature` are valid.

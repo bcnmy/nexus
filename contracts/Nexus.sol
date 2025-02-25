@@ -294,14 +294,14 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function initializeAccount(bytes calldata initData) external payable virtual {
-        if (!Initializable.isInitializable()) {
-            _onlyEntryPointOrSelf();
-        }
+        require(Initializable.isInitializable(), Initializable.NotInitializable());
         _initializeAccount(initData);
     }
 
-    function initializeKeyless7702Account(bytes calldata initData) external payable virtual {
-        _initializeAccount(_authorizeNicksMethod(initData));
+    function initializePREPAccount(bytes calldata initData) external payable virtual {
+        if (isInitialized()) {
+            _initializeAccount(_validatePrepInitData(initData));
+        }
     }
 
     /// @notice Initializes the smart account with the specified initialization data.
@@ -448,6 +448,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         return _isModuleInstalled(moduleTypeId, module, additionalContext);
     }
 
+    /// @notice Checks if the smart account is initialized.
+    /// @return True if the smart account is initialized, false otherwise.
+    /// @dev In case default validator is initialized, two other SLOADS from _areSentinelListsInitialized() are not checked,
+    /// this method should not introduce huge gas overhead.
+    function isInitialized() public view returns (bool) {
+        return (
+            IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this)) ||
+            _areSentinelListsInitialized()
+        );
+    }
+
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
@@ -561,7 +572,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         version = "2.0.0";
     }
 
-    function _authorizeNicksMethod(bytes calldata data) internal returns (bytes calldata) {
+    function _validatePrepInitData(bytes calldata data) internal returns (bytes calldata) {
         bytes32 r;
         bytes32 s;
         bytes32 authHash;
@@ -599,7 +610,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // combined with another `r` (which means another initdata) 
         // and another `s` that matches the pattern of having 0s in the 20 leftmost bytes
         // would result in the same recovered signer (address(this)).
-        address signer = ECDSA.recover(authHash, signature);
+        address signer = ECDSA.recoverCalldata(authHash, signature);
         // TODO: remove this
         console2.log("signer", signer);
         console2.log("address(this)", address(this));
