@@ -222,7 +222,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
     function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
-        emit ModuleUninstalled(moduleTypeId, module);
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _uninstallValidator(module, deInitData);
@@ -235,6 +234,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         ) {
             _uninstallHook(module, moduleTypeId, deInitData);
         }
+        emit ModuleUninstalled(moduleTypeId, module);
     }
 
     function emergencyUninstallHook(EmergencyUninstall calldata data, bytes calldata signature) external payable {

@@ -15,6 +15,12 @@ pragma solidity ^0.8.27;
 import { ModuleManager } from "../base/ModuleManager.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK
+} from "../types/Constants.sol";
 
 /// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
@@ -71,6 +77,7 @@ contract NexusBootstrap is ModuleManager {
     {
         _configureRegistry(registry, attesters, threshold);
         _installValidator(address(validator), data);
+        emit ModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator));
     }
 
     /// @notice Initializes the Nexus account with multiple modules.
@@ -97,23 +104,27 @@ contract NexusBootstrap is ModuleManager {
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
         }
 
         // Initialize executors
         for (uint256 i = 0; i < executors.length; i++) {
             if (executors[i].module == address(0)) continue;
             _installExecutor(executors[i].module, executors[i].data);
+            emit ModuleInstalled(MODULE_TYPE_EXECUTOR, executors[i].module);
         }
 
         // Initialize hook
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
 
         // Initialize fallback handlers
         for (uint256 i = 0; i < fallbacks.length; i++) {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
+            emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
         }
     }
 
@@ -137,11 +148,13 @@ contract NexusBootstrap is ModuleManager {
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
         }
 
         // Initialize hook
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
     }
 
