@@ -7,6 +7,8 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 import "contracts/mocks/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { MODE_VALIDATION, MODE_MODULE_ENABLE, MODULE_TYPE_MULTI, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_ENABLE_MODE_TYPE_HASH } from "contracts/types/Constants.sol";
+import { MockResourceLockPreValidationHook } from "contracts/mocks/MockResourceLockPreValidationHook.sol";
+import { MockAccountLocker } from "contracts/mocks/MockAccountLocker.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
@@ -23,6 +25,8 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     MockMultiModule mockMultiModule;
     Counter public counter;
+    MockResourceLockPreValidationHook private resourceLockHook;
+    MockAccountLocker private accountLocker;
 
     string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
 
@@ -30,9 +34,79 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         setUpModuleManagement_Base();
         mockMultiModule = new MockMultiModule();
         counter = new Counter();
+        accountLocker = new MockAccountLocker();
+        resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(0));
     }
 
     function test_EnableMode_Success_No7739() public {
+        address moduleToEnable = address(mockMultiModule);
+        address opValidator = address(mockMultiModule);
+
+        PackedUserOperation memory op = makeDraftOp(opValidator);
+        
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
+        op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
+
+        (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
+
+        bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
+        enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
+        // Enable Mode Sig Prefix
+        // address moduleToEnable
+        // uint256 moduleTypeId
+        // bytes4 initDataLength
+        // initData
+        // bytes4 enableModeSig length
+        // enableModeSig
+        bytes memory enableModeSigPrefix = abi.encodePacked(
+            moduleToEnable,
+            MODULE_TYPE_MULTI,
+            bytes4(uint32(multiInstallData.length)),
+            multiInstallData,
+            bytes4(uint32(enableModeSig.length)),
+            enableModeSig
+        );
+
+        op.signature = abi.encodePacked(enableModeSigPrefix, op.signature);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = op;
+
+        uint256 counterBefore = counter.getNumber();
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+        assertEq(counter.getNumber(), counterBefore+1, "Counter should have been incremented after single execution");
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockMultiModule), ""),
+            "Module should be installed as validator"
+        );
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockMultiModule), ""),
+            "Module should be installed as executor"
+        );
+    }
+
+    function test_EnableMode_Success_No7739_With_PreValidationHooksInstalled() public {
+        // Install account locker first
+        bytes memory accountLockerInstallCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(accountLocker), "");
+        installModule(accountLockerInstallCallData, MODULE_TYPE_HOOK, address(accountLocker), EXECTYPE_DEFAULT);
+
+        // Install resource lock pre-validation 4337 hook
+        bytes memory resourceLockHook4337InstallCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), "");
+        installModule(resourceLockHook4337InstallCallData, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), EXECTYPE_DEFAULT);
+
+        // Install resource lock pre-validation 1271 hook
+        bytes memory resourceLockHook1271InstallCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), "");
+        installModule(resourceLockHook1271InstallCallData, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), EXECTYPE_DEFAULT);
+
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), ""), "Resource lock 4337 hook should be installed"
+        );
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), ""), "Resource lock 1271 hook should be installed"
+        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(accountLocker), ""), "Account locker should be installed");
+
         address moduleToEnable = address(mockMultiModule);
         address opValidator = address(mockMultiModule);
 

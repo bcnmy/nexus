@@ -40,7 +40,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
-    mapping(address => address) public smartAccountOwners;
+    mapping(address => address) internal smartAccountOwners;
 
     EnumerableSet.AddressSet private _safeSenders;
 
