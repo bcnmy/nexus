@@ -21,7 +21,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
-        bootstrapper = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        bootstrapper = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         validatorFactory =
             new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
     }
@@ -30,7 +30,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesFactory() public {
         address implementation = address(0x123);
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(implementation, FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, REGISTRY);
 
         // Verify the implementation address is set correctly
@@ -50,7 +50,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesWithRegistryAddressZero() public {
         IERC7484 registry = IERC7484(address(0));
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
 
         // Verify the registry address 0

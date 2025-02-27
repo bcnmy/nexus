@@ -177,7 +177,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         vm.expectRevert(EntryPointCanNotBeZero.selector);
 
         // Try deploying the Nexus contract with an entry point address of zero
-        new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
     }
 
     /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it to deploy an account.

@@ -26,9 +26,9 @@ import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusB
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
-import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
+import "../../../contracts/types/Constants.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
 
@@ -116,7 +116,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     function deployTestContracts() internal {
         setupEntrypoint();
         DEFAULT_VALIDATOR_MODULE = new MockValidator();
-        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        // This is the implementation of the account => default module initialized with an unusable configuration
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);

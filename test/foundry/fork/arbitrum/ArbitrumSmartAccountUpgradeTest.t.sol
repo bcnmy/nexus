@@ -28,7 +28,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        newImplementation = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        newImplementation = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         // /!\ The private key is for testing purposes only and should not be used in production.
         signerPrivateKey = 0x2924d554c046e633f658427df4d0e7726487b1322bd16caaf24a53099f1cda85;
         signer = vm.createWallet(signerPrivateKey);

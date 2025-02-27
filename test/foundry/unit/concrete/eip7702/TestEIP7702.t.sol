@@ -58,7 +58,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -98,7 +98,7 @@ contract TestEIP7702 is NexusTest_Base {
         // Encode the call into the calldata for the userOp
         bytes memory userOpCalldata = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -138,7 +138,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -203,7 +203,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -240,14 +240,9 @@ contract TestEIP7702 is NexusTest_Base {
     }
 
     function test_amIERC7702_success()public {
-        ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
         address eip7702account = address(0x7702acc7702acc7702acc7702acc);
         vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
-        bytes32 code;
-        assembly {
-            extcodecopy(eip7702account, code, 0, 0x20)
-        }
-        console2.logBytes32(bytes32(code));
         assertTrue(IExposedNexus(eip7702account).amIERC7702());
     }
 }

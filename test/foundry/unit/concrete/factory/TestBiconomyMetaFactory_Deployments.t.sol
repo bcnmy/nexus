@@ -24,7 +24,7 @@ contract TestBiconomyMetaFactory_Deployments is NexusTest_Base {
                 address(ACCOUNT_IMPLEMENTATION), 
                 address(FACTORY_OWNER.addr), 
                 address(VALIDATOR_MODULE), 
-                new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0))), 
+                new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE))), 
                 REGISTRY
             )
         );

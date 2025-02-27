@@ -598,21 +598,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the account is an ERC7702 account
     function _amIERC7702() internal view returns (bool) {
         bytes32 c;
-        uint256 size;
         assembly {
             // use extcodesize as the first cheapest check
-            size := extcodesize(address())
             if eq(extcodesize(address()), 23) {
                 // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
                 let ptr := mload(0x40)
-                codecopy(ptr, 0, 3)
+                extcodecopy(address(),ptr, 0, 3)
                 c := mload(ptr)
             }
             // if it is not 23, we do not even check the first 3 bytes
         }
-        console2.log("size", size);
-        console2.logBytes32(c);
-    
         return bytes3(c) == bytes3(0xef0100);
     }
 
