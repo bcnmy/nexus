@@ -40,7 +40,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Mapping of smart account addresses to their respective owner addresses
-    mapping(address => address) public smartAccountOwners;
+    mapping(address => address) internal smartAccountOwners;
 
     EnumerableSet.AddressSet private _safeSenders;
 
@@ -53,14 +53,14 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Error to indicate the module is already initialized
     error ModuleAlreadyInitialized();
 
-    /// @notice Error to indicate that the new owner cannot be a contract address
-    error NewOwnerIsContract();
-
     /// @notice Error to indicate that the owner cannot be the zero address
     error OwnerCannotBeZeroAddress();
 
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
+
+    /// @notice Error to indicate that the safe senders data length is invalid
+    error InvalidSafeSendersLength();
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -76,7 +76,6 @@ contract K1Validator is IValidator, ERC7739Validator {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data[:20]));
         require(newOwner != address(0), OwnerCannotBeZeroAddress());
-        require(!_isContract(newOwner), NewOwnerIsContract());
         smartAccountOwners[msg.sender] = newOwner;
         if (data.length > 20) {
             _fillSafeSenders(data[20:]);
@@ -95,7 +94,6 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
         require(newOwner != address(0), ZeroAddressNotAllowed());
-        require(!_isContract(newOwner), NewOwnerIsContract());
         smartAccountOwners[msg.sender] = newOwner;
     }
 
@@ -179,6 +177,16 @@ contract K1Validator is IValidator, ERC7739Validator {
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
+    /**
+     * Get the owner of the smart account
+     * @param smartAccount The address of the smart account
+     * @return The owner of the smart account
+     */
+    function getOwner(address smartAccount) public view returns (address) {
+        address owner = smartAccountOwners[smartAccount];
+        return owner == address(0) ? smartAccount : owner;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
@@ -212,7 +220,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @return The recovered signer address
     /// @notice tryRecover returns address(0) on invalid signature
     function _recoverSigner(bytes32 hash, bytes calldata signature) internal view returns (address) {
-        return hash.tryRecover(signature);
+        return hash.tryRecoverCalldata(signature);
     }
 
     /// @dev Returns whether the `hash` and `signature` are valid.
@@ -221,7 +229,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     ///      against credentials.
     function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
         // call custom internal function to validate the signature against credentials
-        return _validateSignatureForOwner(smartAccountOwners[msg.sender], hash, signature);
+        return _validateSignatureForOwner(getOwner(msg.sender), hash, signature);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
@@ -251,6 +259,7 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     // @notice Fills the _safeSenders list from the given data
     function _fillSafeSenders(bytes calldata data) private {
+        require(data.length % 20 == 0, InvalidSafeSendersLength());
         for (uint256 i; i < data.length / 20; i++) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }
@@ -261,16 +270,5 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @return True if the smart account has an owner, false otherwise
     function _isInitialized(address smartAccount) private view returns (bool) {
         return smartAccountOwners[smartAccount] != address(0);
-    }
-
-    /// @notice Checks if the address is a contract
-    /// @param account The address to check
-    /// @return True if the address is a contract, false otherwise
-    function _isContract(address account) private view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(account)
-        }
-        return size > 0;
     }
 }

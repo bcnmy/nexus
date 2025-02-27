@@ -64,7 +64,7 @@ contract TestK1Validator is NexusTest_Base {
 
         validator.onInstall(abi.encodePacked(ALICE_ADDRESS));
 
-        assertEq(validator.smartAccountOwners(address(ALICE_ACCOUNT)), ALICE_ADDRESS, "Owner should be correctly set");
+        assertEq(validator.getOwner(address(ALICE_ACCOUNT)), ALICE_ADDRESS, "Owner should be correctly set");
     }
 
     /// @notice Tests the onInstall function with no initialization data, expecting a revert
@@ -91,7 +91,7 @@ contract TestK1Validator is NexusTest_Base {
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
-        assertEq(validator.smartAccountOwners(address(BOB_ACCOUNT)), address(0), "Owner should be removed");
+        assertEq(validator.getOwner(address(BOB_ACCOUNT)), address(BOB_ACCOUNT), "Owner should be removed");
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator), ""));
     }
 
@@ -158,7 +158,7 @@ contract TestK1Validator is NexusTest_Base {
         validator.transferOwnership(ALICE_ADDRESS);
 
         // Verify that the ownership is transferred
-        assertEq(validator.smartAccountOwners(address(BOB_ACCOUNT)), ALICE_ADDRESS, "Ownership should be transferred to ALICE");
+        assertEq(validator.getOwner(address(BOB_ACCOUNT)), ALICE_ADDRESS, "Ownership should be transferred to ALICE");
 
         stopPrank();
     }
@@ -201,20 +201,11 @@ contract TestK1Validator is NexusTest_Base {
         assertFalse(result, "Module type should be invalid");
     }
 
-    /// @notice Ensures the transferOwnership function reverts when transferring to a contract address
-    function test_RevertWhen_TransferOwnership_ToContract() public {
-        startPrank(address(BOB_ACCOUNT));
-
-        // Deploy a dummy contract to use as the new owner
-        address dummyContract = address(new K1Validator());
-
-        // Expect the NewOwnerIsContract error to be thrown
-        vm.expectRevert(K1Validator.NewOwnerIsContract.selector);
-
-        // Attempt to transfer ownership to the dummy contract address
-        validator.transferOwnership(dummyContract);
-
-        stopPrank();
+    /// @notice Tests that the account address is returned as owner if no owner is set for the account
+    function test_returns_AccountAddress_as_owner_if_owner_not_set_for_Account() public {
+        address account = address(0x7702770277027702770277027702770277027702);
+        address owner = validator.getOwner(account);
+        assertEq(owner, account, "Owner should be the account address");
     }
 
     /// @notice Tests that a valid signature with a valid 's' value is accepted

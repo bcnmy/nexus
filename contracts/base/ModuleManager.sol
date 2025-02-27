@@ -34,7 +34,8 @@ import {
     MODULE_TYPE_MULTI,
     MODULE_ENABLE_MODE_TYPE_HASH,
     EMERGENCY_UNINSTALL_TYPE_HASH,
-    ERC1271_MAGICVALUE
+    ERC1271_MAGICVALUE,
+    DEFAULT_VALIDATOR_FLAG
 } from "../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
@@ -57,6 +58,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     using ExecLib for address;
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
+
+    /// @dev The default validator address.
+    /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    address internal immutable _DEFAULT_VALIDATOR;
+
+    /// @dev initData should block the implementation from being used as a Smart Account
+    constructor(address _defaultValidator, bytes memory _initData) {
+        if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
+            revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR); 
+        IValidator(_defaultValidator).onInstall(_initData);
+        _DEFAULT_VALIDATOR = _defaultValidator;
+    }
+
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
@@ -121,7 +135,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Initializes the module manager by setting up default states for validators and executors.
-    function _initModuleManager() internal virtual {
+    function _initSentinelLists() internal virtual {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
@@ -139,11 +153,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature)) {
+        address enableModeSigValidator = _handleSigValidator(address(bytes20(enableModeSignature[0:20])));
+        
+        enableModeSignature = enableModeSignature[20:];
+        
+        if (!_checkEnableModeSignature({
+            structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), 
+            sig: enableModeSignature,
+            validator: enableModeSigValidator
+        })) {
             revert EnableModeSigError();
-        }
-        if (!_isAlreadyInitialized()) {
-            _initModuleManager();
         }
         _installModule(moduleType, module, moduleInitData);
     }
@@ -161,6 +180,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
     function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+        if (!_areSentinelListsInitialized()) {
+            _initSentinelLists();
+        }
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
@@ -184,7 +206,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
-         _getAccountStorage().validators.push(validator);
+        if (validator == _DEFAULT_VALIDATOR) {
+            revert DefaultValidatorAlreadyInstalled();
+        }
+        _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
@@ -199,9 +224,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Perform the removal first
         validators.pop(prev, validator);
 
-        // Sentinel pointing to itself / zero means the list is empty / uninitialized, so check this after removal
-        // Below error is very specific to uninstalling validators.
-        require(_hasValidators(), CanNotRemoveLastValidator());
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
@@ -451,31 +473,22 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
-    function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
+    /// @param validator Validator address.
+    function _checkEnableModeSignature(
+        bytes32 structHash,
+        bytes calldata sig,
+        address validator
+    ) internal view returns (bool) {
         bytes32 eip712Digest = _hashTypedData(structHash);
-
-        if (_isValidatorInstalled(enableModeSigValidator)) {
-            // Use standard IERC-1271/ERC-7739 interface.
-            // Even if the validator doesn't support 7739 under the hood, it is still secure,
-            // as eip712digest is already built based on 712Domain of this Smart Account
-            // This interface should always be exposed by validators as per ERC-7579
-            try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+        // Use standard IERC-1271/ERC-7739 interface.
+        // Even if the validator doesn't support 7739 under the hood, it is still secure,
+        // as eip712digest is already built based on 712Domain of this Smart Account
+        // This interface should always be exposed by validators as per ERC-7579
+        try IValidator(validator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
                 return res == ERC1271_MAGICVALUE;
-            } catch {
-                return false;
-            }
-        } else {
-            // If the account is not initialized, check the signature against the account
-            if (!_isAlreadyInitialized()) {
-                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig, eip712Digest);
-            } else {
-                // If the account is initialized, revert as the validator is not installed
-                revert ValidatorNotInstalled(enableModeSigValidator);
-            }
+        } catch {
+            return false;
         }
-
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -529,7 +542,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the validator list is already initialized.
     ///      In theory it doesn't 100% mean there is a validator or executor installed.
     ///      Use below functions to check for validators and executors.
-    function _isAlreadyInitialized() internal view virtual returns (bool) {
+    function _areSentinelListsInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized() && ams.executors.alreadyInitialized();
@@ -559,20 +572,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getAccountStorage().validators.contains(validator);
     }
 
-    /// @dev Checks if there is at least one validator installed.
-    /// @return True if there is at least one validator, otherwise false.
-    function _hasValidators() internal view returns (bool) {
-        return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
-    }
-
-    /// @dev Checks if there is at least one executor installed.
-    /// @return True if there is at least one executor, otherwise false.
-    function _hasExecutors() internal view returns (bool) {
-        return
-            _getAccountStorage().executors.getNext(address(0x01)) != address(0x01) && _getAccountStorage().executors.getNext(address(0x01)) != address(0x00);
-    }
-
     /// @dev Checks if an executor is currently installed.
     /// @param executor The address of the executor to check.
     /// @return True if the executor is installed, otherwise false.
@@ -593,17 +592,30 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         hook = address(_getAccountStorage().hook);
     }
 
-    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
-    /// @param signature The signature to check.
-    /// @param dataHash The hash of the data.
-    /// @return The validation result.
-    function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
-        // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
-        if (signer == address(this)) return true;
-        signer = ECDSA.recover(dataHash, signature);
-        if (signer == address(this)) return true;
-        return false;
+    /// @dev Checks if the account is an ERC7702 account
+    function _amIERC7702() internal view returns (bool) {
+        bytes32 c;
+        assembly {
+            // use extcodesize as the first cheapest check
+            if eq(extcodesize(address()), 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
+                let ptr := mload(0x40)
+                extcodecopy(address(),ptr, 0, 3)
+                c := mload(ptr)
+            }
+            // if it is not 23, we do not even check the first 3 bytes
+        }
+        return bytes3(c) == bytes3(0xef0100);
+    }
+
+    /// @dev Returns the validator address to use
+    function _handleSigValidator(address validator) internal view returns (address) {
+        if (validator == DEFAULT_VALIDATOR_FLAG) {
+            return _DEFAULT_VALIDATOR;
+        } else {
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            return validator;
+        }
     }
 
     function _fallback(bytes calldata callData) private returns (bytes memory result) {

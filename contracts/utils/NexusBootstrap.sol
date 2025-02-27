@@ -31,6 +31,29 @@ struct BootstrapConfig {
 /// @title NexusBootstrap
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
 contract NexusBootstrap is ModuleManager {
+
+    constructor(address defaultValidator, bytes memory initData) ModuleManager(defaultValidator, initData) {}
+
+    modifier _withInitSentinelLists() {
+        _initSentinelLists();
+        _;
+    }
+
+    /// @notice Initializes the Nexus account with the default validator.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @dev For gas savings purposes this method does not initialize the registry.
+    /// @dev The registry should be initialized via the `setRegistry` function on the Nexus contract later if needed.
+    /// @param data The initialization data for the default validator module.
+    function initNexusWithDefaultValidator(
+        bytes calldata data
+    )
+        external
+        payable
+    {
+        IModule(_DEFAULT_VALIDATOR).onInstall(data);
+    }
+
+
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module.
@@ -44,6 +67,7 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+        _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
         _installValidator(address(validator), data);
@@ -66,6 +90,7 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+        _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
 
@@ -105,6 +130,7 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+        _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
 
@@ -180,6 +206,6 @@ contract NexusBootstrap is ModuleManager {
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
-        version = "1.0.0";
+        version = "1.2.0";
     }
 }

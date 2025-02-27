@@ -14,7 +14,7 @@ contract MockValidator is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
-        address owner = smartAccountOwners[msg.sender];
+        address owner = getOwner(msg.sender);
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
@@ -44,11 +44,9 @@ contract MockValidator is ERC7739Validator {
     ///      module's specific internal function to validate the signature
     ///      against credentials.
     function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
-        // obtain credentials
-        address owner = smartAccountOwners[msg.sender];
 
         // call custom internal function to validate the signature against credentials
-        return _validateSignatureForOwner(owner, hash, signature);
+        return _validateSignatureForOwner(getOwner(msg.sender), hash, signature);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
@@ -63,6 +61,16 @@ contract MockValidator is ERC7739Validator {
             sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
                 || sender == msg.sender
         );
+    }
+
+    /**
+     * Get the owner of the smart account
+     * @param smartAccount The address of the smart account
+     * @return The owner of the smart account
+     */
+    function getOwner(address smartAccount) public view returns (address) {
+        address owner = smartAccountOwners[smartAccount];
+        return owner == address(0) ? smartAccount : owner;
     }
 
     function onInstall(bytes calldata data) external {
@@ -87,7 +95,4 @@ contract MockValidator is ERC7739Validator {
         return false;
     }
 
-    function getOwner(address account) external view returns (address) {
-        return smartAccountOwners[account];
-    }
 }

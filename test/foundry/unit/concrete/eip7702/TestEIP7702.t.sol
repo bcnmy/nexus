@@ -5,6 +5,9 @@ import { NexusTest_Base } from "../../../utils/NexusTest_Base.t.sol";
 import "../../../utils/Imports.sol";
 import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
+import { IHook } from "contracts/interfaces/modules/IHook.sol";
+import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
+import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
 
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
@@ -23,7 +26,7 @@ contract TestEIP7702 is NexusTest_Base {
     }
 
     function _doEIP7702(address account) internal {
-        vm.etch(account, address(ACCOUNT_IMPLEMENTATION).code);
+        vm.etch(account, abi.encodePacked(bytes3(0xef0100), bytes20(address(ACCOUNT_IMPLEMENTATION))));
     }
 
     function _getInitData() internal view returns (bytes memory) {
@@ -55,7 +58,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -95,7 +98,7 @@ contract TestEIP7702 is NexusTest_Base {
         // Encode the call into the calldata for the userOp
         bytes memory userOpCalldata = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -135,7 +138,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -200,7 +203,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -234,5 +237,12 @@ contract TestEIP7702 is NexusTest_Base {
 
         // Assert that the value was set ie that execution was successful
         assertTrue(valueTarget.balance == value);
+    }
+
+    function test_amIERC7702_success()public {
+        ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
+        address eip7702account = address(0x7702acc7702acc7702acc7702acc);
+        vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
+        assertTrue(IExposedNexus(eip7702account).amIERC7702());
     }
 }

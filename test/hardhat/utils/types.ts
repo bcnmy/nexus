@@ -49,6 +49,7 @@ export interface DeploymentFixtureWithSA {
   nexusK1Factory: K1ValidatorFactory;
   deployer: Signer;
   mockValidator: MockValidator;
+  defaultValidator: MockValidator;
   mockExecutor: MockExecutor;
   mockHook: MockHook;
   mockHook2: MockHook;
