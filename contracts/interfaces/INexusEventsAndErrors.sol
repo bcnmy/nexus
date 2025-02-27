@@ -54,4 +54,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when attempted to upgrade an ERC7702 account via UUPS proxy upgrade mechanism
     error ERC7702AccountCannotBeUpgradedThisWay();
+
+    /// @notice Error thrown when the provided initData is invalid.
+    error InvalidInitData();
 }

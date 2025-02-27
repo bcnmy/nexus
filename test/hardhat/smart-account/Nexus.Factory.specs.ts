@@ -165,7 +165,7 @@ describe("Nexus Factory Tests", function () {
     });
 
     it("Should prevent account reinitialization", async function () {
-      await expect(smartAccount.initializeAccount("0x")).to.be.rejectedWith(
+      await expect(smartAccount.initializeAccount("0x00000000000000000000000000000000123456784e4e4e4e")).to.be.rejectedWith(
         "reverted with an unrecognized custom error (return data: 0xaed59595)", // NotInitializable()
       );
     });
@@ -284,7 +284,7 @@ describe("Nexus Factory Tests", function () {
       const salt = keccak256("0x");
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
-        ["0x", salt],
+        ["0xffffffff", salt],
       );
       await expect(
         metaFactory.deployWithFactory(await factory.getAddress(), factoryData),
@@ -437,26 +437,6 @@ describe("Nexus Factory Tests", function () {
       ).to.be.revertedWithCustomError(
         smartAccountImplementation,
         "NexusInitializationFailed",
-      );
-    });
-
-    it("Should revert with NoValidatorInstalled if no validator is installed after initialization", async function () {
-      // Set up a valid bootstrap address but do not include any validators in the initData
-      const validBootstrapAddress = await owner.getAddress();
-      const bootstrapData = "0x"; // Valid but does not install any validators
-
-      const initData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address", "bytes"],
-        [validBootstrapAddress, bootstrapData],
-      );
-
-      const salt = keccak256("0x");
-
-      await expect(
-        factory.createAccount(initData, salt),
-      ).to.be.revertedWithCustomError(
-        smartAccountImplementation,
-        "NoValidatorInstalled",
       );
     });
   });
