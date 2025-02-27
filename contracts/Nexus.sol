@@ -114,16 +114,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         returns (uint256 validationData)
     {
         address validator;
+        PackedUserOperation memory userOp = op;
         if (op.nonce.isDefaultValidatorMode()) {
             validator = _DEFAULT_VALIDATOR;
         } else {
+            // if it is module enable mode, we need to enable the module first
+            // and get the cleaned signature
+            if (op.nonce.isModuleEnableMode()) {
+                userOp.signature = _enableMode(userOpHash, op.signature);  
+            }
             validator = op.nonce.getValidator();
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
         }
-        PackedUserOperation memory userOp = op;
-        if (op.nonce.isModuleEnableMode()) {
-            userOp.signature = _enableMode(userOpHash, op.signature);  
-        }
+        
         (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, userOp, missingAccountFunds);
         validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }

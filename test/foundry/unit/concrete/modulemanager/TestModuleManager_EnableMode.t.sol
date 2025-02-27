@@ -101,7 +101,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(BOB_ADDRESS, MODULE_TYPE_MULTI, userOpHash);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
-        //skip appending validator address, as it is not installed (emulate uninitialized 7702 account)
+        enableModeSig = abi.encodePacked(DEFAULT_VALIDATOR_FLAG, enableModeSig); //append validator address
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
             moduleToEnable,

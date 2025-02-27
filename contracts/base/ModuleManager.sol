@@ -34,7 +34,8 @@ import {
     MODULE_TYPE_MULTI,
     MODULE_ENABLE_MODE_TYPE_HASH,
     EMERGENCY_UNINSTALL_TYPE_HASH,
-    ERC1271_MAGICVALUE
+    ERC1271_MAGICVALUE,
+    DEFAULT_VALIDATOR_FLAG
 } from "../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
@@ -42,8 +43,6 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { EmergencyUninstall } from "../types/DataTypes.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-
-import "forge-std/console2.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -63,8 +62,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev The default validator address.
     /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
-    /// @notice The flag to indicate the default validator mode for enable mode signature
-    address internal constant _DEFAULT_VALIDATOR_FLAG = 0x0000000000000000000000000000000000000088;
 
     /// @dev initData should block the implementation from being used as a Smart Account
     constructor(address _defaultValidator, bytes memory _initData) {
@@ -209,7 +206,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
-        if (validator == _DEFAULT_VALIDATOR_FLAG) {
+        if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
         }
         _getAccountStorage().validators.push(validator);
@@ -613,7 +610,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @dev Returns the validator address to use
     function _handleSigValidator(address validator) internal view returns (address) {
-        if (validator == _DEFAULT_VALIDATOR_FLAG) {
+        if (validator == DEFAULT_VALIDATOR_FLAG) {
             return _DEFAULT_VALIDATOR;
         } else {
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));

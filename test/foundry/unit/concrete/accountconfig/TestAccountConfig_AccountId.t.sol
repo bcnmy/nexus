@@ -8,6 +8,7 @@ contract TestAccountConfig_AccountId is NexusTest_Base {
     /// @notice Initialize the testing environment
     /// @notice Initialize the testing environment
     function setUp() public {
+        setupPredefinedWallets();
         deployTestContracts();
     }
 
