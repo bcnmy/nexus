@@ -110,7 +110,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
     function deployTestContracts() internal {
         setupEntrypoint();
-        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
+        DEFAULT_VALIDATOR_MODULE = new MockValidator();
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
@@ -120,7 +121,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new NexusBootstrap();
+        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         REGISTRY = new MockRegistry();
     }
 
@@ -655,5 +656,43 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         );
 
         return finalPmData;
+    }
+
+    function _hashTypedData(bytes32 structHash, address account) internal view virtual returns (bytes32 digest) {
+        // We will use `digest` to store the domain separator to save a bit of gas.
+        digest = _getDomainSeparator(account);
+        
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the digest.
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, digest) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
+            digest := keccak256(0x18, 0x42)
+            // Restore the part of the free memory slot that was overwritten.
+            mstore(0x3a, 0)
+        }
+    }
+
+    function _getDomainSeparator(address account) internal view virtual returns (bytes32 separator) {
+        (   
+            ,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            ,
+        ) = EIP712(account).eip712Domain();
+        separator = keccak256(bytes(name));
+        bytes32 versionHash = keccak256(bytes(version));
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), separator) // Name hash.
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainId)
+            mstore(add(m, 0x80), verifyingContract)
+            separator := keccak256(m, 0xa0)
+        }
     }
 }

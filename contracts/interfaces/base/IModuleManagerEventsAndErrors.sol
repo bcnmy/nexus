@@ -105,4 +105,7 @@ interface IModuleManagerEventsAndErrors {
     /// @notice Error thrown when an execution with an unsupported CallType was made.
     /// @param callType The unsupported call type.
     error UnsupportedCallType(CallType callType);
+
+    /// @notice Error thrown when the default validator is already installed.
+    error DefaultValidatorAlreadyInstalled();
 }

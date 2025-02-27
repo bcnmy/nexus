@@ -27,4 +27,14 @@ library NonceLib {
             res := eq(shl(248, vmode), MODE_MODULE_ENABLE)
         }
     }
+
+    /// @dev Detects if Validaton Mode is Default Validator Mode
+    /// @param nonce The nonce
+    /// @return res boolean result, true if it is the Default Validator Mode
+    function isDefaultValidatorMode(uint256 nonce) internal pure returns (bool res) {
+        assembly {
+            let vmode := byte(3, nonce)
+            res := eq(shl(248, vmode), MODE_DEFAULT_VALIDATOR)
+        }
+    }
 }

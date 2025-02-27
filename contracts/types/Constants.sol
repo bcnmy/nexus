@@ -53,6 +53,7 @@ bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = 0xd3ddfc12654178cc44d4a7b6b969c
 // Validation modes
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
+bytes1 constant MODE_DEFAULT_VALIDATOR = 0x02;
 
 bytes4 constant SUPPORTS_ERC7739 = 0x77390000;
 bytes4 constant SUPPORTS_ERC7739_V1 = 0x77390001;
