@@ -118,10 +118,23 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (op.nonce.isDefaultValidatorMode()) {
             validator = _DEFAULT_VALIDATOR;
         } else {
-            // if it is module enable mode, we need to enable the module first
-            // and get the cleaned signature
-            if (op.nonce.isModuleEnableMode()) {
+            if (op.nonce.isModeValidate()) {
+                // do nothing special. This is introduced
+                // to quickly identify the most commonly used 
+                // mode which is validate mode
+                // and avoid checking two above conditions
+            } else if (op.nonce.isModuleEnableMode()) {\
+                // if it is module enable mode, we need to enable the module first
+                // and get the cleaned signature
                 userOp.signature = _enableMode(userOpHash, op.signature);  
+            } else if (op.nonce.isPrepMode()) {
+                // PREP Mode. Authorize prep signature
+                // and initialize the account
+                // PREP mode is only used for the uninited PREPs
+                require(!isInitialized(), AccountAlreadyInitialized());
+                bytes calldata initData;
+                (userOp.signature, initData) = _handlePREP(op.signature);
+                _initializeAccount(initData);
             }
             validator = op.nonce.getValidator();
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
@@ -278,18 +291,21 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function can only be called by the account itself or the proxy factory.
     /// When a 7702 account is created, the first userOp should contain self-call to initialize the account.
     function initializeAccount(bytes calldata initData) external payable virtual {
-        require(initData.length >= 24, InvalidInitData());
-        
         // Protect this function to only be callable when used with the proxy factory or when
         // account calls itself
         if (msg.sender != address(this)) {
             Initializable.requireInitializable();
         }
+        _initializeAccount(initData);
+    }
+
+    function _initializeAccount(bytes calldata initData) internal {
+        equire(initData.length >= 24, InvalidInitData());
 
         address bootstrap;
         bytes calldata bootstrapCall;
         assembly {
-            bootstrap := calldataload(initData.offset)
+            bootstrap := calldataload(initData.offset)x
             let s := calldataload(add(initData.offset, 0x20))
             let u := add(initData.offset, s)
             bootstrapCall.offset := add(u, 0x20)
