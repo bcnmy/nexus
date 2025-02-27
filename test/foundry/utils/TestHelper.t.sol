@@ -28,10 +28,14 @@ import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFact
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
 
     address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
 
     // -----------------------------------------
     // State Variables
@@ -64,6 +68,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
+    MockValidator internal DEFAULT_VALIDATOR_MODULE;
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
@@ -121,7 +126,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
+        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xa11ce)));
         REGISTRY = new MockRegistry();
     }
 

@@ -24,7 +24,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
     /// @notice Tests the upgrade of the smart account implementation
     function test_upgradeImplementation() public {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(newSmartAccount), "");
 
         Execution[] memory execution = new Execution[](1);
@@ -39,7 +39,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
     /// @notice Tests the upgrade of the smart account implementation with invalid call data
     function test_upgradeImplementation_invalidCallData() public {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(newSmartAccount), bytes(hex"1234"));
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -59,7 +59,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
 
     function test_upgradeImplementation_invalidCaller() public {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.upgradeToAndCall(address(newSmartAccount), "");
     }
@@ -120,7 +120,7 @@ contract UpgradeSmartAccountTest is NexusTest_Base {
         test_proxiableUUIDSlot();
         test_currentImplementationAddress();
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-        Nexus newSmartAccount = new Nexus(_ENTRYPOINT);
+        Nexus newSmartAccount = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0)));
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.upgradeToAndCall(address(newSmartAccount), "");
     }

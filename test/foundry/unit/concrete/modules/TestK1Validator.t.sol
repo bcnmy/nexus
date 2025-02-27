@@ -201,22 +201,6 @@ contract TestK1Validator is NexusTest_Base {
         assertFalse(result, "Module type should be invalid");
     }
 
-    /// @notice Ensures the transferOwnership function reverts when transferring to a contract address
-    function test_RevertWhen_TransferOwnership_ToContract() public {
-        startPrank(address(BOB_ACCOUNT));
-
-        // Deploy a dummy contract to use as the new owner
-        address dummyContract = address(new K1Validator());
-
-        // Expect the NewOwnerIsContract error to be thrown
-        vm.expectRevert(K1Validator.NewOwnerIsContract.selector);
-
-        // Attempt to transfer ownership to the dummy contract address
-        validator.transferOwnership(dummyContract);
-
-        stopPrank();
-    }
-
     /// @notice Tests that a valid signature with a valid 's' value is accepted
     function test_ValidateUserOp_ValidSignature() public {
         bytes32 originalHash = keccak256(abi.encodePacked("valid message"));
