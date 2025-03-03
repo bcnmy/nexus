@@ -7,9 +7,15 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 /// @title TestModuleManager_FallbackHandler
 /// @notice Tests for installing and uninstalling the fallback handler in a smart account.
 contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
-    /// @notice Sets up the base module management environment and installs the fallback handler.
+
+    MockNFT internal erc721;
+    MockERC1155 internal erc1155;
+    
     function setUp() public {
         init();
+
+        erc721 = new MockNFT("Mock NFT", "MNFT");
+        erc1155 = new MockERC1155("Test");
 
         Execution[] memory execution = new Execution[](2);
 
@@ -290,20 +296,35 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     }
 
     function test_onTokenReceived_Success() public {
-        vm.startPrank(address(ENTRYPOINT));
+        
+        erc721.safeMint(address(BOB_ACCOUNT), 1);
+        assertEq(erc721.balanceOf(address(BOB_ACCOUNT)), 1);
+
+        erc1155.safeMint(address(BOB_ACCOUNT), 1, 1);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 1), 1);
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 2;
+        tokenIds[1] = 3;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 10;
+        amounts[1] = 30;
+        erc1155.safeMintBatch(address(BOB_ACCOUNT), tokenIds, amounts);
+
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 2), 10);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 3), 30);
+
         //ERC-721
         (bool success, bytes memory data) = address(BOB_ACCOUNT).call{value: 0}(hex'150b7a02');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'150b7a02')));
+        assertTrue(keccak256(data) == keccak256((hex'150b7a0200000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'f23a6e61');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e61')));
+        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e6100000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 Batch
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'bc197c81');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c81')));
-
-        vm.stopPrank();
+        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c8100000000000000000000000000000000000000000000000000000000')));
     }
 }
