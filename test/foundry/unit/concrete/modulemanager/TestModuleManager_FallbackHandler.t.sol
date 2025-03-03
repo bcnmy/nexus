@@ -373,7 +373,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         assertEq(keccak256(resultData), keccak256(expectedData));
     }
 
-    function test_ReturnBytes() public {
+    function test_ReturnBytes_and_Hook_fallback() public {
         bytes4 selector = bytes4(keccak256(abi.encodePacked("returnBytes()")));
         bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE)));
         bytes memory callData = abi.encodeWithSelector(
