@@ -66,7 +66,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev initData should block the implementation from being used as a Smart Account
     constructor(address _defaultValidator, bytes memory _initData) {
         if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
-            revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR); 
+            revert MismatchModuleTypeId(); 
         IValidator(_defaultValidator).onInstall(_initData);
         _DEFAULT_VALIDATOR = _defaultValidator;
     }
@@ -205,7 +205,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
     function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
-        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
+        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
         }
@@ -231,7 +231,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
     function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
-        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
+        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -249,7 +249,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
     function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
-        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
@@ -279,7 +279,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
-        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
+        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
@@ -333,7 +333,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         virtual
         withRegistry(preValidationHook, preValidationHookType)
     {
-        if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+        if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
         address currentPreValidationHook = _getPreValidationHook(preValidationHookType);
         require(currentPreValidationHook == address(0), PrevalidationHookAlreadyInstalled(currentPreValidationHook));
         _setPreValidationHook(preValidationHookType, preValidationHook);
@@ -593,19 +593,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Checks if the account is an ERC7702 account
-    function _amIERC7702() internal view returns (bool) {
-        bytes32 c;
+    function _amIERC7702() internal view returns (bool res) {
         assembly {
             // use extcodesize as the first cheapest check
             if eq(extcodesize(address()), 23) {
                 // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
-                let ptr := mload(0x40)
-                extcodecopy(address(),ptr, 0, 3)
-                c := mload(ptr)
+                extcodecopy(address(), 0, 0, 3)
+                res := eq(0xef01, shr(240, mload(0x00)))
             }
             // if it is not 23, we do not even check the first 3 bytes
         }
-        return bytes3(c) == bytes3(0xef0100);
     }
 
     /// @dev Returns the validator address to use

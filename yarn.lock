@@ -768,6 +768,27 @@
   resolved "https://registry.yarnpkg.com/@prettier/sync/-/sync-0.3.0.tgz#91f2cfc23490a21586d1cf89c6f72157c000ca1e"
   integrity sha512-3dcmCyAxIcxy036h1I7MQU/uEEBq8oLwf1CE3xeze+MPlgkdlb/+w6rGR/1dhp6Hqi17fRS6nvwnOzkESxEkOw==
 
+"@rhinestone/checknsignatures@github:rhinestonewtf/checknsignatures":
+  version "0.0.1"
+  resolved "https://codeload.github.com/rhinestonewtf/checknsignatures/tar.gz/f8389c186fb58480a9a42d598adebaa1a557762d"
+  dependencies:
+    forge-std "github:foundry-rs/forge-std"
+    solady "github:vectorized/solady"
+
+"@rhinestone/erc4337-validation@0.0.1-alpha.2":
+  version "0.0.1-alpha.2"
+  resolved "https://registry.yarnpkg.com/@rhinestone/erc4337-validation/-/erc4337-validation-0.0.1-alpha.2.tgz#9278ca59972e12838e3a25230041cc21d1c8053f"
+  integrity sha512-sxBSHoR0hV0rN2bv5HfINHR3RyBChfd0OWH0TP8nlA9FolJ1EezLByxcyrvAgi2QLQ2Zf2zVcNky1qYdfF4NjQ==
+  dependencies:
+    "@openzeppelin/contracts" "5.0.1"
+    account-abstraction "github:kopy-kat/account-abstraction#develop"
+    account-abstraction-v0.6 "github:eth-infinitism/account-abstraction#v0.6.0"
+    ds-test "github:dapphub/ds-test"
+    forge-std "github:foundry-rs/forge-std"
+    prettier "^2.8.8"
+    solady "github:vectorized/solady"
+    solhint "^4.1.1"
+
 "@rhinestone/erc4337-validation@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@rhinestone/erc4337-validation/-/erc4337-validation-0.0.4.tgz#85d29a8f624c66ae5cbf9eea86c3bbaccbce649f"
@@ -832,6 +853,9 @@
   resolved "https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/33f110f08ed5fcab75c29d7cfb93f7f3e4da76a7"
   dependencies:
     "@ERC4337/account-abstraction" "github:kopy-kat/account-abstraction#develop"
+    "@ERC4337/account-abstraction-v0.6" "github:eth-infinitism/account-abstraction#v0.6.0"
+    "@rhinestone/checknsignatures" "github:rhinestonewtf/checknsignatures"
+    "@rhinestone/erc4337-validation" "0.0.1-alpha.2"
     "@rhinestone/module-bases" "github:rhinestonewtf/module-bases"
     "@rhinestone/sentinellist" "github:rhinestonewtf/sentinellist"
     "@safe-global/safe-contracts" "^1.4.1"
@@ -2510,9 +2534,9 @@ follow-redirects@^1.12.1, follow-redirects@^1.14.0, follow-redirects@^1.15.6:
   version "1.7.6"
   resolved "https://codeload.github.com/foundry-rs/forge-std/tar.gz/ae570fec082bfe1c1f45b0acca4a2b4f84d345ce"
 
-"forge-std@github:foundry-rs/forge-std#v1.8.2":
-  version "1.8.2"
-  resolved "https://codeload.github.com/foundry-rs/forge-std/tar.gz/978ac6fadb62f5f0b723c996f64be52eddba6801"
+"forge-std@github:foundry-rs/forge-std#v1.9.6":
+  version "1.9.6"
+  resolved "https://codeload.github.com/foundry-rs/forge-std/tar.gz/3b20d60d14b343ee4f908cb8079495c07f5e8981"
 
 form-data-encoder@^2.1.2:
   version "2.1.4"
@@ -3799,6 +3823,10 @@ prelude-ls@~1.1.2:
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.1.2.tgz#21932a549f5e52ffd9a827f570e04be62a97da54"
   integrity sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==
 
+"prep@github:ithacaxyz/account#vectorized/prep":
+  version "0.0.0"
+  resolved "https://codeload.github.com/ithacaxyz/account/tar.gz/733464120b83c7699ba5a3ccf0b56c9ae6dea001"
+
 prettier-linter-helpers@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/prettier-linter-helpers/-/prettier-linter-helpers-1.0.0.tgz#d23d41fe1375646de2d0104d3454a3008802cf7b"
@@ -4222,9 +4250,9 @@ slice-ansi@^4.0.0:
   version "0.0.168"
   resolved "https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e"
 
-"solady@github:vectorized/solady#v0.0.271":
-  version "0.0.271"
-  resolved "https://codeload.github.com/vectorized/solady/tar.gz/b38e2c025f8cd1ecbfc1b92678fe05ac950a4bb1"
+"solady@github:vectorized/solady#v0.1.9":
+  version "0.1.9"
+  resolved "https://codeload.github.com/vectorized/solady/tar.gz/1eb89b9af0a09468c6ccff51ce8ed5eb520b4fb5"
 
 "solarray@github:sablier-labs/solarray":
   version "1.0.0"
@@ -4250,6 +4278,32 @@ solhint-plugin-prettier@^0.1.0:
   dependencies:
     "@prettier/sync" "^0.3.0"
     prettier-linter-helpers "^1.0.0"
+
+solhint@^4.1.1:
+  version "4.5.4"
+  resolved "https://registry.yarnpkg.com/solhint/-/solhint-4.5.4.tgz#171cf33f46c36b8499efe60c0e425f6883a54e50"
+  integrity sha512-Cu1XiJXub2q1eCr9kkJ9VPv1sGcmj3V7Zb76B0CoezDOB9bu3DxKIFFH7ggCl9fWpEPD6xBmRLfZrYijkVmujQ==
+  dependencies:
+    "@solidity-parser/parser" "^0.18.0"
+    ajv "^6.12.6"
+    antlr4 "^4.13.1-patch-1"
+    ast-parents "^0.0.1"
+    chalk "^4.1.2"
+    commander "^10.0.0"
+    cosmiconfig "^8.0.0"
+    fast-diff "^1.2.0"
+    glob "^8.0.3"
+    ignore "^5.2.4"
+    js-yaml "^4.1.0"
+    latest-version "^7.0.0"
+    lodash "^4.17.21"
+    pluralize "^8.0.0"
+    semver "^7.5.2"
+    strip-ansi "^6.0.1"
+    table "^6.8.1"
+    text-table "^0.2.0"
+  optionalDependencies:
+    prettier "^2.8.3"
 
 solhint@^5.0.1:
   version "5.0.3"

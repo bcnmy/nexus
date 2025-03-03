@@ -6,11 +6,13 @@ import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR, ERC1271_MAGICVALUE, ERC1271_INVALID } from "../types/Constants.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 
 contract MockValidator is ERC7739Validator {
+
+    using ECDSA for bytes32;
+    
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -30,13 +32,13 @@ contract MockValidator is ERC7739Validator {
     }
 
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
-            return true;
-        }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
-            return true;
-        }
+        if (_recoverSigner(hash, signature) == owner) return true;
+        if (_recoverSigner(hash.toEthSignedMessageHash(), signature) == owner) return true;
         return false;
+    }
+
+    function _recoverSigner(bytes32 hash, bytes calldata signature) internal view returns (address) {
+        return hash.tryRecoverCalldata(signature);
     }
 
     /// @dev Returns whether the `hash` and `signature` are valid.
