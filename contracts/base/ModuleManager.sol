@@ -426,14 +426,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     function _fallback(bytes calldata callData) private {
-        
-        // hook manually
-        address hook = _getHook();
-        bytes memory hookData;
-        if (hook != address(0)) {
-            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
-        }
-
         bool success;
         bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
@@ -441,6 +433,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         CallType calltype = $fallbackHandler.calltype;
 
         if (handler != address(0)) {
+            // hook manually
+            address hook = _getHook();
+            bytes memory hookData;
+            if (hook != address(0)) {
+                hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            }
             //if there's a fallback handler, call it
             if (calltype == CALLTYPE_STATIC) {
                 (success, result) = handler.staticcall(ExecLib.get2771CallData(callData));
@@ -465,6 +463,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             
         } else {
             // If there's no handler, the call can be one of onERCXXXReceived()
+            // No need to hook this as no execution is done here
             bytes32 s;
             /// @solidity memory-safe-assembly
             assembly {
