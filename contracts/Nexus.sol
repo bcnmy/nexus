@@ -477,13 +477,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
-    /**
-     *  authHash: 32 bytes
-     *  initData: bytes array
-     *  cleaned 4337 Nexus signature: bytes array
-     */
+    /// @dev Handles the PREP initialization.
+    /// @param data The packed data to be handled.
+    /// @return cleanedSignature The cleaned signature for Nexus 4337 (validateUserOp) flow.
+    /// @return initData The data to initialize the account with.
     function _handlePREP(bytes calldata data) internal returns (bytes calldata cleanedSignature, bytes calldata initData) {
         bytes32 saltAndDelegation;
+        // unpack the data
         assembly {
             if lt(data.length, 0x61) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
@@ -505,7 +505,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             cleanedSignature.length := calldataload(u)
         }
         
-        // check that signature (r value) is based on the hash of the initData provided
+        // check r is valid
         bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
         if (r == bytes32(0)) {
             revert InvalidPREP();

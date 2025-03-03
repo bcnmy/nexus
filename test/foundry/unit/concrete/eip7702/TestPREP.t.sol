@@ -12,9 +12,7 @@ import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol
 contract TestPREP is NexusTest_Base {
 
     event PREPInitialized(bytes32 r);
-
-    uint8 constant MAGIC = 0x05;
-
+    
     using ECDSA for bytes32;
     using LibRLP for *;
 
@@ -85,8 +83,7 @@ contract TestPREP is NexusTest_Base {
 
     function _mine(bytes32 digest, uint256 randomnessSalt) internal returns (bytes32 saltAndDelegation, address prep) {
         bytes32 saltRandomnessSeed = EfficientHashLib.hash(uint256(0xa11cedecaf), randomnessSalt);
-        
-        bytes32 h = keccak256(abi.encodePacked(hex"05", LibRLP.p(uint256(0)).p(address(ACCOUNT_IMPLEMENTATION)).p(uint64(0)).encode()));
+        bytes32 h = EfficientHashLib.hash(_rlpEncodeAuth(uint256(0), address(ACCOUNT_IMPLEMENTATION), 0));
         uint96 salt;
         while (true) {
             salt = uint96(uint256(saltRandomnessSeed));
