@@ -19,6 +19,7 @@
     "@types/chai": "^4.3.16",
     "@types/mocha": ">=10.0.6",
     "@types/node": ">=20.12.12",
+    "account": "ithacaxyz/account#vectorized/prep",
     "account-abstraction": "https://github.com/eth-infinitism/account-abstraction#v0.7.0",
     "chai": "^4.3.7",
     "codecov": "^3.8.3",
@@ -42,8 +43,7 @@
     "solidity-coverage": "^0.8.12",
     "ts-node": ">=10.9.2",
     "typechain": "^8.3.2",
-    "typescript": ">=5.4.5",
-    "lib-prep": "ithacaxyz/account#vectorized/prep"
+    "typescript": ">=5.4.5"
   },
   "keywords": [
     "nexus",
