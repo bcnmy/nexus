@@ -7,9 +7,15 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 /// @title TestModuleManager_FallbackHandler
 /// @notice Tests for installing and uninstalling the fallback handler in a smart account.
 contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
-    /// @notice Sets up the base module management environment and installs the fallback handler.
+
+    MockNFT internal erc721;
+    MockERC1155 internal erc1155;
+    
     function setUp() public {
         init();
+
+        erc721 = new MockNFT("Mock NFT", "MNFT");
+        erc1155 = new MockERC1155("Test");
 
         Execution[] memory execution = new Execution[](2);
 
@@ -290,20 +296,79 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     }
 
     function test_onTokenReceived_Success() public {
-        vm.startPrank(address(ENTRYPOINT));
+        erc721.safeMint(address(BOB_ACCOUNT), 1);
+        assertEq(erc721.balanceOf(address(BOB_ACCOUNT)), 1);
+
+        erc721.safeMint(ALICE_ADDRESS, 2);
+        vm.prank(ALICE_ADDRESS);
+        erc721.safeTransfer(address(BOB_ACCOUNT), 2);
+        assertEq(erc721.ownerOf(2), address(BOB_ACCOUNT));
+
+        erc1155.safeMint(address(BOB_ACCOUNT), 1, 1);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 1), 1);
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 2;
+        tokenIds[1] = 3;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 10;
+        amounts[1] = 30;
+        erc1155.safeMintBatch(address(BOB_ACCOUNT), tokenIds, amounts);
+
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 2), 10);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 3), 30);
+
         //ERC-721
         (bool success, bytes memory data) = address(BOB_ACCOUNT).call{value: 0}(hex'150b7a02');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'150b7a02')));
+        assertTrue(keccak256(data) == keccak256((hex'150b7a0200000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'f23a6e61');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e61')));
+        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e6100000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 Batch
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'bc197c81');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c81')));
+        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c8100000000000000000000000000000000000000000000000000000000')));
+    }
 
-        vm.stopPrank();
+    function test_ComplexReturnData() public {
+        bytes4 selector = bytes4(keccak256(abi.encodePacked("complexReturnData(string,bytes4)")));
+
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE))); // onInstall selector
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        // Verify the fallback handler was installed for the given selector
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
+
+        bytes memory testString = "Hello Complex Return Data that is more than 32 bytes";
+        bytes4 testSelector = bytes4(abi.encode("foo()"));
+
+        bytes memory data = abi.encodeWithSelector(
+            MockHandler(address(0)).complexReturnData.selector,
+            testString,
+            testSelector
+        );
+
+        address expectedSender = address(0x1234567890123456789012345678901234567890);
+        vm.prank(expectedSender);
+        (bool success, bytes memory result) = address(BOB_ACCOUNT).call{value: 0}(data);
+        assertTrue(success);
+        (uint256 timestamp, bytes memory resultData, address addr, uint64 chainId, address sender) = abi.decode(result, (uint256, bytes, address, uint64, address));
+        assertEq(timestamp, block.timestamp);
+        assertEq(addr, address(HANDLER_MODULE));
+        assertEq(chainId, block.chainid);
+        assertEq(sender, expectedSender);
+        bytes memory expectedData = abi.encode(testString, HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion(), testSelector);
+        assertEq(keccak256(resultData), keccak256(expectedData));
     }
 }
