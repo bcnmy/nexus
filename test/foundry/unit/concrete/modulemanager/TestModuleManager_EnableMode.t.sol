@@ -170,7 +170,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         op.signature = signMessage(ALICE, userOpHash);  // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
 
         // simulate uninitialized 7702 account
-        vm.etch(BOB_ADDRESS, address(ACCOUNT_IMPLEMENTATION).code);
+        _doEIP7702(BOB_ADDRESS);
 
         (bytes memory multiInstallData, bytes32 hashToSign, ) = makeInstallDataAndHash(BOB_ADDRESS, MODULE_TYPE_MULTI, userOpHash);
 

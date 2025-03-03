@@ -25,10 +25,6 @@ contract TestEIP7702 is NexusTest_Base {
         mockExecutor = new MockExecutor();
     }
 
-    function _doEIP7702(address account) internal {
-        vm.etch(account, abi.encodePacked(bytes3(0xef0100), bytes20(address(ACCOUNT_IMPLEMENTATION))));
-    }
-
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), "");
