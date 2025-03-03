@@ -4,6 +4,11 @@ pragma solidity ^0.8.27;
 import "../../../utils/Imports.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 
+interface IHandler {
+    function returnBytes() external returns (bytes memory);
+    function complexReturnData(string memory input, bytes4 selector) external returns (uint256, bytes memory, address, uint64, address);
+}
+
 /// @title TestModuleManager_FallbackHandler
 /// @notice Tests for installing and uninstalling the fallback handler in a smart account.
 contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
@@ -335,7 +340,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     function test_ComplexReturnData() public {
         bytes4 selector = bytes4(keccak256(abi.encodePacked("complexReturnData(string,bytes4)")));
 
-        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE))); // onInstall selector
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE)));
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_FALLBACK,
@@ -350,7 +355,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Verify the fallback handler was installed for the given selector
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
 
-        bytes memory testString = "Hello Complex Return Data that is more than 32 bytes";
+        string memory testString = "Hello Complex Return Data that is more than 32 bytes";
         bytes4 testSelector = bytes4(abi.encode("foo()"));
 
         bytes memory data = abi.encodeWithSelector(
@@ -370,5 +375,42 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         assertEq(sender, expectedSender);
         bytes memory expectedData = abi.encode(testString, HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion(), testSelector);
         assertEq(keccak256(resultData), keccak256(expectedData));
+
+        vm.prank(expectedSender); 
+        (timestamp, resultData, addr, chainId, sender) = IHandler(address(BOB_ACCOUNT)).complexReturnData(testString, testSelector);
+        assertEq(timestamp, block.timestamp);
+        assertEq(addr, address(HANDLER_MODULE));
+        assertEq(chainId, block.chainid);
+        assertEq(sender, expectedSender);
+        assertEq(keccak256(resultData), keccak256(expectedData));
+    }
+
+    function test_ReturnBytes() public {
+        bytes4 selector = bytes4(keccak256(abi.encodePacked("returnBytes()")));
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE)));
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        // Verify the fallback handler was installed for the given selector
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
+
+        bytes memory data = abi.encodeWithSelector( 
+            MockHandler(address(0)).returnBytes.selector
+        );
+        (bool success, bytes memory result) = address(BOB_ACCOUNT).call{value: 0}(data);
+        bytes memory expectedResult = abi.encodePacked(HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion());
+        assertTrue(success);
+        assertEq(abi.decode(result, (bytes)), expectedResult);
+
+        bytes memory result2 = IHandler(address(BOB_ACCOUNT)).returnBytes();
+        assertEq(result2, expectedResult);
     }
 }
