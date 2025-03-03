@@ -64,7 +64,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     receive() external payable {}
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable withHook {
+    /// Hooked manually in the _fallback function
+    fallback() external payable {
         _fallback(msg.data);
     }
 
@@ -425,6 +426,14 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     function _fallback(bytes calldata callData) private {
+        
+        // hook manually
+        address hook = _getHook();
+        bytes memory hookData;
+        if (hook != address(0)) {
+            hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+        }
+
         bool success;
         bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
@@ -439,6 +448,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 (success, result) = handler.call{ value: msg.value }(ExecLib.get2771CallData(callData));
             } else {
                 revert UnsupportedCallType(calltype);
+            }
+
+            // hook post check
+            if (hook != address(0)) {
+                IHook(hook).postCheck(hookData);
             }
 
             // Use revert message from fallback handler if the call was not successful

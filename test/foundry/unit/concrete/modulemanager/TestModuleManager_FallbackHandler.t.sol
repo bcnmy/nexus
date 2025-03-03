@@ -84,24 +84,12 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Prepare UserOperation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
-        if (!skip) {
-            // Expect the GenericFallbackCalled event from the MockHandler contract
-            vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
-            emit GenericFallbackCalled(address(this), 123, "Example data");
-        }
+        // Expect the GenericFallbackCalled event from the MockHandler contract
+        vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
+        emit GenericFallbackCalled(address(this), 123, "Example data");
 
         // Call handleOps, which should trigger the fallback handler and emit the event
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-    }
-
-    /// @notice Tests that handleOps triggers the generic fallback handler.
-    function test_HandleOpsTriggersGenericFallback_IsProperlyHooked() public {
-        vm.expectEmit(address(HOOK_MODULE));
-        emit PreCheckCalled();
-        vm.expectEmit(address(HOOK_MODULE));
-        emit PostCheckCalled();
-        // skip fallback emit check as per Matching Sequences section here => https://book.getfoundry.sh/cheatcodes/expect-emit 
-        test_HandleOpsTriggersGenericFallback({skip: true});
     }
 
     /// @notice Tests installing a fallback handler.
@@ -410,6 +398,10 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         assertTrue(success);
         assertEq(abi.decode(result, (bytes)), expectedResult);
 
+        vm.expectEmit(true, true, true, true, address(HOOK_MODULE));
+        emit PreCheckCalled();
+        vm.expectEmit(true, true, true, true, address(HOOK_MODULE));
+        emit PostCheckCalled();
         bytes memory result2 = IHandler(address(BOB_ACCOUNT)).returnBytes();
         assertEq(result2, expectedResult);
     }
