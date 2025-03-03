@@ -7,8 +7,11 @@ import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { LibPREP } from "lib-prep/LibPREP.sol";
+import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
 
 contract TestPREP is NexusTest_Base {
+
+    event PREPInitialized(bytes32 r);
 
     uint8 constant MAGIC = 0x05;
 
@@ -28,7 +31,7 @@ contract TestPREP is NexusTest_Base {
 
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), "");
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in the validator
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
@@ -36,18 +39,15 @@ contract TestPREP is NexusTest_Base {
         return BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, ATTESTERS, THRESHOLD);
     }
 
-    function _getUserOpSignature(uint256 eoaKey, PackedUserOperation memory userOp) internal view returns (bytes memory) {
-        bytes32 hash = ENTRYPOINT.getUserOpHash(userOp);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, hash.toEthSignedMessageHash());
-        return abi.encodePacked(r, s, v);
-    }
-
-    function test_PREP_Initialization_Success() public {
+    function test_PREP_Initialization_Success(uint256 valueToSet) public {
+        valueToSet = bound(valueToSet, 0, 77e18);
+        uint256 valueToSet = 1337;
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);    
 
         bytes memory initData = _getInitData();
         bytes32 initDataHash = keccak256(abi.encodePacked(initData));
 
-        (bytes32 saltAndDelegation, address prep) = _mine(initDataHash);
+        (bytes32 saltAndDelegation, address prep) = _mine(initDataHash, valueToSet);
 
         bytes32 r = LibPREP.rPREP(prep, initDataHash, saltAndDelegation);
 
@@ -57,16 +57,34 @@ contract TestPREP is NexusTest_Base {
         // vm.attachDelegation(signedDelegation);        
         _doEIP7702(prep);
         assertEq(LibPREP.isPREP(prep, r), true);
+        vm.deal(prep, 100 ether);
 
         // Initialize PREP with the first userOp
+        uint256 nonce = getNonce(prep, MODE_PREP, address(mockValidator), 0);
 
+        // Create the userOp and add the data
+        PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
+        userOp.callData = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
+        userOp.signature = signUserOp(BOB, userOp);
 
+        // add prep data to signature 
+        userOp.signature = abi.encode(saltAndDelegation, initData, userOp.signature);
+
+        // Create userOps array
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
 
         
+        vm.expectEmit(address(prep));
+        emit PREPInitialized(r);
+        ENTRYPOINT.handleOps(userOps, payable(address(0x69)));
+
+        // Assert that the value was set ie that execution was successful
+        assertTrue(target.value() == valueToSet);        
     }
 
-    function _mine(bytes32 digest) internal returns (bytes32 saltAndDelegation, address prep) {
-        bytes32 saltRandomnessSeed = bytes32(uint256(0xa11cedecaf));
+    function _mine(bytes32 digest, uint256 randomnessSalt) internal returns (bytes32 saltAndDelegation, address prep) {
+        bytes32 saltRandomnessSeed = EfficientHashLib.hash(uint256(0xa11cedecaf), randomnessSalt);
         
         bytes32 h = keccak256(abi.encodePacked(hex"05", LibRLP.p(uint256(0)).p(address(ACCOUNT_IMPLEMENTATION)).p(uint64(0)).encode()));
         uint96 salt;

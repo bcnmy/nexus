@@ -59,7 +59,6 @@ contract TestEIP7702 is NexusTest_Base {
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
         userOp.callData = userOpCalldata;
-        userOp.callData = userOpCalldata;
 
         userOp.signature = _getSignature(eoaKey, userOp);
         _doEIP7702(account);

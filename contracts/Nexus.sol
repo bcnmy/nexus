@@ -489,6 +489,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
+            
             saltAndDelegation := calldataload(data.offset)
 
             // initData
