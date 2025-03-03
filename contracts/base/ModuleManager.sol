@@ -453,33 +453,31 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 IHook(hook).postCheck(hookData);
             }
 
-            // Use revert message from fallback handler if the call was not successful
             assembly {
                 if iszero(success) {
+                    // Use revert message from fallback handler if the call was not successful
                     revert(add(result, 0x20), mload(result))
                 }
-                return (add(result, 0x20), mload(result))
+                return(add(result, 0x20), mload(result))
             }
-            
-        } else {
-            // If there's no handler, the call can be one of onERCXXXReceived()
-            // No need to hook this as no execution is done here
-            bytes32 s;
-            /// @solidity memory-safe-assembly
-            assembly {
-                s := shr(224, calldataload(0))
-                // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
-                // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
-                // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
-                if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
-                    success := true // it is one of onERCXXXReceived
-                    mstore(0x20, s) // Store `msg.sig`.
-                    return(0x3c, 0x20) // Return `msg.sig`.
-                }
-            }
-            // if there was no handler and it is not the onERCXXXReceived call, revert
-            require(success, MissingFallbackHandler(msg.sig));
         }
+        
+        // If there's no handler, the call can be one of onERCXXXReceived()
+        // No need to hook this as no execution is done here
+        bytes32 s;
+        /// @solidity memory-safe-assembly
+        assembly {
+            s := shr(224, calldataload(0))
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
+                mstore(0x20, s) // Store `msg.sig`.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+        }
+        // if there was no handler and it is not the onERCXXXReceived call, revert
+        revert MissingFallbackHandler(msg.sig);
     }
 
     /// @dev Helper function to paginate entries in a SentinelList.
