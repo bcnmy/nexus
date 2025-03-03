@@ -110,11 +110,10 @@ Generate documentation from NatSpec comments.
 
 ### 🚀 Deploy Contracts
 
-```bash
-yarn run deploy:hardhat --network hardhat
-```
+Nexus contracts are pre-deployed on most EVM chains.
+Please see the addresses [here](https://docs.biconomy.io/contractsAndAudits).
 
-Deploys contracts onto the blockchain network.
+If you need to deploy Nexus on your own chain or you want to deploy the contracts with different addresses, please see [this](https://github.com/bcnmy/nexus/tree/deploy-v1.0.1/scripts/bash-deploy) script. Or the same script on differnet deploy branches.
 
 ### 🎨 Lint Code
 
