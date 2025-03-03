@@ -48,7 +48,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
-import { ECDSA } from "solady/utils/ECDSA.sol";
+import { LibPREP } from "lib-prep/LibPREP.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -481,66 +481,36 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     /**
      *  authHash: 32 bytes
-     *  erc7702AuthSignature: 65 bytes
      *  initData: bytes array
      *  cleaned 4337 Nexus signature: bytes array
      */
     function _handlePREP(bytes calldata data) internal returns (bytes calldata cleanedSignature, bytes calldata initData) {
-        bytes32 authHash;
-        bytes calldata erc7702AuthSignature;
-
-        bytes32 r;
-        bytes32 s;
-        
+        bytes32 saltAndDelegation;
         assembly {
             if lt(data.length, 0x61) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
-            authHash := calldataload(data.offset)
-
-            // erc7702AuthSignature
-            let p := calldataload(add(data.offset, 0x20))
-            let u := add(data.offset, p)
-            erc7702AuthSignature.offset := add(u, 0x20)
-            erc7702AuthSignature.length := calldataload(u)
+            saltAndDelegation := calldataload(data.offset)
 
             // initData
-            p := calldataload(add(data.offset, 0x40))
-            u := add(data.offset, p)
+            let p := calldataload(add(data.offset, 0x20))
+            let u := add(data.offset, p)
             initData.offset := add(u, 0x20)
             initData.length := calldataload(u)
 
             // cleanedSignature
-            p := calldataload(add(data.offset, 0x60))
+            p := calldataload(add(data.offset, 0x40))
             u := add(data.offset, p)
             cleanedSignature.offset := add(u, 0x20)
             cleanedSignature.length := calldataload(u)
-
-            r := calldataload(erc7702AuthSignature.offset)
-            s := calldataload(add(erc7702AuthSignature.offset, 0x20))
         }
         
-        // check that signature (r value) is based on the hash of the initData provided 
-        bytes32 initDataHash = keccak256(initData);
-        require(r == initDataHash, InvalidNicksMethodData(authHash, initDataHash, erc7702AuthSignature));
-
-        // check that signature (s value) matches the expected pattern of having 0s in the 20 leftmost bytes
-        require(s & 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000 == bytes32(0));
-        
-        // check auth hash signed by address(this)
-        // we just use authHash provided in the `data` instead of recomputing it
-        // because it is computationally unlikely to find another hash that 
-        // combined with another `r` (which means another initdata) 
-        // and another `s` that matches the pattern of having 0s in the 20 leftmost bytes
-        // would result in the same recovered signer (address(this)).
-        address signer = ECDSA.recoverCalldata(authHash, erc7702AuthSignature);
-        assembly {
-            if iszero(eq(signer, address())) {
-                mstore(0x0, 0xaed59595) // NotInitializable()
-                revert(0x1c, 0x04)
-            }
-        }
+        // check that signature (r value) is based on the hash of the initData provided
+        bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
+        if (r == bytes32(0)) {
+            revert InvalidNicksMethodData(saltAndDelegation, keccak256(initData));
+        }        
     }
     
     /// @dev EIP712 domain name and version.

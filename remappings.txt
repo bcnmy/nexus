@@ -6,3 +6,4 @@ excessively-safe-call/=node_modules/excessively-safe-call/src/
 sentinellist/=node_modules/sentinellist/src/
 solarray/=node_modules/solarray/src/
 erc7739Validator/=node_modules/erc7739-validator-base/src/
+lib-prep/=node_modules/lib-prep/src/

@@ -59,7 +59,7 @@ interface INexusEventsAndErrors {
     error InvalidInitData();
 
     /// @notice Error thrown when the provided authHash and erc7702AuthSignature are invalid.
-    error InvalidNicksMethodData(bytes32 authHash, bytes32 initDataHash, bytes erc7702AuthSignature);
+    error InvalidNicksMethodData(bytes32 authHash, bytes32 initDataHash);
 
     /// @notice Error thrown when the account is already initialized.
     error AccountAlreadyInitialized();
