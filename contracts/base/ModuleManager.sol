@@ -93,8 +93,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback() external payable withHook {
-        _fallback(msg.data);
+    fallback(bytes calldata callData) external payable withHook returns (bytes memory) {
+        return _fallback(callData);
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -615,9 +615,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-    function _fallback(bytes calldata callData) private {
+    function _fallback(bytes calldata callData) private returns (bytes memory result) {
         bool success;
-        bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
@@ -633,13 +632,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             }
 
             // Use revert message from fallback handler if the call was not successful
-            assembly {
-                if iszero(success) {
+            if (!success) {
+                assembly {
                     revert(add(result, 0x20), mload(result))
                 }
-                return (add(result, 0x20), mload(result))
             }
-            
         } else {
             // If there's no handler, the call can be one of onERCXXXReceived()
             bytes32 s;
@@ -651,8 +648,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
                 if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
                     success := true // it is one of onERCXXXReceived
-                    mstore(0x20, s) // Store `msg.sig`.
-                    return(0x3c, 0x20) // Return `msg.sig`.
+                    result := mload(0x40) //result was set to 0x60 as it was empty, so we need to find a new space for it
+                    mstore(result, 0x04) //store length
+                    mstore(add(result, 0x20), shl(224, s)) //store calldata
+                    mstore(0x40, add(result, 0x24)) //allocate memory
                 }
             }
             // if there was no handler and it is not the onERCXXXReceived call, revert

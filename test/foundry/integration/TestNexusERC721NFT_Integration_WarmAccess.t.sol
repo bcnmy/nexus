@@ -48,8 +48,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
 
     /// @notice Tests sending ERC721 tokens from an already deployed Nexus smart account with warm access
     function test_Gas_ERC721NFT_DeployedNexus_Transfer_Warm() public checkERC721NFTBalanceWarm(recipient) {
+        ERC721NFT.mint(preComputedAddress, tokenId);
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
-        ERC721NFT.safeMint(preComputedAddress, tokenId);
         Execution[] memory executions = prepareSingleExecution(
             address(ERC721NFT),
             0,
@@ -160,11 +160,12 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         checkERC721NFTBalanceWarm(recipient)
         checkPaymasterBalance(address(paymaster))
     {
+        // Mint the NFT to the precomputed address
+        ERC721NFT.mint(preComputedAddress, tokenId);
+
         // Deploy the Nexus account
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
 
-        // Mint the NFT to the precomputed address
-        ERC721NFT.safeMint(preComputedAddress, tokenId);
         // Prepare the execution for ERC721 token transfer
         Execution[] memory executions = prepareSingleExecution(
             address(ERC721NFT),
