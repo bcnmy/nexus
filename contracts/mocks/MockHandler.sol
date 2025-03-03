@@ -24,12 +24,13 @@ contract MockHandler is IFallback {
         return this.onGenericFallback.selector;
     }
 
-    function complexReturnData(string memory input, bytes4 selector) external view returns (uint256, bytes memory, address, uint64) {
+    function complexReturnData(string memory input, bytes4 selector) external view returns (uint256, bytes memory, address, uint64, address) {
         return (
             uint256(block.timestamp),
             abi.encode(input, NAME, VERSION, selector),
             address(this),
-            uint64(block.chainid)
+            uint64(block.chainid),
+            _msgSender()
         );
     }
 
@@ -71,5 +72,15 @@ contract MockHandler is IFallback {
 
     function getVersion() external pure returns (string memory) {
         return VERSION;
+    }
+
+    function _msgSender() internal pure returns (address sender) {
+        // The assembly code is more direct than the Solidity version using `abi.decode`.
+        /* solhint-disable no-inline-assembly */
+        /// @solidity memory-safe-assembly
+        assembly {
+            sender := shr(96, calldataload(sub(calldatasize(), 20)))
+        }
+        /* solhint-enable no-inline-assembly */
     }
 }

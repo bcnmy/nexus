@@ -354,13 +354,15 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
             testSelector
         );
 
+        address expectedSender = address(0x1234567890123456789012345678901234567890);
+        vm.prank(expectedSender);
         (bool success, bytes memory result) = address(BOB_ACCOUNT).call{value: 0}(data);
         assertTrue(success);
-        (uint256 timestamp, bytes memory resultData, address addr, uint64 chainId) = abi.decode(result, (uint256, bytes, address, uint64));
+        (uint256 timestamp, bytes memory resultData, address addr, uint64 chainId, address sender) = abi.decode(result, (uint256, bytes, address, uint64, address));
         assertEq(timestamp, block.timestamp);
         assertEq(addr, address(HANDLER_MODULE));
         assertEq(chainId, block.chainid);
-
+        assertEq(sender, expectedSender);
         bytes memory expectedData = abi.encode(testString, HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion(), testSelector);
         assertEq(keccak256(resultData), keccak256(expectedData));
     }
