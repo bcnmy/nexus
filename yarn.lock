@@ -1307,7 +1307,7 @@ abbrev@1.0.x:
     table "^6.8.0"
     typescript "^4.3.5"
 
-account@ithacaxyz/account#vectorized/prep:
+"account@github:ithacaxyz/account#vectorized/prep":
   version "0.0.0"
   resolved "https://codeload.github.com/ithacaxyz/account/tar.gz/733464120b83c7699ba5a3ccf0b56c9ae6dea001"
 
