@@ -43,10 +43,10 @@ contract EventsAndErrors {
     error InvalidFactoryAddress();
     error InvalidEntryPointAddress();
     error InnerCallFailed();
+    error EmergencyUninstallSigError();
     error CallToDeployWithFactoryFailed();
     error NexusInitializationFailed();
     error InvalidThreshold(uint8 providedThreshold, uint256 attestersCount);
-
 
     // ==========================
     // Operation Errors

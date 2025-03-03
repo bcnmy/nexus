@@ -84,7 +84,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Perform the installation and handle possible mismatches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
             // Expect failure if the module type does not match the expected type ID
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
@@ -115,7 +115,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         // First installation should succeed if the module type matches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);

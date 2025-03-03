@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
-
+import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "../modules/IPreValidationHook.sol";
 import { IHook } from "../modules/IHook.sol";
 import { CallType } from "../../lib/ModeLib.sol";
 
@@ -31,16 +31,29 @@ import { CallType } from "../../lib/ModeLib.sol";
 interface IStorage {
     /// @notice Struct storing validators and executors using Sentinel lists, and fallback handlers via mapping.
     struct AccountStorage {
-        SentinelListLib.SentinelList validators; ///< List of validators, initialized upon contract deployment.
-        SentinelListLib.SentinelList executors; ///< List of executors, similarly initialized.
-        mapping(bytes4 => FallbackHandler) fallbacks; ///< Mapping of selectors to their respective fallback handlers.
-        IHook hook; ///< Current hook module associated with this account.
-        mapping(address hook => uint256) emergencyUninstallTimelock; ///< Mapping of hooks to requested timelocks.
+        ///< List of validators, initialized upon contract deployment.
+        SentinelListLib.SentinelList validators;
+        ///< List of executors, similarly initialized.
+        SentinelListLib.SentinelList executors;
+        ///< Mapping of selectors to their respective fallback handlers.
+        mapping(bytes4 => FallbackHandler) fallbacks;
+        ///< Current hook module associated with this account.
+        IHook hook;
+        ///< Mapping of hooks to requested timelocks.
+        mapping(address hook => uint256) emergencyUninstallTimelock;
+        ///< PreValidation hook for validateUserOp
+        IPreValidationHookERC4337 preValidationHookERC4337;
+        ///< PreValidation hook for isValidSignature
+        IPreValidationHookERC1271 preValidationHookERC1271;
+        ///< Mapping of used nonces for replay protection.
+        mapping(uint256 => bool) nonces;
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
     struct FallbackHandler {
-        address handler; ///< The address of the fallback function handler.
-        CallType calltype; ///< The type of call this handler supports (e.g., static or call).
+        ///< The address of the fallback function handler.
+        address handler;
+        ///< The type of call this handler supports (e.g., static or call).
+        CallType calltype;
     }
 }

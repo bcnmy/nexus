@@ -165,10 +165,8 @@ describe("Nexus Factory Tests", function () {
     });
 
     it("Should prevent account reinitialization", async function () {
-      const response = smartAccount.initializeAccount("0x");
-      await expect(response).to.be.revertedWithCustomError(
-        smartAccount,
-        "LinkedList_AlreadyInitialized()",
+      await expect(smartAccount.initializeAccount("0x00000000000000000000000000000000123456784e4e4e4e")).to.be.rejectedWith(
+        "reverted with an unrecognized custom error (return data: 0xaed59595)", // NotInitializable()
       );
     });
   });
@@ -205,12 +203,12 @@ describe("Nexus Factory Tests", function () {
       const validator = {
         module: await validatorModule.getAddress(),
         data: solidityPacked(["address"], [ownerAddress]),
-      }
+      };
 
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator.module,
@@ -286,7 +284,7 @@ describe("Nexus Factory Tests", function () {
       const salt = keccak256("0x");
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
-        ["0x", salt],
+        ["0xffffffff", salt],
       );
       await expect(
         metaFactory.deployWithFactory(await factory.getAddress(), factoryData),
@@ -334,16 +332,16 @@ describe("Nexus Factory Tests", function () {
 
       const validator = {
         module: await validatorModule.getAddress(),
-        data: solidityPacked(["address"], [ownerAddress]),  
-      }
+        data: solidityPacked(["address"], [ownerAddress]),
+      };
       const executor = {
         module: await executorModule.getAddress(),
         data: "0x",
-      }
+      };
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator.module,
@@ -441,26 +439,6 @@ describe("Nexus Factory Tests", function () {
         "NexusInitializationFailed",
       );
     });
-
-    it("Should revert with NoValidatorInstalled if no validator is installed after initialization", async function () {
-      // Set up a valid bootstrap address but do not include any validators in the initData
-      const validBootstrapAddress = await owner.getAddress();
-      const bootstrapData = "0x"; // Valid but does not install any validators
-
-      const initData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address", "bytes"],
-        [validBootstrapAddress, bootstrapData],
-      );
-
-      const salt = keccak256("0x");
-
-      await expect(
-        factory.createAccount(initData, salt),
-      ).to.be.revertedWithCustomError(
-        smartAccountImplementation,
-        "NoValidatorInstalled",
-      );
-    });
   });
 
   describe("RegistryFactory", function () {
@@ -515,21 +493,21 @@ describe("Nexus Factory Tests", function () {
       registryFactory = registryFactory.connect(owner);
 
       ownerAddress = await owner.getAddress();
-      
+
       const validator = {
         module: await validatorModule.getAddress(),
         data: solidityPacked(["address"], [ownerAddress]),
-      }
+      };
 
       const executor = {
         module: await executorModule.getAddress(),
         data: "0x",
-      }
+      };
 
       const hook = {
         module: await hookModule.getAddress(),
         data: "0x",
-      }
+      };
 
       parsedValidator = {
         module: validator[0],

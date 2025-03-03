@@ -9,7 +9,7 @@ import {Script} from "forge-std/Script.sol";
 
 contract HelperConfig is Script {
     IEntryPoint public ENTRYPOINT;
-    address private  constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     constructor() {
         if (block.chainid == 31337) {
