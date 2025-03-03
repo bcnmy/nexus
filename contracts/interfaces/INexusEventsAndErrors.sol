@@ -22,10 +22,9 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface INexusEventsAndErrors {
-    /// @notice Emitted when a user operation is executed from `executeUserOp`
-    /// @param userOp The user operation that was executed.
-    /// @param innerCallRet The return data from the inner call execution.
-    event Executed(PackedUserOperation userOp, bytes innerCallRet);
+    /// @notice Emitted when a PREP is initialized.
+    /// @param r The r value of the PREP signature.
+    event PREPInitialized(bytes32 r);
 
     /// @notice Error thrown when an unsupported ModuleType is requested.
     /// @param moduleTypeId The ID of the unsupported module type.
@@ -59,7 +58,7 @@ interface INexusEventsAndErrors {
     error InvalidInitData();
 
     /// @notice Error thrown when the provided authHash and erc7702AuthSignature are invalid.
-    error InvalidNicksMethodData(bytes32 authHash, bytes32 initDataHash);
+    error InvalidPREP();
 
     /// @notice Error thrown when the account is already initialized.
     error AccountAlreadyInitialized();

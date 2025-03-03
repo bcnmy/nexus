@@ -93,8 +93,8 @@ interface IModuleManagerEventsAndErrors {
     /// @notice Error thrown when an invalid nonce is used
     error InvalidNonce();
 
-    /// Error thrown when account installs/uninstalls module with mismatched input `moduleTypeId`
-    error MismatchModuleTypeId(uint256 moduleTypeId);
+    /// Error thrown when account installs/uninstalls module with mismatched moduleTypeId
+    error MismatchModuleTypeId();
 
     /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
     error FallbackSelectorForbidden();

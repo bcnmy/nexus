@@ -199,9 +199,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
         bytes calldata callData = userOp.callData[4:];
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
-        if (success) {
-            emit Executed(userOp, innerCallRet);
-        } else {
+        if (!success) {
             revert ExecutionFailed();
         }
     }
@@ -509,8 +507,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // check that signature (r value) is based on the hash of the initData provided
         bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
         if (r == bytes32(0)) {
-            revert InvalidNicksMethodData(saltAndDelegation, keccak256(initData));
-        }        
+            revert InvalidPREP();
+        }
+        emit PREPInitialized(r);
     }
     
     /// @dev EIP712 domain name and version.
