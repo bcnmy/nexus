@@ -54,6 +54,7 @@ bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = 0xd3ddfc12654178cc44d4a7b6b969c
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
 bytes1 constant MODE_DEFAULT_VALIDATOR = 0x02;
+bytes1 constant MODE_PREP = 0x03;
 
 // The flag to indicate the default validator mode for enable mode signature
 address constant DEFAULT_VALIDATOR_FLAG = 0x0000000000000000000000000000000000000088;

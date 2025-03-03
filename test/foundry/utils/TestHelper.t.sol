@@ -144,6 +144,15 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         }
     }
 
+    // etch the 7702 code
+    function _doEIP7702(address account) internal {
+        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(address(ACCOUNT_IMPLEMENTATION))));
+    }
+
+    function _doEIP7702_init(address account, address implementation) internal {
+        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(implementation)));
+    }
+
     // -----------------------------------------
     // Account Deployment Functions
     // -----------------------------------------

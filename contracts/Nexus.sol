@@ -48,6 +48,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
+import { LibPREP } from "lib-prep/LibPREP.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -118,10 +119,23 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (op.nonce.isDefaultValidatorMode()) {
             validator = _DEFAULT_VALIDATOR;
         } else {
-            // if it is module enable mode, we need to enable the module first
-            // and get the cleaned signature
-            if (op.nonce.isModuleEnableMode()) {
+            if (op.nonce.isValidateMode()) {
+                // do nothing special. This is introduced
+                // to quickly identify the most commonly used 
+                // mode which is validate mode
+                // and avoid checking two above conditions
+            } else if (op.nonce.isModuleEnableMode()) {
+                // if it is module enable mode, we need to enable the module first
+                // and get the cleaned signature
                 userOp.signature = _enableMode(userOpHash, op.signature);  
+            } else if (op.nonce.isPrepMode()) {
+                // PREP Mode. Authorize prep signature
+                // and initialize the account
+                // PREP mode is only used for the uninited PREPs
+                require(!isInitialized(), AccountAlreadyInitialized());
+                bytes calldata initData;
+                (userOp.signature, initData) = _handlePREP(op.signature);
+                _initializeAccount(initData);
             }
             validator = op.nonce.getValidator();
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
@@ -185,9 +199,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     function executeUserOp(PackedUserOperation calldata userOp, bytes32) external payable virtual onlyEntryPoint withHook {
         bytes calldata callData = userOp.callData[4:];
         (bool success, bytes memory innerCallRet) = address(this).delegatecall(callData);
-        if (success) {
-            emit Executed(userOp, innerCallRet);
-        } else {
+        if (!success) {
             revert ExecutionFailed();
         }
     }
@@ -278,13 +290,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev This function can only be called by the account itself or the proxy factory.
     /// When a 7702 account is created, the first userOp should contain self-call to initialize the account.
     function initializeAccount(bytes calldata initData) external payable virtual {
-        require(initData.length >= 24, InvalidInitData());
-        
         // Protect this function to only be callable when used with the proxy factory or when
         // account calls itself
         if (msg.sender != address(this)) {
             Initializable.requireInitializable();
         }
+        _initializeAccount(initData);
+    }
+
+    function _initializeAccount(bytes calldata initData) internal {
+        require(initData.length >= 24, InvalidInitData());
 
         address bootstrap;
         bytes calldata bootstrapCall;
@@ -462,6 +477,42 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
     }
 
+    /// @dev Handles the PREP initialization.
+    /// @param data The packed data to be handled.
+    /// @return cleanedSignature The cleaned signature for Nexus 4337 (validateUserOp) flow.
+    /// @return initData The data to initialize the account with.
+    function _handlePREP(bytes calldata data) internal returns (bytes calldata cleanedSignature, bytes calldata initData) {
+        bytes32 saltAndDelegation;
+        // unpack the data
+        assembly {
+            if lt(data.length, 0x61) {
+                mstore(0x0, 0xaed59595) // NotInitializable()
+                revert(0x1c, 0x04)
+            }
+            
+            saltAndDelegation := calldataload(data.offset)
+
+            // initData
+            let p := calldataload(add(data.offset, 0x20))
+            let u := add(data.offset, p)
+            initData.offset := add(u, 0x20)
+            initData.length := calldataload(u)
+
+            // cleanedSignature
+            p := calldataload(add(data.offset, 0x40))
+            u := add(data.offset, p)
+            cleanedSignature.offset := add(u, 0x20)
+            cleanedSignature.length := calldataload(u)
+        }
+        
+        // check r is valid
+        bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
+        if (r == bytes32(0)) {
+            revert InvalidPREP();
+        }
+        emit PREPInitialized(r);
+    }
+    
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
