@@ -448,16 +448,20 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
                 revert UnsupportedCallType(calltype);
             }
 
+            // Use revert message from fallback handler if the call was not successful
+            assembly {
+                if iszero(success) {
+                    revert(add(result, 0x20), mload(result))
+                }
+            }
+
             // hook post check
             if (hook != address(0)) {
                 IHook(hook).postCheck(hookData);
             }
 
+            // return the result
             assembly {
-                if iszero(success) {
-                    // Use revert message from fallback handler if the call was not successful
-                    revert(add(result, 0x20), mload(result))
-                }
                 return(add(result, 0x20), mload(result))
             }
         }
