@@ -13,11 +13,11 @@ contract DeployNexus is Script {
     address public constant REGISTRY_ADDRESS = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
-    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000f2bd6e8e0a8d8b01a83be4c5;
-    bytes32 constant K1VALIDATOR_SALT = 0x000000000000000000000000000000000000000014fedeb9e1c61d030943b78e;
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000685bdf10d2a63f043e248cc0;
-    bytes32 constant K1VALIDATORFACTORY_SALT = 0x0000000000000000000000000000000000000000d07e828a05cf8c02ef869155;
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000a00deaddeb69f9031a251b40;
+    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d94e66ffea57d5033465d361; // => 0x000000aC74357BFEa72BBD0781833631F732cf19
+    bytes32 constant K1VALIDATOR_SALT = 0x000000000000000000000000000000000000000014fedeb9e1c61d030943b78e; // => 0x0000002D6DB27c52E3C11c1Cf24072004AC75cBa
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000005e620e103460b60399842649; // => 0x879fa30248eeb693dcCE3eA94a743622170a3658
+    bytes32 constant K1VALIDATORFACTORY_SALT = 0x0000000000000000000000000000000000000000ab83b9fa3c3b1b041f8fa33b; // => 0x2828A0E0f36d8d8BeAE95F00E2BbF235e4230fAc
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000663d6c9d31481c0429f9d44c; // => 0x000000c3A93d2c5E02Cb053AC675665b1c4217F9
 
     function setUp() public {}
 
@@ -136,10 +136,10 @@ contract DeployNexus is Script {
         } else {
             k1validator = DeterministicDeployerLib.broadcastDeploy(bytecode, salt);
             console2.log("Nexus K1 Validator deployed at: ", k1validator);
+            console2.log("Registering K1Validator on registry");
+            // Register K1Validator on registry
+            _registerModule(k1validator);
         }
-
-        // Register K1Validator on registry
-        _registerModule(k1validator);
 
         // ======== NexusBootstrap ========
 
