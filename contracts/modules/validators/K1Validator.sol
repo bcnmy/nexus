@@ -76,6 +76,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data[:20]));
         require(newOwner != address(0), OwnerCannotBeZeroAddress());
+        require(!_isContract(newOwner), NewOwnerIsContract());
         smartAccountOwners[msg.sender] = newOwner;
         if (data.length > 20) {
             _fillSafeSenders(data[20:]);
