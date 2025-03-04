@@ -133,7 +133,7 @@ describe("Nexus Basic Specs", function () {
 
   describe("Smart Account Basics", function () {
     it("Should correctly return the Nexus's ID", async function () {
-      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.1.0.0");
+      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.1.0.2");
     });
 
     it("Should get implementation address of smart account", async () => {

@@ -34,6 +34,10 @@ contract MockHandler is IFallback {
         );
     }
 
+    function returnBytes() external view returns (bytes memory) {
+        return abi.encodePacked(NAME, VERSION);
+    }
+
     function onInstall(bytes calldata data) external override {
         if (data.length >= 0x20) {
             emit HandlerOnInstallCalled(bytes32(data[0:32]));
