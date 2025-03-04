@@ -187,7 +187,7 @@ contract TestK1Validator is NexusTest_Base {
     function test_Version() public {
         string memory contractVersion = validator.version();
 
-        assertEq(contractVersion, "1.0.1", "Contract version should be '1.0.1'");
+        assertEq(contractVersion, "1.0.2", "Contract version should be '1.0.2'");
     }
 
     /// @notice Tests the isModuleType function to return the correct module type
@@ -383,7 +383,7 @@ contract TestK1Validator is NexusTest_Base {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("Nexus"),
-                keccak256("1.0.1"),
+                keccak256("1.0.2"),
                 block.chainid,
                 address(BOB_ACCOUNT)
             )
