@@ -187,7 +187,7 @@ contract TestK1Validator is NexusTest_Base {
     function test_Version() public {
         string memory contractVersion = validator.version();
 
-        assertEq(contractVersion, "1.0.2", "Contract version should be '1.0.2'");
+        assertEq(contractVersion, "1.0.1", "Contract version should be '1.0.1'");
     }
 
     /// @notice Tests the isModuleType function to return the correct module type
