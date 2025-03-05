@@ -200,7 +200,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     /// @notice Returns the version of the module
     /// @return The version of the module
     function version() external pure returns (string memory) {
-        return "1.0.1";
+        return "1.2.0";
     }
 
     /// @notice Checks if the module is of the specified type

@@ -61,7 +61,7 @@ describe("K1Validator module tests", () => {
     });
   });
 
-  describe("K1Validtor tests", () => {
+  describe("K1Validator tests", () => {
     it("should check if validator is installed", async () => {
       expect(
         await deployedNexus.isModuleInstalled(
@@ -79,7 +79,7 @@ describe("K1Validator module tests", () => {
 
     it("should get module version", async () => {
       const version = await k1Validator.version();
-      expect(version).to.equal("1.0.1");
+      expect(version).to.equal("1.2.0");
     });
 
     it("should check module type", async () => {
