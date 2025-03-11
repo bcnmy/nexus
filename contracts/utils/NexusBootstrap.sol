@@ -59,7 +59,40 @@ contract NexusBootstrap is ModuleManager {
         IModule(_DEFAULT_VALIDATOR).onInstall(data);
     }
 
+    function initNexusWithDefaultValidatorAndOtherModules(
+        bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
+    )
+        external
+        payable
+    {
+        IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
 
+        for (uint256 i = 0; i < executors.length; i++) {
+            if (executors[i].module == address(0)) continue;
+            _installExecutor(executors[i].module, executors[i].data);
+            emit ModuleInstalled(MODULE_TYPE_EXECUTOR, executors[i].module);
+        }
+
+        // Initialize hook
+        if (hook.module != address(0)) {
+            _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
+        }
+
+        // Initialize fallback handlers
+        for (uint256 i = 0; i < fallbacks.length; i++) {
+            if (fallbacks[i].module == address(0)) continue;
+            _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
+            emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
+        }        
+    }
+        
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module.
