@@ -15,6 +15,12 @@ pragma solidity ^0.8.27;
 import { ModuleManager } from "../base/ModuleManager.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK
+} from "../types/Constants.sol";
 
 /// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
@@ -31,6 +37,29 @@ struct BootstrapConfig {
 /// @title NexusBootstrap
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
 contract NexusBootstrap is ModuleManager {
+
+    constructor(address defaultValidator, bytes memory initData) ModuleManager(defaultValidator, initData) {}
+
+    modifier _withInitSentinelLists() {
+        _initSentinelLists();
+        _;
+    }
+
+    /// @notice Initializes the Nexus account with the default validator.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @dev For gas savings purposes this method does not initialize the registry.
+    /// @dev The registry should be initialized via the `setRegistry` function on the Nexus contract later if needed.
+    /// @param data The initialization data for the default validator module.
+    function initNexusWithDefaultValidator(
+        bytes calldata data
+    )
+        external
+        payable
+    {
+        IModule(_DEFAULT_VALIDATOR).onInstall(data);
+    }
+
+
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module.
@@ -41,9 +70,14 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+        _withInitSentinelLists
+    {
         _configureRegistry(registry, attesters, threshold);
         _installValidator(address(validator), data);
+        emit ModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator));
     }
 
     /// @notice Initializes the Nexus account with multiple modules.
@@ -60,29 +94,37 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+        _withInitSentinelLists
+    {
         _configureRegistry(registry, attesters, threshold);
 
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
         }
 
         // Initialize executors
         for (uint256 i = 0; i < executors.length; i++) {
             if (executors[i].module == address(0)) continue;
             _installExecutor(executors[i].module, executors[i].data);
+            emit ModuleInstalled(MODULE_TYPE_EXECUTOR, executors[i].module);
         }
 
         // Initialize hook
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
 
         // Initialize fallback handlers
         for (uint256 i = 0; i < fallbacks.length; i++) {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
+            emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
         }
     }
 
@@ -96,17 +138,23 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external {
+    )
+        external
+        payable
+        _withInitSentinelLists
+    {
         _configureRegistry(registry, attesters, threshold);
 
         // Initialize validators
         for (uint256 i = 0; i < validators.length; i++) {
             _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
         }
 
         // Initialize hook
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
     }
 
@@ -124,7 +172,11 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(address(this), abi.encodeCall(this.initNexus, (validators, executors, hook, fallbacks, registry, attesters, threshold)));
     }
 
@@ -138,7 +190,11 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, (validators, hook, registry, attesters, threshold)));
     }
 
@@ -150,16 +206,19 @@ contract NexusBootstrap is ModuleManager {
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
-    ) external view returns (bytes memory init) {
+    )
+        external
+        view
+        returns (bytes memory init)
+    {
         init = abi.encode(
-            address(this),
-            abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
+            address(this), abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
         );
     }
 
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
-        version = "1.0.0";
+        version = "1.2.0";
     }
 }

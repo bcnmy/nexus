@@ -63,6 +63,8 @@ describe("Nexus Basic Specs", function () {
   let bundlerAddress: AddressLike;
   let counter: Counter;
   let validatorModule: MockValidator;
+  let defaultValidator: MockValidator;
+  let defaultValidatorAddress: AddressLike;
   let deployer: Signer;
   let aliceOwner: Signer;
   let provider: Provider;
@@ -76,6 +78,7 @@ describe("Nexus Basic Specs", function () {
     addresses = setup.addresses;
     counter = setup.counter;
     validatorModule = setup.mockValidator;
+    defaultValidator = setup.defaultValidator;
     smartAccountOwner = setup.accountOwner;
     deployer = setup.deployer;
     aliceOwner = setup.aliceAccountOwner;
@@ -88,6 +91,7 @@ describe("Nexus Basic Specs", function () {
     ownerAddress = await smartAccountOwner.getAddress();
     bundler = ethers.Wallet.createRandom();
     bundlerAddress = await bundler.getAddress();
+    defaultValidatorAddress = await defaultValidator.getAddress();
 
     const accountOwnerAddress = ownerAddress;
 
@@ -133,7 +137,7 @@ describe("Nexus Basic Specs", function () {
 
   describe("Smart Account Basics", function () {
     it("Should correctly return the Nexus's ID", async function () {
-      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.1.0.2");
+      expect(await smartAccount.accountId()).to.equal("biconomy.nexus.1.2.0");
     });
 
     it("Should get implementation address of smart account", async () => {
@@ -157,11 +161,6 @@ describe("Nexus Basic Specs", function () {
     it("Should get entry point", async () => {
       const entryPointFromContract = await smartAccount.entryPoint();
       expect(entryPointFromContract).to.be.equal(entryPoint);
-    });
-
-    it("Should get domain separator", async () => {
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-      expect(domainSeparator).to.not.equal(ZeroAddress);
     });
 
     it("Should verify supported account modes", async function () {
@@ -317,8 +316,24 @@ describe("Nexus Basic Specs", function () {
       // Define constants as per the original Solidity function
       const PARENT_TYPEHASH = "PersonalSign(bytes prefixed)";
 
-      // Calculate the domain separator
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
+      const _DOMAIN_TYPEHASH = ethers.keccak256(
+        ethers.toUtf8Bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+      );
+
+      const [fields, name, version, chainId, verifyingContract, salt, extensions] = await smartAccount.eip712Domain();
+
+      const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
+      const versionHash = ethers.keccak256(ethers.toUtf8Bytes(version));
+
+      // corect this => mimic abi.encode , not encodePacked
+
+      const packedData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["bytes32", "bytes32", "bytes32", "uint256", "address"],
+        [_DOMAIN_TYPEHASH, nameHash, versionHash, chainId, verifyingContract]
+      );
+
+      // Compute the Keccak-256 hash of the packed data
+      const domainSeparator = ethers.keccak256(packedData);
 
       // Calculate the parent struct hash
       const parentStructHash = ethers.keccak256(
@@ -512,7 +527,7 @@ describe("Nexus Basic Specs", function () {
     it("should revert if EntryPoint is zero", async function () {
       const NexusFactory = await ethers.getContractFactory("Nexus");
       await expect(
-        NexusFactory.deploy(ZeroAddress),
+        NexusFactory.deploy(ZeroAddress, defaultValidatorAddress, "0x"),
       ).to.be.revertedWithCustomError(NexusFactory, "EntryPointCanNotBeZero");
     });
 
@@ -569,7 +584,7 @@ describe("Nexus Basic Specs", function () {
       // Deploy a new Nexus implementation
       const NewNexusFactory = await ethers.getContractFactory("Nexus");
       const deployedNewNexusImplementation =
-        await NewNexusFactory.deploy(entryPointAddress);
+        await NewNexusFactory.deploy(entryPointAddress, defaultValidatorAddress, "0x");
       await deployedNewNexusImplementation.waitForDeployment();
       newImplementation = await deployedNewNexusImplementation.getAddress();
 
@@ -930,38 +945,4 @@ describe("Nexus Basic Specs", function () {
     });
   });
 
-  describe("Smart Account Typed Data Hashing", function () {
-    it("Should correctly hash the structured data", async function () {
-      const structuredDataHash = ethers.keccak256(
-        ethers.toUtf8Bytes("Structured Data"),
-      );
-
-      // Impersonate the smart account
-      const impersonatedSmartAccount = await impersonateAccount(
-        smartAccountAddress.toString(),
-      );
-
-      // Fetch the domain separator used in the smart contract
-      const domainSeparator = await smartAccount.DOMAIN_SEPARATOR();
-
-      // Manually compute the expected hash for comparison
-      const expectedHash = ethers.keccak256(
-        ethers.concat([
-          "0x1901", // EIP-191 prefix
-          domainSeparator,
-          structuredDataHash,
-        ]),
-      );
-
-      // Get the actual result from the smart contract
-      const result = await smartAccount
-        .connect(impersonatedSmartAccount)
-        .hashTypedData(structuredDataHash);
-
-      expect(result).to.equal(expectedHash);
-
-      // Stop impersonating the smart account
-      await stopImpersonateAccount(smartAccountAddress.toString());
-    });
-  });
 });

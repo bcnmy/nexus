@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import { MODE_MODULE_ENABLE } from "../types/Constants.sol";
+import { MODE_MODULE_ENABLE, MODE_DEFAULT_VALIDATOR, MODE_PREP, MODE_VALIDATION } from "../types/Constants.sol";
 
 /**
     Nonce structure
@@ -25,6 +25,36 @@ library NonceLib {
         assembly {
             let vmode := byte(3, nonce)
             res := eq(shl(248, vmode), MODE_MODULE_ENABLE)
+        }
+    }
+
+    /// @dev Detects if Validaton Mode is Default Validator Mode
+    /// @param nonce The nonce
+    /// @return res boolean result, true if it is the Default Validator Mode
+    function isDefaultValidatorMode(uint256 nonce) internal pure returns (bool res) {
+        assembly {
+            let vmode := byte(3, nonce)
+            res := eq(shl(248, vmode), MODE_DEFAULT_VALIDATOR)
+        }
+    }
+
+    /// @dev Detects if Validaton Mode is Prep Mode
+    /// @param nonce The nonce
+    /// @return res boolean result, true if it is the Prep Mode
+    function isPrepMode(uint256 nonce) internal pure returns (bool res) {
+        assembly {
+            let vmode := byte(3, nonce)
+            res := eq(shl(248, vmode), MODE_PREP)
+        }
+    }
+
+    /// @dev Detects if Validaton Mode is Validate Mode
+    /// @param nonce The nonce
+    /// @return res boolean result, true if it is the Validate Mode
+    function isValidateMode(uint256 nonce) internal pure returns (bool res) {
+        assembly {
+            let vmode := byte(3, nonce)
+            res := eq(shl(248, vmode), MODE_VALIDATION)
         }
     }
 }

@@ -31,7 +31,8 @@
     "reason-string": "error",
     "avoid-low-level-calls": "off",
     "no-inline-assembly": "off",
-    "no-complex-fallback": "off"
+    "no-complex-fallback": "off",
+    "gas-custom-errors": "off"
   },
   "plugins": ["prettier"]
 }

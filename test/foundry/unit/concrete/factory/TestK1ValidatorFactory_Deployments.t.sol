@@ -5,6 +5,7 @@ import "../../../utils/NexusTest_Base.t.sol";
 import "../../../../../contracts/factory/K1ValidatorFactory.sol";
 import "../../../../../contracts/utils/NexusBootstrap.sol";
 import "../../../../../contracts/interfaces/INexus.sol";
+import { NexusProxy } from "../../../../../contracts/utils/NexusProxy.sol";
 
 /// @title TestK1ValidatorFactory_Deployments
 /// @notice Tests for deploying accounts using the K1ValidatorFactory and various methods.
@@ -20,21 +21,16 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
-        bootstrapper = new NexusBootstrap();
-        validatorFactory = new K1ValidatorFactory(
-            address(ACCOUNT_IMPLEMENTATION),
-            address(FACTORY_OWNER.addr),
-            address(VALIDATOR_MODULE),
-            bootstrapper,
-            REGISTRY
-        );
+        bootstrapper = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
+        validatorFactory =
+            new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
     }
 
     /// @notice Tests if the constructor correctly initializes the factory with the given implementation, K1 Validator, and Bootstrapper addresses.
     function test_ConstructorInitializesFactory() public {
         address implementation = address(0x123);
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(implementation, FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, REGISTRY);
 
         // Verify the implementation address is set correctly
@@ -54,7 +50,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesWithRegistryAddressZero() public {
         IERC7484 registry = IERC7484(address(0));
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
 
         // Verify the registry address 0
@@ -129,11 +125,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
 
-        assertEq(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            true,
-            "Validator should be installed"
-        );
+        assertEq(INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), true, "Validator should be installed");
     }
 
     /// @notice Tests that computing the account address returns the expected address.
@@ -187,10 +179,33 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Compute the actual salt manually using keccak256
         bytes32 manualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
-        address expectedAddress = LibClone.predictDeterministicAddressERC1967(
-            address(validatorFactory.ACCOUNT_IMPLEMENTATION()),
-            manualSalt,
-            address(validatorFactory)
+        // Create the validator configuration using the NexusBootstrap library
+        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(validatorFactory.K1_VALIDATOR(), abi.encodePacked(eoaOwner));
+
+        // Get the initialization data for the Nexus account
+        bytes memory _initData =
+            validatorFactory.BOOTSTRAPPER().getInitNexusWithSingleValidatorCalldata(validator, validatorFactory.REGISTRY(), attesters, threshold);
+
+        address expectedAddress = payable(
+            address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(validatorFactory),
+                                manualSalt,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(NexusProxy).creationCode,
+                                        abi.encode(validatorFactory.ACCOUNT_IMPLEMENTATION(), abi.encodeCall(INexus.initializeAccount, _initData))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         );
 
         address computedAddress = validatorFactory.computeAccountAddress(eoaOwner, index, attesters, threshold);
