@@ -70,7 +70,10 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+        _withInitSentinelLists
     {
+        _configureRegistry(registry, attesters, threshold);
+
         IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
 
         for (uint256 i = 0; i < executors.length; i++) {
