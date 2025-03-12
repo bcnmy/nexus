@@ -93,7 +93,7 @@ contract TestEIP7702 is NexusTest_Base {
         // Encode the call into the calldata for the userOp
         bytes memory userOpCalldata = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
 
-        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_DEFAULT_VALIDATOR, address(0), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
