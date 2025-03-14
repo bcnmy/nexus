@@ -34,8 +34,7 @@ import {
     MODULE_TYPE_MULTI,
     MODULE_ENABLE_MODE_TYPE_HASH,
     EMERGENCY_UNINSTALL_TYPE_HASH,
-    ERC1271_MAGICVALUE,
-    DEFAULT_VALIDATOR_FLAG
+    ERC1271_MAGICVALUE
 } from "../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
@@ -60,7 +59,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     using ECDSA for bytes32;
 
     /// @dev The default validator address.
-    /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
 
     /// @dev initData should block the implementation from being used as a Smart Account
@@ -154,7 +153,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        address enableModeSigValidator = _handleSigValidator(address(bytes20(enableModeSignature[0:20])));
+        address enableModeSigValidator = _handleValidator(address(bytes20(enableModeSignature[0:20])));
         
         enableModeSignature = enableModeSignature[20:];
         
@@ -607,8 +606,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Returns the validator address to use
-    function _handleSigValidator(address validator) internal view returns (address) {
-        if (validator == DEFAULT_VALIDATOR_FLAG) {
+    function _handleValidator(address validator) internal view returns (address) {
+        if (validator == address(0)) {
             return _DEFAULT_VALIDATOR;
         } else {
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));

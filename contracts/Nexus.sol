@@ -116,31 +116,26 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     {
         address validator;
         PackedUserOperation memory userOp = op;
-        if (op.nonce.isDefaultValidatorMode()) {
-            validator = _DEFAULT_VALIDATOR;
-        } else {
-            if (op.nonce.isValidateMode()) {
-                // do nothing special. This is introduced
-                // to quickly identify the most commonly used 
-                // mode which is validate mode
-                // and avoid checking two above conditions
-            } else if (op.nonce.isModuleEnableMode()) {
-                // if it is module enable mode, we need to enable the module first
-                // and get the cleaned signature
-                userOp.signature = _enableMode(userOpHash, op.signature);  
-            } else if (op.nonce.isPrepMode()) {
-                // PREP Mode. Authorize prep signature
-                // and initialize the account
-                // PREP mode is only used for the uninited PREPs
-                require(!isInitialized(), AccountAlreadyInitialized());
-                bytes calldata initData;
-                (userOp.signature, initData) = _handlePREP(op.signature);
-                _initializeAccount(initData);
-            }
-            validator = op.nonce.getValidator();
-            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+    
+        if (op.nonce.isValidateMode()) {
+            // do nothing special. This is introduced
+            // to quickly identify the most commonly used 
+            // mode which is validate mode
+            // and avoid checking two above conditions
+        } else if (op.nonce.isModuleEnableMode()) {
+            // if it is module enable mode, we need to enable the module first
+            // and get the cleaned signature
+            userOp.signature = _enableMode(userOpHash, op.signature);
+        } else if (op.nonce.isPrepMode()) {
+            // PREP Mode. Authorize prep signature
+            // and initialize the account
+            // PREP mode is only used for the uninited PREPs
+            require(!isInitialized(), AccountAlreadyInitialized());
+            bytes calldata initData;
+            (userOp.signature, initData) = _handlePREP(op.signature);
+            _initializeAccount(initData);
         }
-        
+        validator = _handleValidator(op.nonce.getValidator());
         (userOpHash, userOp.signature) = _withPreValidationHook(userOpHash, userOp, missingAccountFunds);
         validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }
@@ -303,6 +298,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         address bootstrap;
         bytes calldata bootstrapCall;
+
         assembly {
             bootstrap := calldataload(initData.offset)
             let s := calldataload(add(initData.offset, 0x20))
@@ -310,13 +306,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             bootstrapCall.offset := add(u, 0x20)
             bootstrapCall.length := calldataload(u)
         }
+
         (bool success, ) = bootstrap.delegatecall(bootstrapCall);
 
         require(success, NexusInitializationFailed());
-        // _hasValidators check removed as with 7702 even if there's no validator installed,
-        // the account is still initializeable.
-        // Checking all the possible cases of whether account is initializeable or initialized
-        // is too gas heavy, so it's initializing party responsibility to provide valid initData.
+        if(!_amIERC7702()) {
+            require(isInitialized(), AccountNotInitialized());
+        }
     }
 
     /// @notice Sets the registry for the smart account.
@@ -344,7 +340,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         }
         // else proceed with normal signature verification
         // First 20 bytes of data will be validator address and rest of the bytes is complete signature.
-        address validator = _handleSigValidator(address(bytes20(signature[0:20]))); 
+        address validator = _handleValidator(address(bytes20(signature[0:20]))); 
         bytes memory signature_;
         (hash, signature_) = _withPreValidationHook(hash, signature[20:]);
         try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature_) returns (bytes4 res) {
@@ -458,14 +454,20 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
             address next = validators.entries[SENTINEL];
             while (next != ZERO_ADDRESS && next != SENTINEL) {
-                bytes4 support = IValidator(next).isValidSignatureWithSender(msg.sender, hash, signature);
-                if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > result) {
-                    result = support;
-                }
+                result = _get7739Version(next, result, hash, signature);
                 next = validators.getNext(next);
             }
         }
+        result = _get7739Version(_DEFAULT_VALIDATOR, result, hash, signature); // check default validator
         return result == bytes4(0) ? bytes4(0xffffffff) : result;
+    }
+
+    function _get7739Version(address validator, bytes4 prevResult, bytes32 hash, bytes calldata signature) internal view returns (bytes4) {
+        bytes4 support = IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature);
+        if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > prevResult) {
+            return support;
+        }
+        return prevResult;
     }
 
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.

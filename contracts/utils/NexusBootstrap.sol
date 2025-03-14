@@ -22,6 +22,8 @@ import {
     MODULE_TYPE_HOOK
 } from "../types/Constants.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 /// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
@@ -56,6 +58,7 @@ contract NexusBootstrap is ModuleManager {
         external
         payable
     {
+        console2.log("initNexusWithDefaultValidator");
         IModule(_DEFAULT_VALIDATOR).onInstall(data);
     }
 
