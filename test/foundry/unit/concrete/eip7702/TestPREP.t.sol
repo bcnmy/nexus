@@ -39,7 +39,6 @@ contract TestPREP is NexusTest_Base {
 
     function test_PREP_Initialization_Success(uint256 valueToSet) public {
         valueToSet = bound(valueToSet, 0, 77e18);
-        uint256 valueToSet = 1337;
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);    
 
         bytes memory initData = _getInitData();
@@ -73,6 +72,43 @@ contract TestPREP is NexusTest_Base {
         userOps[0] = userOp;
 
         
+        vm.expectEmit(address(prep));
+        emit PREPInitialized(r);
+        ENTRYPOINT.handleOps(userOps, payable(address(0x69)));
+
+        // Assert that the value was set ie that execution was successful
+        assertTrue(target.value() == valueToSet);        
+    }
+
+    function test_PREP_Initialization_Success_DefaultValidator(uint256 valueToSet) public {
+        valueToSet = bound(valueToSet, 0, 77e18);
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet); 
+
+        bytes memory initData = abi.encodeWithSelector(NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(BOB_ADDRESS));
+        initData = abi.encode(address(BOOTSTRAPPER), initData);
+        bytes32 initDataHash = keccak256(abi.encodePacked(initData));
+
+        (bytes32 saltAndDelegation, address prep) = _mine(initDataHash, 0);
+        bytes32 r = LibPREP.rPREP(prep, initDataHash, saltAndDelegation);
+
+        _doEIP7702(prep);
+        assertEq(LibPREP.isPREP(prep, r), true);
+        vm.deal(prep, 100 ether);
+
+        // Initialize PREP with the first userOp
+        uint256 nonce = getNonce(prep, MODE_PREP, address(0), 0);
+
+        PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
+        userOp.callData = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
+        userOp.signature = signUserOp(BOB, userOp);
+
+        // add prep data to signature 
+        userOp.signature = abi.encode(saltAndDelegation, initData, userOp.signature);
+
+        // Create userOps array
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+
         vm.expectEmit(address(prep));
         emit PREPInitialized(r);
         ENTRYPOINT.handleOps(userOps, payable(address(0x69)));
