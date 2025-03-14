@@ -15,13 +15,13 @@ contract DeployNexus is Script {
     address public constant eEeEeAddress = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
-    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d94e66ffea57d5033465d361; // => 
+    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d94e66ffea57d5033465d362; // => 
     bytes32 constant K1VALIDATOR_SALT = 0x000000000000000000000000000000000000000014fedeb9e1c61d030943b78e; // => 
     bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000005e620e103460b60399842649; // => 
     bytes32 constant K1VALIDATORFACTORY_SALT = 0x0000000000000000000000000000000000000000ab83b9fa3c3b1b041f8fa33b; // => 
     bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000663d6c9d31481c0429f9d44c; // => 
 
-    address internal defaultValidator = address(0xFbCbF8314DE6DA57ea2Bc4710115F5271041CA50); // MEE K1 Validator dev access
+    address internal defaultValidator = address(0xB4Db35b48d6fDD1bFAD19dE34CFa6F9e45a88C1E); // MEE K1 Validator dev access default capability
 
     function setUp() public {}
 
