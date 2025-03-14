@@ -412,8 +412,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The emergency uninstall data.
     /// @param signature The signature to validate.
     function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
-        address validator = address(bytes20(signature[0:20]));
-        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+        address validator = _handleValidator(address(bytes20(signature[0:20])));
         // Hash the data
         bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
         // Check if nonce is valid
