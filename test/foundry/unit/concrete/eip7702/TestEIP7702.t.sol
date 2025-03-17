@@ -8,7 +8,7 @@ import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol
 import { IHook } from "contracts/interfaces/modules/IHook.sol";
 import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
 import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
-
+import { MockTransferer } from "contracts/mocks/MockTransferer.sol";
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
 
@@ -73,6 +73,20 @@ contract TestEIP7702 is NexusTest_Base {
         // Assert that the value was set ie that execution was successful
         assertTrue(target.value() == 1337);
         return account;
+    }
+
+    function test_transfer_to_eip7702_account() public {
+        MockTransferer transferer = new MockTransferer();
+        vm.deal(address(transferer), 10 ether);
+
+        // Get the account, initcode and nonce
+        uint256 eoaKey = uint256(8);
+        address account = vm.addr(eoaKey);
+        _doEIP7702(account);
+
+        transferer.transfer(account, 1 ether);
+        assertEq(address(transferer).balance, 9 ether);
+        assertEq(account.balance, 1 ether);
     }
 
     function test_initializeAndExecSingle() public returns (address) {
