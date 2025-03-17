@@ -7,6 +7,7 @@
     "url": "https://github.com/bcnmy"
   },
   "devDependencies": {
+    "@biconomy/mee-contracts": "github:bcnmy/mee-contracts#fix/composability-msg.value",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.6",
     "@nomicfoundation/hardhat-foundry": "^1.1.2",

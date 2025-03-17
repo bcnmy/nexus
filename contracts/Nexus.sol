@@ -49,6 +49,7 @@ import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelLi
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
 import { LibPREP } from "lib-prep/LibPREP.sol";
+import { ComposableExecutionBase, ComposableExecution } from "mee-contracts/composability/ComposableExecutionBase.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
@@ -58,7 +59,7 @@ import { LibPREP } from "lib-prep/LibPREP.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable {
+contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgradeable, ComposableExecutionBase {
     using ModeLib for ExecutionMode;
     using ExecLib for bytes;
     using NonceLib for uint256;
@@ -202,6 +203,22 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (!success) {
             revert ExecutionFailed();
         }
+    }
+
+    /// @notice Executes a composable execution
+    /// See more about composability here: https://docs.biconomy.io/composability
+    /// @param executions The composable executions to execute
+    function executeComposable(ComposableExecution[] calldata executions) external payable override onlyEntryPoint withHook {
+        _executeComposable(executions);
+    }
+
+    /// @notice Executes a call to a target address with specified value and data.
+    /// @param to The address to execute the action on
+    /// @param value The value to send with the action
+    /// @param data The data to send with the action
+    /// @return result The result of the execution
+    function _executeAction(address to, uint256 value, bytes memory data) internal override returns (bytes memory) {
+        return _executeMemory(to, value, data);
     }
 
     /// @notice Installs a new module to the smart account.
