@@ -324,7 +324,8 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param attesters The attesters to set.
     /// @param threshold The threshold to set.
     /// @dev This function can only be called by the EntryPoint or the account itself.
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable onlyEntryPointOrSelf {
+    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable {
+        require(msg.sender == address(this), AccountAccessUnauthorized());
         _configureRegistry(newRegistry, attesters, threshold);
     }
 
