@@ -2,10 +2,10 @@
 pragma solidity ^0.8.27;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
-import {Storage} from "mee-contracts/composability/Storage.sol";
-import {ComposableExecution, ComposableExecutionBase, InputParam, OutputParam, Constraint, ConstraintType, InputParamFetcherType, OutputParamFetcherType} from "mee-contracts/composability/ComposableExecutionBase.sol";
+import {Storage} from "composability/Storage.sol";
+import {ComposableExecution, ComposableExecutionBase, InputParam, OutputParam, Constraint, ConstraintType, InputParamFetcherType, OutputParamFetcherType} from "composability/ComposableExecutionBase.sol";
 
-import "node_modules/@biconomy/mee-contracts/test/mock/DummyContract.sol";
+import "node_modules/@biconomy/composability/test/mock/DummyContract.sol";
 
 contract ComposableExecutionTest is TestAccountExecution_Base {
 

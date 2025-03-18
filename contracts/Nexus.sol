@@ -49,7 +49,7 @@ import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelLi
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
 import { LibPREP } from "lib-prep/LibPREP.sol";
-import { ComposableExecutionBase, ComposableExecution } from "mee-contracts/composability/ComposableExecutionBase.sol";
+import { ComposableExecutionBase, ComposableExecution } from "composability/ComposableExecutionBase.sol";
 
 /// @title Nexus - Smart Account
 /// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and ERC-4337 standards.
