@@ -428,9 +428,11 @@ describe("Nexus Basic Specs", function () {
         ethers.getBytes(hash),
       );
 
+      const randomAddress = ethers.Wallet.createRandom().address;
+
       const signatureData = ethers.solidityPacked(
         ["address", "bytes"],
-        [ZeroAddress, signature],
+        [randomAddress, signature],
       );
 
       await expect(
