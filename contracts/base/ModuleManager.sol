@@ -185,6 +185,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for PreValidationHookERC1271
+    /// - 9 for PreValidationHookERC4337
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
@@ -357,7 +359,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallPreValidationHook(address preValidationHook, uint256 hookType, bytes calldata data) internal virtual {
         _setPreValidationHook(hookType, address(0));
-        preValidationHook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current pre-validation hook in the storage to the specified address, based on the hook type.
@@ -609,7 +610,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             if eq(extcodesize(address()), 23) {
                 // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
                 extcodecopy(address(), 0, 0, 3)
-                res := eq(0xef01, shr(240, mload(0x00)))
+                res := eq(0xef0100, shr(232, mload(0x00)))
             }
             // if it is not 23, we do not even check the first 3 bytes
         }
