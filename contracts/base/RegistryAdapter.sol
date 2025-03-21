@@ -25,7 +25,7 @@ abstract contract RegistryAdapter {
     /// @param newRegistry The new registry contract to use.
     /// @param attesters The list of attesters to trust.
     /// @param threshold The number of attestations required.
-    function _configureRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) internal {
+    function _configureRegistry(IERC7484 newRegistry, address[] memory attesters, uint8 threshold) internal {
         registry = newRegistry;
         if (address(newRegistry) != address(0)) {
             newRegistry.trustAttesters(threshold, attesters);
