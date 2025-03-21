@@ -46,6 +46,7 @@ contract NexusBootstrap is ModuleManager {
     }
 
     /// @notice Initializes the Nexus account with the default validator.
+    /// No registry is needed for the default validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @dev For gas savings purposes this method does not initialize the registry.
     /// @dev The registry should be initialized via the `setRegistry` function on the Nexus contract later if needed.
@@ -59,6 +60,37 @@ contract NexusBootstrap is ModuleManager {
         IModule(_DEFAULT_VALIDATOR).onInstall(data);
     }
 
+    // ================================================
+    // ===== DEFAULT VALIDATOR + OTHER MODULES =====
+    // ================================================
+
+    /// @notice Initializes the Nexus account with the default validator and other modules and no registry.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param executors The configuration array for executor modules.
+    /// @param hook The configuration for the hook module.
+    /// @param fallbacks The configuration array for fallback handler modules.
+    function initNexusWithDefaultValidatorAndOtherModulesNoRegistry(
+        bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks
+    )
+        external
+        payable
+    {
+        _initNexusWithDefaultValidatorAndOtherModules(defaultValidatorInitData, executors, hook, fallbacks, IERC7484(address(0)), new address[](0), 0);
+    }
+
+    /// @notice Initializes the Nexus account with the default validator and other modules.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param executors The configuration array for executor modules.
+    /// @param hook The configuration for the hook module.
+    /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param registry The address of the registry.
+    /// @param attesters The addresses of the attesters.
+    /// @param threshold The attestations threshold.
     function initNexusWithDefaultValidatorAndOtherModules(
         bytes calldata defaultValidatorInitData,
         BootstrapConfig[] calldata executors,
@@ -70,6 +102,20 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+    {
+        _initNexusWithDefaultValidatorAndOtherModules(defaultValidatorInitData, executors, hook, fallbacks, registry, attesters, threshold);
+    }
+
+    function _initNexusWithDefaultValidatorAndOtherModules(
+        bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks,
+        IERC7484 registry,
+        address[] memory attesters,
+        uint8 threshold
+    )
+        internal
         _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
@@ -95,25 +141,81 @@ contract NexusBootstrap is ModuleManager {
             emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
         }        
     }
-        
+
+    // ================================================
+    // ===== SINGLE VALIDATOR =====
+    // ================================================
+
+    /// @notice Initializes the Nexus account with a single validator and no registry.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param validator The address of the validator module.
+    /// @param data The initialization data for the validator module.
+    function initNexusWithSingleValidatorNoRegistry(
+        IModule validator,
+        bytes calldata data
+    )
+        external
+        payable
+    {
+        _initNexusWithSingleValidator(validator, data, IERC7484(address(0)), new address[](0), 0);
+    }
+
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module.
     /// @param data The initialization data for the validator module.
+    /// @param registry The address of the registry.
+    /// @param attesters The addresses of the attesters.
+    /// @param threshold The attestations threshold.
     function initNexusWithSingleValidator(
         IModule validator,
         bytes calldata data,
         IERC7484 registry,
-        address[] calldata attesters,
+        address[] memory attesters,
         uint8 threshold
     )
         external
         payable
+    {
+        _initNexusWithSingleValidator(validator, data, registry, attesters, threshold);
+    }
+
+
+    function _initNexusWithSingleValidator(
+        IModule validator,
+        bytes calldata data,
+        IERC7484 registry,
+        address[] memory attesters,
+        uint8 threshold
+    )
+        internal
         _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
         _installValidator(address(validator), data);
         emit ModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator));
+    }
+
+    // ================================================
+    // ===== GENERALIZED FLOW =====
+    // ================================================
+
+    /// @notice Initializes the Nexus account with multiple modules and no registry.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param validators The configuration array for validator modules.
+    /// @param executors The configuration array for executor modules.
+    /// @param hook The configuration for the hook module.
+    /// @param fallbacks The configuration array for fallback handler modules.
+    function initNexusNoRegistry(
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks
+    )
+        external
+        payable
+    {
+        _initNexus(validators, executors, hook, fallbacks, IERC7484(address(0)), new address[](0), 0);
     }
 
     /// @notice Initializes the Nexus account with multiple modules.
@@ -122,6 +224,9 @@ contract NexusBootstrap is ModuleManager {
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param registry The address of the registry.
+    /// @param attesters The addresses of the attesters.
+    /// @param threshold The attestations threshold.
     function initNexus(
         BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
@@ -133,6 +238,20 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+    {
+        _initNexus(validators, executors, hook, fallbacks, registry, attesters, threshold);
+    }
+
+    function _initNexus(
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata hook,
+        BootstrapConfig[] calldata fallbacks,
+        IERC7484 registry,
+        address[] memory attesters,
+        uint8 threshold
+    )
+        internal
         _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
@@ -164,10 +283,31 @@ contract NexusBootstrap is ModuleManager {
         }
     }
 
+    // ================================================
+    // ===== SCOPED FLOW =====
+    // ================================================
+
+    /// @notice Initializes the Nexus account with a scoped set of modules and no registry.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param validators The configuration array for validator modules.
+    /// @param hook The configuration for the hook module.
+    function initNexusScopedNoRegistry(
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig calldata hook
+    )
+        external
+        payable
+    {
+        _initNexusScoped(validators, hook, IERC7484(address(0)), new address[](0), 0);
+    }
+
     /// @notice Initializes the Nexus account with a scoped set of modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validators The configuration array for validator modules.
     /// @param hook The configuration for the hook module.
+    /// @param registry The address of the registry.
+    /// @param attesters The addresses of the attesters.
+    /// @param threshold The attestations threshold.
     function initNexusScoped(
         BootstrapConfig[] calldata validators,
         BootstrapConfig calldata hook,
@@ -177,6 +317,22 @@ contract NexusBootstrap is ModuleManager {
     )
         external
         payable
+    {
+        _initNexusScoped(validators, hook, registry, attesters, threshold);
+    }
+
+    /// @notice Initializes the Nexus account with a scoped set of modules.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param validators The configuration array for validator modules.
+    /// @param hook The configuration for the hook module.
+    function _initNexusScoped(
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig calldata hook,
+        IERC7484 registry,
+        address[] memory attesters,
+        uint8 threshold
+    )
+        internal
         _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
@@ -193,6 +349,10 @@ contract NexusBootstrap is ModuleManager {
             emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
     }
+
+    // ================================================
+    // ===== EXTERNAL VIEW HELPERS =====
+    // ================================================
 
     /// @notice Prepares calldata for the initNexus function.
     /// @param validators The configuration array for validator modules.
