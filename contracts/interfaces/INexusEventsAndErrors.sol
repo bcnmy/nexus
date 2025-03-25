@@ -62,4 +62,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when the account is already initialized.
     error AccountAlreadyInitialized();
+
+    /// @notice Error thrown when the account is not initialized but expected to be.
+    error AccountNotInitialized();
 }

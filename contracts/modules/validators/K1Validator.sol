@@ -139,7 +139,7 @@ contract K1Validator is IValidator, ERC7739Validator {
      * for more details)
      */
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view override returns (uint256) {
-        return _validateSignatureForOwner(smartAccountOwners[userOp.sender], userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
+        return _validateSignatureForOwner(getOwner(userOp.sender), userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     /**

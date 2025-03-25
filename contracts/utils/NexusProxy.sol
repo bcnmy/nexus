@@ -17,4 +17,6 @@ contract NexusProxy is Proxy {
     function _implementation() internal view virtual override returns (address) {
         return ERC1967Utils.getImplementation();
     }
+
+    receive() external payable {}
 }

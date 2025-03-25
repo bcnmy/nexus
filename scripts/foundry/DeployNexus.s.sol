@@ -16,12 +16,12 @@ contract DeployNexus is Script {
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
     bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d94e66ffea57d5033465d362; // => 
-    bytes32 constant K1VALIDATOR_SALT = 0x000000000000000000000000000000000000000014fedeb9e1c61d030943b78e; // => 
+    
     bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000005e620e103460b60399842649; // => 
-    bytes32 constant K1VALIDATORFACTORY_SALT = 0x0000000000000000000000000000000000000000ab83b9fa3c3b1b041f8fa33b; // => 
+    
     bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000663d6c9d31481c0429f9d44c; // => 
 
-    address internal defaultValidator = address(0xB4Db35b48d6fDD1bFAD19dE34CFa6F9e45a88C1E); // MEE K1 Validator dev access default capability
+    address internal defaultValidator = address(0x00000000d12897DDAdC2044614A9677B191A2d95); // MEE K1 Validator v0.0.1
 
     function setUp() public {}
 
@@ -35,23 +35,10 @@ contract DeployNexus is Script {
 
     function checkNexusAddress() internal {
 
-        // ======== K1Validator ========
-
-        bytes32 salt = K1VALIDATOR_SALT;
-        bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1Validator/K1Validator.json");
-        address k1validator = DeterministicDeployerLib.computeAddress(bytecode, salt);
-        uint256 codeSize;
-        assembly {
-            codeSize := extcodesize(k1validator)
-        }
-        checkDeployed(codeSize);
-        console2.log("Nexus K1 Validator Addr: ", k1validator, " || >> Code Size: ", codeSize);
-        console2.logBytes32(keccak256(abi.encodePacked(bytecode)));
-
         // ======== Nexus ========
 
-        salt = NEXUS_SALT;
-        bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
+        bytes32 salt = NEXUS_SALT;
+        bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(EP_V07_ADDRESS, defaultValidator, abi.encodePacked(eEeEeAddress));
         address nexus = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
 
@@ -76,25 +63,6 @@ contract DeployNexus is Script {
         console2.log("Nexus Bootstrap Addr: ", bootstrap, " || >> Code Size: ", codeSize);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode)));
 
-        // ======== K1ValidatorFactory ========
-
-        salt = K1VALIDATORFACTORY_SALT;
-        bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1ValidatorFactory/K1ValidatorFactory.json");
-        args = abi.encode(
-                         nexus, 
-                         address(0x129443cA2a9Dec2020808a2868b38dDA457eaCC7), // factory owner
-                         k1validator, 
-                         bootstrap,
-                         REGISTRY_ADDRESS // registry
-                        );
-        address k1ValidatorFactory = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
-        assembly {
-            codeSize := extcodesize(k1ValidatorFactory)
-        }
-        checkDeployed(codeSize);
-        console2.log("K1ValidatorFactory Addr: ", k1ValidatorFactory, " || >> Code Size: ", codeSize);
-        console2.logBytes(args);
-        console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         // ======== NexusAccountFactory ========
 
@@ -122,33 +90,13 @@ contract DeployNexus is Script {
 
     function deployNexus() internal {
 
-        // ======== K1Validator ========
-
-        bytes32 salt = K1VALIDATOR_SALT;
-        bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1Validator/K1Validator.json");
-        address k1validator = DeterministicDeployerLib.computeAddress(bytecode, salt);
-        uint256 codeSize;
-
-        assembly {
-            codeSize := extcodesize(k1validator)
-        }
-        if (codeSize > 0) {
-            console2.log("Nexus K1 Validator already deployed at: ", k1validator, " skipping deployment");
-        } else {
-            k1validator = DeterministicDeployerLib.broadcastDeploy(bytecode, salt);
-            console2.log("Nexus K1 Validator deployed at: ", k1validator);
-            console2.log("Registering K1Validator on registry");
-            // Register K1Validator on registry
-            _registerModule(k1validator);
-        }
-
         // ======== Nexus ========
 
         // ASSIGN DEFAULT VALIDATOR if needed to override the default one
         // defaultValidator = k1validator;
 
-        salt = NEXUS_SALT;
-        bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
+        bytes32 salt = NEXUS_SALT;
+        bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(EP_V07_ADDRESS, defaultValidator, abi.encodePacked(eEeEeAddress));
         address nexus = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
         assembly {
@@ -177,27 +125,6 @@ contract DeployNexus is Script {
             console2.log("Nexus Bootstrap deployed at: ", bootstrap);
         }
 
-        // ======== K1ValidatorFactory ========
-        salt = K1VALIDATORFACTORY_SALT;
-        bytecode = vm.getCode("scripts/bash-deploy/artifacts/K1ValidatorFactory/K1ValidatorFactory.json");
-        args = abi.encode(
-                         nexus, 
-                         address(0x129443cA2a9Dec2020808a2868b38dDA457eaCC7), // factory owner
-                         k1validator, 
-                         bootstrap, 
-                         address(0x000000000069E2a187AEFFb852bF3cCdC95151B2) // registry
-                        );
-        address k1ValidatorFactory = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
-        assembly {
-            codeSize := extcodesize(k1ValidatorFactory)
-        }
-        if (codeSize > 0) {
-            console2.log("Nexus K1 Validator Factory already deployed at: ", k1ValidatorFactory, " skipping deployment");
-        } else {
-            k1ValidatorFactory = DeterministicDeployerLib.broadcastDeploy(bytecode, args, salt);
-            console2.log("Nexus K1 Validator Factory deployed at: ", k1ValidatorFactory);
-        }
-
         // ======== NexusAccountFactory ========
 
         salt = NEXUS_ACCOUNT_FACTORY_SALT;
@@ -223,30 +150,5 @@ contract DeployNexus is Script {
             deployed++;
         }
         total++;
-    }
-
-    function _registerModule(address module) internal {
-        bool registryDeployed;
-        assembly {
-            registryDeployed := iszero(iszero(extcodesize(REGISTRY_ADDRESS)))
-        }
-        if (registryDeployed) {
-            vm.startBroadcast();
-            IRegistryModuleManager registry = IRegistryModuleManager(REGISTRY_ADDRESS);
-            try registry.registerModule(
-                ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f),
-                module,
-                hex"",
-                hex""
-            ) {
-                console2.log("Module registered on registry");
-            } catch (bytes memory reason) {
-                console2.log("Module registration failed");
-                console2.logBytes(reason);
-            }
-            vm.stopBroadcast();
-        } else {
-            console2.log("Registry not deployed, skipping Module registration => module not registered on registry");
-        }
     }
 }

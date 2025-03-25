@@ -34,8 +34,7 @@ import {
     MODULE_TYPE_MULTI,
     MODULE_ENABLE_MODE_TYPE_HASH,
     EMERGENCY_UNINSTALL_TYPE_HASH,
-    ERC1271_MAGICVALUE,
-    DEFAULT_VALIDATOR_FLAG
+    ERC1271_MAGICVALUE
 } from "../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
@@ -59,8 +58,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
 
+    /// @dev The slot in the transient storage to store the hooking flag.
+    // keccak256("nexus.modulemanager.hooking")
+    bytes32 internal constant HOOKING_FLAG_TRANSIENT_STORAGE_SLOT = 0xe4a29a8042309a2ad08ae7c52d833b9d6166e6e098a4b7bfa75a8bad5472586d;
+
     /// @dev The default validator address.
-    /// @notice To initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
 
     /// @dev initData should block the implementation from being used as a Smart Account
@@ -81,9 +84,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
         address hook = _getHook();
-        if (hook == address(0)) {
+        bool hooking;
+        assembly {
+            hooking := tload(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT)
+        }
+        if (hook == address(0) || hooking) {
             _;
         } else {
+            assembly {
+                tstore(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT, 1)
+            }
             bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
             _;
             IHook(hook).postCheck(hookData);
@@ -154,7 +164,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        address enableModeSigValidator = _handleSigValidator(address(bytes20(enableModeSignature[0:20])));
+        address enableModeSigValidator = _handleValidator(address(bytes20(enableModeSignature[0:20])));
         
         enableModeSignature = enableModeSignature[20:];
         
@@ -175,6 +185,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for PreValidationHookERC1271
+    /// - 9 for PreValidationHookERC4337
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
@@ -347,7 +359,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallPreValidationHook(address preValidationHook, uint256 hookType, bytes calldata data) internal virtual {
         _setPreValidationHook(hookType, address(0));
-        preValidationHook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current pre-validation hook in the storage to the specified address, based on the hook type.
@@ -413,8 +424,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The emergency uninstall data.
     /// @param signature The signature to validate.
     function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
-        address validator = address(bytes20(signature[0:20]));
-        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+        address validator = _handleValidator(address(bytes20(signature[0:20])));
         // Hash the data
         bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
         // Check if nonce is valid
@@ -600,15 +610,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             if eq(extcodesize(address()), 23) {
                 // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
                 extcodecopy(address(), 0, 0, 3)
-                res := eq(0xef01, shr(240, mload(0x00)))
+                res := eq(0xef0100, shr(232, mload(0x00)))
             }
             // if it is not 23, we do not even check the first 3 bytes
         }
     }
 
     /// @dev Returns the validator address to use
-    function _handleSigValidator(address validator) internal view returns (address) {
-        if (validator == DEFAULT_VALIDATOR_FLAG) {
+    function _handleValidator(address validator) internal view returns (address) {
+        if (validator == address(0)) {
             return _DEFAULT_VALIDATOR;
         } else {
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));

@@ -29,6 +29,7 @@ import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import "../../../contracts/types/Constants.sol";
+import { K1Validator } from "../../../contracts/modules/validators/K1Validator.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
 
@@ -68,7 +69,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
-    MockValidator internal DEFAULT_VALIDATOR_MODULE;
+    K1Validator internal DEFAULT_VALIDATOR_MODULE;
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
@@ -115,7 +116,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
     function deployTestContracts() internal {
         setupEntrypoint();
-        DEFAULT_VALIDATOR_MODULE = new MockValidator();
+        DEFAULT_VALIDATOR_MODULE = new K1Validator();
         // This is the implementation of the account => default module initialized with an unusable configuration
         ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));

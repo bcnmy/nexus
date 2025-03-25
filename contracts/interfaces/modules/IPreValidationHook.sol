@@ -33,6 +33,5 @@ interface IPreValidationHookERC4337 is IModule {
         bytes32 userOpHash
     )
         external
-        view
         returns (bytes32 hookHash, bytes memory hookSignature);
 }

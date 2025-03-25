@@ -54,6 +54,24 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
     }
 
     /// @notice Executes a call to a target address with specified value and data.
+    /// same as _execute, but callData can be in memory
+    function _executeMemory(address target, uint256 value, bytes memory callData) internal virtual returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            if iszero(call(gas(), target, value, add(callData, 0x20), mload(callData), codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(result, returndatasize()) // Store the length.
+            let o := add(result, 0x20)
+            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
+            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+        }
+    }
+
+    /// @notice Executes a call to a target address with specified value and data.
     /// Same as _execute but without return data for gas optimization.
     function _executeNoReturndata(address target, uint256 value, bytes calldata callData) internal virtual {
         /// @solidity memory-safe-assembly
