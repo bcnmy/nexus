@@ -15,11 +15,11 @@ contract DeployNexus is Script {
     address public constant eEeEeAddress = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
-    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d94e66ffea57d5033465d362; // => 
+    bytes32 constant NEXUS_SALT = 0x00000000000000000000000000000000000000008dfb165219052b02b7138e90; // => 0x00000000f8817C5B6fE5CD929eE23BDA011F08F3;
     
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000005e620e103460b60399842649; // => 
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000004c5824f7e9f5ad03f9df7099; // => 0x000000a576585044d9D8d8A4B924Df87a1066C43;
     
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000663d6c9d31481c0429f9d44c; // => 
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000a68959259157c1036904deee; //=> 0x000000986b00E2cBddF86d516851Bd588aE4252c; // => 
 
     address internal defaultValidator = address(0x00000000d12897DDAdC2044614A9677B191A2d95); // MEE K1 Validator v0.0.1
 
@@ -41,7 +41,7 @@ contract DeployNexus is Script {
         bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(EP_V07_ADDRESS, defaultValidator, abi.encodePacked(eEeEeAddress));
         address nexus = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
-
+        uint256 codeSize;
         assembly {
             codeSize := extcodesize(nexus)
         }
@@ -99,6 +99,8 @@ contract DeployNexus is Script {
         bytes memory bytecode = vm.getCode("scripts/bash-deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(EP_V07_ADDRESS, defaultValidator, abi.encodePacked(eEeEeAddress));
         address nexus = DeterministicDeployerLib.computeAddress(bytecode, args, salt);
+        
+        uint256 codeSize;
         assembly {
             codeSize := extcodesize(nexus)
         }
