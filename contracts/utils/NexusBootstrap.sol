@@ -269,17 +269,17 @@ contract NexusBootstrap is ModuleManager {
             emit ModuleInstalled(MODULE_TYPE_EXECUTOR, executors[i].module);
         }
 
-        // Initialize hook
-        if (hook.module != address(0)) {
-            _installHook(hook.module, hook.data);
-            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
-        }
-
         // Initialize fallback handlers
         for (uint256 i = 0; i < fallbacks.length; i++) {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
             emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
+        }
+
+        // Initialize hook
+        if (hook.module != address(0)) {
+            _installHook(hook.module, hook.data);
+            emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
     }
 
