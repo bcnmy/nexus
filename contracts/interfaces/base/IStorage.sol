@@ -47,6 +47,8 @@ interface IStorage {
         IPreValidationHookERC1271 preValidationHookERC1271;
         ///< Mapping of used nonces for replay protection.
         mapping(uint256 => bool) nonces;
+        ///< ERC-7484 registry
+        address registry;
     }
 
     /// @notice Defines a fallback handler with an associated handler address and a call type.
