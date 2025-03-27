@@ -38,7 +38,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
             address(newMockValidator),
-            ""
+            abi.encodePacked(BOB.addr)
         );
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 

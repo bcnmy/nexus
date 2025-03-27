@@ -249,6 +249,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _uninstallValidator(module, deInitData);
+            _checkInitializedValidators();
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             _uninstallExecutor(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
@@ -531,6 +532,25 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             revert InvalidPREP();
         }
         emit PREPInitialized(r);
+    }
+
+    // checks if there's at least one validator initialized
+    function _checkInitializedValidators() internal view {
+        if(!_amIERC7702() && !IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this))) {
+            unchecked {
+                SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+                address next = validators.entries[SENTINEL];
+                while (next != ZERO_ADDRESS && next != SENTINEL) {
+                    if(IValidator(next).isInitialized(address(this))) {
+                        break;
+                    }
+                    next = validators.getNext(next);
+                }
+                if(next == SENTINEL) { //went through all validators and none was initialized
+                    revert CanNotRemoveLastValidator();
+                }
+            }
+        }
     }
     
     /// @dev EIP712 domain name and version.
