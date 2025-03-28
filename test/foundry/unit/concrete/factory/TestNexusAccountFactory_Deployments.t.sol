@@ -152,7 +152,15 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validatorsInvalid, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validatorsInvalid,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
 
@@ -287,7 +295,15 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
     }

@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { BootstrapLib } from "../lib/BootstrapLib.sol";
-import { NexusBootstrap, BootstrapConfig } from "../utils/NexusBootstrap.sol";
+import { NexusBootstrap, BootstrapConfig, RegistryConfig } from "../utils/NexusBootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { ProxyLib } from "../lib/ProxyLib.sol";
@@ -77,7 +77,13 @@ contract K1ValidatorFactory is Stakeable {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusWithSingleValidator,
-                (K1_VALIDATOR, abi.encodePacked(eoaOwner), REGISTRY, attesters, threshold)
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
             )
         );
 
@@ -113,7 +119,13 @@ contract K1ValidatorFactory is Stakeable {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusWithSingleValidator,
-                (K1_VALIDATOR, abi.encodePacked(eoaOwner), REGISTRY, attesters, threshold)
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
             )
         );
 

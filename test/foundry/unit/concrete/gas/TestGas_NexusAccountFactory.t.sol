@@ -69,7 +69,15 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
     }

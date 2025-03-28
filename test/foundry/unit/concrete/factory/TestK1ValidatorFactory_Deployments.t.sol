@@ -184,7 +184,15 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
             address(validatorFactory.BOOTSTRAPPER()),
             abi.encodeCall(
                 validatorFactory.BOOTSTRAPPER().initNexusWithSingleValidator,
-                (validatorFactory.K1_VALIDATOR(), abi.encodePacked(eoaOwner), validatorFactory.REGISTRY(), attesters, threshold)
+                (
+                    validatorFactory.K1_VALIDATOR(),
+                    abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: validatorFactory.REGISTRY(),
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
             )
         );
 

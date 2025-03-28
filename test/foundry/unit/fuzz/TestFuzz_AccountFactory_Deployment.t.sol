@@ -29,7 +29,15 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
 
@@ -59,7 +67,15 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
 
@@ -89,10 +105,17 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
-
         bytes32 salt = keccak256(abi.encodePacked(randomSeed));
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 

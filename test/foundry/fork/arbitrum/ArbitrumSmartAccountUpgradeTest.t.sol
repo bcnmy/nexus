@@ -23,7 +23,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
         uint256 mainnetFork = vm.createFork(getArbitrumRpcUrl());
         vm.selectFork(mainnetFork);
-        vm.rollFork(209_480_000);
+        vm.rollFork(320_365_545);
         init();
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
@@ -120,7 +120,15 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
             )
         );
 
