@@ -200,7 +200,13 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+            )
+        );
         bytes32 salt = keccak256(saDeploymentIndex);
 
         account = FACTORY.computeAccountAddress(_initData, salt);
@@ -220,7 +226,13 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+            )
+        );
 
         bytes32 salt = keccak256(saDeploymentIndex);
 

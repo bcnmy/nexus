@@ -27,7 +27,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -61,7 +61,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -107,7 +107,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
@@ -123,7 +123,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         bytes memory factoryData1 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
         bytes memory factoryData2 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, keccak256("1"));
@@ -142,13 +142,19 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Should revert if the validator module is invalid
         BootstrapConfig[] memory validatorsInvalid = BootstrapLib.createArrayConfig(address(0), initData);
-        bytes memory _initDataInvalidModule = BOOTSTRAPPER.getInitNexusScopedCalldata(validatorsInvalid, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initDataInvalidModule = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validatorsInvalid, hook, REGISTRY, ATTESTERS, THRESHOLD)
+            )
+        );
 
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(_initDataInvalidModule, salt);
@@ -162,7 +168,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         vm.expectRevert();
         // Should revert if there is not enough gas
@@ -195,7 +201,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(configArray, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(configArray, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -213,7 +219,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -244,7 +250,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         // Compute the expected address using the factory's function
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
@@ -274,5 +280,15 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         // Validate that both addresses match
         assertEq(expectedAddress, manualExpectedAddress, "Manually computed address mismatch");
+    }
+
+    function _getInitData(BootstrapConfig[] memory validators, BootstrapConfig memory hook) internal view returns (bytes memory) {
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+            )
+        );
     }
 }

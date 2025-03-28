@@ -29,10 +29,16 @@ import {
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-struct BootstrapConfig {
-    address module;
-    bytes data;
-}
+    struct BootstrapConfig {
+        address module;
+        bytes data;
+    }
+
+    struct BootstrapPreValidationHookConfig {
+        uint256 hookType;
+        address module;
+        bytes data;
+    }
 
 /// @title NexusBootstrap
 /// @notice Manages the installation of modules into Nexus smart accounts using delegatecalls.
@@ -74,12 +80,20 @@ contract NexusBootstrap is ModuleManager {
         bytes calldata defaultValidatorInitData,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
+        BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks
     )
         external
         payable
     {
-        _initNexusWithDefaultValidatorAndOtherModules(defaultValidatorInitData, executors, hook, fallbacks, IERC7484(address(0)), new address[](0), 0);
+        _initNexusWithDefaultValidatorAndOtherModules(
+            defaultValidatorInitData, 
+            executors, 
+            hook, 
+            fallbacks, 
+            preValidationHooks, 
+            IERC7484(address(0)), 
+            new address[](0), 0);
     }
 
     /// @notice Initializes the Nexus account with the default validator and other modules.
@@ -96,6 +110,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
@@ -103,7 +118,14 @@ contract NexusBootstrap is ModuleManager {
         external
         payable
     {
-        _initNexusWithDefaultValidatorAndOtherModules(defaultValidatorInitData, executors, hook, fallbacks, registry, attesters, threshold);
+        _initNexusWithDefaultValidatorAndOtherModules(
+            defaultValidatorInitData, 
+            executors, 
+            hook, 
+            fallbacks, 
+            preValidationHooks,
+            registry, 
+            attesters, threshold);
     }
 
     function _initNexusWithDefaultValidatorAndOtherModules(
@@ -111,6 +133,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks, 
         IERC7484 registry,
         address[] memory attesters,
         uint8 threshold
@@ -122,7 +145,7 @@ contract NexusBootstrap is ModuleManager {
 
         IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
 
-        for (uint256 i = 0; i < executors.length; i++) {
+        for (uint256 i; i < executors.length; i++) {
             if (executors[i].module == address(0)) continue;
             _installExecutor(executors[i].module, executors[i].data);
             emit ModuleInstalled(MODULE_TYPE_EXECUTOR, executors[i].module);
@@ -135,11 +158,22 @@ contract NexusBootstrap is ModuleManager {
         }
 
         // Initialize fallback handlers
-        for (uint256 i = 0; i < fallbacks.length; i++) {
+        for (uint256 i; i < fallbacks.length; i++) {
             if (fallbacks[i].module == address(0)) continue;
             _installFallbackHandler(fallbacks[i].module, fallbacks[i].data);
             emit ModuleInstalled(MODULE_TYPE_FALLBACK, fallbacks[i].module);
-        }        
+        } 
+
+        // Initialize pre-validation hooks
+        for (uint256 i; i < preValidationHooks.length; i++) {
+            if (preValidationHooks[i].module == address(0)) continue;
+            _installPreValidationHook(
+                preValidationHooks[i].hookType,
+                preValidationHooks[i].module,
+                preValidationHooks[i].data
+            );
+            emit ModuleInstalled(preValidationHooks[i].hookType, preValidationHooks[i].module);
+        }
     }
 
     // ================================================
@@ -151,7 +185,7 @@ contract NexusBootstrap is ModuleManager {
     /// @param validator The address of the validator module.
     /// @param data The initialization data for the validator module.
     function initNexusWithSingleValidatorNoRegistry(
-        IModule validator,
+        address validator,
         bytes calldata data
     )
         external
@@ -168,7 +202,7 @@ contract NexusBootstrap is ModuleManager {
     /// @param attesters The addresses of the attesters.
     /// @param threshold The attestations threshold.
     function initNexusWithSingleValidator(
-        IModule validator,
+        address validator,
         bytes calldata data,
         IERC7484 registry,
         address[] memory attesters,
@@ -180,9 +214,8 @@ contract NexusBootstrap is ModuleManager {
         _initNexusWithSingleValidator(validator, data, registry, attesters, threshold);
     }
 
-
     function _initNexusWithSingleValidator(
-        IModule validator,
+        address validator,
         bytes calldata data,
         IERC7484 registry,
         address[] memory attesters,
@@ -192,8 +225,8 @@ contract NexusBootstrap is ModuleManager {
         _withInitSentinelLists
     {
         _configureRegistry(registry, attesters, threshold);
-        _installValidator(address(validator), data);
-        emit ModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator));
+        _installValidator(validator, data);
+        emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validator);
     }
 
     // ================================================
@@ -210,12 +243,22 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
+        BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks
     )
         external
         payable
     {
-        _initNexus(validators, executors, hook, fallbacks, IERC7484(address(0)), new address[](0), 0);
+        _initNexus({
+            validators: validators,
+            executors: executors,
+            hook: hook,
+            fallbacks: fallbacks,
+            preValidationHooks: preValidationHooks,
+            registry: IERC7484(address(0)),
+            attesters: new address[](0),
+            threshold: 0
+        });
     }
 
     /// @notice Initializes the Nexus account with multiple modules.
@@ -232,6 +275,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         IERC7484 registry,
         address[] calldata attesters,
         uint8 threshold
@@ -239,7 +283,16 @@ contract NexusBootstrap is ModuleManager {
         external
         payable
     {
-        _initNexus(validators, executors, hook, fallbacks, registry, attesters, threshold);
+        _initNexus({
+            validators: validators,
+            executors: executors,
+            hook: hook,
+            fallbacks: fallbacks,
+            preValidationHooks: preValidationHooks,
+            registry: registry,
+            attesters: attesters,
+            threshold: threshold
+        });
     }
 
     function _initNexus(
@@ -247,6 +300,7 @@ contract NexusBootstrap is ModuleManager {
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
+        BootstrapPreValidationHookConfig[] calldata preValidationHooks,
         IERC7484 registry,
         address[] memory attesters,
         uint8 threshold
@@ -280,6 +334,17 @@ contract NexusBootstrap is ModuleManager {
         if (hook.module != address(0)) {
             _installHook(hook.module, hook.data);
             emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
+        }
+
+        // Initialize pre-validation hooks
+        for (uint256 i = 0; i < preValidationHooks.length; i++) {
+            if (preValidationHooks[i].module == address(0)) continue;
+            _installPreValidationHook(
+                preValidationHooks[i].hookType,
+                preValidationHooks[i].module,
+                preValidationHooks[i].data
+            );
+            emit ModuleInstalled(preValidationHooks[i].hookType, preValidationHooks[i].module);
         }
     }
 
@@ -348,68 +413,6 @@ contract NexusBootstrap is ModuleManager {
             _installHook(hook.module, hook.data);
             emit ModuleInstalled(MODULE_TYPE_HOOK, hook.module);
         }
-    }
-
-    // ================================================
-    // ===== EXTERNAL VIEW HELPERS =====
-    // ================================================
-
-    /// @notice Prepares calldata for the initNexus function.
-    /// @param validators The configuration array for validator modules.
-    /// @param executors The configuration array for executor modules.
-    /// @param hook The configuration for the hook module.
-    /// @param fallbacks The configuration array for fallback handler modules.
-    /// @return init The prepared calldata for initNexus.
-    function getInitNexusCalldata(
-        BootstrapConfig[] calldata validators,
-        BootstrapConfig[] calldata executors,
-        BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks,
-        IERC7484 registry,
-        address[] calldata attesters,
-        uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(address(this), abi.encodeCall(this.initNexus, (validators, executors, hook, fallbacks, registry, attesters, threshold)));
-    }
-
-    /// @notice Prepares calldata for the initNexusScoped function.
-    /// @param validators The configuration array for validator modules.
-    /// @param hook The configuration for the hook module.
-    /// @return init The prepared calldata for initNexusScoped.
-    function getInitNexusScopedCalldata(
-        BootstrapConfig[] calldata validators,
-        BootstrapConfig calldata hook,
-        IERC7484 registry,
-        address[] calldata attesters,
-        uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(address(this), abi.encodeCall(this.initNexusScoped, (validators, hook, registry, attesters, threshold)));
-    }
-
-    /// @notice Prepares calldata for the initNexusWithSingleValidator function.
-    /// @param validator The configuration for the validator module.
-    /// @return init The prepared calldata for initNexusWithSingleValidator.
-    function getInitNexusWithSingleValidatorCalldata(
-        BootstrapConfig calldata validator,
-        IERC7484 registry,
-        address[] calldata attesters,
-        uint8 threshold
-    )
-        external
-        view
-        returns (bytes memory init)
-    {
-        init = abi.encode(
-            address(this), abi.encodeCall(this.initNexusWithSingleValidator, (IModule(validator.module), validator.data, registry, attesters, threshold))
-        );
     }
 
     /// @dev EIP712 domain name and version.

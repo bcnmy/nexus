@@ -65,7 +65,13 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     function getInitData(address validator, address owner) internal view returns (bytes memory) {
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, abi.encodePacked(owner));
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-        return BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook, REGISTRY, ATTESTERS, THRESHOLD)
+            )
+        );
     }
 
     /// @notice Validates the creation of a new account.
