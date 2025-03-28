@@ -226,7 +226,15 @@ describe("Nexus Factory Tests", function () {
           await bootstrap.getAddress(),
           bootstrap.interface.encodeFunctionData(
             "initNexusScoped",
-            [[parsedValidator], parsedHook, await registry.getAddress(), [], 0n],
+            [
+              [parsedValidator],
+              parsedHook,
+              {
+                registry: await registry.getAddress(),
+                attesters: [],
+                threshold: 0n,
+              },
+            ],
           ),
         ],
       );
