@@ -28,7 +28,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
     MockResourceLockPreValidationHook private resourceLockHook;
     MockAccountLocker private accountLocker;
 
-    string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
+    string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes initData)";
 
     function setUp() public {
         setUpModuleManagement_Base();
@@ -553,7 +553,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         // prepare Enable Mode Signature
         structHash = keccak256(abi.encode(
-            MODULE_ENABLE_MODE_TYPE_HASH, 
+            keccak256(bytes(MODULE_ENABLE_MODE_NOTATION)), //type hash
             address(mockMultiModule),
             moduleType,
             userOpHash,

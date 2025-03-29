@@ -44,8 +44,8 @@ uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 = 8;
 uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 = 9;
 
 
-// keccak256("ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)")
-bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = 0xbe844ccefa05559a48680cb7fe805b2ec58df122784191aed18f9f315c763e1b;
+// keccak256("ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes initData)")
+bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = 0xf6c866c1cd985ce61f030431e576c0e82887de0643dfa8a2e6efc3463e638ed0;
 
 // keccak256("EmergencyUninstall(address hook,uint256 hookType,bytes deInitData,uint256 nonce)")
 bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = 0xd3ddfc12654178cc44d4a7b6b969cfdce7ffe6342326ba37825314cffa0fba9c;
