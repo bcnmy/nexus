@@ -192,7 +192,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev This function goes through hook checks via withHook modifier.
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
         if (!_areSentinelListsInitialized()) {
             _initSentinelLists();
         }
@@ -217,7 +217,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withHook
+        withRegistry(validator, MODULE_TYPE_VALIDATOR) 
+    {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
@@ -243,7 +251,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(executor, MODULE_TYPE_EXECUTOR) 
+    {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -261,7 +277,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
+    function _installHook(
+        address hook,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(hook, MODULE_TYPE_HOOK) 
+    {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
@@ -291,7 +315,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
+    function _installFallbackHandler(
+        address handler, 
+        bytes calldata params
+    )
+        internal 
+        virtual
+        withHook
+        withRegistry(handler, MODULE_TYPE_FALLBACK) 
+    {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
@@ -344,6 +376,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     )
         internal
         virtual
+        withHook
         withRegistry(preValidationHook, preValidationHookType)
     {
         if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
