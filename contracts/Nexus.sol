@@ -241,10 +241,25 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// - 4 for Hook
     /// - 8 for 1271 Prevalidation Hook
     /// - 9 for 4337 Prevalidation Hook
+    /// @dev Attention: All the underlying functions _uninstall[ModuleType] are calling module.onInstall() method.
+    /// If the module is malicious (which is not likely because such a module won't be attested), it can prevent
+    /// itself from being uninstalled by spending all gas in the onUninstall() method. Then 1/64 gas left can
+    /// be not enough to finish the uninstallation, assuming there may be hook postCheck() call.
+    /// In this highly unlikely scenario, user will have to uninstall the hook, then uninstall the malicious
+    /// module => in this case 1/64 gas left should be enough to finish the uninstallation.
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    ) 
+        external 
+        payable
+        onlyEntryPointOrSelf
+        withHook 
+    {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
