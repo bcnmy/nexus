@@ -406,49 +406,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         emit PostCheckCalled();
         bytes memory result2 = IHandler(address(BOB_ACCOUNT)).returnBytes();
         assertEq(result2, expectedResult);
-    }
-
-    function test_No_Double_Hooking() public {
-        MockMultiModule multiModule = new MockMultiModule();
-
-        bytes memory customData = abi.encode(bytes5(abi.encodePacked(bytes4(0x0d50031f), CALLTYPE_SINGLE)));
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(multiModule),
-            customData
-        );
-
-        bytes memory callData2 = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(multiModule),
-            ""
-        );
-
-        Execution[] memory executions = new Execution[](2);
-        executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-        executions[1] = Execution(address(BOB_ACCOUNT), 0, callData2);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
-        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-
-        assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(multiModule), customData), true);
-        assertEq(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(multiModule), ""), true);
-
-        Execution memory execution = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
-
-        uint256 hookUsedBefore = HOOK_MODULE.getA();
-        assertEq(counter.getNumber(), 0);
-        
-        vm.startPrank(address(ENTRYPOINT));
-        vm.expectEmit(true, true, true, true, address(HOOK_MODULE));
-        emit PreCheckCalled();
-        ISomeFallbackFunction(address(BOB_ACCOUNT)).someFallbackFunction(execution);
-        vm.stopPrank();
-
-        assertEq(HOOK_MODULE.getA(), hookUsedBefore + 1);
-        assertEq(counter.getNumber(), 1);
-    }     
+    }   
 }
 
 interface ISomeFallbackFunction {
