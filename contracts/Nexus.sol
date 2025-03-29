@@ -505,7 +505,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32 saltAndDelegation;
         // unpack the data
         assembly {
-            if lt(data.length, 0x61) {
+            if lt(data.length, 0xf9) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
