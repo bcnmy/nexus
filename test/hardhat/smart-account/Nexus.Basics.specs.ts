@@ -899,7 +899,7 @@ describe("Nexus Basic Specs", function () {
         .setRegistry(mockRegistry.getAddress(), attesters, threshold);
 
       // Verify the registry is set
-      const configuredRegistry = await smartAccount.registry();
+      const configuredRegistry = await smartAccount.getRegistry();
       expect(configuredRegistry).to.equal(await mockRegistry.getAddress());
 
       // Stop impersonating the smart account

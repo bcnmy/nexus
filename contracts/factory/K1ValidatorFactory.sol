@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { BootstrapLib } from "../lib/BootstrapLib.sol";
-import { NexusBootstrap, BootstrapConfig } from "../utils/NexusBootstrap.sol";
+import { NexusBootstrap, BootstrapConfig, RegistryConfig } from "../utils/NexusBootstrap.sol";
 import { Stakeable } from "../common/Stakeable.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { ProxyLib } from "../lib/ProxyLib.sol";
@@ -73,8 +73,19 @@ contract K1ValidatorFactory is Stakeable {
         bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
         // Create the validator configuration using the NexusBootstrap library
-        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
-        bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator, REGISTRY, attesters, threshold);
+        bytes memory initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusWithSingleValidator,
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
+            )
+        );
 
         // Deploy the Nexus account using the ProxyLib
         (bool alreadyDeployed, address payable account) = ProxyLib.deployProxy(ACCOUNT_IMPLEMENTATION, salt, initData);
@@ -103,11 +114,20 @@ contract K1ValidatorFactory is Stakeable {
         // Compute the salt for deterministic deployment
         bytes32 salt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
-        // Create the validator configuration using the NexusBootstrap library
-        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(K1_VALIDATOR, abi.encodePacked(eoaOwner));
-
         // Get the initialization data for the Nexus account
-        bytes memory initData = BOOTSTRAPPER.getInitNexusWithSingleValidatorCalldata(validator, REGISTRY, attesters, threshold);
+        bytes memory initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusWithSingleValidator,
+                (K1_VALIDATOR, abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
+            )
+        );
 
         // Compute the predicted address using the ProxyLib
         return ProxyLib.predictProxyAddress(ACCOUNT_IMPLEMENTATION, salt, initData);

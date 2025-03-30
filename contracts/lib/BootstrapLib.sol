@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { BootstrapConfig } from "../utils/NexusBootstrap.sol";
+import { BootstrapConfig, BootstrapPreValidationHookConfig } from "../utils/NexusBootstrap.sol";
 
 /// @title NexusBootstrap Configuration Library
 /// @notice Provides utility functions to create and manage BootstrapConfig structures.
@@ -30,6 +30,17 @@ library BootstrapLib {
         config[0].data = data;
     }
 
+    /// @notice Creates an array with a single BootstrapPreValidationHookConfig structure.
+    /// @param hookType The type of the pre-validation hook.
+    /// @param module The address of the module.
+    /// @param data The initialization data for the module.
+    /// @return config An array containing a single BootstrapPreValidationHookConfig structure.
+    function createArrayPreValidationHookConfig(uint256 hookType, address module, bytes memory data) internal pure returns (BootstrapPreValidationHookConfig[] memory config) {
+        config = new BootstrapPreValidationHookConfig[](1);
+        config[0].hookType = hookType;
+        config[0].module = module;
+        config[0].data = data;
+    }
     /// @notice Creates an array of BootstrapConfig structures.
     /// @param modules An array of module addresses.
     /// @param datas An array of initialization data for each module.

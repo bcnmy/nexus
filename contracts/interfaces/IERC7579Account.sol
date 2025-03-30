@@ -25,7 +25,7 @@ import { IModuleManager } from "./base/IModuleManager.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface IERC7579Account is IAccountConfig, IExecutionHelper, IModuleManager {
+interface IERC7579Account is IAccountConfig, IExecutionHelper {
     /// @dev Validates a smart account signature according to ERC-1271 standards.
     /// This method may delegate the call to a validator module to check the signature.
     /// @param hash The hash of the data being validated.
