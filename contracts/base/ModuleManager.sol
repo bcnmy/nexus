@@ -235,7 +235,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         IValidator(validator).onInstall(data);
     }
 
-    /// @dev Uninstalls a validator module /!\ ensuring the account retains at least one validator.
+    /// @dev Uninstalls a validator module.
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
