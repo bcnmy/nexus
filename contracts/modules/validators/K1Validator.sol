@@ -44,6 +44,9 @@ contract K1Validator is IValidator, ERC7739Validator {
 
     EnumerableSet.AddressSet private _safeSenders;
 
+    /// @notice Event emitted when the owner of a smart account is set
+    event OwnerSet(address indexed smartAccount, address indexed owner);
+
     /// @notice Error to indicate that no owner was provided during installation
     error NoOwnerProvided();
 
@@ -77,6 +80,7 @@ contract K1Validator is IValidator, ERC7739Validator {
         address newOwner = address(bytes20(data[:20]));
         require(newOwner != address(0), OwnerCannotBeZeroAddress());
         smartAccountOwners[msg.sender] = newOwner;
+        emit OwnerSet(msg.sender, newOwner);
         if (data.length > 20) {
             _fillSafeSenders(data[20:]);
         }
@@ -88,6 +92,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     function onUninstall(bytes calldata) external override {
         delete smartAccountOwners[msg.sender];
         _safeSenders.removeAll(msg.sender);
+        emit OwnerSet(msg.sender, address(0));
     }
 
     /// @notice Transfers ownership of the validator to a new owner
@@ -95,6 +100,7 @@ contract K1Validator is IValidator, ERC7739Validator {
     function transferOwnership(address newOwner) external {
         require(newOwner != address(0), ZeroAddressNotAllowed());
         smartAccountOwners[msg.sender] = newOwner;
+        emit OwnerSet(msg.sender, newOwner);
     }
 
     /// @notice Adds a safe sender to the _safeSenders list for the smart account
