@@ -93,8 +93,8 @@ contract MockValidator is ERC7739Validator {
         return smartAccountOwners[account] == owner;
     }
 
-    function isInitialized(address) external pure returns (bool) {
-        return false;
+    function isInitialized(address) external view returns (bool) {
+        return smartAccountOwners[msg.sender] != address(0);
     }
 
 }

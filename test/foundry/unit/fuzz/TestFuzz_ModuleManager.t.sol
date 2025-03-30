@@ -73,7 +73,14 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(funcSig != bytes4(0)); // Ensure the function signature is not empty for fallback modules
 
         // Setup module-specific initialization data
-        bytes memory initData = (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encode("");
+        bytes memory initData; 
+        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            initData = abi.encode(bytes4(funcSig));
+        } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            initData = abi.encodePacked(BOB.addr);
+        } else {
+            initData = abi.encode("");
+        }
 
         // Prepare the installation calldata
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, moduleTypeId, moduleAddress, initData);
