@@ -417,4 +417,18 @@ contract NexusBootstrap is ModuleManager {
         name = "NexusBootstrap";
         version = "1.2.0";
     }
+
+    
+    // required implementations. Are not used.
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable override {
+        // do nothing
+    }
+
+    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable override {
+        // do nothing
+    }
+
+    function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view override returns (bool installed) {
+        return false;
+    }
 }

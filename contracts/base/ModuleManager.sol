@@ -23,7 +23,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
-import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -51,7 +51,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
@@ -100,6 +100,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
+    // receive function
     receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
@@ -175,7 +176,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         })) {
             revert EnableModeSigError();
         }
-        _installModule(moduleType, module, moduleInitData);
+        this.installModule(moduleType, module, moduleInitData);
     }
 
     /// @notice Installs a new module to the smart account.
