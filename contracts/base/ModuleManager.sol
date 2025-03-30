@@ -58,10 +58,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
 
-    /// @dev The slot in the transient storage to store the hooking flag.
-    // keccak256("nexus.modulemanager.hooking")
-    bytes32 internal constant HOOKING_FLAG_TRANSIENT_STORAGE_SLOT = 0xe4a29a8042309a2ad08ae7c52d833b9d6166e6e098a4b7bfa75a8bad5472586d;
-
     /// @dev The default validator address.
     /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
@@ -84,16 +80,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
         address hook = _getHook();
-        bool hooking;
-        assembly {
-            hooking := tload(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT)
-        }
-        if (hook == address(0) || hooking) {
+        if (hook == address(0)) {
             _;
         } else {
-            assembly {
-                tstore(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT, 1)
-            }
             bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
             _;
             IHook(hook).postCheck(hookData);
