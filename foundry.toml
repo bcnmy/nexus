@@ -19,12 +19,12 @@
   libs = ["node_modules", "lib"]
   gas_reports_ignore = ["MockToken"]
 
+[profile.via-ir]
+  via-ir = true
+
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4
-
-[profile.coverage]
-  via-ir = false
 
 [etherscan]
   arbitrum = { key = "${API_KEY_ARBISCAN}" }
