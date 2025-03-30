@@ -44,6 +44,7 @@ describe("Nexus Factory Tests", function () {
   let ownerAddress: AddressLike;
   let bundler: Signer;
   let bundlerAddress: AddressLike;
+  let initData: string;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsFixture);
@@ -217,6 +218,25 @@ describe("Nexus Factory Tests", function () {
         module: hook.module,
         data: hook.data,
       };
+
+      initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [
+          await bootstrap.getAddress(),
+          bootstrap.interface.encodeFunctionData(
+            "initNexusScoped",
+            [
+              [parsedValidator],
+              parsedHook,
+              {
+                registry: await registry.getAddress(),
+                attesters: [],
+                threshold: 0n,
+              },
+            ],
+          ),
+        ],
+      );
     });
 
     it("Should add factory to whitelist", async function () {
@@ -243,13 +263,7 @@ describe("Nexus Factory Tests", function () {
 
     it("Should not work to deploy Nexus account, factory is not whitelisted", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
+
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
         [initData, salt],
@@ -262,13 +276,7 @@ describe("Nexus Factory Tests", function () {
     it("Should deploy Nexus account", async function () {
       await metaFactory.addFactoryToWhitelist(await factory.getAddress());
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
+
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
         [initData, salt],
@@ -379,25 +387,11 @@ describe("Nexus Factory Tests", function () {
 
     it("Should compute address", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
       const address = await factory.computeAccountAddress(initData, salt);
     });
 
     it("Should deploy Nexus account", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
 
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
@@ -408,15 +402,6 @@ describe("Nexus Factory Tests", function () {
     it("Should revert with NexusInitializationFailed when delegatecall fails", async function () {
       // Get the actual bootstrap address
       const bootstrapAddress = await bootstrap.getAddress();
-
-      // Generate valid initialization data
-      let initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
 
       // Manually corrupt the bootstrapCall data to cause failure
       const corruptedBootstrapCall = "0x12345678"; // Invalid data

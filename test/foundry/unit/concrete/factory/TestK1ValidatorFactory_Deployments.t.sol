@@ -179,12 +179,22 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Compute the actual salt manually using keccak256
         bytes32 manualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
-        // Create the validator configuration using the NexusBootstrap library
-        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(validatorFactory.K1_VALIDATOR(), abi.encodePacked(eoaOwner));
-
         // Get the initialization data for the Nexus account
-        bytes memory _initData =
-            validatorFactory.BOOTSTRAPPER().getInitNexusWithSingleValidatorCalldata(validator, validatorFactory.REGISTRY(), attesters, threshold);
+        bytes memory _initData = abi.encode(
+            address(validatorFactory.BOOTSTRAPPER()),
+            abi.encodeCall(
+                validatorFactory.BOOTSTRAPPER().initNexusWithSingleValidator,
+                (
+                    validatorFactory.K1_VALIDATOR(),
+                    abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: validatorFactory.REGISTRY(),
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
+            )
+        );
 
         address expectedAddress = payable(
             address(

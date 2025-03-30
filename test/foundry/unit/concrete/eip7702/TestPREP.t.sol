@@ -19,12 +19,14 @@ contract TestPREP is NexusTest_Base {
     MockTarget target;
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
+    MockPreValidationHook public mockPreValidationHook;
 
     function setUp() public {
         setupTestEnvironment();
         target = new MockTarget();
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
+        mockPreValidationHook = new MockPreValidationHook();
     }
 
     function _getInitData() internal view returns (bytes memory) {
@@ -33,8 +35,24 @@ contract TestPREP is NexusTest_Base {
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(mockPreValidationHook),
+            ""
+        );
 
-        return BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, ATTESTERS, THRESHOLD);
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexus,
+                (validators, executors, hook, fallbacks, preValidationHooks, 
+                RegistryConfig({
+                    registry: REGISTRY,
+                    attesters: ATTESTERS,
+                    threshold: THRESHOLD
+                }))
+            )
+        );
     }
 
     function test_PREP_Initialization_Success(uint256 valueToSet) public {
