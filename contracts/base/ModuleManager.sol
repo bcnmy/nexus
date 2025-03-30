@@ -274,6 +274,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param hookType The type of the hook to be uninstalled.
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallHook(address hook, uint256 hookType, bytes calldata data) internal virtual {
+        if (_getAccountStorage().emergencyUninstallTimelock[hook] != 0) {
+            _getAccountStorage().emergencyUninstallTimelock[hook] = 0;
+        }
         if (hookType == MODULE_TYPE_HOOK) {
             _setHook(address(0));
         } else if (hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
