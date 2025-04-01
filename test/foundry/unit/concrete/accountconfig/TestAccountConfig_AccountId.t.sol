@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../../../utils/Imports.sol";
+import { NexusTest_Base } from "../../../utils/NexusTest_Base.t.sol";
 
 /// @title Test suite for checking account ID in AccountConfig
-contract TestAccountConfig_AccountId is Test {
-    Nexus internal accountConfig;
-    address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-
-    modifier givenTheAccountConfiguration() {
-        _;
-    }
-
+contract TestAccountConfig_AccountId is NexusTest_Base {
+    /// @notice Initialize the testing environment
     /// @notice Initialize the testing environment
     function setUp() public {
-        accountConfig = new Nexus(_ENTRYPOINT);
+        setupPredefinedWallets();
+        deployTestContracts();
     }
 
     /// @notice Tests if the account ID returns the expected value
-    function test_WhenCheckingTheAccountID() external givenTheAccountConfiguration {
-        string memory expected = "biconomy.nexus.1.0.2";
-        assertEq(accountConfig.accountId(), expected, "AccountConfig should return the expected account ID.");
+    function test_WhenCheckingTheAccountID() external {
+        string memory expected = "biconomy.nexus.1.2.0";
+        assertEq(ACCOUNT_IMPLEMENTATION.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
 }

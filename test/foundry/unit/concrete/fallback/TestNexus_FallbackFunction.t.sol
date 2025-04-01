@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "../../../shared/TestModuleManagement_Base.t.sol";
 import "../../../../../contracts/mocks/MockHandler.sol";
+import "../../../../../contracts/mocks/MockTransferer.sol";
 
 /// @title TestNexus_FallbackFunction
 /// @notice Tests for handling fallback functions in the Nexus system.
@@ -264,6 +265,14 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         (bool success,) = address(BOB_ACCOUNT).call(abi.encodeWithSelector(selector));
     }
 
+    function test_receive_transfer() public {
+        MockTransferer transferer = new MockTransferer();
+        vm.deal(address(transferer), 10 ether);
+        transferer.transfer(address(BOB_ACCOUNT), 1 ether);
+        assertEq(address(transferer).balance, 9 ether);
+        assertEq(address(BOB_ACCOUNT).balance, 1 ether);
+    }
+
     /// @notice Installs a module to the smart account.
     function installModule(bytes memory callData, uint256 moduleTypeId, address module) internal {
         Execution[] memory execution = new Execution[](1);
@@ -275,4 +284,5 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         // Verify the module was installed
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, module, ""), "Module should be installed");
     }
+
 }

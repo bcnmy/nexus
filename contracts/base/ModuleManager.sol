@@ -16,17 +16,32 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { Storage } from "./Storage.sol";
 import { IHook } from "../interfaces/modules/IHook.sol";
 import { IModule } from "../interfaces/modules/IModule.sol";
+import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "../interfaces/modules/IPreValidationHook.sol";
 import { IExecutor } from "../interfaces/modules/IExecutor.sol";
 import { IFallback } from "../interfaces/modules/IFallback.sol";
 import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
-import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK, MODULE_TYPE_MULTI, MODULE_ENABLE_MODE_TYPE_HASH, ERC1271_MAGICVALUE } from "../types/Constants.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+    MODULE_TYPE_MULTI,
+    MODULE_ENABLE_MODE_TYPE_HASH,
+    EMERGENCY_UNINSTALL_TYPE_HASH,
+    ERC1271_MAGICVALUE
+} from "../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
+import { EmergencyUninstall } from "../types/DataTypes.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -36,11 +51,24 @@ import { RegistryAdapter } from "./RegistryAdapter.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
+    using ECDSA for bytes32;
+
+    /// @dev The default validator address.
+    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    address internal immutable _DEFAULT_VALIDATOR;
+
+    /// @dev initData should block the implementation from being used as a Smart Account
+    constructor(address _defaultValidator, bytes memory _initData) {
+        if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
+            revert MismatchModuleTypeId(); 
+        IValidator(_defaultValidator).onInstall(_initData);
+        _DEFAULT_VALIDATOR = _defaultValidator;
+    }
 
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
@@ -61,7 +89,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
-    receive() external payable {}
+    // receive function
+    receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
     /// Hooked manually in the _fallback function
@@ -107,7 +136,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Initializes the module manager by setting up default states for validators and executors.
-    function _initModuleManager() internal virtual {
+    function _initSentinelLists() internal virtual {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
@@ -125,10 +154,18 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature))
+        address enableModeSigValidator = _handleValidator(address(bytes20(enableModeSignature[0:20])));
+        
+        enableModeSignature = enableModeSignature[20:];
+        
+        if (!_checkEnableModeSignature({
+            structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), 
+            sig: enableModeSignature,
+            validator: enableModeSigValidator
+        })) {
             revert EnableModeSigError();
-
-        _installModule(moduleType, module, moduleInitData);
+        }
+        this.installModule(moduleType, module, moduleInitData);
     }
 
     /// @notice Installs a new module to the smart account.
@@ -138,12 +175,17 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for PreValidationHookERC1271
+    /// - 9 for PreValidationHookERC4337
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
+        if (!_areSentinelListsInitialized()) {
+            _initSentinelLists();
+        }
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
@@ -153,6 +195,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             _installFallbackHandler(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
+        } else if (moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            _installPreValidationHook(moduleTypeId, module, initData);
         } else if (moduleTypeId == MODULE_TYPE_MULTI) {
             _multiTypeInstall(module, initData);
         } else {
@@ -163,13 +207,24 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
-        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withHook
+        withRegistry(validator, MODULE_TYPE_VALIDATOR) 
+    {
+        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
+        if (validator == _DEFAULT_VALIDATOR) {
+            revert DefaultValidatorAlreadyInstalled();
+        }
         _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
-    /// @dev Uninstalls a validator module /!\ ensuring the account retains at least one validator.
+    /// @dev Uninstalls a validator module.
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
@@ -180,17 +235,22 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Perform the removal first
         validators.pop(prev, validator);
 
-        // Sentinel pointing to itself / zero means the list is empty / uninitialized, so check this after removal
-        // Below error is very specific to uninstalling validators.
-        require(_hasValidators(), CanNotRemoveLastValidator());
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
-        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(executor, MODULE_TYPE_EXECUTOR) 
+    {
+        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -207,8 +267,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
-        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+    function _installHook(
+        address hook,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(hook, MODULE_TYPE_HOOK) 
+    {
+        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
@@ -217,9 +285,14 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
     /// @dev Uninstalls a hook module, ensuring the current hook matches the one intended for uninstallation.
     /// @param hook The address of the hook to be uninstalled.
+    /// @param hookType The type of the hook to be uninstalled.
     /// @param data De-initialization data to configure the hook upon uninstallation.
-    function _uninstallHook(address hook, bytes calldata data) internal virtual {
-        _setHook(address(0));
+    function _uninstallHook(address hook, uint256 hookType, bytes calldata data) internal virtual {
+        if (hookType == MODULE_TYPE_HOOK) {
+            _setHook(address(0));
+        } else if (hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            _uninstallPreValidationHook(hook, hookType, data);
+        }
         hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
@@ -232,8 +305,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
-        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
+    function _installFallbackHandler(
+        address handler, 
+        bytes calldata params
+    )
+        internal 
+        virtual
+        withHook
+        withRegistry(handler, MODULE_TYPE_FALLBACK) 
+    {
+        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
@@ -272,6 +353,46 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     function _uninstallFallbackHandler(address fallbackHandler, bytes calldata data) internal virtual {
         _getAccountStorage().fallbacks[bytes4(data[0:4])] = FallbackHandler(address(0), CallType.wrap(0x00));
         fallbackHandler.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data[4:]));
+    }
+
+    /// @dev Installs a pre-validation hook module, ensuring no other pre-validation hooks are installed before proceeding.
+    /// @param preValidationHookType The type of the pre-validation hook.
+    /// @param preValidationHook The address of the pre-validation hook to be installed.
+    /// @param data Initialization data to configure the hook upon installation.
+    function _installPreValidationHook(
+        uint256 preValidationHookType,
+        address preValidationHook,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withHook
+        withRegistry(preValidationHook, preValidationHookType)
+    {
+        if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
+        address currentPreValidationHook = _getPreValidationHook(preValidationHookType);
+        require(currentPreValidationHook == address(0), PrevalidationHookAlreadyInstalled(currentPreValidationHook));
+        _setPreValidationHook(preValidationHookType, preValidationHook);
+        IModule(preValidationHook).onInstall(data);
+    }
+
+    /// @dev Uninstalls a pre-validation hook module
+    /// @param preValidationHook The address of the pre-validation hook to be uninstalled.
+    /// @param hookType The type of the pre-validation hook.
+    /// @param data De-initialization data to configure the hook upon uninstallation.
+    function _uninstallPreValidationHook(address preValidationHook, uint256 hookType, bytes calldata data) internal virtual {
+        _setPreValidationHook(hookType, address(0));
+    }
+
+    /// @dev Sets the current pre-validation hook in the storage to the specified address, based on the hook type.
+    /// @param hookType The type of the pre-validation hook.
+    /// @param hook The new hook address.
+    function _setPreValidationHook(uint256 hookType, address hook) internal virtual {
+        if (hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271) {
+            _getAccountStorage().preValidationHookERC1271 = IPreValidationHookERC1271(hook);
+        } else if (hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            _getAccountStorage().preValidationHookERC4337 = IPreValidationHookERC4337(hook);
+        }
     }
 
     /// @notice Installs a module with multiple types in a single operation.
@@ -313,25 +434,92 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             else if (theType == MODULE_TYPE_HOOK) {
                 _installHook(module, initDatas[i]);
             }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*          INSTALL PRE-VALIDATION HOOK                       */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+                _installPreValidationHook(theType, module, initDatas[i]);
+            }
         }
+    }
+
+    /// @notice Checks if an emergency uninstall signature is valid.
+    /// @param data The emergency uninstall data.
+    /// @param signature The signature to validate.
+    function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
+        address validator = _handleValidator(address(bytes20(signature[0:20])));
+        // Hash the data
+        bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
+        // Check if nonce is valid
+        require(!_getAccountStorage().nonces[data.nonce], InvalidNonce());
+        // Mark nonce as used
+        _getAccountStorage().nonces[data.nonce] = true;
+        // Check if the signature is valid
+        require((IValidator(validator).isValidSignatureWithSender(address(this), hash, signature[20:]) == ERC1271_MAGICVALUE), EmergencyUninstallSigError());
+    }
+
+    /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
+    /// @param preValidationHookType The type of the pre-validation hook.
+    /// @return preValidationHook The address of the pre-validation hook.
+    function _getPreValidationHook(uint256 preValidationHookType) internal view returns (address preValidationHook) {
+        preValidationHook = preValidationHookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+            ? address(_getAccountStorage().preValidationHookERC1271)
+            : address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @dev Calls the pre-validation hook for ERC-1271.
+    /// @param hash The hash of the user operation.
+    /// @param signature The signature to validate.
+    /// @return postHash The updated hash after the pre-validation hook.
+    /// @return postSig The updated signature after the pre-validation hook.
+    function _withPreValidationHook(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32 postHash, bytes memory postSig) {
+        // Get the pre-validation hook for ERC-1271
+        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
+        // If no pre-validation hook is installed, return the original hash and signature
+        if (preValidationHook == address(0)) return (hash, signature);
+        // Otherwise, call the pre-validation hook and return the updated hash and signature
+        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
+    }
+
+    /// @dev Calls the pre-validation hook for ERC-4337.
+    /// @param hash The hash of the user operation.
+    /// @param userOp The user operation data.
+    /// @param missingAccountFunds The amount of missing account funds.
+    /// @return postHash The updated hash after the pre-validation hook.
+    /// @return postSig The updated signature after the pre-validation hook.
+    function _withPreValidationHook(
+        bytes32 hash,
+        PackedUserOperation memory userOp,
+        uint256 missingAccountFunds
+    )
+        internal
+        virtual
+        returns (bytes32 postHash, bytes memory postSig)
+    {
+        // Get the pre-validation hook for ERC-4337
+        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337);
+        // If no pre-validation hook is installed, return the original hash and signature
+        if (preValidationHook == address(0)) return (hash, userOp.signature);
+        // Otherwise, call the pre-validation hook and return the updated hash and signature
+        else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(userOp, missingAccountFunds, hash);
     }
 
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
-    function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
-        if (!_isValidatorInstalled(enableModeSigValidator)) {
-            revert ValidatorNotInstalled(enableModeSigValidator);
-        }
+    /// @param validator Validator address.
+    function _checkEnableModeSignature(
+        bytes32 structHash,
+        bytes calldata sig,
+        address validator
+    ) internal view returns (bool) {
         bytes32 eip712Digest = _hashTypedData(structHash);
-
         // Use standard IERC-1271/ERC-7739 interface.
         // Even if the validator doesn't support 7739 under the hood, it is still secure,
         // as eip712digest is already built based on 712Domain of this Smart Account
         // This interface should always be exposed by validators as per ERC-7579
-        try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
-            return res == ERC1271_MAGICVALUE;
+        try IValidator(validator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
+                return res == ERC1271_MAGICVALUE;
         } catch {
             return false;
         }
@@ -345,6 +533,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return structHash data hash
     function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32) {
         return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
+    }
+
+    /// @notice Builds the emergency uninstall data hash as per eip712
+    /// @param hookType Type of the hook (4 for Hook, 8 for ERC-1271 Prevalidation Hook, 9 for ERC-4337 Prevalidation Hook)
+    /// @param hook address of the hook being uninstalled
+    /// @param data De-initialization data to configure the hook upon uninstallation.
+    /// @param nonce Unique nonce for the operation
+    /// @return structHash data hash
+    function _getEmergencyUninstallDataHash(address hook, uint256 hookType, bytes calldata data, uint256 nonce) internal view returns (bytes32) {
+        return _hashTypedData(keccak256(abi.encode(EMERGENCY_UNINSTALL_TYPE_HASH, hook, hookType, keccak256(data), nonce)));
     }
 
     /// @notice Checks if a module is installed on the smart account.
@@ -368,9 +566,20 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             return _isFallbackHandlerInstalled(selector, module);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             return _isHookInstalled(module);
+        } else if (moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            return _getPreValidationHook(moduleTypeId) == module;
         } else {
             return false;
         }
+    }
+
+    /// @dev Checks if the validator list is already initialized.
+    ///      In theory it doesn't 100% mean there is a validator or executor installed.
+    ///      Use below functions to check for validators and executors.
+    function _areSentinelListsInitialized() internal view virtual returns (bool) {
+        // account module storage
+        AccountStorage storage ams = _getAccountStorage();
+        return ams.validators.alreadyInitialized() && ams.executors.alreadyInitialized();
     }
 
     /// @dev Checks if a fallback handler is set for a given selector.
@@ -397,14 +606,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getAccountStorage().validators.contains(validator);
     }
 
-    /// @dev Checks if there is at least one validator installed.
-    /// @return True if there is at least one validator, otherwise false.
-    function _hasValidators() internal view returns (bool) {
-        return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) &&
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
-    }
-
     /// @dev Checks if an executor is currently installed.
     /// @param executor The address of the executor to check.
     /// @return True if the executor is installed, otherwise false.
@@ -423,6 +624,29 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @return hook The address of the current hook.
     function _getHook() internal view returns (address hook) {
         hook = address(_getAccountStorage().hook);
+    }
+
+    /// @dev Checks if the account is an ERC7702 account
+    function _amIERC7702() internal view returns (bool res) {
+        assembly {
+            // use extcodesize as the first cheapest check
+            if eq(extcodesize(address()), 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
+                extcodecopy(address(), 0, 0, 3)
+                res := eq(0xef0100, shr(232, mload(0x00)))
+            }
+            // if it is not 23, we do not even check the first 3 bytes
+        }
+    }
+
+    /// @dev Returns the validator address to use
+    function _handleValidator(address validator) internal view returns (address) {
+        if (validator == address(0)) {
+            return _DEFAULT_VALIDATOR;
+        } else {
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            return validator;
+        }
     }
 
     function _fallback(bytes calldata callData) private {
@@ -494,7 +718,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         SentinelListLib.SentinelList storage list,
         address cursor,
         uint256 size
-    ) private view returns (address[] memory array, address nextCursor) {
+    )
+        private
+        view
+        returns (address[] memory array, address nextCursor)
+    {
         (array, nextCursor) = list.getEntriesPaginated(cursor, size);
     }
 }

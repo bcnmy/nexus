@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
+import "forge-std/console2.sol";
 import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
@@ -19,15 +21,23 @@ import { MockDelegateTarget } from "../../../contracts/mocks/MockDelegateTarget.
 import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
-import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusBootstrap.sol";
+import { MockTarget } from "../../../contracts/mocks/MockTarget.sol";
+import { NexusBootstrap, BootstrapConfig, RegistryConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
 import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
-import { MODE_VALIDATION, SUPPORTS_ERC7739_V1 } from "../../../contracts/types/Constants.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
-import { HelperConfig } from "../../../scripts/foundry/HelperConfig.s.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
+import "../../../contracts/types/Constants.sol";
+import { K1Validator } from "../../../contracts/modules/validators/K1Validator.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
+
+    address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+
     // -----------------------------------------
     // State Variables
     // -----------------------------------------
@@ -59,6 +69,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
+    K1Validator internal DEFAULT_VALIDATOR_MODULE;
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
@@ -104,9 +115,10 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function deployTestContracts() internal {
-        HelperConfig helperConfig = new HelperConfig();
-        ENTRYPOINT = helperConfig.ENTRYPOINT();
-        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT));
+        setupEntrypoint();
+        DEFAULT_VALIDATOR_MODULE = new K1Validator();
+        // This is the implementation of the account => default module initialized with an unusable configuration
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
         vm.prank(FACTORY_OWNER.addr);
@@ -116,8 +128,30 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new NexusBootstrap();
+        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xa11ce)));
         REGISTRY = new MockRegistry();
+    }
+
+    function setupEntrypoint() internal {
+        if (block.chainid == 31337) {
+            if(address(ENTRYPOINT) != address(0)){
+                return;
+            }
+            ENTRYPOINT = new EntryPoint();
+            vm.etch(address(MAINNET_ENTRYPOINT_ADDRESS), address(ENTRYPOINT).code);
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        } else {
+            ENTRYPOINT = IEntryPoint(MAINNET_ENTRYPOINT_ADDRESS);
+        }
+    }
+
+    // etch the 7702 code
+    function _doEIP7702(address account) internal {
+        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(address(ACCOUNT_IMPLEMENTATION))));
+    }
+
+    function _doEIP7702_init(address account, address implementation) internal {
+        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(implementation)));
     }
 
     // -----------------------------------------
@@ -166,7 +200,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
+        );
         bytes32 salt = keccak256(saDeploymentIndex);
 
         account = FACTORY.computeAccountAddress(_initData, salt);
@@ -186,15 +232,26 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory saDeploymentIndex = "0";
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (validators, hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
+        );
 
         bytes32 salt = keccak256(saDeploymentIndex);
 
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         // Prepend the factory address to the encoded function call to form the initCode
-        initCode =
-            abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
+        initCode = abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
     }
 
     /// @notice Prepares a user operation with init code and call data
@@ -309,8 +366,9 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param messageHash The hash of the message to sign
     /// @return signature The packed signature
     function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
-        bytes32 userOpHash = ECDSA.toEthSignedMessageHash(messageHash);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, userOpHash);
+        messageHash = ECDSA.toEthSignedMessageHash(messageHash);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
         signature = abi.encodePacked(r, s, v);
     }
 
@@ -318,18 +376,14 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param execType The execution type
     /// @param executions The executions to include
     /// @return executionCalldata The prepared callData
-    function prepareERC7579ExecuteCallData(
-        ExecType execType, 
-        Execution[] memory executions
-    ) internal virtual view returns (bytes memory executionCalldata) {
+    function prepareERC7579ExecuteCallData(ExecType execType, Execution[] memory executions) internal view virtual returns (bytes memory executionCalldata) {
         // Determine mode and calldata based on callType and executions length
         ExecutionMode mode;
         uint256 length = executions.length;
 
         if (length == 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-            executionCalldata =
-                abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
+            executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(executions[0].target, executions[0].value, executions[0].callData)));
         } else if (length > 1) {
             mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleBatch() : ModeLib.encodeTryBatch();
             executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeBatch(executions)));
@@ -345,17 +399,19 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     /// @param data The call data
     /// @return executionCalldata The prepared callData
     function prepareERC7579SingleExecuteCallData(
-        ExecType execType, 
+        ExecType execType,
         address target,
         uint256 value,
         bytes memory data
-    ) internal virtual view returns (bytes memory executionCalldata) {
+    )
+        internal
+        view
+        virtual
+        returns (bytes memory executionCalldata)
+    {
         ExecutionMode mode;
         mode = (execType == EXECTYPE_DEFAULT) ? ModeLib.encodeSimpleSingle() : ModeLib.encodeTrySingle();
-        executionCalldata = abi.encodeCall(
-            Nexus.execute,
-            (mode, ExecLib.encodeSingle(target, value, data))
-        );
+        executionCalldata = abi.encodeCall(Nexus.execute, (mode, ExecLib.encodeSingle(target, value, data)));
     }
 
     /// @notice Prepares a packed user operation with specified parameters
@@ -370,8 +426,12 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         ExecType execType,
         Execution[] memory executions,
         address validator,
-        uint256 nonce 
-    ) internal view returns (PackedUserOperation[] memory userOps) {
+        uint256 nonce
+    )
+        internal
+        view
+        returns (PackedUserOperation[] memory userOps)
+    {
         // Validate execType
         require(execType == EXECTYPE_DEFAULT || execType == EXECTYPE_TRY, "Invalid ExecType");
 
@@ -379,7 +439,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         userOps = new PackedUserOperation[](1);
 
         uint256 nonceToUse;
-        if(nonce == 0) {
+        if (nonce == 0) {
             nonceToUse = getNonce(address(account), MODE_VALIDATION, validator, bytes3(0));
         } else {
             nonceToUse = nonce;
@@ -504,16 +564,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     /// @notice Helper function to execute a single operation.
-    function executeSingle(
-        Vm.Wallet memory user,
-        Nexus userAccount,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        ExecType execType
-    )
-        internal
-    {
+    function executeSingle(Vm.Wallet memory user, Nexus userAccount, address target, uint256 value, bytes memory callData, ExecType execType) internal {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
@@ -645,5 +696,43 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         );
 
         return finalPmData;
+    }
+
+    function _hashTypedData(bytes32 structHash, address account) internal view virtual returns (bytes32 digest) {
+        // We will use `digest` to store the domain separator to save a bit of gas.
+        digest = _getDomainSeparator(account);
+        
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the digest.
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, digest) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
+            digest := keccak256(0x18, 0x42)
+            // Restore the part of the free memory slot that was overwritten.
+            mstore(0x3a, 0)
+        }
+    }
+
+    function _getDomainSeparator(address account) internal view virtual returns (bytes32 separator) {
+        (   
+            ,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            ,
+        ) = EIP712(account).eip712Domain();
+        separator = keccak256(bytes(name));
+        bytes32 versionHash = keccak256(bytes(version));
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), separator) // Name hash.
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainId)
+            mstore(add(m, 0x80), verifyingContract)
+            separator := keccak256(m, 0xa0)
+        }
     }
 }

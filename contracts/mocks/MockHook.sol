@@ -10,6 +10,8 @@ contract MockHook is IModule {
     event PostCheckCalled();
     event HookOnInstallCalled(bytes32 dataFirstWord);
 
+    uint256 public a;
+
     function onInstall(bytes calldata data) external override {
         if (data.length >= 0x20) {
             emit HookOnInstallCalled(bytes32(data[0:32]));
@@ -22,6 +24,8 @@ contract MockHook is IModule {
 
     function preCheck(address sender, uint256 value, bytes calldata data) external returns (bytes memory) {
         emit PreCheckCalled();
+
+        a++;
 
         // Add a condition to revert if the sender is the zero address or if the value is 1 ether for testing purposes
         if (value == 1 ether) {
@@ -42,5 +46,13 @@ contract MockHook is IModule {
 
     function isInitialized(address) external pure returns (bool) {
         return false;
+    }
+
+    function getA() external view returns (uint256) {
+        return a;
+    }
+
+    function cleanA() external {
+        a = 0;
     }
 }

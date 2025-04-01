@@ -38,7 +38,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
             address(newMockValidator),
-            ""
+            abi.encodePacked(BOB.addr)
         );
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
@@ -144,46 +144,6 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         // Verify the module is uninstalled
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "Module should not be installed anymore");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should be installed");
-    }
-
-    /// @notice Tests failure to uninstall the last validator module
-    function test_RevertIf_UninstallingLastValidator() public {
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Module should not be installed initially");
-
-        // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
-        address remove = address(mockValidator);
-        address prev = SentinelListHelper.findPrevious(array, remove);
-        if (prev == address(0)) prev = address(0x01); // Default to sentinel address if not found
-
-        // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(VALIDATOR_MODULE),
-            abi.encode(prev, "")
-        );
-
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CanNotRemoveLastValidator()");
-
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-
-        // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
-        // Expect the UserOperationRevertReason event
-        vm.expectEmit(true, true, true, true);
-        emit UserOperationRevertReason(
-            userOpHash, // userOpHash
-            address(BOB_ACCOUNT), // sender
-            userOps[0].nonce, // nonce
-            expectedRevertReason
-        );
-
-        // Execute the user operation
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
     /// @notice Tests uninstallation with incorrect module type
@@ -359,54 +319,6 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Verify the module is still installed
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
-    }
-
-    /// @notice Tests reverting when uninstalling the last validator
-    function test_RevertIf_UninstallingLastValidatorModule() public {
-        bytes memory customData = abi.encode(GENERIC_FALLBACK_SELECTOR);
-
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData),
-            "Module should not be installed initially"
-        );
-
-        // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
-        address remove = address(VALIDATOR_MODULE);
-        address prev = SentinelListHelper.findPrevious(array, remove);
-
-        // Prepare call data for uninstalling the last validator module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            remove,
-            abi.encode(prev, customData)
-        );
-
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
-
-        // Prepare the user operation for uninstalling the module
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
-
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-
-        // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature("CanNotRemoveLastValidator()");
-
-        // Expect the UserOperationRevertReason event
-        vm.expectEmit(true, true, true, true);
-        emit UserOperationRevertReason(
-            userOpHash, // userOpHash
-            address(BOB_ACCOUNT), // sender
-            userOps[0].nonce, // nonce
-            expectedRevertReason
-        );
-
-        // Execute the user operation
-        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), customData), "Module should be installed");
     }
 
     /// @notice Tests successful uninstallation of the fallback handler module

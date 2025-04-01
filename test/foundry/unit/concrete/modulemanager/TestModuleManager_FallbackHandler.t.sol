@@ -15,10 +15,12 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
     MockNFT internal erc721;
     MockERC1155 internal erc1155;
+    Counter internal counter;
     
     function setUp() public {
         init();
 
+        counter = new Counter();
         erc721 = new MockNFT("Mock NFT", "MNFT");
         erc1155 = new MockERC1155("Test");
 
@@ -404,5 +406,9 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         emit PostCheckCalled();
         bytes memory result2 = IHandler(address(BOB_ACCOUNT)).returnBytes();
         assertEq(result2, expectedResult);
-    }
+    }   
+}
+
+interface ISomeFallbackFunction {
+    function someFallbackFunction(Execution calldata execution) external;
 }

@@ -65,13 +65,27 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     function getInitData(address validator, address owner) internal view returns (bytes memory) {
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, abi.encodePacked(owner));
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-        return BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
+        );
     }
 
     /// @notice Validates the creation of a new account.
     /// @param _account The new account address.
     function assertValidCreation(Nexus _account) internal {
-        string memory expected = "biconomy.nexus.1.0.2";
+        string memory expected = "biconomy.nexus.1.2.0";
         assertEq(_account.accountId(), expected, "AccountConfig should return the expected account ID.");
         assertTrue(
             _account.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Account should have the validation module installed"
