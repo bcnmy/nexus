@@ -9,7 +9,7 @@
   via-ir = false
   gas_reports = ["*"]
   optimizer = true
-  optimizer_runs = 999
+  optimizer_runs = 777
   out = "out"
   script = "scripts"
   solc = "0.8.27"
@@ -19,6 +19,9 @@
   libs = ["node_modules", "lib"]
   gas_reports_ignore = ["MockToken"]
   fs_permissions = [{ access = "read", path = "scripts/bash-deploy/artifacts"}]
+
+[profile.via-ir]
+  via-ir = true
 
 [profile.ci]
   fuzz = { runs = 10_000 }

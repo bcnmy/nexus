@@ -23,7 +23,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
-import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -51,16 +51,12 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
-
-    /// @dev The slot in the transient storage to store the hooking flag.
-    // keccak256("nexus.modulemanager.hooking")
-    bytes32 internal constant HOOKING_FLAG_TRANSIENT_STORAGE_SLOT = 0xe4a29a8042309a2ad08ae7c52d833b9d6166e6e098a4b7bfa75a8bad5472586d;
 
     /// @dev The default validator address.
     /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
@@ -84,22 +80,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
     modifier withHook() {
         address hook = _getHook();
-        bool hooking;
-        assembly {
-            hooking := tload(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT)
-        }
-        if (hook == address(0) || hooking) {
+        if (hook == address(0)) {
             _;
         } else {
-            assembly {
-                tstore(HOOKING_FLAG_TRANSIENT_STORAGE_SLOT, 1)
-            }
             bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
             _;
             IHook(hook).postCheck(hookData);
         }
     }
 
+    // receive function
     receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
@@ -175,7 +165,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         })) {
             revert EnableModeSigError();
         }
-        _installModule(moduleType, module, moduleInitData);
+        this.installModule(moduleType, module, moduleInitData);
     }
 
     /// @notice Installs a new module to the smart account.
@@ -192,7 +182,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev This function goes through hook checks via withHook modifier.
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
         if (!_areSentinelListsInitialized()) {
             _initSentinelLists();
         }
@@ -217,7 +207,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withHook
+        withRegistry(validator, MODULE_TYPE_VALIDATOR) 
+    {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
@@ -226,7 +224,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         IValidator(validator).onInstall(data);
     }
 
-    /// @dev Uninstalls a validator module /!\ ensuring the account retains at least one validator.
+    /// @dev Uninstalls a validator module.
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
@@ -243,7 +241,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(executor, MODULE_TYPE_EXECUTOR) 
+    {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -261,7 +267,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
+    function _installHook(
+        address hook,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(hook, MODULE_TYPE_HOOK) 
+    {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
@@ -291,7 +305,15 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
+    function _installFallbackHandler(
+        address handler, 
+        bytes calldata params
+    )
+        internal 
+        virtual
+        withHook
+        withRegistry(handler, MODULE_TYPE_FALLBACK) 
+    {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
@@ -344,6 +366,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     )
         internal
         virtual
+        withHook
         withRegistry(preValidationHook, preValidationHookType)
     {
         if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();

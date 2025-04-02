@@ -15,11 +15,11 @@ contract DeployNexus is Script {
     address public constant eEeEeAddress = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     // NEXUS CONTRACTS DEPLOYMENT SALTS
-    bytes32 constant NEXUS_SALT = 0x00000000000000000000000000000000000000008dfb165219052b02b7138e90; // => 0x00000000f8817C5B6fE5CD929eE23BDA011F08F3;
+    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000f036b687a1f82003988bd953; // => 0x000000004F43C49e93C970E84001853a70923B03;
     
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000004c5824f7e9f5ad03f9df7099; // => 0x000000a576585044d9D8d8A4B924Df87a1066C43;
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000018498303cad360073be91cc; // => 0x00000000fc7930C6F28401804b9606669A015Ff7
     
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000a68959259157c1036904deee; //=> 0x000000986b00E2cBddF86d516851Bd588aE4252c; // => 
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000e289724d34a3660389fc1ab0;//  => 0x000000001D1D5004a02bAfAb9de2D6CE5b7B13de;
 
     address internal defaultValidator = address(0x00000000d12897DDAdC2044614A9677B191A2d95); // MEE K1 Validator v0.0.1
 
@@ -47,7 +47,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Addr: ", nexus, " || >> Code Size: ", codeSize);
-        console2.logBytes(args);
+        //console2.logBytes(args);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         // ======== NexusBootstrap ========
@@ -61,8 +61,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Bootstrap Addr: ", bootstrap, " || >> Code Size: ", codeSize);
-        console2.logBytes32(keccak256(abi.encodePacked(bytecode)));
-
+        console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         // ======== NexusAccountFactory ========
 
@@ -78,7 +77,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Account Factory Addr: ", nexusAccountFactory, " || >> Code Size: ", codeSize);
-        console2.logBytes(args);
+        //console2.logBytes(args);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
         console2.log("=====> On this chain we have", deployed, " contracts already deployed out of ", total);
     }

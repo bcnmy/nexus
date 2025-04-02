@@ -62,6 +62,7 @@ read -r -p "Do you want to rebuild Nexus artifacts from your local sources? (y/n
 if [ $proceed = "y" ]; then
     ### BUILD ARTIFACTS ###
     printf "Building Nexus artifacts\n"
+    export FOUNDRY_PROFILE="via-ir"
     { (forge build 1> ./logs/forge-build.log 2> ./logs/forge-build-errors.log) } || {
         printf "Build failed\n See logs for more details\n"
         exit 1

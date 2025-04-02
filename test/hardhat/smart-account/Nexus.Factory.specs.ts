@@ -20,7 +20,6 @@ import {
   MockHook,
   MockRegistry,
   MockExecutor,
-  RegistryFactory,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
@@ -45,6 +44,7 @@ describe("Nexus Factory Tests", function () {
   let ownerAddress: AddressLike;
   let bundler: Signer;
   let bundlerAddress: AddressLike;
+  let initData: string;
 
   beforeEach(async function () {
     const setup = await loadFixture(deployContractsFixture);
@@ -218,6 +218,25 @@ describe("Nexus Factory Tests", function () {
         module: hook.module,
         data: hook.data,
       };
+
+      initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [
+          await bootstrap.getAddress(),
+          bootstrap.interface.encodeFunctionData(
+            "initNexusScoped",
+            [
+              [parsedValidator],
+              parsedHook,
+              {
+                registry: await registry.getAddress(),
+                attesters: [],
+                threshold: 0n,
+              },
+            ],
+          ),
+        ],
+      );
     });
 
     it("Should add factory to whitelist", async function () {
@@ -244,13 +263,7 @@ describe("Nexus Factory Tests", function () {
 
     it("Should not work to deploy Nexus account, factory is not whitelisted", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
+
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
         [initData, salt],
@@ -263,13 +276,7 @@ describe("Nexus Factory Tests", function () {
     it("Should deploy Nexus account", async function () {
       await metaFactory.addFactoryToWhitelist(await factory.getAddress());
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
+
       const factoryData = factory.interface.encodeFunctionData(
         "createAccount",
         [initData, salt],
@@ -380,25 +387,11 @@ describe("Nexus Factory Tests", function () {
 
     it("Should compute address", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
       const address = await factory.computeAccountAddress(initData, salt);
     });
 
     it("Should deploy Nexus account", async function () {
       const salt = keccak256("0x");
-      const initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
 
       await expect(factory.createAccount(initData, salt)).to.emit(
         factory,
@@ -409,15 +402,6 @@ describe("Nexus Factory Tests", function () {
     it("Should revert with NexusInitializationFailed when delegatecall fails", async function () {
       // Get the actual bootstrap address
       const bootstrapAddress = await bootstrap.getAddress();
-
-      // Generate valid initialization data
-      let initData = await bootstrap.getInitNexusScopedCalldata(
-        [parsedValidator],
-        parsedHook,
-        registry,
-        [],
-        0,
-      );
 
       // Manually corrupt the bootstrapCall data to cause failure
       const corruptedBootstrapCall = "0x12345678"; // Invalid data
@@ -438,203 +422,6 @@ describe("Nexus Factory Tests", function () {
         smartAccountImplementation,
         "NexusInitializationFailed",
       );
-    });
-  });
-
-  describe("RegistryFactory", function () {
-    let smartAccount: Nexus;
-    let entryPoint: EntryPoint;
-    let factory: RegistryFactory;
-    let bootstrap: NexusBootstrap;
-    let validatorModule: MockValidator;
-    let executorModule: MockExecutor;
-    let BootstrapLib: BootstrapLib;
-    let hookModule: MockHook;
-    let registryFactory: RegistryFactory;
-    let owner: Signer;
-    let mockRegistry: MockRegistry;
-    let smartAccountImplementation: Nexus;
-
-    let parsedValidator: BootstrapConfigStruct;
-    let parsedExecutor: BootstrapConfigStruct;
-    let parsedHook: BootstrapConfigStruct;
-    let ownerAddress: AddressLike;
-    let entryPointAddress: AddressLike;
-    let attester1: Signer;
-    let attester2: Signer;
-    let nonOwner: Signer;
-    const threshold = 1;
-
-    beforeEach(async function () {
-      const setup = await loadFixture(deployContractsAndSAFixture);
-      entryPoint = setup.entryPoint;
-      smartAccount = setup.deployedNexus;
-      owner = setup.accountOwner;
-      entryPointAddress = await setup.entryPoint.getAddress();
-      [, , , , attester1, attester2, nonOwner] = await ethers.getSigners();
-
-      const RegistryFactory =
-        await ethers.getContractFactory("RegistryFactory");
-      bootstrap = setup.bootstrap;
-      validatorModule = setup.mockValidator;
-      BootstrapLib = setup.BootstrapLib;
-      hookModule = setup.mockHook;
-      executorModule = setup.mockExecutor;
-      mockRegistry = setup.registry;
-      smartAccountImplementation = setup.smartAccountImplementation;
-      registryFactory = await RegistryFactory.deploy(
-        await smartAccount.getAddress(),
-        await owner.getAddress(),
-        await mockRegistry.getAddress(),
-        [await attester1.getAddress()],
-        1,
-      );
-
-      registryFactory = registryFactory.connect(owner);
-
-      ownerAddress = await owner.getAddress();
-
-      const validator = {
-        module: await validatorModule.getAddress(),
-        data: solidityPacked(["address"], [ownerAddress]),
-      };
-
-      const executor = {
-        module: await executorModule.getAddress(),
-        data: "0x",
-      };
-
-      const hook = {
-        module: await hookModule.getAddress(),
-        data: "0x",
-      };
-
-      parsedValidator = {
-        module: validator[0],
-        data: validator[1],
-      };
-
-      parsedExecutor = {
-        module: executor[0],
-        data: executor[1],
-      };
-
-      parsedHook = {
-        module: hook[0],
-        data: hook[1],
-      };
-    });
-
-    describe("Deployment", function () {
-      it("Should set the correct owner, implementation, and registry", async function () {
-        expect(await registryFactory.owner()).to.equal(
-          await owner.getAddress(),
-        );
-        expect(await registryFactory.ACCOUNT_IMPLEMENTATION()).to.equal(
-          await smartAccount.getAddress(),
-        );
-        expect(await registryFactory.REGISTRY()).to.equal(
-          await mockRegistry.getAddress(),
-        );
-      });
-
-      it("Should revert if implementation address is zero", async function () {
-        const RegistryFactory =
-          await ethers.getContractFactory("RegistryFactory");
-        await expect(
-          RegistryFactory.deploy(
-            ethers.ZeroAddress,
-            await owner.getAddress(),
-            await mockRegistry.getAddress(),
-            [await attester1.getAddress()],
-            threshold,
-          ),
-        ).to.be.revertedWithCustomError(
-          registryFactory,
-          "ImplementationAddressCanNotBeZero",
-        );
-      });
-
-      it("Should revert if owner address is zero", async function () {
-        const RegistryFactory =
-          await ethers.getContractFactory("RegistryFactory");
-        await expect(
-          RegistryFactory.deploy(
-            await smartAccount.getAddress(),
-            ethers.ZeroAddress,
-            await mockRegistry.getAddress(),
-            [await attester1.getAddress()],
-            threshold,
-          ),
-        ).to.be.revertedWithCustomError(
-          registryFactory,
-          "ZeroAddressNotAllowed",
-        );
-      });
-
-      it("Should revert if threshold is greater than the number of attesters", async function () {
-        const RegistryFactory =
-          await ethers.getContractFactory("RegistryFactory");
-        await expect(
-          RegistryFactory.deploy(
-            await smartAccount.getAddress(),
-            await owner.getAddress(),
-            await mockRegistry.getAddress(),
-            [await attester1.getAddress()],
-            2,
-          ),
-        )
-          .to.be.revertedWithCustomError(registryFactory, "InvalidThreshold")
-          .withArgs(2, 1);
-      });
-    });
-
-    describe("Attester Management", function () {
-      it("Should allow owner to add an attester", async function () {
-        await registryFactory.addAttester(await attester2.getAddress());
-        const attesters = await registryFactory.getAttesters();
-        expect(attesters).to.include(await attester2.getAddress());
-      });
-
-      it("Should sort attesters after adding", async function () {
-        await registryFactory.addAttester(await attester2.getAddress());
-        const attesters = await registryFactory.getAttesters();
-        expect(attesters).to.deep.equal(
-          [await attester1.getAddress(), await attester2.getAddress()].sort(),
-        );
-      });
-
-      it("Should allow owner to remove an attester", async function () {
-        await registryFactory.removeAttester(await attester1.getAddress());
-        const attesters = await registryFactory.getAttesters();
-        expect(attesters).to.not.include(await attester1.getAddress());
-      });
-
-      it("Should revert if non-owner tries to add or remove attester", async function () {
-        await expect(
-          registryFactory
-            .connect(nonOwner)
-            .addAttester(await attester2.getAddress()),
-        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
-        await expect(
-          registryFactory
-            .connect(nonOwner)
-            .removeAttester(await attester1.getAddress()),
-        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
-      });
-    });
-
-    describe("Threshold Management", function () {
-      it("Should allow owner to set a new threshold", async function () {
-        await registryFactory.setThreshold(2);
-        expect(await registryFactory.threshold()).to.equal(2);
-      });
-
-      it("Should revert if non-owner tries to set a new threshold", async function () {
-        await expect(
-          registryFactory.connect(nonOwner).setThreshold(2),
-        ).to.be.revertedWithCustomError(registryFactory, "Unauthorized");
-      });
     });
   });
 });

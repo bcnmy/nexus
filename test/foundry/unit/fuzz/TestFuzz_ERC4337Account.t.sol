@@ -62,7 +62,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
     /// @param amount The amount to withdraw.
     function testFuzz_WithdrawDepositTo(address to, uint256 amount) public {
         vm.assume(!isContract(to)); // Valid 'to' address and skip precompiles
-        vm.assume(uint160(address(to)) > 10);
+        vm.assume(uint160(address(to)) > 0xff); // no precompiles
         vm.assume(amount > 0.01 ether && amount <= 50 ether); // Restricting the amount to a reasonable upper limit and ensuring it's greater than 0
         vm.assume(to.balance == 0);
         // Fund the BOB_ACCOUNT with more than just the deposit amount to cover potential transaction fees

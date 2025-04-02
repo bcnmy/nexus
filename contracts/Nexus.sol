@@ -228,7 +228,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param initData Initialization data for the module.
     /// @dev This function can only be called by the EntryPoint or the account itself for security reasons.
     /// @dev This function goes through hook checks via withHook modifier through internal function _installModule.
-    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable onlyEntryPointOrSelf {
+    function installModule(uint256 moduleTypeId, address module, bytes calldata initData) external payable virtual override onlyEntryPointOrSelf {
         _installModule(moduleTypeId, module, initData);
         emit ModuleInstalled(moduleTypeId, module);
     }
@@ -241,14 +241,30 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// - 4 for Hook
     /// - 8 for 1271 Prevalidation Hook
     /// - 9 for 4337 Prevalidation Hook
+    /// @dev Attention: All the underlying functions _uninstall[ModuleType] are calling module.onInstall() method.
+    /// If the module is malicious (which is not likely because such a module won't be attested), it can prevent
+    /// itself from being uninstalled by spending all gas in the onUninstall() method. Then 1/64 gas left can
+    /// be not enough to finish the uninstallation, assuming there may be hook postCheck() call.
+    /// In this highly unlikely scenario, user will have to uninstall the hook, then uninstall the malicious
+    /// module => in this case 1/64 gas left should be enough to finish the uninstallation.
     /// @param module The address of the module to uninstall.
     /// @param deInitData De-initialization data for the module.
     /// @dev Ensures that the operation is authorized and valid before proceeding with the uninstallation.
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable onlyEntryPointOrSelf withHook {
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    ) 
+        external 
+        payable
+        onlyEntryPointOrSelf
+        withHook 
+    {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _uninstallValidator(module, deInitData);
+            _checkInitializedValidators();
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             _uninstallExecutor(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
@@ -505,7 +521,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32 saltAndDelegation;
         // unpack the data
         assembly {
-            if lt(data.length, 0x61) {
+            if lt(data.length, 0xf9) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
@@ -531,6 +547,25 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             revert InvalidPREP();
         }
         emit PREPInitialized(r);
+    }
+
+    // checks if there's at least one validator initialized
+    function _checkInitializedValidators() internal view {
+        if(!_amIERC7702() && !IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this))) {
+            unchecked {
+                SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
+                address next = validators.entries[SENTINEL];
+                while (next != ZERO_ADDRESS && next != SENTINEL) {
+                    if(IValidator(next).isInitialized(address(this))) {
+                        break;
+                    }
+                    next = validators.getNext(next);
+                }
+                if(next == SENTINEL) { //went through all validators and none was initialized
+                    revert CanNotRemoveLastValidator();
+                }
+            }
+        }
     }
     
     /// @dev EIP712 domain name and version.
