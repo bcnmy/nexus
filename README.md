@@ -43,7 +43,7 @@ To kickstart, follow these steps:
 
 - Node.js (v18.x or later)
 - Yarn (or npm)
-- Foundry (Refer to [Foundry installation instructions](https://getfoundry.sh/docs/installation))
+- Foundry (Refer to [Foundry installation instructions](https://book.getfoundry.sh/getting-started/installation))
 
 ### Installation
 
