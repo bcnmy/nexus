@@ -47,7 +47,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Addr: ", nexus, " || >> Code Size: ", codeSize);
-        //console2.logBytes(args);
+        console2.logBytes(args);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         // ======== NexusBootstrap ========
@@ -61,6 +61,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Bootstrap Addr: ", bootstrap, " || >> Code Size: ", codeSize);
+        console2.logBytes(args);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
 
         // ======== NexusAccountFactory ========
@@ -77,7 +78,7 @@ contract DeployNexus is Script {
         }
         checkDeployed(codeSize);
         console2.log("Nexus Account Factory Addr: ", nexusAccountFactory, " || >> Code Size: ", codeSize);
-        //console2.logBytes(args);
+        console2.logBytes(args);
         console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
         console2.log("=====> On this chain we have", deployed, " contracts already deployed out of ", total);
     }
