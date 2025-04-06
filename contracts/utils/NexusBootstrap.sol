@@ -79,6 +79,7 @@ contract NexusBootstrap is ModuleManager {
     /// @notice Initializes the Nexus account with the default validator and other modules and no registry.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param validators The configuration array for validator modules.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
@@ -113,6 +114,7 @@ contract NexusBootstrap is ModuleManager {
     /// @notice Initializes the Nexus account with the default validator and other modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param validators The configuration array for validator modules.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
