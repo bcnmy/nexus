@@ -84,6 +84,7 @@ contract NexusBootstrap is ModuleManager {
     /// @param fallbacks The configuration array for fallback handler modules.
     function initNexusWithDefaultValidatorAndOtherModulesNoRegistry(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -100,6 +101,7 @@ contract NexusBootstrap is ModuleManager {
 
         _initNexusWithDefaultValidatorAndOtherModules(
             defaultValidatorInitData, 
+            validators,
             executors, 
             hook, 
             fallbacks, 
@@ -117,6 +119,7 @@ contract NexusBootstrap is ModuleManager {
     /// @param registryConfig The registry configuration.
     function initNexusWithDefaultValidatorAndOtherModules(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -127,7 +130,8 @@ contract NexusBootstrap is ModuleManager {
         payable
     {
         _initNexusWithDefaultValidatorAndOtherModules(
-            defaultValidatorInitData, 
+            defaultValidatorInitData,
+            validators,
             executors, 
             hook, 
             fallbacks, 
@@ -138,6 +142,7 @@ contract NexusBootstrap is ModuleManager {
 
     function _initNexusWithDefaultValidatorAndOtherModules(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -150,6 +155,12 @@ contract NexusBootstrap is ModuleManager {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
 
         IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
+
+        for (uint256 i; i < validators.length; i++) {
+            if (validators[i].module == address(0)) continue;
+            _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
+        }
 
         for (uint256 i; i < executors.length; i++) {
             if (executors[i].module == address(0)) continue;
@@ -411,7 +422,7 @@ contract NexusBootstrap is ModuleManager {
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
-        version = "1.2.0";
+        version = "1.2.1";
     }
 
     
