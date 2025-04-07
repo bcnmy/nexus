@@ -28,10 +28,6 @@ Documentation: (https://github.com/bcnmy/nexus/wiki)
     - [🖌️ Auto-fix Linting Issues](#️-auto-fix-linting-issues)
     - [🚀 Generating Storage Layout](#-generating-storage-layout)
   - [🔒 Security Audits](#-security-audits)
-  - [🏆 Biconomy Champions League 🏆](#-biconomy-champions-league-)
-    - [Champions Roster](#champions-roster)
-    - [Entering the League](#entering-the-league)
-  - [Documentation and Resources](#documentation-and-resources)
   - [License](#license)
   - [Connect with Biconomy 🍊](#connect-with-biconomy-)
 
@@ -60,9 +56,26 @@ cd nexus
 yarn install
 ```
 
-3. **Setup environment variables:**
+Unfortunately, one of the dependencies does not populate the `package.json` file. That prevents hardhat from building the project successfully, while Foundry builds just fine.
 
-Copy `.env.example` to `.env` and fill in your details.
+So you may want to add this package.json manually.
+After doing `yarn install`, you can do:
+
+```bash
+cd node_modules/prep
+touch package.json
+```
+
+then add the following content to the `package.json` file:
+
+```json
+{
+  "name": "prep",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {}
+}
+```
 
 ## 🛠️ Essential Scripts
 
@@ -147,30 +160,8 @@ To generate reports of the storage layout for potential upgrades safety using `h
 | ---------------- | ---------- | ----------------------- |
 | CodeHawks-Cyfrin | 17-09-2024 | [View Report](./audits/CodeHawks-Cyfrin-17-09-2024.pdf) |
 | Spearbit         | 10/11-2024 | [View Report](./audits/report-cantinacode-biconomy-0708-final.pdf) / [View Add-on](./audits/report-cantinacode-biconomy-erc7739-addon-final.pdf) |
-
-### Entering the League
-
-Your journey to becoming a champion can start in any domain:
-
-- **Code Wizards**: Dive into our [Gas Optimization](./GAS_OPTIMIZATION.md) efforts.
-- **Security Guardians**: Enhance our safety following the [Security Guidelines](./SECURITY.md).
-- **Documentation Scribes**: Elevate our knowledge base with your contributions.
-
-The **Champions League** is not just a recognition, it's a testament to the impactful work done by our community. Whether you're optimizing gas usage or securing our contracts, your contributions help shape the future of Biconomy.
-
-> **To Join**: Leave a lasting impact in your chosen area. Our Hall of Fame is regularly updated to honor our most dedicated contributors.
-
-Let's build a legacy together, championing innovation and excellence in the blockchain space.
-
-## Documentation and Resources
-
-For a comprehensive understanding of our project and to contribute effectively, please refer to the following resources:
-
-- [**Contributing Guidelines**](./CONTRIBUTING.md): Learn how to contribute to our project, from code contributions to documentation improvements.
-- [**Code of Conduct**](./CODE_OF_CONDUCT.md): Our commitment to fostering an open and welcoming environment.
-- [**Security Policy**](./SECURITY.md): Guidelines for reporting security vulnerabilities.
-- [**Gas Optimization Program**](./GAS_OPTIMIZATION.md): Contribute towards optimizing gas efficiency of our smart contracts.
-- [**Changelog**](./CHANGELOG.md): Stay updated with the changes and versions.
+| Zenith           | 03-2025 | [View Report](./audits/Biconomy-Nexus_Zenith-Audit-Report.pdf) |
+| Pashov           | 03-2025 | [View Report](./audits/Nexus-Pashov-Review_2025-03.pdf) |
 
 ## License
 
