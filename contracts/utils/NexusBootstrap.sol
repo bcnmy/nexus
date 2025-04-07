@@ -79,11 +79,14 @@ contract NexusBootstrap is ModuleManager {
     /// @notice Initializes the Nexus account with the default validator and other modules and no registry.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param preValidationHooks The configuration array for pre-validation hooks.
     function initNexusWithDefaultValidatorAndOtherModulesNoRegistry(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -100,6 +103,7 @@ contract NexusBootstrap is ModuleManager {
 
         _initNexusWithDefaultValidatorAndOtherModules(
             defaultValidatorInitData, 
+            validators,
             executors, 
             hook, 
             fallbacks, 
@@ -111,12 +115,15 @@ contract NexusBootstrap is ModuleManager {
     /// @notice Initializes the Nexus account with the default validator and other modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param defaultValidatorInitData The initialization data for the default validator module.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param preValidationHooks The configuration array for pre-validation hooks.
     /// @param registryConfig The registry configuration.
     function initNexusWithDefaultValidatorAndOtherModules(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -127,7 +134,8 @@ contract NexusBootstrap is ModuleManager {
         payable
     {
         _initNexusWithDefaultValidatorAndOtherModules(
-            defaultValidatorInitData, 
+            defaultValidatorInitData,
+            validators,
             executors, 
             hook, 
             fallbacks, 
@@ -138,6 +146,7 @@ contract NexusBootstrap is ModuleManager {
 
     function _initNexusWithDefaultValidatorAndOtherModules(
         bytes calldata defaultValidatorInitData,
+        BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
         BootstrapConfig[] calldata fallbacks,
@@ -150,6 +159,12 @@ contract NexusBootstrap is ModuleManager {
         _configureRegistry(registryConfig.registry, registryConfig.attesters, registryConfig.threshold);
 
         IModule(_DEFAULT_VALIDATOR).onInstall(defaultValidatorInitData);
+
+        for (uint256 i; i < validators.length; i++) {
+            if (validators[i].module == address(0)) continue;
+            _installValidator(validators[i].module, validators[i].data);
+            emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validators[i].module);
+        }
 
         for (uint256 i; i < executors.length; i++) {
             if (executors[i].module == address(0)) continue;
@@ -188,7 +203,7 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with a single validator and no registry.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validator The address of the validator module.
+    /// @param validator The address of the validator module. Should not be the default validator.
     /// @param data The initialization data for the validator module.
     function initNexusWithSingleValidatorNoRegistry(
         address validator,
@@ -207,7 +222,7 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with a single validator.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validator The address of the validator module.
+    /// @param validator The address of the validator module. Should not be the default validator.
     /// @param data The initialization data for the validator module.
     /// @param registryConfig The registry configuration.
     function initNexusWithSingleValidator(
@@ -240,10 +255,11 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with multiple modules and no registry.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validators The configuration array for validator modules.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param preValidationHooks The configuration array for pre-validation hooks.
     function initNexusNoRegistry(
         BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
@@ -265,10 +281,11 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with multiple modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validators The configuration array for validator modules.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param executors The configuration array for executor modules.
     /// @param hook The configuration for the hook module.
     /// @param fallbacks The configuration array for fallback handler modules.
+    /// @param preValidationHooks The configuration array for pre-validation hooks.
     /// @param registryConfig The registry configuration.
     function initNexus(
         BootstrapConfig[] calldata validators,
@@ -348,7 +365,7 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with a scoped set of modules and no registry.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validators The configuration array for validator modules.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param hook The configuration for the hook module.
     function initNexusScopedNoRegistry(
         BootstrapConfig[] calldata validators,
@@ -367,7 +384,7 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with a scoped set of modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validators The configuration array for validator modules.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param hook The configuration for the hook module.
     /// @param registryConfig The registry configuration.
     function initNexusScoped(
@@ -383,7 +400,7 @@ contract NexusBootstrap is ModuleManager {
 
     /// @notice Initializes the Nexus account with a scoped set of modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validators The configuration array for validator modules.
+    /// @param validators The configuration array for validator modules. Should not contain the default validator.
     /// @param hook The configuration for the hook module.
     function _initNexusScoped(
         BootstrapConfig[] calldata validators,
@@ -411,7 +428,7 @@ contract NexusBootstrap is ModuleManager {
     /// @dev EIP712 domain name and version.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "NexusBootstrap";
-        version = "1.2.0";
+        version = "1.2.1";
     }
 
     
