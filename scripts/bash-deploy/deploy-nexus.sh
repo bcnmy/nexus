@@ -74,11 +74,14 @@ if [ $proceed = "y" ]; then
     mkdir -p ./artifacts/NexusBootstrap
     mkdir -p ./artifacts/K1ValidatorFactory
     mkdir -p ./artifacts/NexusAccountFactory
+    mkdir -p ./artifacts/NexusProxy
+
     cp ../../out/Nexus.sol/Nexus.json ./artifacts/Nexus/.
     cp ../../out/K1Validator.sol/K1Validator.json ./artifacts/K1Validator/.
     cp ../../out/NexusBootstrap.sol/NexusBootstrap.json ./artifacts/NexusBootstrap/.
     cp ../../out/K1ValidatorFactory.sol/K1ValidatorFactory.json ./artifacts/K1ValidatorFactory/.
     cp ../../out/NexusAccountFactory.sol/NexusAccountFactory.json ./artifacts/NexusAccountFactory/.
+    cp ../../out/NexusProxy.sol/NexusProxy.json ./artifacts/NexusProxy/.
     printf "Artifacts copied\n"
 
     ### CREATE VERIFICATION ARTIFACTS ###
@@ -89,6 +92,8 @@ if [ $proceed = "y" ]; then
     forge verify-contract --show-standard-json-input $(cast address-zero) NexusBootstrap > ./artifacts/NexusBootstrap/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) K1ValidatorFactory > ./artifacts/K1ValidatorFactory/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) NexusAccountFactory > ./artifacts/NexusAccountFactory/verify.json
+    forge verify-contract --show-standard-json-input $(cast address-zero) NexusProxy > ./artifacts/NexusProxy/verify.json
+
     
 else 
     printf "Using precompiled artifacts\n"

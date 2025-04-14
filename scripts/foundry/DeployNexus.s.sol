@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import {Script, console2} from "forge-std/Script.sol";
 import {DeterministicDeployerLib} from "./utils/DeterministicDeployerLib.sol";
 import { ResolverUID, IRegistryModuleManager } from "./utils/RegisterModule.s.sol";
-
+import { NexusAccountFactory } from "contracts/factory/NexusAccountFactory.sol";
+import { NexusBootstrap } from "contracts/utils/NexusBootstrap.sol";
 contract DeployNexus is Script {
 
     uint256 deployed;
@@ -145,6 +146,21 @@ contract DeployNexus is Script {
             nexusAccountFactory = DeterministicDeployerLib.broadcastDeploy(bytecode, args, salt);
             console2.log("Nexus Account Factory deployed at: ", nexusAccountFactory);
         }
+
+        // ======== NexusProxy ========
+
+        salt = 0x0000000000000000000000000000000000000000000000000000000000000001;
+        bytes memory initData = abi.encode(
+            bootstrap,
+            abi.encodeWithSelector(
+                NexusBootstrap.initNexusWithDefaultValidator.selector,
+                abi.encodePacked(eEeEeAddress)
+            ) 
+        );
+        vm.startBroadcast();
+        address nexusProxy = NexusAccountFactory(nexusAccountFactory).createAccount(initData, salt);
+        vm.stopBroadcast();
+        console2.log("Nexus Proxy deployed at: ", nexusProxy);
     }
 
     function checkDeployed(uint256 codeSize) internal {
