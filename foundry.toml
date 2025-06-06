@@ -87,6 +87,8 @@
 
   apechain = "${APECHAIN_RPC_URL}" 
   apechain-testnet = "${APECHAIN_TESTNET_RPC_URL}" 
+  
+  hyperevm = "${HYPER_EVM_RPC_URL}"
 
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
