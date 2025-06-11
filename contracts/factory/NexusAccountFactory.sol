@@ -33,7 +33,11 @@ contract NexusAccountFactory is Stakeable, INexusFactory {
     /// @param owner_ The address of the owner of the factory.
     constructor(address implementation_, address owner_) Stakeable(owner_) {
         require(implementation_ != address(0), ImplementationAddressCanNotBeZero());
-        require(implementation_.code.length > 0, ImplementationCodeCanNotBeEmpty());
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(implementation_)
+        }
+        require(codeSize > 0 && codeSize != 0x17, ImplementationCodeCanNotBeEmpty());
         require(owner_ != address(0), ZeroAddressNotAllowed());
         ACCOUNT_IMPLEMENTATION = implementation_;
     }

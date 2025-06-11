@@ -69,7 +69,11 @@ contract K1ValidatorFactory is Stakeable {
             !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
         );
-        require(implementation.code.length > 0, ImplementationCodeCanNotBeEmpty());
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(implementation)
+        }
+        require(codeSize > 0 && codeSize != 0x17, ImplementationCodeCanNotBeEmpty());
         ACCOUNT_IMPLEMENTATION = implementation;
         K1_VALIDATOR = k1Validator;
         BOOTSTRAPPER = bootstrapper;
