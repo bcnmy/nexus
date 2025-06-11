@@ -50,6 +50,9 @@ contract K1ValidatorFactory is Stakeable {
     /// @notice Error thrown when an inner call fails.
     error InnerCallFailed();
 
+    /// @notice Error thrown when the implementation code is empty.
+    error ImplementationCodeCanNotBeEmpty();
+
     /// @notice Constructor to set the immutable variables.
     /// @param implementation The address of the Nexus implementation to be used for all deployments.
     /// @param factoryOwner The address of the factory owner.
@@ -66,6 +69,7 @@ contract K1ValidatorFactory is Stakeable {
             !(implementation == address(0) || k1Validator == address(0) || address(bootstrapper) == address(0) || factoryOwner == address(0)),
             ZeroAddressNotAllowed()
         );
+        require(implementation.code.length > 0, ImplementationCodeCanNotBeEmpty());
         ACCOUNT_IMPLEMENTATION = implementation;
         K1_VALIDATOR = k1Validator;
         BOOTSTRAPPER = bootstrapper;

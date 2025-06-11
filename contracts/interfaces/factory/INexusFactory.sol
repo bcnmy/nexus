@@ -36,6 +36,9 @@ interface INexusFactory {
     /// @notice Error thrown when the implementation address is zero.
     error ImplementationAddressCanNotBeZero();
 
+    /// @notice Error thrown when the implementation code is empty.
+    error ImplementationCodeCanNotBeEmpty();
+
     /// @notice Creates a new Nexus with initialization data.
     /// @param initData Initialization data to be called on the new Smart Account.
     /// @param salt Unique salt for the Smart Account creation.
