@@ -278,19 +278,15 @@ contract TestEIP7702 is NexusTest_Base {
         // Prepare the actual initialization data (without signature and nonce)
         bytes memory actualInitData = _getInitData();
 
-        // Choose a nonce
-        uint256 nonce = 12_345;
-
         // Calculate the hash that needs to be signed
-        // Hash is keccak256(abi.encode(keccak256(initData), nonce))
-        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+        bytes32 initDataHash = keccak256(actualInitData);
 
         // Sign the hash with the EOA's private key
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
         // Pack the full initData: signature (64 bytes) + nonce (32 bytes) + actual initData
-        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+        bytes memory fullInitData = abi.encodePacked(signature, actualInitData);
 
         // Use a different address as the relayer
         address relayer = makeAddr("relayer");
@@ -312,23 +308,22 @@ contract TestEIP7702 is NexusTest_Base {
 
         // Prepare initialization data
         bytes memory actualInitData = _getInitData();
-        uint256 nonce = 12_345;
 
         // Sign the initialization
-        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+        bytes32 initDataHash = keccak256(actualInitData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+        bytes memory fullInitData = abi.encodePacked(signature, actualInitData);
 
         // First initialization should succeed
         address relayer = makeAddr("relayer");
         vm.prank(relayer);
         INexus(account).initializeAccount(fullInitData);
 
-        // Second initialization with same nonce should fail
+        // Second initialization with same data should fail
         vm.prank(relayer);
-        vm.expectRevert(InvalidNonce.selector);
+        vm.expectRevert(AccountAlreadyInitialized.selector);
         INexus(account).initializeAccount(fullInitData);
     }
 
@@ -343,15 +338,14 @@ contract TestEIP7702 is NexusTest_Base {
 
         // Prepare initialization data
         bytes memory actualInitData = _getInitData();
-        uint256 nonce = 12_345;
 
         // Sign with a different key (wrong signature)
         uint256 wrongKey = uint256(999);
-        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+        bytes32 initDataHash = keccak256(actualInitData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongKey, initDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+        bytes memory fullInitData = abi.encodePacked(signature, actualInitData);
 
         // Should fail with InvalidSignature
         address relayer = makeAddr("relayer");

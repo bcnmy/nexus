@@ -312,22 +312,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 // to initialize the account. This allows 7702 accounts to be initialized
                 // by a relayer.
                 bytes calldata signature = initData[0:65];
-                // Get the nonce from the initData
-                uint256 nonce;
-                assembly {
-                    nonce := calldataload(add(initData.offset, 0x41))
-                }
                 AccountStorage storage $accountStorage = _getAccountStorage();
-                // Make sure the nonce is valid
-                require(!$accountStorage.nonces[nonce], InvalidNonce());
-                // Mark nonce as used
-                $accountStorage.nonces[nonce] = true;
-                // Remove the signature and nonce from the initData
-                initData = initData[97:];
-                // Calculate the hash of the initData and nonce
-                bytes32 initDataHash = keccak256(abi.encode(keccak256(initData), nonce));
+                // Remove the signature  from the initData
+                initData = initData[65:];
+                // Calculate the hash of the initData
+                bytes32 initDataHash = keccak256(initData);
+                // Make sure the initHash is not already used
+                require(!$accountStorage.erc7702InitHashes[initDataHash], AccountAlreadyInitialized());
                 // Check if the signature is valid
                 require(ECDSA.recover(initDataHash, signature) == address(this), InvalidSignature());
+                // Mark the initDataHash as used
+                $accountStorage.erc7702InitHashes[initDataHash] = true;
             } else {
                 Initializable.requireInitializable();
             }
