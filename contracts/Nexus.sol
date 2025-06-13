@@ -308,7 +308,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // account calls itself
         if (msg.sender != address(this)) {
             if (_amIERC7702()) {
-                // If this is a 7702 account, we allow passing signature with the initData
+                // If this is a 7702 account, we allow passing a user signature with the initData
                 // to initialize the account. This allows 7702 accounts to be initialized
                 // by a relayer.
                 bytes calldata signature = initData[0:65];
