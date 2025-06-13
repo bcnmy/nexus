@@ -9,6 +9,7 @@ import { IHook } from "contracts/interfaces/modules/IHook.sol";
 import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
 import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
 import { MockTransferer } from "contracts/mocks/MockTransferer.sol";
+
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
 
@@ -33,22 +34,14 @@ contract TestEIP7702 is NexusTest_Base {
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
-            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            address(mockPreValidationHook),
-            ""
-        );
+        BootstrapPreValidationHookConfig[] memory preValidationHooks =
+            BootstrapLib.createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
 
         return abi.encode(
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexus,
-                (validators, executors, hook, fallbacks, preValidationHooks, 
-                RegistryConfig({
-                    registry: REGISTRY,
-                    attesters: ATTESTERS,
-                    threshold: THRESHOLD
-                }))
+                (validators, executors, hook, fallbacks, preValidationHooks, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD }))
             )
         );
     }
@@ -266,10 +259,104 @@ contract TestEIP7702 is NexusTest_Base {
         assertTrue(valueTarget.balance == value);
     }
 
-    function test_amIERC7702_success()public {
+    function test_amIERC7702_success() public {
         ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
         address eip7702account = address(0x7702acc7702acc7702acc7702acc);
         vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
         assertTrue(IExposedNexus(eip7702account).amIERC7702());
+    }
+
+    function test_initializeAccount_7702_with_relayer() public {
+        // Get the account (EOA that will become 7702)
+        uint256 eoaKey = uint256(8);
+        address account = vm.addr(eoaKey);
+        vm.deal(account, 100 ether);
+
+        // Set up as ERC-7702 account
+        _doEIP7702(account);
+
+        // Prepare the actual initialization data (without signature and nonce)
+        bytes memory actualInitData = _getInitData();
+
+        // Choose a nonce
+        uint256 nonce = 12_345;
+
+        // Calculate the hash that needs to be signed
+        // Hash is keccak256(abi.encode(keccak256(initData), nonce))
+        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+
+        // Sign the hash with the EOA's private key
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // Pack the full initData: signature (64 bytes) + nonce (32 bytes) + actual initData
+        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+
+        // Use a different address as the relayer
+        address relayer = makeAddr("relayer");
+        vm.deal(relayer, 1 ether);
+
+        // Call initializeAccount from the relayer
+        vm.prank(relayer);
+        INexus(account).initializeAccount(fullInitData);
+    }
+
+    function test_initializeAccount_7702_replay_protection() public {
+        // Get the account
+        uint256 eoaKey = uint256(8);
+        address account = vm.addr(eoaKey);
+        vm.deal(account, 100 ether);
+
+        // Set up as ERC-7702 account
+        _doEIP7702(account);
+
+        // Prepare initialization data
+        bytes memory actualInitData = _getInitData();
+        uint256 nonce = 12_345;
+
+        // Sign the initialization
+        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+
+        // First initialization should succeed
+        address relayer = makeAddr("relayer");
+        vm.prank(relayer);
+        INexus(account).initializeAccount(fullInitData);
+
+        // Second initialization with same nonce should fail
+        vm.prank(relayer);
+        vm.expectRevert(InvalidNonce.selector);
+        INexus(account).initializeAccount(fullInitData);
+    }
+
+    function test_initializeAccount_7702_invalid_signature() public {
+        // Get the account
+        uint256 eoaKey = uint256(8);
+        address account = vm.addr(eoaKey);
+        vm.deal(account, 100 ether);
+
+        // Set up as ERC-7702 account
+        _doEIP7702(account);
+
+        // Prepare initialization data
+        bytes memory actualInitData = _getInitData();
+        uint256 nonce = 12_345;
+
+        // Sign with a different key (wrong signature)
+        uint256 wrongKey = uint256(999);
+        bytes32 initDataHash = keccak256(abi.encode(keccak256(actualInitData), nonce));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongKey, initDataHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        bytes memory fullInitData = abi.encodePacked(signature, nonce, actualInitData);
+
+        // Should fail with InvalidSignature
+        address relayer = makeAddr("relayer");
+        vm.prank(relayer);
+        vm.expectRevert(InvalidSignature.selector);
+        INexus(account).initializeAccount(fullInitData);
     }
 }
