@@ -6,7 +6,7 @@ This script allows for seamless and automated deployment of Nexus contracts.
 ## Clone the repository
 
 ```bash
-git clone https://github.com/nexus-labs/nexus.git
+git clone https://github.com/bcnmy/nexus
 git fetch --all
 git checkout 'deploy-vx.x.x' // (use the version you want to deploy)
 ```
