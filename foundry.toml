@@ -92,50 +92,54 @@
 
   coredao-testnet="${CORE_DAO_TESTNET_RPC_URL}"
 
+  neura-testnet="${NEURA_TESTNET_RPC_URL}"
+
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
   sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }
   
-  base = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api" }
-  base-sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
+  base = { key = "${ETHERSCAN_API_KEY}", url = "https://api.basescan.org/api" }
+  base-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
 
-  arbitrum = { key = "${ARBISCAN_API_KEY}", url = "https://api.arbiscan.io/api" }
-  arbitrum-sepolia = { key = "${ARBISCAN_API_KEY}", url = "https://api-sepolia.arbiscan.io/api" }
+  arbitrum = { key = "${ETHERSCAN_API_KEY}", url = "https://api.arbiscan.io/api" }
+  arbitrum-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.arbiscan.io/api" }
   
-  polygon = { key = "${POLYGONSCAN_API_KEY}", url = "https://api.polygonscan.com/api" }
-  amoy = { key = "${POLYGONSCAN_API_KEY}", url = "https://api-amoy.polygonscan.com/api" }
+  polygon = { key = "${ETHERSCAN_API_KEY}", url = "https://api.polygonscan.com/api" }
+  amoy = { key = "${ETHERSCAN_API_KEY}", url = "https://api-amoy.polygonscan.com/api" }
 
-  scroll = { key = "${SCROLLSCAN_API_KEY}", url = "https://api.scrollscan.com/api" }
-  scroll-sepolia = { key = "${SCROLLSCAN_API_KEY}", url = "https://api-sepolia.scrollscan.com/api" }
+  scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.scrollscan.com/api" }
+  scroll-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.scrollscan.com/api" }
 
-  gnosis = { key = "${GNOSISSCAN_API_KEY}", url = "https://api.gnosisscan.io/api" }
+  gnosis = { key = "${ETHERSCAN_API_KEY}", url = "https://api.gnosisscan.io/api" }
   # gnosis-chiado is via blockscan, not etherscan 
 
-  bsc = { key = "${BSCSCAN_API_KEY}", url = "https://api.bscscan.com/api"}
-  bsc-testnet = { key = "${BSCSCAN_API_KEY}", url = "https://api-testnet.bscscan.com/api" }
+  bsc = { key = "${ETHERSCAN_API_KEY}", url = "https://api.bscscan.com/api"}
+  bsc-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api-testnet.bscscan.com/api" }
 
-  avalanche = { key = "${SNOWTRACE_API_KEY}", url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan" }
-  fuji = { key = "${SNOWTRACE_API_KEY}", url = "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan" }
+  avalanche = { key = "${ETHERSCAN_API_KEY}", url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan" }
+  fuji = { key = "${ETHERSCAN_API_KEY}", url = "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan" }
 
-  optimism = { key = "${OPTIMISM_API_KEY}", url = "https://api-optimistic.etherscan.io/api" }
-  optimism-sepolia = { key = "${OPTIMISM_API_KEY}", url = "https://api-sepolia-optimistic.etherscan.io/api" }
+  optimism = { key = "${ETHERSCAN_API_KEY}", url = "https://api-optimistic.etherscan.io/api" }
+  optimism-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia-optimistic.etherscan.io/api" }
 
-  berachain-bartio = { key = "${BERACHAIN_API_KEY}", url = "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan" }
+  berachain-bartio = { key = "${ETHERSCAN_API_KEY}", url = "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan" }
 
-  sonic-mainnet = { key = "${SONICSCAN_API_KEY}", url = "https://api.sonicscan.org/api", chain="146"}
-  sonic-blaze-testnet = { key = "${SONICSCAN_API_KEY}", url = "https://api-testnet.sonicscan.org/api", chain="57054"}
+  sonic-mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api", chain="146"}
+  sonic-blaze-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api-testnet.sonicscan.org/api", chain="57054"}
 
-  blast = { key = "${BLASTSCAN_API_KEY}", url = "https://api.blastscan.io/api", chain="81457"}
-  blast-sepolia = { key = "${BLASTSCAN_API_KEY}", url = "https://api-sepolia.blastscan.io/api", chain="168587773"}
+  blast = { key = "${ETHERSCAN_API_KEY}", url = "https://api.blastscan.io/api", chain="81457"}
+  blast-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.blastscan.io/api", chain="168587773"}
 
-  monad-testnet = { key = "${MONAD_EXPLORER_API_KEY}", url = "https://testnet.monadexplorer.com/api", chain="10143"}
+  monad-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://testnet.monadexplorer.com/api", chain="10143"}
 
-  iota-mainnet = { key = "${IOTA_EXPLORER_API_KEY}", url = "https://explorer.evm.iota.org/api/", chain="8822"}
+  iota-mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://explorer.evm.iota.org/api/", chain="8822"}
 
-  soneium-mainnet = { key = "${SONEIUM_EXPLORER_API_KEY}", url = "https://soneium.blockscout.com/api/", chain="1868"}
+  soneium-mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://soneium.blockscout.com/api/", chain="1868"}
   soneium-testnet = { key = "${SONEIUM_EXPLORER_API_KEY}", url = "https://soneium-minato.blockscout.com/api/", chain="1946"}
 
-  apechain = { key = "${APECHAIN_API_KEY}", url = "https://api.apescan.io/api", chain="33139"}
-  apechain-testnet = { key = "${APECHAIN_TESTNET_API_KEY}", url = "https://curtis.explorer.caldera.xyz/api/", chain="33111" }
+  apechain = { key = "${ETHERSCAN_API_KEY}", url = "https://api.apescan.io/api", chain="33139"}
+  apechain-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://curtis.explorer.caldera.xyz/api/", chain="33111" }
+
+  hyperevm = {key = "", url = "https://sourcify.parsec.finance/verify", chain="999"}
 
 # [possible values: mainnet, morden, ropsten, rinkeby, goerli, kovan, holesky, sepolia, odyssey, optimism, optimism-kovan, optimism-goerli, optimism-sepolia, arbitrum, arbitrum-testnet, arbitrum-goerli, arbitrum-sepolia, arbitrum-nova, cronos, cronos-testnet, rsk, crab, darwinia, koi, bsc, bsc-testnet, poa, sokol, scroll, scroll-sepolia, metis, cfx-testnet, cfx, xdai, polygon, mumbai, amoy, polygon-zkevm, polygon-zkevm-testnet, fantom, fantom-testnet, moonbeam, moonbeam-dev, moonriver, moonbase, dev, anvil-hardhat, gravity-alpha-mainnet, gravity-alpha-testnet-sepolia, evmos, evmos-testnet, chiado, oasis, emerald, emerald-testnet, filecoin-mainnet, filecoin-calibration-testnet, avalanche, fuji, celo, celo-alfajores, celo-baklava, aurora, aurora-testnet, canto, canto-testnet, boba, base, base-goerli, base-sepolia, syndr, syndr-sepolia, shimmer, ink-sepolia, fraxtal, fraxtal-testnet, blast, blast-sepolia, linea, linea-goerli, linea-sepolia, zksync, zksync-testnet, mantle, mantle-testnet, mantle-sepolia, xai, xai-sepolia, viction, zora, zora-goerli, zora-sepolia, pgn, pgn-sepolia, mode, mode-sepolia, elastos, kakarot-sepolia, etherlink, etherlink-testnet, degen, opbnb-mainnet, opbnb-testnet, ronin, taiko, taiko-hekla, autonomys-nova-testnet, flare, flare-coston2, acala, acala-mandala-testnet, acala-testnet, karura, karura-testnet, pulsechain, pulsechain-testnet, immutable, immutable-testnet, soneium-minato-testnet, world, world-sepolia, iotex, core, merlin, bitlayer, unichain-sepolia, apechain, curtis, sonic-testnet]
