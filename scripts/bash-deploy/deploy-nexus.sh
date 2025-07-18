@@ -33,6 +33,9 @@ else
         fi
         CHAIN_NAME=$2
         VERIFY="--verify"
+        if [ $CHAIN_NAME = "sei-mainnet" ]; then
+            VERIFY="--verify --verifier blockscout --verifier-url https://seitrace.com/atlantic-2/api --chain-id 1329"
+        fi
     else 
         printf "Invalid environment\n"
         printMan
