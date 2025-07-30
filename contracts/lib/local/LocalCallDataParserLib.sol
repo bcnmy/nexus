@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.27;
+pragma solidity ^0.8.27;
 
 library LocalCallDataParserLib {
     /// @dev Parses the `userOp.signature` to extract the module type, module initialization data,
