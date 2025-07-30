@@ -104,6 +104,14 @@
 
   linea-mainnet="${LINEA_MAINNET_RPC_URL}"
 
+  lisk-mainnet="${LISK_MAINNET_RPC_URL}"
+
+  fluent-devnet="${FLUENT_DEV_ACCESS_RPC_URL}"
+
+  worldchain-mainnet="${WC_MAINNET_RPC_URL}"
+  worldchain-testnet="${WC_TESTNET_RPC_URL}"
+
+
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
   sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }
