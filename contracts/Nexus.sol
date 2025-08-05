@@ -48,7 +48,7 @@ import { NonceLib } from "./lib/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { Initializable } from "./lib/Initializable.sol";
 import { EmergencyUninstall } from "./types/DataTypes.sol";
-import { LibPREP } from "lib-prep/LibPREP.sol";
+import { LibPREP } from "./lib/local/LibPREP.sol";
 import { ComposableExecutionBase, ComposableExecution } from "composability/ComposableExecutionBase.sol";
 
 /// @title Nexus - Smart Account
