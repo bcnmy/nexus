@@ -4,7 +4,7 @@
   auto_detect_solc = false
   block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
   bytecode_hash = "none"
-  evm_version = "cancun"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
+  evm_version = "paris"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
   fuzz = { runs = 1_000 }
   via-ir = false
   gas_reports = ["*"]
@@ -82,7 +82,32 @@
   soneium-mainnet = "${SONEIUM_MAINNET_RPC_URL}"
   soneium-testnet = "${SONEIUM_TESTNET_RPC_URL}"
 
-  chiliz-mainnet = "${CHILIZ_RPC_URL}"
+  apechain = "${APECHAIN_RPC_URL}" 
+  apechain-testnet = "${APECHAIN_TESTNET_RPC_URL}"
+
+  hyperevm = "${HYPER_EVM_RPC_URL}"
+
+  coredao-testnet="${CORE_DAO_TESTNET_RPC_URL}"
+
+  neura-testnet = "${NEURA_TESTNET_RPC_URL}"
+
+  sei-mainnet="${SEI_MAINNET_RPC_URL}"
+  sei-testnet="${SEI_TESTNET_RPC_URL}"
+
+  unichain-mainnet="${UNICHAIN_MAINNET_RPC_URL}"
+  unichain-testnet="${UNICHAIN_TESTNET_RPC_URL}"
+
+  katana-mainnet="${KATANA_MAINNET_RPC_URL}"
+
+  linea-mainnet="${LINEA_MAINNET_RPC_URL}"
+
+  lisk-mainnet="${LISK_MAINNET_RPC_URL}"
+
+  worldchain-mainnet="${WC_MAINNET_RPC_URL}"
+  worldchain-testnet="${WC_TESTNET_RPC_URL}"
+
+  fluent-testnet="${FLUENT_TESTNET_RPC_URL}"
+
   chiliz-testnet = "${CHILIZ_TESTNET_URL}"
 
 [etherscan]
