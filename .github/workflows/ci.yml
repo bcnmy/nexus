@@ -11,7 +11,7 @@ jobs:
       cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v5.1.6
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -38,7 +38,7 @@ jobs:
     needs: setup
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v5.1.6
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1.2.0
@@ -70,7 +70,7 @@ jobs:
     needs: setup
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v5.1.6
 
       - name: Cache node modules
         uses: actions/cache@v4
@@ -100,7 +100,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v5.1.6
 
       - name: Cache node modules
         uses: actions/cache@v4
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
