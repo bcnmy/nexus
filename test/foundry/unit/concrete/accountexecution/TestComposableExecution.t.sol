@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import "../../../shared/TestAccountExecution_Base.t.sol";
 import {Storage} from "composability/Storage.sol";
 import {ComposableExecution, ComposableExecutionBase, InputParam, OutputParam, Constraint, ConstraintType, InputParamFetcherType, OutputParamFetcherType} from "composability/ComposableExecutionBase.sol";
+import {InputParamType} from "composability/types/ComposabilityDataTypes.sol";
 
 import "node_modules/@biconomy/composability/test/mock/DummyContract.sol";
 
@@ -47,16 +48,31 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         });
 
         // first execution => call swap and store the result in the composability storage
-        InputParam[] memory inputParams_execution1 = new InputParam[](2);
+        InputParam[] memory inputParams_execution1 = new InputParam[](4);
         inputParams_execution1[0] = InputParam({
+            paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.RAW_BYTES,
             paramData: abi.encode(input1),
             constraints: constraints_input1_1
         });
         inputParams_execution1[1] = InputParam({
+            paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.RAW_BYTES,
             paramData: abi.encode(input2),
             constraints: constraints_input1_2
+        });
+
+        inputParams_execution1[2] = InputParam({
+            paramType: InputParamType.VALUE,
+            fetcherType: InputParamFetcherType.STATIC_CALL,
+            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.getNativeValue.selector)),
+            constraints: emptyConstraints
+        });
+        inputParams_execution1[3] = InputParam({
+            paramType: InputParamType.TARGET,
+            fetcherType: InputParamFetcherType.RAW_BYTES,
+            paramData: abi.encode(address(dummyContract)),
+            constraints: emptyConstraints
         });
 
         OutputParam[] memory outputParams_execution1 = new OutputParam[](2);
@@ -86,32 +102,43 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
             referenceData: abi.encode(bytes32(input1+1))
         });
         
-        InputParam[] memory inputParams_execution2 = new InputParam[](2);
+        InputParam[] memory inputParams_execution2 = new InputParam[](4);
         inputParams_execution2[0] = InputParam({
+            paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
             paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
             constraints: constraints_input2_1
         });
         inputParams_execution2[1] = InputParam({
+            paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
             paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_B_0))),
             constraints: emptyConstraints
         });
-        OutputParam[] memory outputParams_execution2 = new OutputParam[](0);
 
-        uint256 valueToSend = 1e15;
+        inputParams_execution2[2] = InputParam({
+            paramType: InputParamType.VALUE,
+            fetcherType: InputParamFetcherType.STATIC_CALL,
+            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.getNativeValue.selector)),
+            constraints: emptyConstraints
+        });
+        
+        inputParams_execution2[3] = InputParam({
+            paramType: InputParamType.TARGET,
+            fetcherType: InputParamFetcherType.RAW_BYTES,
+            paramData: abi.encode(address(dummyContract)),
+            constraints: emptyConstraints
+        });
+
+        OutputParam[] memory outputParams_execution2 = new OutputParam[](0);
 
         ComposableExecution[] memory executions = new ComposableExecution[](2);
         executions[0] = ComposableExecution({
-            to: address(dummyContract),
-            value: valueToSend,
             functionSig: DummyContract.swap.selector,
             inputParams: inputParams_execution1,
             outputParams: outputParams_execution1
         });
         executions[1] = ComposableExecution({
-            to: address(dummyContract),
-            value: valueToSend,
             functionSig: DummyContract.stake.selector,
             inputParams: inputParams_execution2,
             outputParams: outputParams_execution2
@@ -123,6 +150,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         userOps[0] = buildUserOpWithCalldata(BOB, callData, address(VALIDATOR_MODULE));
 
         uint256 expectedToStake = input1 + 1;
+        uint256 expectedNativeValue = dummyContract.getNativeValue();
         vm.expectEmit(address(dummyContract));
         // swap emits input params
         emit Uint256Emitted2(input1, input2);
@@ -130,7 +158,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         emit Uint256Emitted(expectedToStake);
         // stake emits input params: first param is from swap, second param is from getFoo which is just input1
         emit Uint256Emitted2(expectedToStake, input1);
-        emit Received(valueToSend);
+        emit Received(expectedNativeValue);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         
 

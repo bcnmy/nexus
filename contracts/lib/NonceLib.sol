@@ -18,7 +18,7 @@ library NonceLib {
         }
     }
 
-    /// @dev Detects if Validaton Mode is Module Enable Mode
+    /// @dev Detects if Validation Mode is Module Enable Mode
     /// @param nonce The nonce
     /// @return res boolean result, true if it is the Module Enable Mode
     function isModuleEnableMode(uint256 nonce) internal pure returns (bool res) {
@@ -38,7 +38,7 @@ library NonceLib {
         }
     }
 
-    /// @dev Detects if Validaton Mode is Prep Mode
+    /// @dev Detects if Validation Mode is Prep Mode
     /// @param nonce The nonce
     /// @return res boolean result, true if it is the Prep Mode
     function isPrepMode(uint256 nonce) internal pure returns (bool res) {
@@ -48,9 +48,9 @@ library NonceLib {
         }
     }
 
-    /// @dev Detects if Validaton Mode is Validate Mode
+    /// @dev Detects if Validation Mode is Validate Mode
     /// @param nonce The nonce
-    /// @return res boolean result, true if it is the Validate Mode
+    /// @return res boolean result, true if it is the Validation Mode
     function isValidateMode(uint256 nonce) internal pure returns (bool res) {
         assembly {
             let vmode := byte(3, nonce)

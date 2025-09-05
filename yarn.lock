@@ -60,9 +60,9 @@
   resolved "https://registry.yarnpkg.com/@babel/helper-validator-identifier/-/helper-validator-identifier-7.25.9.tgz#24b64e2c3ec7cd3b3c547729b8d16871f22cbdc7"
   integrity sha512-Ed61U6XJc3CVRfkERJWDz4dJwKe7iLmmJsbOGu9wSloNSFttHV0I8g6UAgb7qnK5ly5bGLPd4oXZlxCdANBOWQ==
 
-"@biconomy/composability@github:bcnmy/composability":
+"@biconomy/composability@github:bcnmy/composability#feat/native-token-input-param":
   version "0.0.1"
-  resolved "https://codeload.github.com/bcnmy/composability/tar.gz/c4f072e19bef0e34070cc8a1ece14e54e8634d32"
+  resolved "https://codeload.github.com/bcnmy/composability/tar.gz/4c3c41112a45587898959efc7c2a3e93a5a5de08"
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
@@ -3826,10 +3826,6 @@ prelude-ls@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.1.2.tgz#21932a549f5e52ffd9a827f570e04be62a97da54"
   integrity sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==
-
-"prep@github:ithacaxyz/account#vectorized/prep":
-  version "0.0.0"
-  resolved "https://codeload.github.com/ithacaxyz/account/tar.gz/733464120b83c7699ba5a3ccf0b56c9ae6dea001"
 
 prettier-linter-helpers@^1.0.0:
   version "1.0.0"
