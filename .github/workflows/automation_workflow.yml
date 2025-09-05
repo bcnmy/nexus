@@ -10,7 +10,7 @@ jobs:
   check-files:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v5.1.6
 
       - name: Check package.json
         uses: tj-actions/changed-files@v44.5.1
