@@ -65,4 +65,7 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when the account is not initialized but expected to be.
     error AccountNotInitialized();
+
+    /// @notice Error thrown when the provided signature is invalid.
+    error InvalidSignature();
 }
