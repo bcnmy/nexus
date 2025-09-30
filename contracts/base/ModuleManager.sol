@@ -62,14 +62,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
     address internal immutable _DEFAULT_VALIDATOR;
 
-    /// @dev initData should block the implementation from being used as a Smart Account
-    constructor(address _defaultValidator, bytes memory _initData) {
-        if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
-            revert MismatchModuleTypeId(); 
-        IValidator(_defaultValidator).onInstall(_initData);
-        _DEFAULT_VALIDATOR = _defaultValidator;
-    }
-
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
@@ -89,6 +81,14 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         }
     }
 
+    /// @dev initData should block the implementation from being used as a Smart Account
+    constructor(address defaultValidator_, bytes memory initData_) {
+        if (!IValidator(defaultValidator_).isModuleType(MODULE_TYPE_VALIDATOR)) 
+            revert MismatchModuleTypeId(); 
+        IValidator(defaultValidator_).onInstall(initData_);
+        _DEFAULT_VALIDATOR = defaultValidator_;
+    }
+
     // receive function
     receive() external payable { }
 
@@ -96,6 +96,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     /// Hooked manually in the _fallback function
     fallback() external payable {
         _fallback(msg.data);
+    }
+
+    /// @dev Retrieves the default validator address.
+    /// @return The address of the default validator.
+    function getDefaultValidator() external view returns (address) {
+        return _DEFAULT_VALIDATOR;
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -291,7 +297,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         if (hookType == MODULE_TYPE_HOOK) {
             _setHook(address(0));
         } else if (hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
-            _uninstallPreValidationHook(hook, hookType, data);
+            _uninstallPreValidationHook(hookType);
         }
         hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
@@ -377,10 +383,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     }
 
     /// @dev Uninstalls a pre-validation hook module
-    /// @param preValidationHook The address of the pre-validation hook to be uninstalled.
     /// @param hookType The type of the pre-validation hook.
-    /// @param data De-initialization data to configure the hook upon uninstallation.
-    function _uninstallPreValidationHook(address preValidationHook, uint256 hookType, bytes calldata data) internal virtual {
+    function _uninstallPreValidationHook(uint256 hookType) internal virtual {
         _setPreValidationHook(hookType, address(0));
     }
 
@@ -458,29 +462,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         require((IValidator(validator).isValidSignatureWithSender(address(this), hash, signature[20:]) == ERC1271_MAGICVALUE), EmergencyUninstallSigError());
     }
 
-    /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
-    /// @param preValidationHookType The type of the pre-validation hook.
-    /// @return preValidationHook The address of the pre-validation hook.
-    function _getPreValidationHook(uint256 preValidationHookType) internal view returns (address preValidationHook) {
-        preValidationHook = preValidationHookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-            ? address(_getAccountStorage().preValidationHookERC1271)
-            : address(_getAccountStorage().preValidationHookERC4337);
-    }
-
-    /// @dev Calls the pre-validation hook for ERC-1271.
-    /// @param hash The hash of the user operation.
-    /// @param signature The signature to validate.
-    /// @return postHash The updated hash after the pre-validation hook.
-    /// @return postSig The updated signature after the pre-validation hook.
-    function _withPreValidationHook(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32 postHash, bytes memory postSig) {
-        // Get the pre-validation hook for ERC-1271
-        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
-        // If no pre-validation hook is installed, return the original hash and signature
-        if (preValidationHook == address(0)) return (hash, signature);
-        // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
-    }
-
     /// @dev Calls the pre-validation hook for ERC-4337.
     /// @param hash The hash of the user operation.
     /// @param userOp The user operation data.
@@ -504,6 +485,29 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         else return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(userOp, missingAccountFunds, hash);
     }
 
+    /// @dev Retrieves the pre-validation hook from the storage based on the hook type.
+    /// @param preValidationHookType The type of the pre-validation hook.
+    /// @return preValidationHook The address of the pre-validation hook.
+    function _getPreValidationHook(uint256 preValidationHookType) internal view returns (address preValidationHook) {
+        preValidationHook = preValidationHookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+            ? address(_getAccountStorage().preValidationHookERC1271)
+            : address(_getAccountStorage().preValidationHookERC4337);
+    }
+
+    /// @dev Calls the pre-validation hook for ERC-1271.
+    /// @param hash The hash of the user operation.
+    /// @param signature The signature to validate.
+    /// @return postHash The updated hash after the pre-validation hook.
+    /// @return postSig The updated signature after the pre-validation hook.
+    function _withPreValidationHook(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32 postHash, bytes memory postSig) {
+        // Get the pre-validation hook for ERC-1271
+        address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
+        // If no pre-validation hook is installed, return the original hash and signature
+        if (preValidationHook == address(0)) return (hash, signature);
+        // Otherwise, call the pre-validation hook and return the updated hash and signature
+        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
+    }
+
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
@@ -523,16 +527,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         } catch {
             return false;
         }
-    }
-
-    /// @notice Builds the enable mode data hash as per eip712
-    /// @param module Module being enabled
-    /// @param moduleType Type of the module as per EIP-7579
-    /// @param userOpHash Hash of the User Operation
-    /// @param initData Module init data.
-    /// @return structHash data hash
-    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal view returns (bytes32) {
-        return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
     }
 
     /// @notice Builds the emergency uninstall data hash as per eip712
@@ -647,6 +641,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
             return validator;
         }
+    }
+
+    /// @notice Builds the enable mode data hash as per eip712
+    /// @param module Module being enabled
+    /// @param moduleType Type of the module as per EIP-7579
+    /// @param userOpHash Hash of the User Operation
+    /// @param initData Module init data.
+    /// @return structHash data hash
+    function _getEnableModeDataHash(address module, uint256 moduleType, bytes32 userOpHash, bytes calldata initData) internal pure returns (bytes32) {
+        return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
     }
 
     function _fallback(bytes calldata callData) private {
