@@ -44,9 +44,9 @@ import "../../../contracts/interfaces/INexus.sol";
 // ==========================
 import "../../../contracts/Nexus.sol";
 import "../../../contracts/factory/NexusAccountFactory.sol";
-import "../../../contracts/factory/RegistryFactory.sol";
 import "./../../../contracts/modules/validators/K1Validator.sol";
 import "../../../contracts/common/Stakeable.sol";
+import "../../../contracts/mocks/ExposedNexus.sol";
 
 // ==========================
 // Mock Contracts for Testing
@@ -61,6 +61,7 @@ import { MockToken } from "../../../contracts/mocks/MockToken.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { MockSafe1271Caller } from "../../../contracts/mocks/MockSafe1271Caller.sol";
+import { MockPreValidationHook } from "../../../contracts/mocks/MockPreValidationHook.sol";
 
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/Counter.sol";

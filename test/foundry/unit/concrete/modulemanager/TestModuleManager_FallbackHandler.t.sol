@@ -4,12 +4,25 @@ pragma solidity ^0.8.27;
 import "../../../utils/Imports.sol";
 import "../../../shared/TestModuleManagement_Base.t.sol";
 
+interface IHandler {
+    function returnBytes() external returns (bytes memory);
+    function complexReturnData(string memory input, bytes4 selector) external returns (uint256, bytes memory, address, uint64, address);
+}
+
 /// @title TestModuleManager_FallbackHandler
 /// @notice Tests for installing and uninstalling the fallback handler in a smart account.
 contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
-    /// @notice Sets up the base module management environment and installs the fallback handler.
+
+    MockNFT internal erc721;
+    MockERC1155 internal erc1155;
+    Counter internal counter;
+    
     function setUp() public {
         init();
+
+        counter = new Counter();
+        erc721 = new MockNFT("Mock NFT", "MNFT");
+        erc1155 = new MockERC1155("Test");
 
         Execution[] memory execution = new Execution[](2);
 
@@ -73,24 +86,12 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         // Prepare UserOperation
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
-        if (!skip) {
-            // Expect the GenericFallbackCalled event from the MockHandler contract
-            vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
-            emit GenericFallbackCalled(address(this), 123, "Example data");
-        }
+        // Expect the GenericFallbackCalled event from the MockHandler contract
+        vm.expectEmit(true, true, false, true, address(HANDLER_MODULE));
+        emit GenericFallbackCalled(address(this), 123, "Example data");
 
         // Call handleOps, which should trigger the fallback handler and emit the event
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
-    }
-
-    /// @notice Tests that handleOps triggers the generic fallback handler.
-    function test_HandleOpsTriggersGenericFallback_IsProperlyHooked() public {
-        vm.expectEmit(address(HOOK_MODULE));
-        emit PreCheckCalled();
-        vm.expectEmit(address(HOOK_MODULE));
-        emit PostCheckCalled();
-        // skip fallback emit check as per Matching Sequences section here => https://book.getfoundry.sh/cheatcodes/expect-emit 
-        test_HandleOpsTriggersGenericFallback({skip: true});
     }
 
     /// @notice Tests installing a fallback handler.
@@ -290,20 +291,124 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     }
 
     function test_onTokenReceived_Success() public {
-        vm.startPrank(address(ENTRYPOINT));
+        erc721.safeMint(address(BOB_ACCOUNT), 1);
+        assertEq(erc721.balanceOf(address(BOB_ACCOUNT)), 1);
+
+        erc721.safeMint(ALICE_ADDRESS, 2);
+        vm.prank(ALICE_ADDRESS);
+        erc721.safeTransfer(address(BOB_ACCOUNT), 2);
+        assertEq(erc721.ownerOf(2), address(BOB_ACCOUNT));
+
+        erc1155.safeMint(address(BOB_ACCOUNT), 1, 1);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 1), 1);
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 2;
+        tokenIds[1] = 3;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 10;
+        amounts[1] = 30;
+        erc1155.safeMintBatch(address(BOB_ACCOUNT), tokenIds, amounts);
+
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 2), 10);
+        assertEq(erc1155.balanceOf(address(BOB_ACCOUNT), 3), 30);
+
         //ERC-721
         (bool success, bytes memory data) = address(BOB_ACCOUNT).call{value: 0}(hex'150b7a02');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'150b7a02')));
+        assertTrue(keccak256(data) == keccak256((hex'150b7a0200000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'f23a6e61');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e61')));
+        assertTrue(keccak256(data) == keccak256(bytes(hex'f23a6e6100000000000000000000000000000000000000000000000000000000')));
         //ERC-1155 Batch
         (success, data) = address(BOB_ACCOUNT).call{value: 0}(hex'bc197c81');
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c81')));
-
-        vm.stopPrank();
+        assertTrue(keccak256(data) == keccak256(bytes(hex'bc197c8100000000000000000000000000000000000000000000000000000000')));
     }
+
+    function test_ComplexReturnData() public {
+        bytes4 selector = bytes4(keccak256(abi.encodePacked("complexReturnData(string,bytes4)")));
+
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE)));
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        // Verify the fallback handler was installed for the given selector
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
+
+        string memory testString = "Hello Complex Return Data that is more than 32 bytes";
+        bytes4 testSelector = bytes4(abi.encode("foo()"));
+
+        bytes memory data = abi.encodeWithSelector(
+            MockHandler(address(0)).complexReturnData.selector,
+            testString,
+            testSelector
+        );
+
+        address expectedSender = address(0x1234567890123456789012345678901234567890);
+        vm.prank(expectedSender);
+        (bool success, bytes memory result) = address(BOB_ACCOUNT).call{value: 0}(data);
+        assertTrue(success);
+        (uint256 timestamp, bytes memory resultData, address addr, uint64 chainId, address sender) = abi.decode(result, (uint256, bytes, address, uint64, address));
+        assertEq(timestamp, block.timestamp);
+        assertEq(addr, address(HANDLER_MODULE));
+        assertEq(chainId, block.chainid);
+        assertEq(sender, expectedSender);
+        bytes memory expectedData = abi.encode(testString, HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion(), testSelector);
+        assertEq(keccak256(resultData), keccak256(expectedData));
+
+        vm.prank(expectedSender); 
+        (timestamp, resultData, addr, chainId, sender) = IHandler(address(BOB_ACCOUNT)).complexReturnData(testString, testSelector);
+        assertEq(timestamp, block.timestamp);
+        assertEq(addr, address(HANDLER_MODULE));
+        assertEq(chainId, block.chainid);
+        assertEq(sender, expectedSender);
+        assertEq(keccak256(resultData), keccak256(expectedData));
+    }
+
+    function test_ReturnBytes_and_Hook_fallback() public {
+        bytes4 selector = bytes4(keccak256(abi.encodePacked("returnBytes()")));
+        bytes memory customData = abi.encode(bytes5(abi.encodePacked(selector, CALLTYPE_SINGLE)));
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(HANDLER_MODULE),
+            customData
+        );
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
+
+        // Verify the fallback handler was installed for the given selector
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler not installed");
+
+        bytes memory data = abi.encodeWithSelector( 
+            MockHandler(address(0)).returnBytes.selector
+        );
+        (bool success, bytes memory result) = address(BOB_ACCOUNT).call{value: 0}(data);
+        bytes memory expectedResult = abi.encodePacked(HANDLER_MODULE.getName(), HANDLER_MODULE.getVersion());
+        assertTrue(success);
+        assertEq(abi.decode(result, (bytes)), expectedResult);
+
+        vm.expectEmit(true, true, true, true, address(HOOK_MODULE));
+        emit PreCheckCalled();
+        vm.expectEmit(true, true, true, true, address(HOOK_MODULE));
+        emit PostCheckCalled();
+        bytes memory result2 = IHandler(address(BOB_ACCOUNT)).returnBytes();
+        assertEq(result2, expectedResult);
+    }   
+}
+
+interface ISomeFallbackFunction {
+    function someFallbackFunction(Execution calldata execution) external;
 }

@@ -5,12 +5,13 @@ import { IModule } from "../interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import "../types/Constants.sol";
 
-contract MockHook is IModule {
-    event PreCheckCalled();
-    event PostCheckCalled();
+contract EmittingHook is IModule {
+    event PreCheckMsgData(bytes data);
+    event PreCheckExtractedSelector(bytes4 selector);
+    event PreCheckSender(address sender);
+    event PreCheckValue(uint256 value);
     event HookOnInstallCalled(bytes32 dataFirstWord);
-
-    uint256 public a;
+    event PostCheckCalled();
 
     function onInstall(bytes calldata data) external override {
         if (data.length >= 0x20) {
@@ -23,14 +24,11 @@ contract MockHook is IModule {
     }
 
     function preCheck(address sender, uint256 value, bytes calldata data) external returns (bytes memory) {
-        emit PreCheckCalled();
-
-        a++;
-
-        // Add a condition to revert if the sender is the zero address or if the value is 1 ether for testing purposes
-        if (value == 1 ether) {
-            revert("PreCheckFailed");
-        }
+        bytes4 selector = bytes4(data[0:4]);
+        emit PreCheckExtractedSelector(selector);
+        emit PreCheckMsgData(data);
+        emit PreCheckSender(sender);
+        emit PreCheckValue(value);
 
         return "";
     }
@@ -46,13 +44,5 @@ contract MockHook is IModule {
 
     function isInitialized(address) external pure returns (bool) {
         return false;
-    }
-
-    function getA() external view returns (uint256) {
-        return a;
-    }
-
-    function cleanA() external {
-        a = 0;
     }
 }

@@ -60,34 +60,6 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
         assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 1e18);
     }
 
-    function testHashTypedData() public {
-        bytes32 structHash = keccak256(abi.encodePacked("testStruct"));
-        bytes32 expectedHash = BOB_ACCOUNT.hashTypedData(structHash);
-
-        bytes32 domainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
-        bytes32 actualHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
-
-        assertEq(expectedHash, actualHash);
-    }
-
-    function testDomainSeparator() public {
-        bytes32 expectedDomainSeparator = BOB_ACCOUNT.DOMAIN_SEPARATOR();
-
-        AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) = BOB_ACCOUNT.eip712Domain();
-
-        bytes32 calculatedDomainSeparator = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(t.name)),
-                keccak256(bytes(t.version)),
-                t.chainId,
-                t.verifyingContract
-            )
-        );
-        assertEq(expectedDomainSeparator, calculatedDomainSeparator);
-    }
-
     /// @notice Tests the failure of signature validation due to an incorrect signer.
     function test_RevertWhen_SignatureIsInvalidDueToWrongSigner() public {
         TestTemps memory t;

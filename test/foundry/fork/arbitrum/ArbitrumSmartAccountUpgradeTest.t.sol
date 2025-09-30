@@ -23,12 +23,12 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
         uint256 mainnetFork = vm.createFork(getArbitrumRpcUrl());
         vm.selectFork(mainnetFork);
-        vm.rollFork(209_480_000);
+        vm.rollFork(320_365_545);
         init();
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        newImplementation = new Nexus(_ENTRYPOINT);
+        newImplementation = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         // /!\ The private key is for testing purposes only and should not be used in production.
         signerPrivateKey = 0x2924d554c046e633f658427df4d0e7726487b1322bd16caaf24a53099f1cda85;
         signer = vm.createWallet(signerPrivateKey);
@@ -45,7 +45,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     /// @notice Validates the account ID after the upgrade process.
     function test_AccountIdValidationAfterUpgrade() public {
         test_UpgradeV2ToV3AndInitialize();
-        string memory expectedAccountId = "biconomy.nexus.1.0.0";
+        string memory expectedAccountId = "biconomy.nexus.1.2.0";
         string memory actualAccountId = IAccountConfig(payable(address(smartAccountV2))).accountId();
         assertEq(actualAccountId, expectedAccountId, "Account ID does not match after upgrade.");
     }
@@ -116,7 +116,21 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
+        );
 
         dest[1] = address(smartAccountV2);
         values[1] = 0;

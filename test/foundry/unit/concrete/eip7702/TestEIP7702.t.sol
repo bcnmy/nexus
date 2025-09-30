@@ -5,7 +5,10 @@ import { NexusTest_Base } from "../../../utils/NexusTest_Base.t.sol";
 import "../../../utils/Imports.sol";
 import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
-
+import { IHook } from "contracts/interfaces/modules/IHook.sol";
+import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "contracts/interfaces/modules/IPreValidationHook.sol";
+import { MockPreValidationHook } from "contracts/mocks/MockPreValidationHook.sol";
+import { MockTransferer } from "contracts/mocks/MockTransferer.sol";
 contract TestEIP7702 is NexusTest_Base {
     using ECDSA for bytes32;
 
@@ -13,6 +16,7 @@ contract TestEIP7702 is NexusTest_Base {
     MockTarget target;
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
+    MockPreValidationHook public mockPreValidationHook;
 
     function setUp() public {
         setupTestEnvironment();
@@ -20,10 +24,7 @@ contract TestEIP7702 is NexusTest_Base {
         target = new MockTarget();
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
-    }
-
-    function _doEIP7702(address account) internal {
-        vm.etch(account, address(ACCOUNT_IMPLEMENTATION).code);
+        mockPreValidationHook = new MockPreValidationHook();
     }
 
     function _getInitData() internal view returns (bytes memory) {
@@ -32,8 +33,24 @@ contract TestEIP7702 is NexusTest_Base {
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(mockPreValidationHook),
+            ""
+        );
 
-        return BOOTSTRAPPER.getInitNexusCalldata(validators, executors, hook, fallbacks, REGISTRY, ATTESTERS, THRESHOLD);
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexus,
+                (validators, executors, hook, fallbacks, preValidationHooks, 
+                RegistryConfig({
+                    registry: REGISTRY,
+                    attesters: ATTESTERS,
+                    threshold: THRESHOLD
+                }))
+            )
+        );
     }
 
     function _getSignature(uint256 eoaKey, PackedUserOperation memory userOp) internal view returns (bytes memory) {
@@ -55,11 +72,10 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
-        userOp.callData = userOpCalldata;
         userOp.callData = userOpCalldata;
 
         userOp.signature = _getSignature(eoaKey, userOp);
@@ -75,6 +91,20 @@ contract TestEIP7702 is NexusTest_Base {
         // Assert that the value was set ie that execution was successful
         assertTrue(target.value() == 1337);
         return account;
+    }
+
+    function test_transfer_to_eip7702_account() public {
+        MockTransferer transferer = new MockTransferer();
+        vm.deal(address(transferer), 10 ether);
+
+        // Get the account, initcode and nonce
+        uint256 eoaKey = uint256(8);
+        address account = vm.addr(eoaKey);
+        _doEIP7702(account);
+
+        transferer.transfer(account, 1 ether);
+        assertEq(address(transferer).balance, 9 ether);
+        assertEq(account.balance, 1 ether);
     }
 
     function test_initializeAndExecSingle() public returns (address) {
@@ -95,7 +125,7 @@ contract TestEIP7702 is NexusTest_Base {
         // Encode the call into the calldata for the userOp
         bytes memory userOpCalldata = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(executions)));
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -135,7 +165,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -200,7 +230,7 @@ contract TestEIP7702 is NexusTest_Base {
         address account = vm.addr(eoaKey);
         vm.deal(account, 100 ether);
 
-        uint256 nonce = getNonce(account, MODE_VALIDATION, address(mockValidator), 0);
+        uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
@@ -234,5 +264,12 @@ contract TestEIP7702 is NexusTest_Base {
 
         // Assert that the value was set ie that execution was successful
         assertTrue(valueTarget.balance == value);
+    }
+
+    function test_amIERC7702_success()public {
+        ExposedNexus exposedNexus = new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
+        address eip7702account = address(0x7702acc7702acc7702acc7702acc);
+        vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
+        assertTrue(IExposedNexus(eip7702account).amIERC7702());
     }
 }

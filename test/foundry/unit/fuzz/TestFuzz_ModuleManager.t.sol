@@ -73,7 +73,14 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(funcSig != bytes4(0)); // Ensure the function signature is not empty for fallback modules
 
         // Setup module-specific initialization data
-        bytes memory initData = (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encode("");
+        bytes memory initData; 
+        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+            initData = abi.encode(bytes4(funcSig));
+        } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            initData = abi.encodePacked(BOB.addr);
+        } else {
+            initData = abi.encode("");
+        }
 
         // Prepare the installation calldata
         bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, moduleTypeId, moduleAddress, initData);
@@ -84,7 +91,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Perform the installation and handle possible mismatches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
             // Expect failure if the module type does not match the expected type ID
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
@@ -115,7 +122,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         // First installation should succeed if the module type matches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
-            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", moduleTypeId);
+            bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
             vm.expectEmit(true, true, true, true);
             emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);

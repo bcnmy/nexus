@@ -57,40 +57,12 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         }
     }
 
-    /// @notice Fuzz testing for validating user operations with random nonces and signatures.
-    /// @param randomNonce A random nonce value.
-    /// @param randomSignature A random signature.
-    function testFuzz_ValidateUserOp(uint256 randomNonce, bytes memory randomSignature) public {
-        vm.deal(address(ENTRYPOINT), 10 ether); // Ensure the ENTRYPOINT has enough ether to cover transaction fees
-        vm.assume(randomNonce < type(uint192).max); // Assuming practical nonce range
-
-        // Create a user operation with random data
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, randomNonce);
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = randomSignature; // Using fuzzed signature
-
-        address validator;
-
-        assembly {
-            validator := shr(96, shl(32, randomNonce))
-        }
-
-        // Expect revert with ValidatorNotInstalled selector
-        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
-
-        // Attempt to validate the user operation
-        startPrank(address(ENTRYPOINT));
-        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        stopPrank();
-    }
-
     /// @notice Fuzz testing for withdrawing deposits to a specific address.
     /// @param to The address to withdraw to.
     /// @param amount The amount to withdraw.
     function testFuzz_WithdrawDepositTo(address to, uint256 amount) public {
         vm.assume(!isContract(to)); // Valid 'to' address and skip precompiles
-        vm.assume(uint160(address(to)) > 10);
+        vm.assume(uint160(address(to)) > 0xff); // no precompiles
         vm.assume(amount > 0.01 ether && amount <= 50 ether); // Restricting the amount to a reasonable upper limit and ensuring it's greater than 0
         vm.assume(to.balance == 0);
         // Fund the BOB_ACCOUNT with more than just the deposit amount to cover potential transaction fees
@@ -110,29 +82,6 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
         executeBatch(BOB, BOB_ACCOUNT, withdrawExecutions, EXECTYPE_DEFAULT);
 
         assertEq(to.balance, amount, "Withdrawal amount should reflect in the 'to' address balance");
-    }
-
-    /// @notice Fuzz testing for validating user operations with invalid signatures.
-    /// @param randomNonce A random nonce value.
-    /// @param invalidSignature An invalid signature.
-    function testFuzz_InvalidSignature(uint256 randomNonce, bytes memory invalidSignature) public {
-        vm.assume(randomNonce < type(uint192).max); // Assuming practical nonce range
-
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(userAddress, randomNonce);
-        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        userOps[0].signature = invalidSignature; // Using invalid signature
-        address validator;
-
-        assembly {
-            validator := shr(96, shl(32, randomNonce))
-        }
-        // Expect revert with ValidatorNotInstalled selector
-        vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
-
-        startPrank(address(ENTRYPOINT));
-        BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 10);
-        stopPrank();
     }
 
     /// @notice Fuzz testing for withdrawing deposits with insufficient funds.

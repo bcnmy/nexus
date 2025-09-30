@@ -160,33 +160,6 @@ describe("Nexus Module Management Tests", () => {
       ).to.be.revertedWithCustomError(deployedNexus, "MismatchModuleTypeId");
     });
 
-    it("Should not be able to uninstall last validator   module", async () => {
-      let prevAddress = "0x0000000000000000000000000000000000000001";
-      const functionCalldata = deployedNexus.interface.encodeFunctionData(
-        "uninstallModule",
-        [
-          ModuleType.Validation,
-          await mockValidator.getAddress(),
-          encodeData(
-            ["address", "bytes"],
-            [prevAddress, ethers.hexlify(ethers.toUtf8Bytes(""))],
-          ),
-        ],
-      );
-
-      await expect(
-        mockExecutor.executeViaAccount(
-          await deployedNexus.getAddress(),
-          await deployedNexus.getAddress(),
-          0n,
-          functionCalldata,
-        ),
-      ).to.be.revertedWithCustomError(
-        deployedNexus,
-        "CanNotRemoveLastValidator()",
-      );
-    });
-
     it("Should revert with AccountAccessUnauthorized", async () => {
       const installModuleData = deployedNexus.interface.encodeFunctionData(
         "installModule",

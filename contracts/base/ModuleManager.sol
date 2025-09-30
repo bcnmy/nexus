@@ -23,7 +23,7 @@ import { IValidator } from "../interfaces/modules/IValidator.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
-import { IModuleManagerEventsAndErrors } from "../interfaces/base/IModuleManagerEventsAndErrors.sol";
+import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -51,12 +51,25 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndErrors, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
     using ECDSA for bytes32;
+
+    /// @dev The default validator address.
+    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be called.
+    address internal immutable _DEFAULT_VALIDATOR;
+
+    /// @dev initData should block the implementation from being used as a Smart Account
+    constructor(address _defaultValidator, bytes memory _initData) {
+        if (!IValidator(_defaultValidator).isModuleType(MODULE_TYPE_VALIDATOR)) 
+            revert MismatchModuleTypeId(); 
+        IValidator(_defaultValidator).onInstall(_initData);
+        _DEFAULT_VALIDATOR = _defaultValidator;
+    }
+
     /// @notice Ensures the message sender is a registered executor module.
     modifier onlyExecutorModule() virtual {
         require(_getAccountStorage().executors.contains(msg.sender), InvalidModule(msg.sender));
@@ -76,11 +89,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         }
     }
 
+    // receive function
     receive() external payable { }
 
     /// @dev Fallback function to manage incoming calls using designated handlers based on the call type.
-    fallback(bytes calldata callData) external payable withHook returns (bytes memory) {
-        return _fallback(callData);
+    /// Hooked manually in the _fallback function
+    fallback() external payable {
+        _fallback(msg.data);
     }
 
     /// @dev Retrieves a paginated list of validator addresses from the linked list.
@@ -121,7 +136,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     }
 
     /// @dev Initializes the module manager by setting up default states for validators and executors.
-    function _initModuleManager() internal virtual {
+    function _initSentinelLists() internal virtual {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         ams.executors.init();
@@ -139,13 +154,18 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
 
         (module, moduleType, moduleInitData, enableModeSignature, userOpSignature) = packedData.parseEnableModeData();
 
-        if (!_checkEnableModeSignature(_getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), enableModeSignature)) {
+        address enableModeSigValidator = _handleValidator(address(bytes20(enableModeSignature[0:20])));
+        
+        enableModeSignature = enableModeSignature[20:];
+        
+        if (!_checkEnableModeSignature({
+            structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData), 
+            sig: enableModeSignature,
+            validator: enableModeSigValidator
+        })) {
             revert EnableModeSigError();
         }
-        if (!_isAlreadyInitialized()) {
-            _initModuleManager();
-        }
-        _installModule(moduleType, module, moduleInitData);
+        this.installModule(moduleType, module, moduleInitData);
     }
 
     /// @notice Installs a new module to the smart account.
@@ -155,12 +175,17 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// - 2 for Executor
     /// - 3 for Fallback
     /// - 4 for Hook
+    /// - 8 for PreValidationHookERC1271
+    /// - 9 for PreValidationHookERC4337
     /// @param module The address of the module to install.
     /// @param initData Initialization data for the module.
     /// @dev This function goes through hook checks via withHook modifier.
     /// @dev No need to check that the module is already installed, as this check is done
     /// when trying to sstore the module in an appropriate SentinelList
-    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal withHook {
+    function _installModule(uint256 moduleTypeId, address module, bytes calldata initData) internal {
+        if (!_areSentinelListsInitialized()) {
+            _initSentinelLists();
+        }
         if (module == address(0)) revert ModuleAddressCanNotBeZero();
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             _installValidator(module, initData);
@@ -182,13 +207,24 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withRegistry(validator, MODULE_TYPE_VALIDATOR) {
-        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId(MODULE_TYPE_VALIDATOR);
-         _getAccountStorage().validators.push(validator);
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withHook
+        withRegistry(validator, MODULE_TYPE_VALIDATOR) 
+    {
+        if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
+        if (validator == _DEFAULT_VALIDATOR) {
+            revert DefaultValidatorAlreadyInstalled();
+        }
+        _getAccountStorage().validators.push(validator);
         IValidator(validator).onInstall(data);
     }
 
-    /// @dev Uninstalls a validator module /!\ ensuring the account retains at least one validator.
+    /// @dev Uninstalls a validator module.
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
@@ -199,17 +235,22 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         // Perform the removal first
         validators.pop(prev, validator);
 
-        // Sentinel pointing to itself / zero means the list is empty / uninitialized, so check this after removal
-        // Below error is very specific to uninstalling validators.
-        require(_hasValidators(), CanNotRemoveLastValidator());
         validator.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, disableModuleData));
     }
 
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withRegistry(executor, MODULE_TYPE_EXECUTOR) {
-        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId(MODULE_TYPE_EXECUTOR);
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(executor, MODULE_TYPE_EXECUTOR) 
+    {
+        if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
     }
@@ -226,8 +267,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withRegistry(hook, MODULE_TYPE_HOOK) {
-        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+    function _installHook(
+        address hook,
+        bytes calldata data
+    ) 
+        internal
+        virtual
+        withHook
+        withRegistry(hook, MODULE_TYPE_HOOK) 
+    {
+        if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
         _setHook(hook);
@@ -256,8 +305,16 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withRegistry(handler, MODULE_TYPE_FALLBACK) {
-        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId(MODULE_TYPE_FALLBACK);
+    function _installFallbackHandler(
+        address handler, 
+        bytes calldata params
+    )
+        internal 
+        virtual
+        withHook
+        withRegistry(handler, MODULE_TYPE_FALLBACK) 
+    {
+        if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
 
@@ -309,9 +366,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     )
         internal
         virtual
+        withHook
         withRegistry(preValidationHook, preValidationHookType)
     {
-        if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId(MODULE_TYPE_HOOK);
+        if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
         address currentPreValidationHook = _getPreValidationHook(preValidationHookType);
         require(currentPreValidationHook == address(0), PrevalidationHookAlreadyInstalled(currentPreValidationHook));
         _setPreValidationHook(preValidationHookType, preValidationHook);
@@ -324,7 +382,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data De-initialization data to configure the hook upon uninstallation.
     function _uninstallPreValidationHook(address preValidationHook, uint256 hookType, bytes calldata data) internal virtual {
         _setPreValidationHook(hookType, address(0));
-        preValidationHook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
     }
 
     /// @dev Sets the current pre-validation hook in the storage to the specified address, based on the hook type.
@@ -390,8 +447,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @param data The emergency uninstall data.
     /// @param signature The signature to validate.
     function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
-        address validator = address(bytes20(signature[0:20]));
-        require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+        address validator = _handleValidator(address(bytes20(signature[0:20])));
         // Hash the data
         bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
         // Check if nonce is valid
@@ -451,31 +507,22 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @notice Checks if an enable mode signature is valid.
     /// @param structHash data hash.
     /// @param sig Signature.
-    function _checkEnableModeSignature(bytes32 structHash, bytes calldata sig) internal view returns (bool) {
-        address enableModeSigValidator = address(bytes20(sig[0:20]));
+    /// @param validator Validator address.
+    function _checkEnableModeSignature(
+        bytes32 structHash,
+        bytes calldata sig,
+        address validator
+    ) internal view returns (bool) {
         bytes32 eip712Digest = _hashTypedData(structHash);
-
-        if (_isValidatorInstalled(enableModeSigValidator)) {
-            // Use standard IERC-1271/ERC-7739 interface.
-            // Even if the validator doesn't support 7739 under the hood, it is still secure,
-            // as eip712digest is already built based on 712Domain of this Smart Account
-            // This interface should always be exposed by validators as per ERC-7579
-            try IValidator(enableModeSigValidator).isValidSignatureWithSender(address(this), eip712Digest, sig[20:]) returns (bytes4 res) {
+        // Use standard IERC-1271/ERC-7739 interface.
+        // Even if the validator doesn't support 7739 under the hood, it is still secure,
+        // as eip712digest is already built based on 712Domain of this Smart Account
+        // This interface should always be exposed by validators as per ERC-7579
+        try IValidator(validator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
                 return res == ERC1271_MAGICVALUE;
-            } catch {
-                return false;
-            }
-        } else {
-            // If the account is not initialized, check the signature against the account
-            if (!_hasValidators() && !_hasExecutors()) {
-                // ERC-7739 is not required here as the userOpHash is hashed into the structHash => safe
-                return _checkSelfSignature(sig, eip712Digest);
-            } else {
-                // If the account is initialized, revert as the validator is not installed
-                revert ValidatorNotInstalled(enableModeSigValidator);
-            }
+        } catch {
+            return false;
         }
-
     }
 
     /// @notice Builds the enable mode data hash as per eip712
@@ -529,7 +576,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
     /// @dev Checks if the validator list is already initialized.
     ///      In theory it doesn't 100% mean there is a validator or executor installed.
     ///      Use below functions to check for validators and executors.
-    function _isAlreadyInitialized() internal view virtual returns (bool) {
+    function _areSentinelListsInitialized() internal view virtual returns (bool) {
         // account module storage
         AccountStorage storage ams = _getAccountStorage();
         return ams.validators.alreadyInitialized() && ams.executors.alreadyInitialized();
@@ -559,20 +606,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         return _getAccountStorage().validators.contains(validator);
     }
 
-    /// @dev Checks if there is at least one validator installed.
-    /// @return True if there is at least one validator, otherwise false.
-    function _hasValidators() internal view returns (bool) {
-        return
-            _getAccountStorage().validators.getNext(address(0x01)) != address(0x01) && _getAccountStorage().validators.getNext(address(0x01)) != address(0x00);
-    }
-
-    /// @dev Checks if there is at least one executor installed.
-    /// @return True if there is at least one executor, otherwise false.
-    function _hasExecutors() internal view returns (bool) {
-        return
-            _getAccountStorage().executors.getNext(address(0x01)) != address(0x01) && _getAccountStorage().executors.getNext(address(0x01)) != address(0x00);
-    }
-
     /// @dev Checks if an executor is currently installed.
     /// @param executor The address of the executor to check.
     /// @return True if the executor is installed, otherwise false.
@@ -593,26 +626,43 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
         hook = address(_getAccountStorage().hook);
     }
 
-    /// @dev Checks if the userOp signer matches address(this), returns VALIDATION_SUCCESS if it does, otherwise VALIDATION_FAILED
-    /// @param signature The signature to check.
-    /// @param dataHash The hash of the data.
-    /// @return The validation result.
-    function _checkSelfSignature(bytes calldata signature, bytes32 dataHash) internal view returns (bool) {
-        // Recover the signer from the signature, if it is the account, return success, otherwise revert
-        address signer = ECDSA.recover(dataHash.toEthSignedMessageHash(), signature);
-        if (signer == address(this)) return true;
-        signer = ECDSA.recover(dataHash, signature);
-        if (signer == address(this)) return true;
-        return false;
+    /// @dev Checks if the account is an ERC7702 account
+    function _amIERC7702() internal view returns (bool res) {
+        assembly {
+            // use extcodesize as the first cheapest check
+            if eq(extcodesize(address()), 23) {
+                // use extcodecopy to copy first 3 bytes of this contract and compare with 0xef0100
+                extcodecopy(address(), 0, 0, 3)
+                res := eq(0xef0100, shr(232, mload(0x00)))
+            }
+            // if it is not 23, we do not even check the first 3 bytes
+        }
     }
 
-    function _fallback(bytes calldata callData) private returns (bytes memory result) {
+    /// @dev Returns the validator address to use
+    function _handleValidator(address validator) internal view returns (address) {
+        if (validator == address(0)) {
+            return _DEFAULT_VALIDATOR;
+        } else {
+            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
+            return validator;
+        }
+    }
+
+    function _fallback(bytes calldata callData) private {
         bool success;
+        bytes memory result;
         FallbackHandler storage $fallbackHandler = _getAccountStorage().fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
 
         if (handler != address(0)) {
+            // hook manually
+            address hook = _getHook();
+            bytes memory hookData;
+            if (hook != address(0)) {
+                hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            }
             //if there's a fallback handler, call it
             if (calltype == CALLTYPE_STATIC) {
                 (success, result) = handler.staticcall(ExecLib.get2771CallData(callData));
@@ -623,31 +673,39 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManagerEventsAndError
             }
 
             // Use revert message from fallback handler if the call was not successful
-            if (!success) {
-                assembly {
+            assembly {
+                if iszero(success) {
                     revert(add(result, 0x20), mload(result))
                 }
             }
-        } else {
-            // If there's no handler, the call can be one of onERCXXXReceived()
-            bytes32 s;
-            /// @solidity memory-safe-assembly
-            assembly {
-                s := shr(224, calldataload(0))
-                // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
-                // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
-                // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
-                if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
-                    success := true // it is one of onERCXXXReceived
-                    result := mload(0x40) //result was set to 0x60 as it was empty, so we need to find a new space for it
-                    mstore(result, 0x04) //store length
-                    mstore(add(result, 0x20), shl(224, s)) //store calldata
-                    mstore(0x40, add(result, 0x24)) //allocate memory
-                }
+
+            // hook post check
+            if (hook != address(0)) {
+                IHook(hook).postCheck(hookData);
             }
-            // if there was no handler and it is not the onERCXXXReceived call, revert
-            require(success, MissingFallbackHandler(msg.sig));
+
+            // return the result
+            assembly {
+                return(add(result, 0x20), mload(result))
+            }
         }
+        
+        // If there's no handler, the call can be one of onERCXXXReceived()
+        // No need to hook this as no execution is done here
+        bytes32 s;
+        /// @solidity memory-safe-assembly
+        assembly {
+            s := shr(224, calldataload(0))
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
+                mstore(0x20, s) // Store `msg.sig`.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+        }
+        // if there was no handler and it is not the onERCXXXReceived call, revert
+        revert MissingFallbackHandler(msg.sig);
     }
 
     /// @dev Helper function to paginate entries in a SentinelList.

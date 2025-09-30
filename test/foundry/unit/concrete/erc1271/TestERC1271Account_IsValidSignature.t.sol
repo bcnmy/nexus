@@ -163,7 +163,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
                 keccak256(bytes(t.name)),
                 keccak256(bytes(t.version)),
                 t.chainId,
-                t.verifyingContract // veryfingContract should be the account address.
+                t.verifyingContract // verifyingContract should be the account address.
             )
         );
         bytes32 parentStructHash = keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));

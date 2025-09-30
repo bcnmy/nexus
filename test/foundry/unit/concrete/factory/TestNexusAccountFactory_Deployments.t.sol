@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "../../../utils/NexusTest_Base.t.sol";
+import { NexusProxy } from "../../../../../contracts/utils/NexusProxy.sol";
 
 /// @title TestNexusAccountFactory_Deployments
 /// @notice Tests for deploying accounts using the NexusAccountFactory.
@@ -26,7 +27,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -60,7 +61,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -83,7 +84,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         userOps[0] = buildUserOpWithInitAndCalldata(user, initCode, "", address(VALIDATOR_MODULE));
         ENTRYPOINT.depositTo{ value: 1 ether }(address(accountAddress));
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
-        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.1.0.0", "Not deployed properly");
+        assertEq(IAccountConfig(accountAddress).accountId(), "biconomy.nexus.1.2.0", "Not deployed properly");
     }
 
     /// @notice Tests that deploying an account fails if it already exists.
@@ -106,29 +107,13 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes32 salt = keccak256(saDeploymentIndex);
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
-
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(LinkedList_AlreadyInitialized.selector);
-        INexus(firstAccountAddress).initializeAccount(factoryData);
-    }
-
-    /// @notice Tests that account initialization reverts if no validator is installed.
-    function test_RevertIf_NoValidatorDuringInitialization() public {
-        BootstrapConfig[] memory emptyValidators; // Empty validators array
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-        bytes memory saDeploymentIndex = "0";
-        bytes32 salt = keccak256(saDeploymentIndex);
-
-        // Create initcode with no validator configuration
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(emptyValidators, hook, REGISTRY, ATTESTERS, THRESHOLD);
-
-        vm.expectRevert(NoValidatorInstalled.selector);
-        FACTORY.createAccount(_initData, salt);
+        vm.expectRevert(NexusInitializationFailed.selector);
+        INexus(firstAccountAddress).initializeAccount(_initData);
     }
 
     /// @notice Tests creating accounts with different indexes.
@@ -138,7 +123,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         bytes memory factoryData1 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
         bytes memory factoryData2 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, keccak256("1"));
@@ -157,13 +142,27 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Should revert if the validator module is invalid
         BootstrapConfig[] memory validatorsInvalid = BootstrapLib.createArrayConfig(address(0), initData);
-        bytes memory _initDataInvalidModule = BOOTSTRAPPER.getInitNexusScopedCalldata(validatorsInvalid, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initDataInvalidModule = abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (
+                    validatorsInvalid,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
+        );
 
         vm.expectRevert();
         address payable accountAddress = FACTORY.createAccount(_initDataInvalidModule, salt);
@@ -177,7 +176,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         vm.expectRevert();
         // Should revert if there is not enough gas
@@ -192,7 +191,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         vm.expectRevert(EntryPointCanNotBeZero.selector);
 
         // Try deploying the Nexus contract with an entry point address of zero
-        new Nexus(zeroAddress);
+        new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
     }
 
     /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it to deploy an account.
@@ -210,7 +209,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(configArray, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(configArray, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -228,7 +227,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
-        bytes memory _initData = BOOTSTRAPPER.getInitNexusScopedCalldata(validators, hook, REGISTRY, ATTESTERS, THRESHOLD);
+        bytes memory _initData = _getInitData(validators, hook);
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
@@ -241,12 +240,71 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         // Verify that the validators and hook were installed
         assertTrue(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Validator should be installed"
         );
         assertTrue(
-            INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
+            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
             "Hook should be installed"
+        );
+    }
+
+    /// @notice Tests that the manually computed address matches the one from computeAccountAddress.
+    function test_ComputeAccountAddress_ManualComparison() public view {
+        // Prepare the initial data and salt
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        bytes memory saDeploymentIndex = "0";
+        bytes32 salt = keccak256(saDeploymentIndex);
+
+        // Create initcode and salt to be sent to Factory
+        bytes memory _initData = _getInitData(validators, hook);
+
+        // Compute the expected address using the factory's function
+        address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
+
+        // Manually compute the expected address
+        address payable manualExpectedAddress = payable(
+            address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                bytes1(0xff),
+                                address(FACTORY),
+                                salt,
+                                keccak256(
+                                    abi.encodePacked(
+                                        type(NexusProxy).creationCode,
+                                        abi.encode(FACTORY.ACCOUNT_IMPLEMENTATION(), abi.encodeCall(INexus.initializeAccount, _initData))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
+
+        // Validate that both addresses match
+        assertEq(expectedAddress, manualExpectedAddress, "Manually computed address mismatch");
+    }
+
+    function _getInitData(BootstrapConfig[] memory validators, BootstrapConfig memory hook) internal view returns (bytes memory) {
+        return abi.encode(
+            address(BOOTSTRAPPER),
+            abi.encodeCall(
+                BOOTSTRAPPER.initNexusScoped,
+                (
+                    validators,
+                    hook,
+                    RegistryConfig({
+                        registry: REGISTRY,
+                        attesters: ATTESTERS,
+                        threshold: THRESHOLD
+                    })
+                )
+            )
         );
     }
 }

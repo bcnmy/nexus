@@ -4,12 +4,12 @@
   auto_detect_solc = false
   block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
   bytecode_hash = "none"
-  evm_version = "cancun"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
+  evm_version = "prague"           # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
   fuzz = { runs = 1_000 }
   via-ir = false
   gas_reports = ["*"]
   optimizer = true
-  optimizer_runs = 999
+  optimizer_runs = 777
   out = "out"
   script = "scripts"
   solc = "0.8.27"
@@ -19,12 +19,12 @@
   libs = ["node_modules", "lib"]
   gas_reports_ignore = ["MockToken"]
 
+[profile.via-ir]
+  via-ir = true
+
 [profile.ci]
   fuzz = { runs = 10_000 }
   verbosity = 4
-
-[profile.coverage]
-  via-ir = false
 
 [etherscan]
   arbitrum = { key = "${API_KEY_ARBISCAN}" }

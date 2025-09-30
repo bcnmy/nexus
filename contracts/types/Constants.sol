@@ -43,15 +43,17 @@ uint256 constant MODULE_TYPE_HOOK = 4;
 uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 = 8;
 uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 = 9;
 
-string constant MODULE_ENABLE_MODE_NOTATION = "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes32 initDataHash)";
-bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = keccak256(bytes(MODULE_ENABLE_MODE_NOTATION));
 
-string constant EMERGENCY_UNINSTALL_NOTATION = "EmergencyUninstall(address hook,uint256 hookType,bytes deInitData,uint256 nonce)";
-bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = keccak256(bytes(EMERGENCY_UNINSTALL_NOTATION));
+// keccak256("ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes initData)")
+bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = 0xf6c866c1cd985ce61f030431e576c0e82887de0643dfa8a2e6efc3463e638ed0;
+
+// keccak256("EmergencyUninstall(address hook,uint256 hookType,bytes deInitData,uint256 nonce)")
+bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = 0xd3ddfc12654178cc44d4a7b6b969cfdce7ffe6342326ba37825314cffa0fba9c;
 
 // Validation modes
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
+bytes1 constant MODE_PREP = 0x02;
 
 bytes4 constant SUPPORTS_ERC7739 = 0x77390000;
 bytes4 constant SUPPORTS_ERC7739_V1 = 0x77390001;

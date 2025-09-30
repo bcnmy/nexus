@@ -234,7 +234,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expected revert reason encoded
-        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -258,7 +258,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_EXECUTOR);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -288,7 +288,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId(uint256)", MODULE_TYPE_VALIDATOR);
+        bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event

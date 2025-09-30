@@ -21,7 +21,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
-        bootstrapper = new NexusBootstrap();
+        bootstrapper = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         validatorFactory =
             new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr), address(VALIDATOR_MODULE), bootstrapper, REGISTRY);
     }
@@ -30,7 +30,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesFactory() public {
         address implementation = address(0x123);
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(implementation, FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, REGISTRY);
 
         // Verify the implementation address is set correctly
@@ -50,7 +50,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
     function test_ConstructorInitializesWithRegistryAddressZero() public {
         IERC7484 registry = IERC7484(address(0));
         address k1Validator = address(0x456);
-        NexusBootstrap bootstrapperInstance = new NexusBootstrap();
+        NexusBootstrap bootstrapperInstance = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         K1ValidatorFactory factory = new K1ValidatorFactory(address(ACCOUNT_IMPLEMENTATION), FACTORY_OWNER.addr, k1Validator, bootstrapperInstance, registry);
 
         // Verify the registry address 0
@@ -125,7 +125,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
 
-        assertEq(INexus(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), true, "Validator should be installed");
+        assertEq(IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), true, "Validator should be installed");
     }
 
     /// @notice Tests that computing the account address returns the expected address.
@@ -179,12 +179,22 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Compute the actual salt manually using keccak256
         bytes32 manualSalt = keccak256(abi.encodePacked(eoaOwner, index, attesters, threshold));
 
-        // Create the validator configuration using the NexusBootstrap library
-        BootstrapConfig memory validator = BootstrapLib.createSingleConfig(validatorFactory.K1_VALIDATOR(), abi.encodePacked(eoaOwner));
-
         // Get the initialization data for the Nexus account
-        bytes memory _initData =
-            validatorFactory.BOOTSTRAPPER().getInitNexusWithSingleValidatorCalldata(validator, validatorFactory.REGISTRY(), attesters, threshold);
+        bytes memory _initData = abi.encode(
+            address(validatorFactory.BOOTSTRAPPER()),
+            abi.encodeCall(
+                validatorFactory.BOOTSTRAPPER().initNexusWithSingleValidator,
+                (
+                    validatorFactory.K1_VALIDATOR(),
+                    abi.encodePacked(eoaOwner),
+                    RegistryConfig({
+                        registry: validatorFactory.REGISTRY(),
+                        attesters: attesters,
+                        threshold: threshold
+                    })
+                )
+            )
+        );
 
         address expectedAddress = payable(
             address(
