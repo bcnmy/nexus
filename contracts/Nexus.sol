@@ -317,6 +317,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 initData = initData[65:];
                 // Calculate the hash of the initData
                 bytes32 initDataHash = keccak256(initData);
+                // Make sure the account has not been already initialized
+                // Means relay can not re-initialize the account
+                require(!isInitialized(), AccountAlreadyInitialized());
                 // Make sure the initHash is not already used
                 require(!$accountStorage.erc7702InitHashes[initDataHash], AccountAlreadyInitialized());
                 // Check if the signature is valid
