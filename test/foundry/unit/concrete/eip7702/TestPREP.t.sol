@@ -6,7 +6,7 @@ import "../../../utils/Imports.sol";
 import { MockTarget } from "contracts/mocks/MockTarget.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { LibPREP } from "lib-prep/LibPREP.sol";
+import { LibPREP } from "contracts/lib/local/LibPREP.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
 
 contract TestPREP is NexusTest_Base {
