@@ -373,7 +373,7 @@ contract TestK1Validator is NexusTest_Base {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("Nexus"),
-                keccak256("1.2.0"),
+                keccak256("1.2.1"),
                 block.chainid,
                 address(BOB_ACCOUNT)
             )
