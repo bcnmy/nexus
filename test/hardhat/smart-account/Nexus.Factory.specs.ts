@@ -12,19 +12,16 @@ import {
   EntryPoint,
   MockValidator,
   Nexus,
-  BiconomyMetaFactory,
   NexusAccountFactory,
   NexusBootstrap,
-  BootstrapLib,
   MockHook,
-  MockRegistry,
   MockExecutor,
 } from "../../../typechain-types";
 import {
   deployContractsAndSAFixture,
   deployContractsFixture,
 } from "../utils/deployment";
-import { BootstrapConfigStruct } from "../../../typechain-types/contracts/lib/BootstrapLib";
+import { BootstrapConfigStruct } from "../../../typechain-types/contracts/utils/NexusBootstrap";
 
 describe("Nexus Factory Tests", function () {
   let factory: NexusAccountFactory;
@@ -51,24 +48,18 @@ describe("Nexus Factory Tests", function () {
     bundler = ethers.Wallet.createRandom();
     bundlerAddress = await bundler.getAddress();
 
-    const accountOwnerAddress = ownerAddress;
-
-    const saDeploymentIndex = 0;
-
-    await factory.createAccount(accountOwnerAddress, saDeploymentIndex, [], 0);
+    // Note: This beforeEach doesn't deploy any accounts - the tests in the nested describe block
+    // handle their own account deployments with proper initData
   });
 
   describe("Nexus Account Factory tests", function () {
     let smartAccount: Nexus;
     let entryPoint: EntryPoint;
-    let metaFactory: BiconomyMetaFactory;
     let factory: NexusAccountFactory;
     let bootstrap: NexusBootstrap;
     let validatorModule: MockValidator;
     let executorModule: MockExecutor;
-    let BootstrapLib: BootstrapLib;
     let hookModule: MockHook;
-    let registry: MockRegistry;
     let owner: Signer;
     let smartAccountImplementation: Nexus;
 
@@ -84,14 +75,11 @@ describe("Nexus Factory Tests", function () {
       smartAccount = setup.deployedNexus;
       owner = setup.accountOwner;
       entryPointAddress = await setup.entryPoint.getAddress();
-      metaFactory = setup.metaFactory;
       factory = setup.nexusFactory;
       bootstrap = setup.bootstrap;
       validatorModule = setup.mockValidator;
-      BootstrapLib = setup.BootstrapLib;
       hookModule = setup.mockHook;
       executorModule = setup.mockExecutor;
-      registry = setup.registry;
       smartAccountImplementation = setup.smartAccountImplementation;
 
       ownerAddress = await owner.getAddress();
@@ -123,6 +111,18 @@ describe("Nexus Factory Tests", function () {
         module: hook.module,
         data: hook.data,
       };
+
+      // Construct initData for account deployment
+      initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "bytes"],
+        [
+          await bootstrap.getAddress(),
+          bootstrap.interface.encodeFunctionData("initNexusScoped", [
+            [parsedValidator],
+            parsedHook,
+          ]),
+        ],
+      );
     });
 
     it("Should check implementation address", async function () {

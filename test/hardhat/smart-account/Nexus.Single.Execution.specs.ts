@@ -3,7 +3,7 @@ import { expect } from "chai";
 
 import { Signer, parseEther } from "ethers";
 import {
-  K1ValidatorFactory,
+  NexusAccountFactory,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -34,7 +34,7 @@ import {
 import { encodeData } from "../utils/encoding";
 
 describe("Nexus Single Execution", () => {
-  let factory: K1ValidatorFactory;
+  let factory: NexusAccountFactory;
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let validatorModule: MockValidator;
@@ -59,7 +59,7 @@ describe("Nexus Single Execution", () => {
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    factory = setup.nexusK1Factory;
+    factory = setup.nexusFactory;
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;

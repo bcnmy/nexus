@@ -78,7 +78,6 @@
     "coverage:hardhat": "SHOULD_ENABLE_VIA_IR=false yarn hardhat coverage",
     "coverage": "yarn run coverage:forge && yarn run coverage:hardhat",
     "coverage:report": "scripts/foundry/generate_coverage_report.sh && yarn run coverage:hardhat",
-    "docs": "yarn hardhat docgen",
     "check-storage": "yarn hardhat check",
     "deploy:hardhat": "yarn hardhat run scripts/hardhat/deploy.ts",
     "deploy:hardhat:mainnet": "yarn hardhat run scripts/hardhat/deploy:mainnet.ts",
