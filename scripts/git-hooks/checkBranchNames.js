@@ -2,7 +2,7 @@
 const execSync = require("child_process").execSync;
 const branchName = execSync("git branch --show-current").toString().trim();
 const pattern = /^(feat\/|fix\/|release\/|chore\/)/;
-const ignoreBranches = /^(main|dev)$/;
+const ignoreBranches = /^(main|dev)(\/|$)/;
 
 if (!ignoreBranches.test(branchName) && !pattern.test(branchName)) {
   console.error(

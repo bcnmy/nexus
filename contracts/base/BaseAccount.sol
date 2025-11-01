@@ -25,7 +25,7 @@ import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
     /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.2.0";
+    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.2.1";
 
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.

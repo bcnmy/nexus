@@ -47,6 +47,7 @@ contract EventsAndErrors {
     error CallToDeployWithFactoryFailed();
     error NexusInitializationFailed();
     error InvalidThreshold(uint8 providedThreshold, uint256 attestersCount);
+    error AccountAlreadyInitialized();
 
     // ==========================
     // Operation Errors

@@ -40,6 +40,9 @@
   tab_width = 4
   wrap_comments = true
 
+[lint]
+  lint_on_build = false
+
 [rpc_endpoints]
   localhost = "http://localhost:8545"
   mainnet = "${MAINNET_RPC_URL}"
