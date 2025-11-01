@@ -39,7 +39,6 @@ import {
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { EmergencyUninstall } from "../types/DataTypes.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
@@ -51,7 +50,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdapter {
+abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
@@ -220,7 +219,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         internal
         virtual
         withHook
-        withRegistry(validator, MODULE_TYPE_VALIDATOR) 
     {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
@@ -254,7 +252,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         internal
         virtual
         withHook
-        withRegistry(executor, MODULE_TYPE_EXECUTOR) 
     {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
@@ -280,7 +277,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         internal
         virtual
         withHook
-        withRegistry(hook, MODULE_TYPE_HOOK) 
     {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
@@ -318,7 +314,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         internal 
         virtual
         withHook
-        withRegistry(handler, MODULE_TYPE_FALLBACK) 
     {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
@@ -373,7 +368,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
         internal
         virtual
         withHook
-        withRegistry(preValidationHook, preValidationHookType)
     {
         if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
         address currentPreValidationHook = _getPreValidationHook(preValidationHookType);

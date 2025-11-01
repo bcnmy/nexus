@@ -34,9 +34,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, _initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
-
-        address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
+        address payable deployedAccountAddress = FACTORY.createAccount(_initData, salt);
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
@@ -67,12 +65,10 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         vm.expectEmit(true, true, true, true);
         emit AccountCreated(expectedAddress, _initData, salt);
+        address payable deployedAccountAddress = FACTORY.createAccount(_initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
+        address payable deployedAccountAddress2 = FACTORY.createAccount(_initData, salt);
 
-        address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
-
-        address payable deployedAccountAddress2 = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
         assertEq(deployedAccountAddress, deployedAccountAddress2, "Deployed account address mismatch");
     }
 
@@ -125,11 +121,8 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         bytes memory _initData = _getInitData(validators, hook);
 
-        bytes memory factoryData1 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
-        bytes memory factoryData2 = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, keccak256("1"));
-
-        address payable accountAddress1 = META_FACTORY.deployWithFactory(address(FACTORY), factoryData1);
-        address payable accountAddress2 = META_FACTORY.deployWithFactory(address(FACTORY), factoryData2);
+        address payable accountAddress1 = FACTORY.createAccount(_initData, salt);
+        address payable accountAddress2 = FACTORY.createAccount(_initData, keccak256("1"));
 
         // Validate that the deployed addresses are different
         assertTrue(accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses");
@@ -154,12 +147,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validatorsInvalid,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );
@@ -213,9 +201,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
-
-        address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
+        address payable deployedAccountAddress = FACTORY.createAccount(_initData, salt);
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
     }
@@ -231,9 +217,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
-        bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
-
-        address payable deployedAccountAddress = META_FACTORY.deployWithFactory(address(FACTORY), factoryData);
+        address payable deployedAccountAddress = FACTORY.createAccount(_initData, salt);
 
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
@@ -297,12 +281,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );

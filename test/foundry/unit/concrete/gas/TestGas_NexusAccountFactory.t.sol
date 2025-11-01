@@ -71,12 +71,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );

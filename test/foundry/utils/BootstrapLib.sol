@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { BootstrapConfig, BootstrapPreValidationHookConfig } from "../utils/NexusBootstrap.sol";
+import { BootstrapConfig, BootstrapPreValidationHookConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 
 /// @title NexusBootstrap Configuration Library
 /// @notice Provides utility functions to create and manage BootstrapConfig structures.

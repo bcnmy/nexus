@@ -122,12 +122,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );
