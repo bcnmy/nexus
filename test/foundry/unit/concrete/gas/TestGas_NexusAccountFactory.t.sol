@@ -80,7 +80,7 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     /// @notice Validates the creation of a new account.
     /// @param _account The new account address.
     function assertValidCreation(Nexus _account) internal {
-        string memory expected = "biconomy.nexus.1.2.1";
+        string memory expected = "biconomy.nexus.1.3.0";
         assertEq(_account.accountId(), expected, "AccountConfig should return the expected account ID.");
         assertTrue(
             _account.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Account should have the validation module installed"
