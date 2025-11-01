@@ -237,50 +237,6 @@ export async function getDeployedMockHandler(): Promise<MockHandler> {
 }
 
 /**
- * Deploys the MockRegistry contract with a deterministic deployment.
- * @returns A promise that resolves to the deployed MockRegistry contract instance.
- */
-export async function getDeployedRegistry(): Promise<MockRegistry> {
-  const accounts: Signer[] = await ethers.getSigners();
-  const addresses = await Promise.all(
-    accounts.map((account) => account.getAddress()),
-  );
-
-  const MockRegistry = await ethers.getContractFactory("MockRegistry");
-  const deterministicMockRegistry = await deployments.deploy("MockRegistry", {
-    from: addresses[0],
-    deterministicDeployment: true,
-  });
-
-  return MockRegistry.attach(deterministicMockRegistry.address) as MockRegistry;
-}
-
-/**
- * Deploys the BiconomyMetaFactory contract with a deterministic deployment.
- * @returns A promise that resolves to the deployed BiconomyMetaFactory contract instance.
- */
-export async function getDeployedMetaFactory(): Promise<BiconomyMetaFactory> {
-  const accounts: Signer[] = await ethers.getSigners();
-  const addresses = await Promise.all(
-    accounts.map((account) => account.getAddress()),
-  );
-
-  const MetaFactory = await ethers.getContractFactory("BiconomyMetaFactory");
-  const deterministicMetaFactory = await deployments.deploy(
-    "BiconomyMetaFactory",
-    {
-      from: addresses[0],
-      deterministicDeployment: true,
-      args: [addresses[0]],
-    },
-  );
-
-  return MetaFactory.attach(
-    deterministicMetaFactory.address,
-  ) as BiconomyMetaFactory;
-}
-
-/**
  * Deploys the NexusAccountFactory contract with a deterministic deployment.
  * @returns A promise that resolves to the deployed NexusAccountFactory contract instance.
  */
@@ -396,16 +352,6 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
     deployer,
   );
 
-  const registry = await getDeployedRegistry();
-
-  const nexusFactory = await getDeployedAccountK1Factory(
-    await smartAccountImplementation.getAddress(),
-    factoryOwner,
-    await mockValidator.getAddress(),
-    await bootstrap.getAddress(),
-    await registry.getAddress(),
-  );
-
   const ecdsaValidator = await getDeployedK1Validator();
 
   const mockToken = await getDeployedMockToken();
@@ -420,7 +366,6 @@ export async function deployContractsFixture(): Promise<DeploymentFixture> {
     ecdsaValidator,
     counter,
     mockToken,
-    registry,
     accounts,
     addresses,
   };
@@ -446,8 +391,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
 
   const entryPoint = await getDeployedEntrypoint();
 
-  const registry = await getDeployedRegistry();
-
   const mockValidator = await deployContract<MockValidator>(
     "MockValidator",
     deployer,
@@ -467,14 +410,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     deployer,
   );
 
-  const nexusK1Factory = await getDeployedAccountK1Factory(
-    await smartAccountImplementation.getAddress(),
-    factoryOwner,
-    await mockValidator.getAddress(),
-    await bootstrap.getAddress(),
-    await registry.getAddress(),
-  );
-
   const mockHook = await getDeployedMockHook();
 
   const mockHook2 = await deployContract<MockHook>("MockHook", deployer);
@@ -490,8 +425,6 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
   const counter = await deployContract<Counter>("Counter", deployer);
 
   const stakeable = await getDeployedStakeable();
-
-  const metaFactory = await getDeployedMetaFactory();
 
   const nexusFactory = await getDeployedNexusAccountFactory(await smartAccountImplementation.getAddress());
 
@@ -552,11 +485,9 @@ export async function deployContractsAndSAFixture(): Promise<DeploymentFixtureWi
     accounts,
     addresses,
     stakeable,
-    metaFactory,
     nexusFactory,
     bootstrap,
     BootstrapLib,
-    registry,
   };
 }
 

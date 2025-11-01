@@ -46,7 +46,7 @@ export interface DeploymentFixtureWithSA {
   deployedNexusAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  nexusK1Factory: K1ValidatorFactory;
+  nexusAccountFactory: NexusAccountFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   defaultValidator: MockValidator;

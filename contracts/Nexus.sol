@@ -17,7 +17,6 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { ExecLib } from "./lib/ExecLib.sol";
 import { INexus } from "./interfaces/INexus.sol";
 import { BaseAccount } from "./base/BaseAccount.sol";
-import { IERC7484 } from "./interfaces/IERC7484.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
 import { IValidator } from "./interfaces/modules/IValidator.sol";
@@ -167,7 +166,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         payable
         onlyExecutorModule
         withHook
-        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
         returns (bytes[] memory returnData)
     {
         (CallType callType, ExecType execType) = mode.decodeBasic();
@@ -353,16 +351,6 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (!_amIERC7702()) {
             require(isInitialized(), AccountNotInitialized());
         }
-    }
-
-    /// @notice Sets the registry for the smart account.
-    /// @param newRegistry The new registry to set.
-    /// @param attesters The attesters to set.
-    /// @param threshold The threshold to set.
-    /// @dev This function can only be called by the EntryPoint or the account itself.
-    function setRegistry(IERC7484 newRegistry, address[] calldata attesters, uint8 threshold) external payable {
-        require(msg.sender == address(this), AccountAccessUnauthorized());
-        _configureRegistry(newRegistry, attesters, threshold);
     }
 
     /// @notice Validates a signature according to ERC-1271 standards.

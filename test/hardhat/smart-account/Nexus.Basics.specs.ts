@@ -5,20 +5,18 @@ import {
   Provider,
   Signer,
   ZeroAddress,
-  ZeroHash,
   keccak256,
   solidityPacked,
   toBeHex,
-  zeroPadBytes,
 } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockValidator,
   Nexus,
   MockHook,
+  NexusAccountFactory,
 } from "../../../typechain-types";
 import { ExecutionMethod, ModuleType } from "../utils/types";
 import { deployContractsAndSAFixture } from "../utils/deployment";
@@ -32,7 +30,6 @@ import {
   getAccountDomainStructFields,
   impersonateAccount,
   stopImpersonateAccount,
-  MODE_MODULE_ENABLE,
   numberTo3Bytes,
 } from "../utils/operationHelpers";
 import {
@@ -48,7 +45,7 @@ import {
 } from "../utils/erc7579Utils";
 
 describe("Nexus Basic Specs", function () {
-  let factory: K1ValidatorFactory;
+  let factory: NexusAccountFactory;
   let smartAccount: Nexus;
   let entryPoint: EntryPoint;
   let accounts: Signer[];
