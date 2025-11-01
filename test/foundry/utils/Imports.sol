@@ -59,7 +59,6 @@ import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockHook } from "../../../contracts/mocks/MockHook.sol";
 import { MockToken } from "../../../contracts/mocks/MockToken.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
-import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { MockSafe1271Caller } from "../../../contracts/mocks/MockSafe1271Caller.sol";
 import { MockPreValidationHook } from "../../../contracts/mocks/MockPreValidationHook.sol";
 
@@ -69,9 +68,8 @@ import "../../../contracts/mocks/Counter.sol";
 // ==========================
 // Additional Contract Imports
 // ==========================
-import "./../../../contracts/factory/K1ValidatorFactory.sol";
-import "./../../../contracts/utils/NexusBootstrap.sol";
-import "./../../../contracts/lib/BootstrapLib.sol";
+import "contracts/utils/NexusBootstrap.sol";
+import "../../../test/foundry/utils/BootstrapLib.sol";
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/MockToken.sol";
 

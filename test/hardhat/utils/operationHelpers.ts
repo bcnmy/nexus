@@ -207,34 +207,26 @@ export async function fillSignAndPack(
 }
 
 /**
- * Generates the full initialization code for deploying a smart account.
- * @param ownerAddress - The address of the owner of the new smart account.
- * @param factoryAddress - The address of the K1ValidatorFactory contract.
- * @param validatorAddress - The address of the module to be installed in the smart account.
- * @param saDeploymentIndex: number = 0,
+ * Generates the full initialization code for deploying a smart account via NexusAccountFactory.
+ * @param initData - The initialization data for the smart account (encoded bootstrap call).
+ * @param salt - The salt for CREATE2 deployment.
+ * @param factoryAddress - The address of the NexusAccountFactory contract.
  * @returns The full initialization code as a hex string.
  */
 export async function getInitCode(
-  ownerAddress: AddressLike,
+  initData: BytesLike,
+  salt: BytesLike,
   factoryAddress: AddressLike,
-  saDeploymentIndex: number = 0,
 ): Promise<string> {
-  // Deploy the BootstrapLib library
-  const BootstrapLibFactory = await ethers.getContractFactory("BootstrapLib");
-  const BootstrapLib = await BootstrapLibFactory.deploy();
-  BootstrapLib.waitForDeployment();
-
-  const K1ValidatorFactory = await ethers.getContractFactory(
-    "K1ValidatorFactory"
+  const NexusAccountFactory = await ethers.getContractFactory(
+    "NexusAccountFactory"
   );
 
   // Encode the createAccount function call with the provided parameters
-  const factoryDeploymentData = K1ValidatorFactory.interface
+  const factoryDeploymentData = NexusAccountFactory.interface
     .encodeFunctionData("createAccount", [
-      ownerAddress,
-      saDeploymentIndex,
-      [],
-      0,
+      initData,
+      salt,
     ])
     .slice(2);
 
@@ -244,32 +236,26 @@ export async function getInitCode(
 // Note: could be a method getAccountAddressAndInitCode
 
 /**
- * Calculates the CREATE2 address for a smart account deployment.
- * @param {AddressLike} signerAddress - The address of the signer (owner of the new smart account).
- * @param {AddressLike} factoryAddress - The address of the K1ValidatorFactory contract.
- * @param {AddressLike} validatorAddress - The address of the module to be installed in the smart account.
+ * Calculates the CREATE2 address for a smart account deployment using NexusAccountFactory.
+ * @param {BytesLike} initData - The initialization data for the smart account.
+ * @param {BytesLike} salt - The salt for CREATE2 deployment.
+ * @param {AddressLike} factoryAddress - The address of the NexusAccountFactory contract.
  * @param {Object} setup - The setup object containing deployed contracts and addresses.
- * @param {number} saDeploymentIndex - The deployment index for the smart account.
  * @returns {Promise<string>} The calculated CREATE2 address.
  */
 // Note: could add off-chain way later using Create2 utils
 export async function getAccountAddress(
-  signerAddress: AddressLike, // ECDSA signer
+  initData: BytesLike,
+  salt: BytesLike,
   factoryAddress: AddressLike,
-  validatorAddress: AddressLike,
   setup: { accountFactory: any },
-  saDeploymentIndex: number = 0,
 ): Promise<string> {
-  // Module initialization data, encoded
-  const moduleInitData = ethers.solidityPacked(["address"], [signerAddress]);
-
   setup.accountFactory = setup.accountFactory.attach(factoryAddress);
 
   const counterFactualAddress =
     await setup.accountFactory.computeAccountAddress(
-      validatorAddress,
-      moduleInitData,
-      saDeploymentIndex,
+      initData,
+      salt,
     );
 
   return counterFactualAddress;

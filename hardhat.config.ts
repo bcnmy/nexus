@@ -4,7 +4,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-storage-layout";
 import "hardhat-deploy";
-import { dynamicNetworkConfig } from "./scripts/hardhat/dynamicNetworkConfig";
 
 dotenv.config();
 
@@ -31,11 +30,6 @@ const config: HardhatUserConfig = {
 		hardhat: {
 			allowUnlimitedContractSize: true,
 		},
-		...dynamicNetworkConfig(),
-	},
-	docgen: {
-		projectName: "Nexus",
-		projectDescription: "Nexus - Biconomy Modular Smart Account - ERC-7579",
 	},
 };
 

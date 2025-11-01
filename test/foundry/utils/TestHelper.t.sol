@@ -22,11 +22,9 @@ import { MockValidator } from "../../../contracts/mocks/MockValidator.sol";
 import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockPaymaster } from "./../../../contracts/mocks/MockPaymaster.sol";
 import { MockTarget } from "../../../contracts/mocks/MockTarget.sol";
-import { NexusBootstrap, BootstrapConfig, RegistryConfig } from "../../../contracts/utils/NexusBootstrap.sol";
-import { BiconomyMetaFactory } from "../../../contracts/factory/BiconomyMetaFactory.sol";
+import { NexusBootstrap, BootstrapConfig } from "../../../contracts/utils/NexusBootstrap.sol";
 import { NexusAccountFactory } from "../../../contracts/factory/NexusAccountFactory.sol";
-import { BootstrapLib } from "../../../contracts/lib/BootstrapLib.sol";
-import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
+import { BootstrapLib } from "./BootstrapLib.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import "../../../contracts/types/Constants.sol";
 import { K1Validator } from "../../../contracts/modules/validators/K1Validator.sol";
@@ -54,17 +52,12 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     address internal CHARLIE_ADDRESS;
     address payable internal BUNDLER_ADDRESS;
 
-    address[] internal ATTESTERS;
-    uint8 internal THRESHOLD;
-
     Nexus internal BOB_ACCOUNT;
     Nexus internal ALICE_ACCOUNT;
     Nexus internal CHARLIE_ACCOUNT;
 
     IEntryPoint internal ENTRYPOINT;
     NexusAccountFactory internal FACTORY;
-    BiconomyMetaFactory internal META_FACTORY;
-    MockRegistry internal REGISTRY;
     MockHook internal HOOK_MODULE;
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
@@ -108,10 +101,6 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         BUNDLER_ADDRESS = payable(BUNDLER.addr);
 
         FACTORY_OWNER = createAndFundWallet("FACTORY_OWNER", 1000 ether);
-
-        ATTESTERS = new address[](1);
-        ATTESTERS[0] = ALICE.addr;
-        THRESHOLD = 1;
     }
 
     function deployTestContracts() internal {
@@ -120,16 +109,12 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         // This is the implementation of the account => default module initialized with an unusable configuration
         ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
-        META_FACTORY = new BiconomyMetaFactory(address(FACTORY_OWNER.addr));
-        vm.prank(FACTORY_OWNER.addr);
-        META_FACTORY.addFactoryToWhitelist(address(FACTORY));
         HOOK_MODULE = new MockHook();
         HANDLER_MODULE = new MockHandler();
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
         BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xa11ce)));
-        REGISTRY = new MockRegistry();
     }
 
     function setupEntrypoint() internal {
@@ -204,13 +189,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
+                (validators, hook)
             )
         );
         bytes32 salt = keccak256(saDeploymentIndex);
@@ -236,13 +215,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexusScoped,
-                (validators, hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
+                (validators, hook)
             )
         );
 
@@ -251,7 +224,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         bytes memory factoryData = abi.encodeWithSelector(FACTORY.createAccount.selector, _initData, salt);
 
         // Prepend the factory address to the encoded function call to form the initCode
-        initCode = abi.encodePacked(address(META_FACTORY), abi.encodeWithSelector(META_FACTORY.deployWithFactory.selector, address(FACTORY), factoryData));
+        initCode = abi.encodePacked(address(FACTORY), factoryData);
     }
 
     /// @notice Prepares a user operation with init code and call data

@@ -6,7 +6,6 @@ import {
   Signer,
 } from "ethers";
 import {
-  K1ValidatorFactory,
   Counter,
   EntryPoint,
   MockToken,
@@ -17,23 +16,19 @@ import {
   MockHook,
   MockHandler,
   Stakeable,
-  BiconomyMetaFactory,
   NexusAccountFactory,
   NexusBootstrap,
-  BootstrapLib,
-  MockRegistry,
 } from "../../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export interface DeploymentFixture {
   entryPoint: EntryPoint;
   smartAccountImplementation: Nexus;
-  nexusFactory: K1ValidatorFactory;
+  nexusFactory: NexusAccountFactory;
   mockValidator: MockValidator;
   ecdsaValidator: K1Validator;
   counter: Counter;
   mockToken: MockToken;
-  registry: MockRegistry;
   accounts: Signer[];
   addresses: string[];
 }
@@ -46,7 +41,7 @@ export interface DeploymentFixtureWithSA {
   deployedNexusAddress: AddressLike;
   accountOwner: HardhatEthersSigner;
   aliceAccountOwner: HardhatEthersSigner;
-  nexusK1Factory: K1ValidatorFactory;
+  nexusAccountFactory: NexusAccountFactory;
   deployer: Signer;
   mockValidator: MockValidator;
   defaultValidator: MockValidator;
@@ -60,11 +55,8 @@ export interface DeploymentFixtureWithSA {
   accounts: Signer[];
   addresses: string[];
   stakeable: Stakeable;
-  metaFactory: BiconomyMetaFactory;
   nexusFactory: NexusAccountFactory;
   bootstrap: NexusBootstrap;
-  BootstrapLib: BootstrapLib;
-  registry: MockRegistry;
 }
 
 export interface UserOperation {

@@ -48,7 +48,7 @@ interface IStorage {
         ///< Mapping of used nonces for replay protection.
         mapping(uint256 => bool) nonces;
         ///< ERC-7484 registry
-        address registry;
+        address registry; // keeping this to avoid collisions b/w versions
         ///< Mapping of used 7702 init hashes for replay protection.
         mapping(bytes32 => bool) erc7702InitHashes;
     }

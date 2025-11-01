@@ -5,7 +5,7 @@ import { expect } from "chai";
 
 import { ContractTransactionResponse, Signer } from "ethers";
 import {
-  K1ValidatorFactory,
+  NexusAccountFactory,
   Counter,
   EntryPoint,
   MockExecutor,
@@ -33,7 +33,7 @@ import {
 } from "../utils/erc7579Utils";
 
 describe("Nexus Batch Execution", () => {
-  let factory: K1ValidatorFactory;
+  let factory: NexusAccountFactory;
   let entryPoint: EntryPoint;
   let bundler: Signer;
   let validatorModule: MockValidator;
@@ -61,7 +61,7 @@ describe("Nexus Batch Execution", () => {
   beforeEach(async () => {
     const setup = await loadFixture(deployContractsAndSAFixture);
     entryPoint = setup.entryPoint;
-    factory = setup.nexusK1Factory;
+    factory = setup.nexusAccountFactory;
     bundler = ethers.Wallet.createRandom();
     validatorModule = setup.mockValidator;
     executorModule = setup.mockExecutor;

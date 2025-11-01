@@ -45,12 +45,7 @@ contract TestPREP is NexusTest_Base {
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexus,
-                (validators, executors, hook, fallbacks, preValidationHooks, 
-                RegistryConfig({
-                    registry: REGISTRY,
-                    attesters: ATTESTERS,
-                    threshold: THRESHOLD
-                }))
+                (validators, executors, hook, fallbacks, preValidationHooks)
             )
         );
     }

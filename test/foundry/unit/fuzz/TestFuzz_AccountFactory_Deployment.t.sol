@@ -31,12 +31,7 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );
@@ -69,12 +64,7 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );
@@ -107,12 +97,7 @@ contract TestFuzz_AccountFactory_Deployment is NexusTest_Base {
                 BOOTSTRAPPER.initNexusScoped,
                 (
                     validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
+                    hook
                 )
             )
         );
