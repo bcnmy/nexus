@@ -131,7 +131,6 @@ Addresses for Nexus SCs:
   Nexus Addr:  0x000000008761E87F023f65c49DC9cb1C7EdFEaaf  || >> Code Size:  0
   Nexus K1 Validator Addr:  0x0000002D6DB27c52E3C11c1Cf24072004AC75cBa  || >> Code Size:  0
   Nexus Bootstrap Addr:  0x000000F5b753Fdd20C5CA2D7c1210b3Ab1EA5903  || >> Code Size:  0
-  K1ValidatorFactory Addr:  0x00000024115AA990F0bAE0B6b0D5B8F68b684cd6  || >> Code Size:  0
   Nexus Account Factory Addr:  0x000000226cada0d8b36034F5D5c06855F59F6F3A  || >> Code Size:  0
   =====> On this chain we have 0  contracts already deployed out of  5
 ```
@@ -146,7 +145,6 @@ If you want different addresses, you can change the salts in the script.
     bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000f2bd6e8e0a8d8b01a83be4c5;
     bytes32 constant K1VALIDATOR_SALT = 0x000000000000000000000000000000000000000014fedeb9e1c61d030943b78e;
     bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000685bdf10d2a63f043e248cc0;
-    bytes32 constant K1VALIDATORFACTORY_SALT = 0x0000000000000000000000000000000000000000d07e828a05cf8c02ef869155;
     bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000a00deaddeb69f9031a251b40;
 ```
 
