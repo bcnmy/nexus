@@ -109,6 +109,7 @@
   fluent-testnet="${FLUENT_TESTNET_RPC_URL}"
 
   chiliz-testnet = "${CHILIZ_TESTNET_URL}"
+  chiliz-mainnet = "${CHILIZ_MAINNET_URL}"
 
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api" }
