@@ -2,7 +2,16 @@
 pragma solidity ^0.8.27;
 
 import "../../utils/NexusTest_Base.t.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../../../../contracts/lib/ModeLib.sol";
+import {
+    ModeLib,
+    ExecutionMode,
+    ExecType,
+    CallType,
+    CALLTYPE_BATCH,
+    CALLTYPE_SINGLE,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY
+} from "../../../../contracts/lib/ModeLib.sol";
 
 contract TestFuzz_Execute is NexusTest_Base {
     // Fixture arrays for CallType and ExecType
@@ -101,7 +110,7 @@ contract TestFuzz_Execute is NexusTest_Base {
     /// @param amount The amount of tokens to transfer.
     function testFuzz_TokenTransfer(address to, uint256 amount) public {
         vm.assume(to != address(0));
-        vm.assume(amount < ~uint(0) / 0xff); // Ensure amount is manageable
+        vm.assume(amount < ~uint256(0) / 0xff); // Ensure amount is manageable
         vm.assume(token.balanceOf(to) == 0);
         token.mint(address(BOB_ACCOUNT), amount); // Mint tokens to BOB_ACCOUNT
 
@@ -118,7 +127,7 @@ contract TestFuzz_Execute is NexusTest_Base {
     /// @param amount The amount of tokens to transfer to each receiver.
     function testFuzz_ComplexTokenOperations(address[] calldata receivers, uint256 amount) public {
         vm.assume(receivers.length > 0 && receivers.length < 50);
-        vm.assume(amount < ~uint(0) / 0xff); // Ensure baseAmount is manageable
+        vm.assume(amount < ~uint256(0) / 0xff); // Ensure baseAmount is manageable
 
         token.mint(address(BOB_ACCOUNT), amount * receivers.length); // Mint enough tokens to cover all transfers
 

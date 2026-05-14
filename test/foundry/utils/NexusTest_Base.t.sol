@@ -21,5 +21,5 @@ abstract contract NexusTest_Base is TestHelper {
         setupTestEnvironment();
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

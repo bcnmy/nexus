@@ -151,16 +151,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         bytes memory _initDataInvalidModule = abi.encode(
             address(BOOTSTRAPPER),
             abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (
-                    validatorsInvalid,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
+                BOOTSTRAPPER.initNexusScoped, (validatorsInvalid, hook, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD }))
             )
         );
 
@@ -240,8 +231,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
 
         // Verify that the validators and hook were installed
         assertTrue(
-            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
-            "Validator should be installed"
+            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), "Validator should be installed"
         );
         assertTrue(
             IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
@@ -264,8 +254,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Manually compute the expected address
-        address payable manualExpectedAddress = payable(
-            address(
+        address payable manualExpectedAddress = payable(address(
                 uint160(
                     uint256(
                         keccak256(
@@ -283,8 +272,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
                         )
                     )
                 )
-            )
-        );
+            ));
 
         // Validate that both addresses match
         assertEq(expectedAddress, manualExpectedAddress, "Manually computed address mismatch");
@@ -293,18 +281,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
     function _getInitData(BootstrapConfig[] memory validators, BootstrapConfig memory hook) internal view returns (bytes memory) {
         return abi.encode(
             address(BOOTSTRAPPER),
-            abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (
-                    validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
-            )
+            abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD })))
         );
     }
 }

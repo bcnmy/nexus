@@ -118,18 +118,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         // Create initcode and salt to be sent to Factory
         bytes memory _initData = abi.encode(
             address(BOOTSTRAPPER),
-            abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (
-                    validators,
-                    hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
-            )
+            abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD })))
         );
 
         dest[1] = address(smartAccountV2);

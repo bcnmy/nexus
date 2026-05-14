@@ -62,6 +62,7 @@ import { MockMultiModule } from "contracts/mocks/MockMultiModule.sol";
 import { MockRegistry } from "../../../contracts/mocks/MockRegistry.sol";
 import { MockSafe1271Caller } from "../../../contracts/mocks/MockSafe1271Caller.sol";
 import { MockPreValidationHook } from "../../../contracts/mocks/MockPreValidationHook.sol";
+import { MockRevertingValidator } from "../../../contracts/mocks/MockRevertingValidator.sol";
 
 import "../../../contracts/mocks/MockNFT.sol";
 import "../../../contracts/mocks/Counter.sol";
@@ -87,6 +88,6 @@ import { SentinelListHelper } from "sentinellist/SentinelListHelper.sol";
 import "./TestHelper.t.sol";
 
 contract Imports {
-// This contract acts as a single point of import for Foundry tests.
-// It does not require any logic, as its sole purpose is to consolidate imports.
+    // This contract acts as a single point of import for Foundry tests.
+    // It does not require any logic, as its sole purpose is to consolidate imports.
 }

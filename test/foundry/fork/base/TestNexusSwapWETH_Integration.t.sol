@@ -48,7 +48,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         WETH_ADDRESS = address(weth);
 
         // Convert ETH to WETH for swapper
-        (bool success, ) = WETH_ADDRESS.call{ value: 10 ether }(abi.encodeWithSignature("deposit()"));
+        (bool success,) = WETH_ADDRESS.call{ value: 10 ether }(abi.encodeWithSignature("deposit()"));
         require(success, "WETH deposit failed");
 
         // Initialize Nexus
@@ -77,14 +77,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             "47::UniswapV2::swapExactTokensForTokens::EOA::WETHtoUSDC::N/A",
             address(uniswapV2Router),
             0,
-            abi.encodeWithSignature(
-                "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
-                SWAP_AMOUNT,
-                0,
-                path,
-                swapper,
-                block.timestamp
-            )
+            abi.encodeWithSignature("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)", SWAP_AMOUNT, 0, path, swapper, block.timestamp)
         );
         vm.stopPrank();
     }
@@ -135,14 +128,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
@@ -180,14 +167,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -219,11 +200,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Tests deploying Nexus and batch approval and swapping WETH for USDC with Paymaster
-    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster()
-        public
-        checkERC20Balance(preComputedAddress)
-        checkPaymasterBalance(address(paymaster))
-    {
+    function test_Gas_BatchApproveAndSwap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress) checkPaymasterBalance(address(paymaster)) {
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution(address(weth), 0, abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), SWAP_AMOUNT));
         executions[1] = Execution(
@@ -239,14 +216,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
@@ -281,14 +252,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -321,14 +286,8 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);

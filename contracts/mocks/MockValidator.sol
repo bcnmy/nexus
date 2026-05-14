@@ -10,9 +10,8 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 
 contract MockValidator is ERC7739Validator {
-
     using ECDSA for bytes32;
-    
+
     mapping(address => address) public smartAccountOwners;
 
     function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
@@ -46,7 +45,6 @@ contract MockValidator is ERC7739Validator {
     ///      module's specific internal function to validate the signature
     ///      against credentials.
     function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
-
         // call custom internal function to validate the signature against credentials
         return _validateSignatureForOwner(getOwner(msg.sender), hash, signature);
     }
@@ -59,10 +57,8 @@ contract MockValidator is ERC7739Validator {
     // msg.sender = Smart Account
     // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return (
-            sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
-                || sender == msg.sender
-        );
+        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
+                || sender == msg.sender);
     }
 
     /**
@@ -96,5 +92,4 @@ contract MockValidator is ERC7739Validator {
     function isInitialized(address) external view returns (bool) {
         return smartAccountOwners[msg.sender] != address(0);
     }
-
 }

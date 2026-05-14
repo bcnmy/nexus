@@ -29,9 +29,9 @@ contract MockSafe1271Caller is IModule {
         return balances[smartAccount];
     }
 
-    function onInstall(bytes calldata data) external override {}
+    function onInstall(bytes calldata data) external override { }
 
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;

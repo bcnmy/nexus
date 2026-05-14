@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../../../../../contracts/lib/ExecLib.sol";
 
 contract ExecLibTest is Test {
-    function setUp() public {}
+    function setUp() public { }
 
     function test_encode_decode(address target, uint256 value, bytes memory callData) public {
         bytes memory encoded = ExecLib.encodeSingle(target, value, callData);

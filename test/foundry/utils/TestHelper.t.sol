@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 import "forge-std/console2.sol";
 import "solady/utils/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -32,11 +31,9 @@ import "../../../contracts/types/Constants.sol";
 import { K1Validator } from "../../../contracts/modules/validators/K1Validator.sol";
 
 contract TestHelper is CheatCodes, EventsAndErrors {
-
     address private constant MAINNET_ENTRYPOINT_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
     /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
     bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
-
 
     // -----------------------------------------
     // State Variables
@@ -133,8 +130,8 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function setupEntrypoint() internal {
-        if (block.chainid == 31337) {
-            if(address(ENTRYPOINT) != address(0)){
+        if (block.chainid == 31_337) {
+            if (address(ENTRYPOINT) != address(0)) {
                 return;
             }
             ENTRYPOINT = new EntryPoint();
@@ -147,11 +144,11 @@ contract TestHelper is CheatCodes, EventsAndErrors {
 
     // etch the 7702 code
     function _doEIP7702(address account) internal {
-        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(address(ACCOUNT_IMPLEMENTATION))));
+        vm.etch(account, abi.encodePacked(hex"ef0100", bytes20(address(ACCOUNT_IMPLEMENTATION))));
     }
 
     function _doEIP7702_init(address account, address implementation) internal {
-        vm.etch(account, abi.encodePacked(hex'ef0100', bytes20(implementation)));
+        vm.etch(account, abi.encodePacked(hex"ef0100", bytes20(implementation)));
     }
 
     // -----------------------------------------
@@ -184,6 +181,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         CHARLIE_ACCOUNT = deployNexus(CHARLIE, 100 ether, address(VALIDATOR_MODULE));
         vm.label(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
+
     // -----------------------------------------
     // Utility Functions
     // -----------------------------------------
@@ -202,16 +200,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         // Create initcode and salt to be sent to Factory
         bytes memory _initData = abi.encode(
             address(BOOTSTRAPPER),
-            abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (validators, hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
-            )
+            abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD })))
         );
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -234,16 +223,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
         // Create initcode and salt to be sent to Factory
         bytes memory _initData = abi.encode(
             address(BOOTSTRAPPER),
-            abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (validators, hook,
-                    RegistryConfig({
-                        registry: REGISTRY,
-                        attesters: ATTESTERS,
-                        threshold: THRESHOLD
-                    })
-                )
-            )
+            abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD })))
         );
 
         bytes32 salt = keccak256(saDeploymentIndex);
@@ -701,7 +681,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     function _hashTypedData(bytes32 structHash, address account) internal view virtual returns (bytes32 digest) {
         // We will use `digest` to store the domain separator to save a bit of gas.
         digest = _getDomainSeparator(account);
-        
+
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the digest.
@@ -715,14 +695,7 @@ contract TestHelper is CheatCodes, EventsAndErrors {
     }
 
     function _getDomainSeparator(address account) internal view virtual returns (bytes32 separator) {
-        (   
-            ,
-            string memory name,
-            string memory version,
-            uint256 chainId,
-            address verifyingContract,
-            ,
-        ) = EIP712(account).eip712Domain();
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) = EIP712(account).eip712Domain();
         separator = keccak256(bytes(name));
         bytes32 versionHash = keccak256(bytes(version));
         assembly {

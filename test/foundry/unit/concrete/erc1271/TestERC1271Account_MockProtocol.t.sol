@@ -137,7 +137,13 @@ contract TestERC1271Account_MockProtocol is NexusTest_Base {
     /// @return The EIP-712 domain struct fields encoded.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) = EIP712(account).eip712Domain();
+        (/*t.fields*/,
+            t.name,
+            t.version,
+            t.chainId,
+            t.verifyingContract,
+            t.salt, /*t.extensions*/
+        ) = EIP712(account).eip712Domain();
 
         return abi.encode(
             keccak256(bytes(t.name)),

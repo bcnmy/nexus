@@ -11,7 +11,7 @@ contract BaseSettings is NexusTest_Base {
     //string public constant DEFAULT_BASE_RPC_URL = "https://mainnet.base.org";
     string public constant DEFAULT_BASE_RPC_URL = "https://base.llamarpc.com";
     //string public constant DEFAULT_BASE_RPC_URL = "https://developer-access-mainnet.base.org";
-    uint constant BLOCK_NUMBER = 15000000;
+    uint256 constant BLOCK_NUMBER = 15_000_000;
 
     /// @notice Retrieves the Base RPC URL from the environment variable or defaults to the hardcoded URL
     /// @return rpcUrl The Base RPC URL

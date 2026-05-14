@@ -17,14 +17,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
-        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "MockExecutor should be installed");
     }

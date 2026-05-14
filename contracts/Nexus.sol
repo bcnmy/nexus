@@ -552,12 +552,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
     // checks if there's at least one validator initialized
     function _checkInitializedValidators() internal view {
-        if (!_amIERC7702() && !IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this))) {
+        if (!_amIERC7702() && !_safeIsInitialized(_DEFAULT_VALIDATOR)) {
             unchecked {
                 SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
                 address next = validators.entries[SENTINEL];
                 while (next != ZERO_ADDRESS && next != SENTINEL) {
-                    if (IValidator(next).isInitialized(address(this))) {
+                    if (_safeIsInitialized(next)) {
                         break;
                     }
                     next = validators.getNext(next);
@@ -567,6 +567,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     revert CanNotRemoveLastValidator();
                 }
             }
+        }
+    }
+
+    /// @dev Safely calls IValidator.isInitialized() on a validator, returning false if the call reverts.
+    /// This prevents a malicious or broken validator from blocking uninstallation of other validators.
+    function _safeIsInitialized(address validator) internal view returns (bool) {
+        try IValidator(validator).isInitialized(address(this)) returns (bool result) {
+            return result;
+        } catch {
+            return false;
         }
     }
 

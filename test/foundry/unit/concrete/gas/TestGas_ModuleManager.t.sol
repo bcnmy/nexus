@@ -71,30 +71,16 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
 
     function test_Gas_UninstallValidatorModule() public {
         // Install module first
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(mockValidator),
-            ""
-        );
+        bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            installExecution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory installUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(mockValidator),
-            abi.encode(address(VALIDATOR_MODULE), "")
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), abi.encode(address(VALIDATOR_MODULE), "")
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -113,22 +99,13 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            installExecution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory installUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(mockExecutor),
-            abi.encode(address(VALIDATOR_MODULE), "")
+            IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), abi.encode(address(VALIDATOR_MODULE), "")
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -147,23 +124,13 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            installExecution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory installUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_HOOK,
-            address(mockHook),
-            abi.encode(address(VALIDATOR_MODULE), "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_HOOK, address(mockHook), abi.encode(address(VALIDATOR_MODULE), ""));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -179,31 +146,15 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
     function test_Gas_UninstallFallbackHandler() public {
         // Install module first
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler),
-            customData
-        );
+        bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData);
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            installExecution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory installUserOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler),
-            customData
-        );
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData);
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);

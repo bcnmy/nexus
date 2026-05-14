@@ -51,11 +51,7 @@ interface IERC4337Account {
     ///                                                    If an account doesn't use time-range, it is enough to
     ///                                                    return SIG_VALIDATION_FAILED value (1) for signature failure.
     ///                              Note that the validation code cannot use block.timestamp (or block.number) directly.
-    function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) external returns (uint256 validationData);
+    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 missingAccountFunds) external returns (uint256 validationData);
 
     /// Account may implement this execute method.
     /// passing this methodSig at the beginning of callData will cause the entryPoint to pass the

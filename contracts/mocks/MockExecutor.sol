@@ -5,7 +5,17 @@ import { IModule } from "../interfaces/modules/IModule.sol";
 import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
 import { INexus } from "../interfaces/INexus.sol";
 import { MODULE_TYPE_EXECUTOR } from "../types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../lib/ModeLib.sol";
+import {
+    ModeLib,
+    ExecutionMode,
+    ExecType,
+    CallType,
+    CALLTYPE_BATCH,
+    CALLTYPE_SINGLE,
+    CALLTYPE_DELEGATECALL,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY
+} from "../lib/ModeLib.sol";
 import { ExecLib } from "../lib/ExecLib.sol";
 import { MODE_DEFAULT, ModePayload } from "../lib/ModeLib.sol";
 
@@ -21,7 +31,7 @@ contract MockExecutor is IExecutor {
         }
     }
 
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     function executeViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
@@ -35,12 +45,7 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 
-    function tryExecuteViaAccount(
-        INexus account,
-        address target,
-        uint256 value,
-        bytes calldata callData
-    ) external returns (bytes[] memory returnData) {
+    function tryExecuteViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
         return account.executeFromExecutor(ModeLib.encodeTrySingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
@@ -54,8 +59,11 @@ contract MockExecutor is IExecutor {
         address target,
         uint256 value,
         bytes calldata callData
-    ) external returns (bytes[] memory) {
-        (CallType callType, ) = ModeLib.decodeBasic(mode);
+    )
+        external
+        returns (bytes[] memory)
+    {
+        (CallType callType,) = ModeLib.decodeBasic(mode);
         bytes memory executionCallData;
         if (callType == CALLTYPE_SINGLE) {
             executionCallData = ExecLib.encodeSingle(target, value, callData);
@@ -74,11 +82,11 @@ contract MockExecutor is IExecutor {
         return moduleTypeId == MODULE_TYPE_EXECUTOR;
     }
 
-    function getModuleTypes() external view returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address) external pure override returns (bool) {
         return false;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

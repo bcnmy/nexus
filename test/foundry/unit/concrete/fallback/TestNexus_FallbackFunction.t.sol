@@ -96,12 +96,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         // Use an invalid call type (0xFF is not defined)
         bytes memory customData = abi.encodePacked(selector, bytes1(0xFF));
 
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockFallbackHandler),
-            customData
-        );
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockFallbackHandler), customData);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
@@ -116,7 +111,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
             userOps[0].nonce, // nonce
             expectedRevertReason
         );
-        
+
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
@@ -284,5 +279,4 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         // Verify the module was installed
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, module, ""), "Module should be installed");
     }
-
 }

@@ -45,12 +45,7 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ETH transfer using call
     function test_Gas_NativeETH_SimpleTransfer_UsingCall() public checkETHBalanceCold(recipient, transferAmount) {
         prank(BOB.addr);
-        measureAndLogGasEOA(
-            "27::ETH::call::EOA::Simple::ColdAccess",
-            recipient,
-            transferAmount,
-            abi.encodeWithSignature("call{ value: transferAmount }('')")
-        );
+        measureAndLogGasEOA("27::ETH::call::EOA::Simple::ColdAccess", recipient, transferAmount, abi.encodeWithSignature("call{ value: transferAmount }('')"));
     }
 
     /// @notice Tests gas consumption for a simple ETH transfer using send
@@ -81,14 +76,8 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
 
         Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = initCode;
 
@@ -117,14 +106,8 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
         Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
 
         // Sign the user operation
@@ -146,14 +129,8 @@ contract TestNexusNativeETH_Integration_ColdAccess is NexusTest_Base {
         Execution[] memory executions = prepareSingleExecution(recipient, transferAmount, "");
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);

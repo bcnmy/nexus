@@ -91,13 +91,9 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTest_Base {
 
         Execution[] memory executions = prepareSingleExecution(address(account), 0, "");
         PackedUserOperation[] memory userOps = buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), incorrectNonce);
-        
-        bytes memory expectedRevertReason = abi.encodeWithSelector(
-            FailedOp.selector, 
-            0, 
-            "AA25 invalid account nonce"
-        );
-        
+
+        bytes memory expectedRevertReason = abi.encodeWithSelector(FailedOp.selector, 0, "AA25 invalid account nonce");
+
         vm.expectRevert(expectedRevertReason);
 
         ENTRYPOINT.handleOps(userOps, payable(address(signer.addr)));

@@ -43,12 +43,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(selector != bytes4(0x6d61fe70) && selector != bytes4(0x8a91b0e3) && selector != bytes4(0)); // Exclude known selectors
         // Prepare data with a random selector to test dynamic input handling
         bytes memory customData = abi.encode(selector);
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(HANDLER_MODULE),
-            customData
-        );
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData);
 
         // Prepare the module installation operation
         Execution[] memory executions = new Execution[](1);
@@ -57,10 +52,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         // Execute and check if the fallback handler installs correctly
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData),
-            "Fallback handler should be correctly installed"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData), "Fallback handler should be correctly installed");
     }
 
     /// @notice Fuzz test for correct module installation based on type
@@ -73,7 +65,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         vm.assume(funcSig != bytes4(0)); // Ensure the function signature is not empty for fallback modules
 
         // Setup module-specific initialization data
-        bytes memory initData; 
+        bytes memory initData;
         if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             initData = abi.encode(bytes4(funcSig));
         } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -132,17 +124,11 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Initial installation should succeed");
 
             // Attempt to reinstall the same module should fail
-            PackedUserOperation[] memory userOpsSecondAttempt = buildPackedUserOperation(
-                BOB,
-                BOB_ACCOUNT,
-                EXECTYPE_DEFAULT,
-                executions,
-                address(VALIDATOR_MODULE),
-                0
-            );
-            
+            PackedUserOperation[] memory userOpsSecondAttempt =
+                buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+
             bytes memory expectedRevertReason = abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
-            if(moduleTypeId == MODULE_TYPE_FALLBACK) {
+            if (moduleTypeId == MODULE_TYPE_FALLBACK) {
                 expectedRevertReason = abi.encodeWithSignature("FallbackAlreadyInstalledForSelector(bytes4)", bytes4(funcSig));
             } else if (moduleTypeId == MODULE_TYPE_HOOK) {
                 expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", moduleAddress);
@@ -155,8 +141,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
             // Verify that the reinstallation attempt did not change the installation status
             assertTrue(
-                BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData),
-                "Module status should remain unchanged after failed reinstallation"
+                BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module status should remain unchanged after failed reinstallation"
             );
         }
     }
@@ -179,13 +164,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory callData;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             // Prepare the uninstallation calldata for Validation
-            (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             // Prepare the uninstallation calldata for Executor
-            (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
@@ -212,12 +197,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         testFuzz_InstallModule_CorrectType(moduleTypeId, moduleAddress, funcSig);
 
         // Install an additional executor module
-        bytes memory installExecutorCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(EXECUTOR_MODULE),
-            ""
-        );
+        bytes memory installExecutorCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), "");
         installModule(installExecutorCallData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), EXECTYPE_DEFAULT);
 
         bytes memory initData = (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encodePacked("");
@@ -231,13 +211,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory callData;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             // Prepare the uninstallation calldata for Validation
-            (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
             address remove = address(VALIDATOR_MODULE);
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, address(VALIDATOR_MODULE), abi.encode(prev, ""));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             // Prepare the uninstallation calldata for Executor
-            (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
             address remove = address(EXECUTOR_MODULE);
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, address(EXECUTOR_MODULE), abi.encode(prev, ""));
@@ -274,24 +254,10 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory initData = (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encode("");
 
         // Preparing different call data for installing all types of modules.
-        bytes memory installValidatorCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(mockValidator),
-            ""
-        );
-        bytes memory installExecutorCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(mockExecutor),
-            ""
-        );
-        bytes memory installHandlerCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler),
-            abi.encode(bytes4(funcSig))
-        );
+        bytes memory installValidatorCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), "");
+        bytes memory installExecutorCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        bytes memory installHandlerCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), abi.encode(bytes4(funcSig)));
         bytes memory installHookCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
 
         // Install modules of all types to set up the test environment.
@@ -303,12 +269,12 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Prepare call data for uninstallation based on the module type.
         bytes memory callData;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
@@ -357,13 +323,13 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory callData;
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             // Retrieve and paginate existing modules to find the correct one to uninstall
-            (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
             // Retrieve and paginate existing modules to find the correct one to uninstall
-            (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
             address remove = moduleAddress;
             address prev = SentinelListHelper.findPrevious(array, remove);
             callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, moduleTypeId, moduleAddress, abi.encode(prev, ""));
@@ -396,7 +362,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @return isValid True if the module address is valid
     function isValidModuleAddress(address moduleAddress) internal view returns (bool isValid) {
         address[] memory moduleAddresses = fixtureModuleAddress();
-        for (uint i = 0; i < moduleAddresses.length; i++) {
+        for (uint256 i = 0; i < moduleAddresses.length; i++) {
             if (moduleAddresses[i] == moduleAddress) {
                 return true;
             }
@@ -408,8 +374,8 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @param typeId The type ID of the module
     /// @return isValid True if the module type ID is valid
     function isValidModuleTypeId(uint256 typeId) internal pure returns (bool isValid) {
-        uint[] memory moduleTypeIds = fixtureModuleTypeId();
-        for (uint i = 0; i < moduleTypeIds.length; i++) {
+        uint256[] memory moduleTypeIds = fixtureModuleTypeId();
+        for (uint256 i = 0; i < moduleTypeIds.length; i++) {
             if (moduleTypeIds[i] == typeId) {
                 return true;
             }

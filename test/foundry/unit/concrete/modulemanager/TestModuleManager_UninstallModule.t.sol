@@ -34,12 +34,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         MockValidator newMockValidator = new MockValidator();
 
         // Install new mock validator module
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(newMockValidator),
-            abi.encodePacked(BOB.addr)
-        );
+        bytes memory installCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(newMockValidator), abi.encodePacked(BOB.addr));
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
         // Install the original mock validator module
@@ -47,25 +43,18 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         // Verify both modules are installed
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""),
-            "New Mock Module should be installed initially"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""), "New Mock Module should be installed initially");
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Mock Module should be installed initially");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(VALIDATOR_MODULE);
         address prev = SentinelListHelper.findPrevious(array, remove);
         if (prev == address(0)) prev = address(0x01); // Default to sentinel address if not found
 
         // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(VALIDATOR_MODULE),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), abi.encode(prev, ""));
 
         uninstallModule(callData, EXECTYPE_DEFAULT);
 
@@ -79,29 +68,20 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         MockValidator newMockValidator = new MockValidator();
 
         // Install new mock validator module
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(newMockValidator),
-            ""
-        );
+        bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(newMockValidator), "");
         installModule(installCallData, MODULE_TYPE_VALIDATOR, address(newMockValidator), EXECTYPE_DEFAULT);
 
         // Verify the module is installed
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(newMockValidator), ""), "Module should be installed initially");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(newMockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(newMockValidator),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(newMockValidator), abi.encode(prev, ""));
 
         uninstallModule(callData, EXECTYPE_DEFAULT);
 
@@ -115,29 +95,20 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         MockExecutor newMockExecutor = new MockExecutor();
 
         // Install new mock executor module
-        bytes memory installCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(newMockExecutor),
-            ""
-        );
+        bytes memory installCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(newMockExecutor), "");
         installModule(installCallData, MODULE_TYPE_EXECUTOR, address(newMockExecutor), EXECTYPE_DEFAULT);
 
         // Verify the module is installed
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should not be installed initially");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
         address remove = address(mockExecutor);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(mockExecutor),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), abi.encode(prev, ""));
 
         uninstallModule(callData, EXECTYPE_DEFAULT);
 
@@ -152,17 +123,13 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         // Prepare call data for uninstalling the module with incorrect type
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(VALIDATOR_MODULE),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(VALIDATOR_MODULE), abi.encode(prev, ""));
 
         // Define expected revert reason
         bytes memory expectedRevertReason = abi.encodeWithSelector(ModuleNotInstalled.selector, MODULE_TYPE_EXECUTOR, address(VALIDATOR_MODULE));
@@ -193,17 +160,13 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should not be installed");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
         address remove = address(mockValidator);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(mockValidator),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), abi.encode(prev, ""));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -214,11 +177,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Define expected revert reason
-        bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "ModuleNotInstalled(uint256,address)",
-            MODULE_TYPE_VALIDATOR,
-            address(mockValidator)
-        );
+        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -252,17 +211,13 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should be installed");
 
         // Find the previous module for uninstallation
-        (address[] memory array, ) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
+        (address[] memory array,) = BOB_ACCOUNT.getExecutorsPaginated(address(0x1), 100);
         address remove = address(newMockExecutor);
         address prev = SentinelListHelper.findPrevious(array, remove);
 
         // Prepare call data for uninstalling the module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(newMockExecutor),
-            abi.encode(prev, "")
-        );
+        bytes memory callData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(newMockExecutor), abi.encode(prev, ""));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -287,12 +242,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         address remove = address(mockValidator);
 
         // Prepare call data for uninstalling the module with incorrect previous module data
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            remove,
-            abi.encode(address(0x66), "")
-        );
+        bytes memory callData = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, remove, abi.encode(address(0x66), ""));
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -325,47 +275,27 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
     function test_SuccessfulUninstallationOfFallbackHandler() public {
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
-            "FallbackHandler should be uninstalled initially"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData), "FallbackHandler should be uninstalled initially");
         installModule(
             abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData),
             MODULE_TYPE_FALLBACK,
             address(mockHandler),
             EXECTYPE_DEFAULT
         );
-        assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
-            "FallbackHandler should be installed successfully"
-        );
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData), "FallbackHandler should be installed successfully");
 
         // Uninstall
-        bytes memory callDataUninstall = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler),
-            customData
-        );
+        bytes memory callDataUninstall = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData);
 
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOpsUninstall = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            executionUninstall,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOpsUninstall =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
-        assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData),
-            "FallbackHandler should be uninstalled successfully"
-        );
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData), "FallbackHandler should be uninstalled successfully");
     }
 
     /// @notice Tests uninstallation of a fallback handler that is not installed
@@ -373,30 +303,14 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         // Uninstall
         bytes memory customData = abi.encode(bytes4(GENERIC_FALLBACK_SELECTOR));
 
-        bytes memory callDataUninstall = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler),
-            customData
-        );
+        bytes memory callDataUninstall = abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), customData);
 
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            executionUninstall,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature(
-            "ModuleNotInstalled(uint256,address)",
-            MODULE_TYPE_FALLBACK,
-            address(mockHandler)
-        );
+        bytes memory expectedRevertReason = abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler));
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -412,5 +326,46 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_FALLBACK, address(mockHandler), customData), "FallbackHandler should not be installed");
+    }
+
+    /// @notice Tests that uninstalling a validator succeeds even when another installed
+    /// validator has a reverting isInitialized() call (regression test for issue #300).
+    function test_UninstallValidatorWithRevertingValidator() public {
+        MockRevertingValidator revertingValidator = new MockRevertingValidator();
+        MockValidator normalValidator = new MockValidator();
+
+        // Install the reverting validator
+        bytes memory installReverting = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(revertingValidator), "");
+        installModule(installReverting, MODULE_TYPE_VALIDATOR, address(revertingValidator), EXECTYPE_DEFAULT);
+
+        // Install a normal validator with BOB as owner
+        bytes memory installNormal =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(normalValidator), abi.encodePacked(BOB.addr));
+        installModule(installNormal, MODULE_TYPE_VALIDATOR, address(normalValidator), EXECTYPE_DEFAULT);
+
+        // Verify both validators are installed
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(revertingValidator), ""));
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(normalValidator), ""));
+
+        // Find the previous module for uninstallation of normalValidator
+        (address[] memory validators,) = BOB_ACCOUNT.getValidatorsPaginated(address(0x1), 100);
+        address remove = address(normalValidator);
+        address prev = SentinelListHelper.findPrevious(validators, remove);
+        if (prev == address(0)) prev = address(0x01);
+
+        // Uninstall the normal validator — should NOT revert despite the reverting validator
+        bytes memory uninstallData =
+            abi.encodeWithSelector(IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(normalValidator), abi.encode(prev, ""));
+
+        Execution[] memory execution = new Execution[](1);
+        execution[0] = Execution(address(BOB_ACCOUNT), 0, uninstallData);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+
+        ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
+
+        // After fix: normalValidator should be successfully uninstalled
+        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(normalValidator), ""), "Normal validator should have been uninstalled");
+        // The reverting validator should still be installed
+        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(revertingValidator), ""), "Reverting validator should still be installed");
     }
 }
