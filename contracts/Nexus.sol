@@ -444,7 +444,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev In case default validator is initialized, two other SLOADS from _areSentinelListsInitialized() are not checked,
     /// this method should not introduce huge gas overhead.
     function isInitialized() public view returns (bool) {
-        return (IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this)) || _areSentinelListsInitialized());
+        return (_safeIsInitialized(_DEFAULT_VALIDATOR) || _areSentinelListsInitialized());
     }
 
     /// Returns the account's implementation ID.
@@ -498,10 +498,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     function _get7739Version(address validator, bytes4 prevResult, bytes32 hash, bytes calldata signature) internal view returns (bytes4) {
-        bytes4 support = IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature);
-        if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > prevResult) {
-            return support;
-        }
+        try IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature) returns (bytes4 support) {
+            if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > prevResult) {
+                return support;
+            }
+        } catch { }
         return prevResult;
     }
 
