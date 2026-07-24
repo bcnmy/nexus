@@ -19,16 +19,21 @@ library Initializable {
         }
     }
 
-    /// @dev Checks if the initializable flag is set in the transient storage slot, reverts with NotInitializable if not
-    function requireInitializable() internal view {
+    /// @dev Checks the initializable flag and consumes it by clearing the transient
+    /// slot, reverting with NotInitializable if it is not set. Consuming the flag makes
+    /// it single-use within the deploying transaction: a second initializeAccount call
+    /// in the same transaction reverts, instead of passing because EIP-1153 transient
+    /// storage keeps the flag set until the end of the transaction.
+    function requireInitializable() internal {
         bytes32 slot = INIT_SLOT;
-        // Load the current value from the slot, revert if 0
+        // Load the current value from the slot, revert if 0, then clear it.
         assembly {
             let isInitializable := tload(slot)
             if iszero(isInitializable) {
                 mstore(0x0, 0xaed59595) // NotInitializable()
                 revert(0x1c, 0x04)
             }
+            tstore(slot, 0x00)
         }
     }
 }
