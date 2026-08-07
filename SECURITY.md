@@ -1,5 +1,38 @@
 # Security Policy
 
+## Published Advisories
+
+### Stale transient initialization flag (GHSA-q47q-h6x2-f5qg)
+
+`NexusProxy` set the `Initializable` transient flag in its constructor and never cleared it. EIP-1153 transient storage persists for the whole transaction, so the classic (non-7702) `initializeAccount` guard still passed on a second call within the deploying transaction. An account that held funds at its counterfactual address before being deployed could be deployed and then re-initialized in the same transaction with attacker-supplied bootstrap data.
+
+**Affected**
+
+- Classic (non-7702) Nexus accounts, version 1.2.0 and above, **only while they hold a balance and have not yet been deployed**
+
+**Not affected**
+
+- Accounts already deployed on chain. Deployment is the point at which an account stops being exposed, and it is permanent for that account
+- EIP-7702 accounts and Fusion flows, which do not hold funds at an undeployed account address
+- Biconomy Smart Account V2
+
+**Fixed in**
+
+| Where | Fixed at |
+| ----- | -------- |
+| This repository | `contracts/lib/Initializable.sol`, commit `272c408` on `main` |
+| Deployed contracts | Nexus 1.3.3, shipped as MEE contract suite 2.2.3 |
+
+`requireInitializable()` now consumes the flag by clearing the transient slot, making it single-use within the deploying transaction.
+
+The deployed fix was built from [bcnmy/stx-contracts](https://github.com/bcnmy/stx-contracts), which carries the Nexus 1.3.3 lineage, and reviewed by Pashov Audit Group in July 2026. This repository is on the 1.2.1 lineage and receives the same change so that forks and self-deployments are built from fixed code.
+
+**If you fork or deploy this repository yourself**
+
+Build from `main` at or after commit `272c408`. Earlier commits and tags contain the issue. If you have already deployed contracts from an earlier commit and hold balances at account addresses that have not been deployed yet, deploy those accounts. Any operation deploys an account, including one with empty calldata, and the funds do not need to be moved.
+
+See [Account Migration](https://docs.biconomy.io/upgrade-migrate) for the version-by-version picture and [Contracts & Audits](https://docs.biconomy.io/contracts-and-audits) for deployed addresses.
+
 ## Reporting a Vulnerability
 
 The safety and security of our smart contract platform is our top priority. If you have discovered a security vulnerability, we appreciate your help in disclosing it to us responsibly.

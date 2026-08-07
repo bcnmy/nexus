@@ -163,6 +163,12 @@ To generate reports of the storage layout for potential upgrades safety using `h
 | Zenith           | 03-2025 | [View Report](./audits/Biconomy-Nexus_Zenith-Audit-Report.pdf) |
 | Pashov           | 03-2025 | [View Report](./audits/Nexus-Pashov-Review_2025-03.pdf) |
 
+### Before you fork or self-deploy
+
+`main` contains a fix for a disclosed issue affecting classic (non-7702) accounts that hold funds **before** they are deployed. Build from `main` at or after commit `272c408`; earlier commits and tags do not contain it. Accounts already deployed on chain were never exposed, and EIP-7702 and Fusion flows are unaffected.
+
+The full description, including which versions are affected and what to do if you already deployed from an earlier commit, is in [SECURITY.md](./SECURITY.md#published-advisories).
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
