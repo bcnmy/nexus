@@ -100,6 +100,10 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
     }
 
     /// @notice Tests that a deployed account is initialized and cannot be reinitialized.
+    /// @dev The revert comes from Initializable.requireInitializable, which consumes the
+    /// transient flag on first use. Before that, this call reached initialization itself and
+    /// reverted with NexusInitializationFailed only because _initData reinstalls the same
+    /// validator; different init data would not have been stopped here.
     function test_DeployAccount_CannotReinitialize() public {
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
@@ -112,7 +116,7 @@ contract TestNexusAccountFactory_Deployments is NexusTest_Base {
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(NexusInitializationFailed.selector);
+        vm.expectRevert(Initializable.NotInitializable.selector);
         INexus(firstAccountAddress).initializeAccount(_initData);
     }
 
