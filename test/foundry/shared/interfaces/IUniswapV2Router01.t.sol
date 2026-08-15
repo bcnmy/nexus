@@ -14,7 +14,9 @@ interface IUniswapV2Router01 {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+    )
+        external
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     function addLiquidityETH(
         address token,
@@ -23,7 +25,10 @@ interface IUniswapV2Router01 {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
+    )
+        external
+        payable
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
     function removeLiquidity(
         address tokenA,
@@ -33,7 +38,9 @@ interface IUniswapV2Router01 {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB);
+    )
+        external
+        returns (uint256 amountA, uint256 amountB);
 
     function removeLiquidityETH(
         address token,
@@ -42,7 +49,9 @@ interface IUniswapV2Router01 {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountETH);
+    )
+        external
+        returns (uint256 amountToken, uint256 amountETH);
 
     function removeLiquidityWithPermit(
         address tokenA,
@@ -56,7 +65,9 @@ interface IUniswapV2Router01 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 amountA, uint256 amountB);
+    )
+        external
+        returns (uint256 amountA, uint256 amountB);
 
     function removeLiquidityETHWithPermit(
         address token,
@@ -69,7 +80,9 @@ interface IUniswapV2Router01 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (uint256 amountToken, uint256 amountETH);
+    )
+        external
+        returns (uint256 amountToken, uint256 amountETH);
 
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -77,7 +90,9 @@ interface IUniswapV2Router01 {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    )
+        external
+        returns (uint256[] memory amounts);
 
     function swapTokensForExactTokens(
         uint256 amountOut,
@@ -85,14 +100,19 @@ interface IUniswapV2Router01 {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    )
+        external
+        returns (uint256[] memory amounts);
 
     function swapExactETHForTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    )
+        external
+        payable
+        returns (uint256[] memory amounts);
 
     function swapTokensForExactETH(
         uint256 amountOut,
@@ -100,7 +120,9 @@ interface IUniswapV2Router01 {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    )
+        external
+        returns (uint256[] memory amounts);
 
     function swapExactTokensForETH(
         uint256 amountIn,
@@ -108,14 +130,11 @@ interface IUniswapV2Router01 {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    )
+        external
+        returns (uint256[] memory amounts);
 
-    function swapETHForExactTokens(
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline) external payable returns (uint256[] memory amounts);
 
     function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) external pure returns (uint256 amountB);
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) external pure returns (uint256 amountOut);

@@ -5,5 +5,5 @@ import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { VerifyingPaymaster } from "account-abstraction/samples/VerifyingPaymaster.sol";
 
 contract MockPaymaster is VerifyingPaymaster {
-    constructor(address _entryPoint, address _signer) VerifyingPaymaster(IEntryPoint(_entryPoint), _signer) {}
+    constructor(address _entryPoint, address _signer) VerifyingPaymaster(IEntryPoint(_entryPoint), _signer) { }
 }

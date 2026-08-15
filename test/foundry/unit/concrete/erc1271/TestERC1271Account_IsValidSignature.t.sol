@@ -28,7 +28,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     function setUp() public {
         init();
         validator = new K1Validator();
-         bytes memory callData =
+        bytes memory callData =
             abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(validator), abi.encodePacked(ALICE_ADDRESS));
         // Create an execution array with the installation call data
         Execution[] memory execution = new Execution[](1);
@@ -117,10 +117,7 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         ALICE_ACCOUNT.installModule(MODULE_TYPE_VALIDATOR, address(validator_7739v2), abi.encodePacked(ALICE_ADDRESS));
         assertTrue(ALICE_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator_7739v2), ""));
         assertEq(
-            ALICE_ACCOUNT.isValidSignature(
-                0x7739773977397739773977397739773977397739773977397739773977397739, 
-                ""
-            ),
+            ALICE_ACCOUNT.isValidSignature(0x7739773977397739773977397739773977397739773977397739773977397739, ""),
             bytes4(0x77390002) // SUPPORTS_ERC7739_V2
         );
     }
@@ -156,7 +153,13 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @return The ERC-1271 hash for personal sign.
     function toERC1271HashPersonalSign(bytes32 childHash, address account) internal view returns (bytes32) {
         AccountDomainStruct memory t;
-        (/*t.fields*/, t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/)  = EIP712(account).eip712Domain();        
+        (/*t.fields*/,
+            t.name,
+            t.version,
+            t.chainId,
+            t.verifyingContract,
+            t.salt, /*t.extensions*/
+        ) = EIP712(account).eip712Domain();
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -183,16 +186,21 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        (/*fields*/, t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/) = EIP712(account).eip712Domain();
+        (/*fields*/,
+            t.name,
+            t.version,
+            t.chainId,
+            t.verifyingContract,
+            t.salt, /*extensions*/
+        ) = EIP712(account).eip712Domain();
 
-        return
-            abi.encode(
-                keccak256(bytes(t.name)),
-                keccak256(bytes(t.version)),
-                t.chainId,
-                t.verifyingContract, // Use the account address as the verifying contract.
-                t.salt
-            );
+        return abi.encode(
+            keccak256(bytes(t.name)),
+            keccak256(bytes(t.version)),
+            t.chainId,
+            t.verifyingContract, // Use the account address as the verifying contract.
+            t.salt
+        );
     }
 
     /// @notice Generates a random string from given byte choices.
@@ -225,10 +233,9 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
     /// @param signature The original signature.
     /// @return The ERC-6492 wrapped signature.
     function erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
-        return
-            abi.encodePacked(
-                abi.encode(randomNonZeroAddress(), bytes(randomString("12345", false)), signature),
-                bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
-            );
+        return abi.encodePacked(
+            abi.encode(randomNonZeroAddress(), bytes(randomString("12345", false)), signature),
+            bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
+        );
     }
 }

@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../../../../../contracts/lib/ModeLib.sol";
 
 contract ModeLibTest is Test {
-    function setUp() public {}
+    function setUp() public { }
 
     function test_encodeDecodeSingle_Success() public {
         CallType callType = CALLTYPE_SINGLE;
@@ -14,7 +14,7 @@ contract ModeLibTest is Test {
         ModePayload payload = ModePayload.wrap(bytes22(hex"01"));
         ExecutionMode enc = ModeLib.encode(callType, execType, modeSelector, payload);
 
-        (CallType _calltype, ExecType _execType, ModeSelector _mode, ) = ModeLib.decode(enc);
+        (CallType _calltype, ExecType _execType, ModeSelector _mode,) = ModeLib.decode(enc);
         assertTrue(_calltype == callType);
         assertTrue(_execType == execType);
         assertTrue(_mode == modeSelector);
@@ -27,7 +27,7 @@ contract ModeLibTest is Test {
         ModePayload payload = ModePayload.wrap(bytes22(hex"01"));
         ExecutionMode enc = ModeLib.encode(callType, execType, modeSelector, payload);
 
-        (CallType _calltype, ExecType _execType, ModeSelector _mode, ) = ModeLib.decode(enc);
+        (CallType _calltype, ExecType _execType, ModeSelector _mode,) = ModeLib.decode(enc);
         assertTrue(_calltype == callType);
         assertTrue(_execType == execType);
         assertTrue(_mode == modeSelector);

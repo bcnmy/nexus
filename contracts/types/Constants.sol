@@ -43,7 +43,6 @@ uint256 constant MODULE_TYPE_HOOK = 4;
 uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 = 8;
 uint256 constant MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 = 9;
 
-
 // keccak256("ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes initData)")
 bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = 0xf6c866c1cd985ce61f030431e576c0e82887de0643dfa8a2e6efc3463e638ed0;
 

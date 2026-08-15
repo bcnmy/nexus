@@ -2,13 +2,22 @@
 pragma solidity ^0.8.27;
 
 import "../../../shared/TestAccountExecution_Base.t.sol";
-import {Storage} from "composability/Storage.sol";
-import {ComposableExecution, ComposableExecutionBase, InputParam, OutputParam, Constraint, ConstraintType, InputParamFetcherType, OutputParamFetcherType, InputParamType} from "composability/ComposableExecutionBase.sol";
+import { Storage } from "composability/Storage.sol";
+import {
+    ComposableExecution,
+    ComposableExecutionBase,
+    InputParam,
+    OutputParam,
+    Constraint,
+    ConstraintType,
+    InputParamFetcherType,
+    OutputParamFetcherType,
+    InputParamType
+} from "composability/ComposableExecutionBase.sol";
 
 import "node_modules/@biconomy/composability/test/mock/DummyContract.sol";
 
 contract ComposableExecutionTest is TestAccountExecution_Base {
-
     event MockAccountReceive(uint256 amount);
     Storage public storageContract;
     DummyContract public dummyContract;
@@ -36,39 +45,25 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
 
         // Constraints
         Constraint[] memory constraints_input1_1 = new Constraint[](1);
-        constraints_input1_1[0] = Constraint({
-            constraintType: ConstraintType.EQ,
-            referenceData: abi.encode(bytes32(input1))
-        });
+        constraints_input1_1[0] = Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(input1)) });
         Constraint[] memory constraints_input1_2 = new Constraint[](1);
-        constraints_input1_2[0] = Constraint({
-            constraintType: ConstraintType.IN,
-            referenceData: abi.encode(bytes32(uint256(input2-1)), bytes32(uint256(input2+1)))
-        });
+        constraints_input1_2[0] =
+            Constraint({ constraintType: ConstraintType.IN, referenceData: abi.encode(bytes32(uint256(input2 - 1)), bytes32(uint256(input2 + 1))) });
         Constraint[] memory emptyConstraints = new Constraint[](0);
 
         // first execution => call swap and store the result in the composability storage
         InputParam[] memory inputParams_execution1 = new InputParam[](4);
         inputParams_execution1[0] = InputParam({
-            paramType: InputParamType.CALL_DATA,
-            fetcherType: InputParamFetcherType.RAW_BYTES,
-            paramData: abi.encode(input1),
-            constraints: constraints_input1_1
+            paramType: InputParamType.CALL_DATA, fetcherType: InputParamFetcherType.RAW_BYTES, paramData: abi.encode(input1), constraints: constraints_input1_1
         });
         inputParams_execution1[1] = InputParam({
-            paramType: InputParamType.CALL_DATA,
-            fetcherType: InputParamFetcherType.RAW_BYTES,
-            paramData: abi.encode(input2),
-            constraints: constraints_input1_2
+            paramType: InputParamType.CALL_DATA, fetcherType: InputParamFetcherType.RAW_BYTES, paramData: abi.encode(input2), constraints: constraints_input1_2
         });
 
         uint256 valueToSend = 1e15;
 
         inputParams_execution1[2] = InputParam({
-            paramType: InputParamType.VALUE,
-            fetcherType: InputParamFetcherType.RAW_BYTES,
-            paramData: abi.encode(valueToSend),
-            constraints: emptyConstraints
+            paramType: InputParamType.VALUE, fetcherType: InputParamFetcherType.RAW_BYTES, paramData: abi.encode(valueToSend), constraints: emptyConstraints
         });
         inputParams_execution1[3] = InputParam({
             paramType: InputParamType.TARGET,
@@ -78,19 +73,11 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         });
 
         OutputParam[] memory outputParams_execution1 = new OutputParam[](2);
-        outputParams_execution1[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_A)
-        });
+        outputParams_execution1[0] =
+            OutputParam({ fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_A) });
         outputParams_execution1[1] = OutputParam({
             fetcherType: OutputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                1,
-                address(dummyContract),
-                abi.encodeWithSelector(DummyContract.getFoo.selector),
-                address(storageContract),
-                SLOT_B
-            )
+            paramData: abi.encode(1, address(dummyContract), abi.encodeWithSelector(DummyContract.getFoo.selector), address(storageContract), SLOT_B)
         });
 
         bytes32 namespace = storageContract.getNamespace(address(BOB_ACCOUNT), address(BOB_ACCOUNT));
@@ -99,11 +86,8 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
 
         // second execution => call stake with the result of the first execution
         Constraint[] memory constraints_input2_1 = new Constraint[](1);
-        constraints_input2_1[0] = Constraint({
-            constraintType: ConstraintType.EQ,
-            referenceData: abi.encode(bytes32(input1+1))
-        });
-        
+        constraints_input2_1[0] = Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(input1 + 1)) });
+
         InputParam[] memory inputParams_execution2 = new InputParam[](4);
         inputParams_execution2[0] = InputParam({
             paramType: InputParamType.CALL_DATA,
@@ -118,10 +102,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
             constraints: emptyConstraints
         });
         inputParams_execution2[2] = InputParam({
-            paramType: InputParamType.VALUE,
-            fetcherType: InputParamFetcherType.RAW_BYTES,
-            paramData: abi.encode(valueToSend),
-            constraints: emptyConstraints
+            paramType: InputParamType.VALUE, fetcherType: InputParamFetcherType.RAW_BYTES, paramData: abi.encode(valueToSend), constraints: emptyConstraints
         });
         inputParams_execution2[3] = InputParam({
             paramType: InputParamType.TARGET,
@@ -132,16 +113,10 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         OutputParam[] memory outputParams_execution2 = new OutputParam[](0);
 
         ComposableExecution[] memory executions = new ComposableExecution[](2);
-        executions[0] = ComposableExecution({
-            functionSig: DummyContract.swap.selector,
-            inputParams: inputParams_execution1,
-            outputParams: outputParams_execution1
-        });
-        executions[1] = ComposableExecution({
-            functionSig: DummyContract.stake.selector,
-            inputParams: inputParams_execution2,
-            outputParams: outputParams_execution2
-        });
+        executions[0] =
+            ComposableExecution({ functionSig: DummyContract.swap.selector, inputParams: inputParams_execution1, outputParams: outputParams_execution1 });
+        executions[1] =
+            ComposableExecution({ functionSig: DummyContract.stake.selector, inputParams: inputParams_execution2, outputParams: outputParams_execution2 });
 
         // Build user operation
         bytes memory callData = abi.encodeWithSelector(ComposableExecutionBase.executeComposable.selector, executions);
@@ -158,7 +133,6 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         emit Uint256Emitted2(expectedToStake, input1);
         emit Received(valueToSend);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        
 
         //check storage slots
         bytes32 storedValueA = storageContract.readStorage(namespace, SLOT_A_0);
@@ -166,6 +140,4 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         bytes32 storedValueB = storageContract.readStorage(namespace, SLOT_B_0);
         assertEq(uint256(storedValueB), input1, "Value not stored correctly in the composability storage");
     }
-
-
 }

@@ -35,12 +35,21 @@ library BootstrapLib {
     /// @param module The address of the module.
     /// @param data The initialization data for the module.
     /// @return config An array containing a single BootstrapPreValidationHookConfig structure.
-    function createArrayPreValidationHookConfig(uint256 hookType, address module, bytes memory data) internal pure returns (BootstrapPreValidationHookConfig[] memory config) {
+    function createArrayPreValidationHookConfig(
+        uint256 hookType,
+        address module,
+        bytes memory data
+    )
+        internal
+        pure
+        returns (BootstrapPreValidationHookConfig[] memory config)
+    {
         config = new BootstrapPreValidationHookConfig[](1);
         config[0].hookType = hookType;
         config[0].module = module;
         config[0].data = data;
     }
+
     /// @notice Creates an array of BootstrapConfig structures.
     /// @param modules An array of module addresses.
     /// @param datas An array of initialization data for each module.

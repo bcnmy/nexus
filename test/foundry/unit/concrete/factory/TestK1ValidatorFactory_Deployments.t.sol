@@ -125,7 +125,11 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
         // Validate that the account was deployed correctly
         assertEq(deployedAccountAddress, expectedAddress, "Deployed account address mismatch");
 
-        assertEq(IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""), true, "Validator should be installed");
+        assertEq(
+            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            true,
+            "Validator should be installed"
+        );
     }
 
     /// @notice Tests that computing the account address returns the expected address.
@@ -187,17 +191,12 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
                 (
                     validatorFactory.K1_VALIDATOR(),
                     abi.encodePacked(eoaOwner),
-                    RegistryConfig({
-                        registry: validatorFactory.REGISTRY(),
-                        attesters: attesters,
-                        threshold: threshold
-                    })
+                    RegistryConfig({ registry: validatorFactory.REGISTRY(), attesters: attesters, threshold: threshold })
                 )
             )
         );
 
-        address expectedAddress = payable(
-            address(
+        address expectedAddress = payable(address(
                 uint160(
                     uint256(
                         keccak256(
@@ -215,8 +214,7 @@ contract TestK1ValidatorFactory_Deployments is NexusTest_Base {
                         )
                     )
                 )
-            )
-        );
+            ));
 
         address computedAddress = validatorFactory.computeAccountAddress(eoaOwner, index, attesters, threshold);
 

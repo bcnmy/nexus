@@ -51,36 +51,22 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         ERC721NFT.mint(preComputedAddress, tokenId);
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC721NFT),
-            0,
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+            address(ERC721NFT), 0, abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("16::ERC721::transferFrom::Nexus::Deployed::WarmAccess", userOps);
     }
 
     /// @notice Tests deploying Nexus and transferring ERC721 tokens using a paymaster with warm access
-    function test_Gas_ERC721NFT_DeployWithPaymaster_Transfer_Warm()
-        public
-        checkERC721NFTBalanceWarm(recipient)
-        checkPaymasterBalance(address(paymaster))
-    {
+    function test_Gas_ERC721NFT_DeployWithPaymaster_Transfer_Warm() public checkERC721NFTBalanceWarm(recipient) checkPaymasterBalance(address(paymaster)) {
         ERC721NFT.mint(preComputedAddress, tokenId);
 
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC721NFT),
-            0,
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+            address(ERC721NFT), 0, abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -101,19 +87,11 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC721NFT),
-            0,
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+            address(ERC721NFT), 0, abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         userOps[0].signature = signUserOp(user, userOps[0]);
 
@@ -133,20 +111,12 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
 
         // Prepare execution to transfer ERC721 tokens
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC721NFT),
-            0,
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+            address(ERC721NFT), 0, abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -168,9 +138,7 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
 
         // Prepare the execution for ERC721 token transfer
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC721NFT),
-            0,
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
+            address(ERC721NFT), 0, abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
 
         // Build the PackedUserOperation array

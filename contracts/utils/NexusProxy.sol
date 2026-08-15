@@ -18,5 +18,5 @@ contract NexusProxy is Proxy {
         return ERC1967Utils.getImplementation();
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

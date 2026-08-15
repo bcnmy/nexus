@@ -25,13 +25,7 @@ contract MockHandler is IFallback {
     }
 
     function complexReturnData(string memory input, bytes4 selector) external view returns (uint256, bytes memory, address, uint64, address) {
-        return (
-            uint256(block.timestamp),
-            abi.encode(input, NAME, VERSION, selector),
-            address(this),
-            uint64(block.chainid),
-            _msgSender()
-        );
+        return (uint256(block.timestamp), abi.encode(input, NAME, VERSION, selector), address(this), uint64(block.chainid), _msgSender());
     }
 
     function returnBytes() external view returns (bytes memory) {
@@ -44,7 +38,7 @@ contract MockHandler is IFallback {
         }
     }
 
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
         return moduleTypeId == MODULE_TYPE_FALLBACK;

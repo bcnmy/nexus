@@ -8,7 +8,6 @@ import { Storage } from "./Storage.sol";
 /// @notice This contract provides an interface for interacting with an ERC-7484 compliant registry.
 /// @dev The registry feature is opt-in, allowing the smart account owner to select and trust specific attesters.
 abstract contract RegistryAdapter is Storage {
-
     /// @notice Emitted when a new ERC-7484 registry is configured for the account.
     /// @param registry The configured registry contract.
     event ERC7484RegistryConfigured(IERC7484 indexed registry);

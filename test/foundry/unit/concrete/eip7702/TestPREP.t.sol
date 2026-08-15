@@ -10,9 +10,8 @@ import { LibPREP } from "contracts/lib/local/LibPREP.sol";
 import { IExecutionHelper } from "contracts/interfaces/base/IExecutionHelper.sol";
 
 contract TestPREP is NexusTest_Base {
-
     event PREPInitialized(bytes32 r);
-    
+
     using ECDSA for bytes32;
     using LibRLP for *;
 
@@ -31,33 +30,26 @@ contract TestPREP is NexusTest_Base {
 
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in the validator
+        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in the
+        // validator
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
-            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            address(mockPreValidationHook),
-            ""
-        );
+        BootstrapPreValidationHookConfig[] memory preValidationHooks =
+            BootstrapLib.createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
 
         return abi.encode(
             address(BOOTSTRAPPER),
             abi.encodeCall(
                 BOOTSTRAPPER.initNexus,
-                (validators, executors, hook, fallbacks, preValidationHooks, 
-                RegistryConfig({
-                    registry: REGISTRY,
-                    attesters: ATTESTERS,
-                    threshold: THRESHOLD
-                }))
+                (validators, executors, hook, fallbacks, preValidationHooks, RegistryConfig({ registry: REGISTRY, attesters: ATTESTERS, threshold: THRESHOLD }))
             )
         );
     }
 
     function test_PREP_Initialization_Success(uint256 valueToSet) public {
         valueToSet = bound(valueToSet, 0, 77e18);
-        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);    
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);
 
         bytes memory initData = _getInitData();
         bytes32 initDataHash = keccak256(abi.encodePacked(initData));
@@ -69,7 +61,7 @@ contract TestPREP is NexusTest_Base {
         // We can not use vm.attachDelegation by foundry because it
         // uses 31337 as chainId in the 7702 auth tuple and it can not be altered.
         // as signedDelegation struct doesn't have a chainId field.
-        // vm.attachDelegation(signedDelegation);        
+        // vm.attachDelegation(signedDelegation);
         _doEIP7702(prep);
         assertEq(LibPREP.isPREP(prep, r), true);
         vm.deal(prep, 100 ether);
@@ -79,28 +71,28 @@ contract TestPREP is NexusTest_Base {
 
         // Create the userOp and add the data
         PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
-        userOp.callData = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
+        userOp.callData =
+            abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
         userOp.signature = signUserOp(BOB, userOp);
 
-        // add prep data to signature 
+        // add prep data to signature
         userOp.signature = abi.encode(saltAndDelegation, initData, userOp.signature);
 
         // Create userOps array
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
 
-        
         vm.expectEmit(address(prep));
         emit PREPInitialized(r);
         ENTRYPOINT.handleOps(userOps, payable(address(0x69)));
 
         // Assert that the value was set ie that execution was successful
-        assertTrue(target.value() == valueToSet);        
+        assertTrue(target.value() == valueToSet);
     }
 
     function test_PREP_Initialization_Success_DefaultValidator(uint256 valueToSet) public {
         valueToSet = bound(valueToSet, 0, 77e18);
-        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet); 
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);
 
         bytes memory initData = abi.encodeWithSelector(NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(BOB_ADDRESS));
         initData = abi.encode(address(BOOTSTRAPPER), initData);
@@ -117,10 +109,11 @@ contract TestPREP is NexusTest_Base {
         uint256 nonce = getNonce(prep, MODE_PREP, address(0), 0);
 
         PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
-        userOp.callData = abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
+        userOp.callData =
+            abi.encodeCall(IExecutionHelper.execute, (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget)));
         userOp.signature = signUserOp(BOB, userOp);
 
-        // add prep data to signature 
+        // add prep data to signature
         userOp.signature = abi.encode(saltAndDelegation, initData, userOp.signature);
 
         // Create userOps array
@@ -132,7 +125,7 @@ contract TestPREP is NexusTest_Base {
         ENTRYPOINT.handleOps(userOps, payable(address(0x69)));
 
         // Assert that the value was set ie that execution was successful
-        assertTrue(target.value() == valueToSet);        
+        assertTrue(target.value() == valueToSet);
     }
 
     function _mine(bytes32 digest, uint256 randomnessSalt) internal returns (bytes32 saltAndDelegation, address prep) {
@@ -141,8 +134,7 @@ contract TestPREP is NexusTest_Base {
         uint96 salt;
         while (true) {
             salt = uint96(uint256(saltRandomnessSeed));
-            bytes32 r =
-                EfficientHashLib.hash(uint256(digest), salt) & bytes32(uint256(2 ** 160 - 1));
+            bytes32 r = EfficientHashLib.hash(uint256(digest), salt) & bytes32(uint256(2 ** 160 - 1));
             bytes32 s = EfficientHashLib.hash(r);
             prep = ecrecover(h, 27, r, s);
             if (prep != address(0)) break;
@@ -152,8 +144,8 @@ contract TestPREP is NexusTest_Base {
     }
 
     function test_Auth_RLP_encoding() public {
-        uint256 eoaKey = uint256(1010101010101);
-    
+        uint256 eoaKey = uint256(1_010_101_010_101);
+
         Vm.SignedDelegation memory signedDelegation = vm.signDelegation(address(ACCOUNT_IMPLEMENTATION), eoaKey);
 
         bytes memory rlpAuth = _rlpEncodeAuth(uint256(0x7a69), signedDelegation.implementation, signedDelegation.nonce);

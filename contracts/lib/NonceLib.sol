@@ -4,9 +4,9 @@ pragma solidity ^0.8.27;
 import { MODE_MODULE_ENABLE, MODE_PREP, MODE_VALIDATION } from "../types/Constants.sol";
 
 /**
-    Nonce structure
-    [3 bytes empty][1 bytes validation mode][20 bytes validator][8 bytes nonce]
-*/
+ *     Nonce structure
+ *     [3 bytes empty][1 bytes validation mode][20 bytes validator][8 bytes nonce]
+ */
 
 library NonceLib {
     /// @dev Parses validator address out of nonce

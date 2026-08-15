@@ -18,24 +18,12 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
         token = new MockToken("Test Token", "TST");
 
         // Install MockExecutor as an executor module on BOB_ACCOUNT
-        bytes memory installExecModuleData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(mockExecutor),
-            ""
-        );
+        bytes memory installExecModuleData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });
 
-        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_DEFAULT,
-            execution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOpsInstall = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         require(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""), "Executor module installation failed.");
@@ -88,7 +76,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTest_Base {
     /// @param amount The amount of tokens to transfer
     function testFuzz_TokenTransfer(address to, uint256 amount) public {
         vm.assume(to != address(0) && amount > 0);
-        vm.assume(amount < ~uint(0) / 0xff); // Ensure amount is manageable
+        vm.assume(amount < ~uint256(0) / 0xff); // Ensure amount is manageable
         vm.assume(token.balanceOf(to) == 0);
         bytes memory callData = abi.encodeWithSelector(token.transfer.selector, to, amount);
 

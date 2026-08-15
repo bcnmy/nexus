@@ -93,9 +93,7 @@ contract TestFuzz_ERC4337Account is NexusTest_Base {
 
         Execution[] memory withdrawExecutions = new Execution[](1);
         withdrawExecutions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
+            target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
         PackedUserOperation[] memory withdrawUserOps =

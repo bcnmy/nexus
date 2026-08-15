@@ -61,7 +61,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         uint256 sendValue = 1 ether;
 
         // Fund BOB_ACCOUNT with 2 ETH to cover the value transfer
-        (bool res, ) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
+        (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: 2 ether }(""); // Fund BOB_ACCOUNT
         assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
 
         Execution[] memory execution = new Execution[](1);
@@ -112,14 +112,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         approvalExecution[0] = Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = buildPackedUserOperation(
-            BOB,
-            BOB_ACCOUNT,
-            EXECTYPE_TRY,
-            approvalExecution,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory approveOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 

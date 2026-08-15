@@ -83,11 +83,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             address(uniswapV2Router),
             SWAP_AMOUNT,
             abi.encodeWithSignature(
-                "swapExactETHForTokens(uint256,address[],address,uint256)",
-                0,
-                getPathForETHtoUSDC(),
-                address(deployedNexus),
-                block.timestamp
+                "swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), address(deployedNexus), block.timestamp
             )
         );
 
@@ -98,11 +94,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
 
     /// @notice Tests deploying Nexus and swapping ETH for USDC with Paymaster
     /// @dev Verifies that the paymaster has sufficient deposit, prepares and executes the swap, and logs gas usage.
-    function test_Gas_Swap_DeployAndSwap_WithPaymaster()
-        public
-        checkERC20Balance(preComputedAddress, SWAP_AMOUNT)
-        checkPaymasterBalance(address(paymaster))
-    {
+    function test_Gas_Swap_DeployAndSwap_WithPaymaster() public checkERC20Balance(preComputedAddress, SWAP_AMOUNT) checkPaymasterBalance(address(paymaster)) {
         // Prepare the swap execution details
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router), // Uniswap V2 Router address
@@ -148,23 +140,11 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature(
-                "swapExactETHForTokens(uint256,address[],address,uint256)",
-                0,
-                getPathForETHtoUSDC(),
-                preComputedAddress,
-                block.timestamp
-            )
+            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), preComputedAddress, block.timestamp)
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -185,24 +165,12 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         Execution[] memory executions = prepareSingleExecution(
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature(
-                "swapExactETHForTokens(uint256,address[],address,uint256)",
-                0,
-                getPathForETHtoUSDC(),
-                preComputedAddress,
-                block.timestamp
-            )
+            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, getPathForETHtoUSDC(), preComputedAddress, block.timestamp)
         );
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);

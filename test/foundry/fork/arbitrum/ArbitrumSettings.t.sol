@@ -19,7 +19,7 @@ contract ArbitrumSettings is NexusTest_Base {
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://rpc.ankr.com/arbitrum";
     //string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum-one-rpc.publicnode.com";
     // string public constant DEFAULT_ARBITRUM_RPC_URL = "https://arbitrum.meowrpc.com";
-    uint constant BLOCK_NUMBER = 209480000;
+    uint256 constant BLOCK_NUMBER = 209_480_000;
 
     /// @notice Retrieves the Arbitrum RPC URL from the environment variable or defaults to the hardcoded URL
     function getArbitrumRpcUrl() internal view returns (string memory) {

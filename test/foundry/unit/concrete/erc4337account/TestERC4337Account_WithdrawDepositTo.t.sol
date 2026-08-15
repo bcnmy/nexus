@@ -28,11 +28,8 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        executions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
@@ -42,10 +39,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
         assertApproxEqRel(
-            depositAfter,
-            depositBefore - amount - gasUsed * tx.gasprice,
-            defaultTolerance,
-            "Deposit should be reduced by the withdrawal amount and gas cost"
+            depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost"
         );
     }
 
@@ -58,11 +52,8 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        executions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BUNDLER.addr);
 
@@ -72,10 +63,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in the 'to' address balance");
         assertApproxEqRel(
-            depositAfter,
-            depositBefore - amount - gasUsed * tx.gasprice,
-            defaultTolerance,
-            "Deposit should be reduced by the withdrawal amount and gas cost"
+            depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost"
         );
     }
 
@@ -88,11 +76,8 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Prepare and execute the user operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        executions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
@@ -102,10 +87,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
         // Check balances after the operation
         assertApproxEqRel(balanceAfter, balanceBefore + amount, defaultTolerance, "Withdrawal amount should reflect in BOB's address balance");
         assertApproxEqRel(
-            depositAfter,
-            depositBefore - amount - gasUsed * tx.gasprice,
-            defaultTolerance,
-            "Deposit should be reduced by the withdrawal amount and gas cost"
+            depositAfter, depositBefore - amount - gasUsed * tx.gasprice, defaultTolerance, "Deposit should be reduced by the withdrawal amount and gas cost"
         );
     }
 
@@ -115,11 +97,8 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Prepare the user operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", BOB.addr, 0.5 ether)
-        });
+        executions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", BOB.addr, 0.5 ether) });
 
         // Expect revert due to unauthorized access
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
@@ -140,7 +119,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
     /// @notice Tests withdrawal of deposit exceeding available amount, expecting failure.
     function test_RevertIf_WithdrawDepositTo_ExceedsAvailable() public {
         address to = address(0x123);
-        uint256 amount = 10000 ether; // Exceeding the available deposit
+        uint256 amount = 10_000 ether; // Exceeding the available deposit
 
         startPrank(address(BOB_ACCOUNT));
 
@@ -157,11 +136,8 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTest_Base {
 
         // Prepare the user operation
         Execution[] memory executions = new Execution[](1);
-        executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: 0,
-            callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
-        });
+        executions[0] =
+            Execution({ target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount) });
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 

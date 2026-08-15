@@ -40,10 +40,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
     /// @notice Tests gas consumption for a simple ERC20 token transfer with cold access
     function test_Gas_ERC20Token_Simple_Transfer_Cold() public checkERC20TokenBalanceCold(recipient, amount) {
         measureAndLogGasEOA(
-            "1::ERC20::transfer::EOA::Simple::ColdAccess",
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            "1::ERC20::transfer::EOA::Simple::ColdAccess", address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
     }
 
@@ -53,11 +50,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         ERC20Token.transfer(address(deployedNexus), amount);
 
         assertEq(address(deployedNexus), calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
-        Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-        );
+        Execution[] memory executions = prepareSingleExecution(address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount));
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
@@ -72,11 +65,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
     {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
-        Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-        );
+        Execution[] memory executions = prepareSingleExecution(address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
@@ -106,21 +95,11 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Prepare execution to transfer ERC20 tokens
-        Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-        );
+        Execution[] memory executions = prepareSingleExecution(address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount));
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -137,21 +116,11 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         // Prepare execution to transfer ERC20 tokens
-        Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-        );
+        Execution[] memory executions = prepareSingleExecution(address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount));
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
-        );
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         userOps[0].initCode = initCode;
         // Sign the user operation
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -173,11 +142,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTest_Base {
         ERC20Token.transfer(address(deployedNexus), amount);
 
         // Prepare the execution for ERC20 token transfer
-        Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
-        );
+        Execution[] memory executions = prepareSingleExecution(address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount));
 
         // Build the PackedUserOperation array
         PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
