@@ -15,11 +15,11 @@ lcov --version
 mkdir -p coverage/foundry
 
 # Exclude test, mock, and node_modules folders
-EXCLUDE="*test* *mocks* *node_modules* *scripts* *lib*"
-lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info $EXCLUDE --output-file coverage/foundry/forge-pruned-lcov.info
+EXCLUDES=("*test*" "*mocks*" "*node_modules*" "*scripts*" "*lib*")
+lcov --rc lcov_branch_coverage=1 --ignore-errors unused --ignore-errors inconsistent --remove lcov.info "${EXCLUDES[@]}" --output-file coverage/foundry/forge-pruned-lcov.info
 
 # Remove the original lcov.info file and coverage.json
-rm lcov.info && rm coverage.json
+rm -f lcov.info coverage.json
 
 # Check if the coverage file is created
 if [ -f coverage/foundry/forge-pruned-lcov.info ]; then
@@ -32,7 +32,11 @@ fi
 # Generate HTML report if not running in CI
 if [ "$CI" != "true" ]; then
   genhtml coverage/foundry/forge-pruned-lcov.info --ignore-errors deprecated,inconsistent,corrupt --output-directory coverage/foundry
-  open coverage/foundry/index.html
+  if command -v xdg-open &>/dev/null; then
+    xdg-open coverage/foundry/index.html
+  elif command -v open &>/dev/null; then
+    open coverage/foundry/index.html
+  fi
 fi
 
 # List the generated files for debugging purposes
