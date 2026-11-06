@@ -365,6 +365,46 @@ contract TestK1Validator is NexusTest_Base {
         assertTrue(validator.isSafeSender(address(0x01), address(0x03)));
     }
 
+    /// @notice Tests validateSignatureWithData: malformed signature with zero owner must be rejected
+    function test_ValidateSignatureWithData_ZeroOwnerMalformedSig_ReturnsFalse() public {
+        bytes32 testHash = keccak256("any hash");
+        bytes memory malformedSig = hex"";
+        bytes memory zeroOwnerData = abi.encodePacked(address(0));
+
+        bool valid = validator.validateSignatureWithData(testHash, malformedSig, zeroOwnerData);
+        assertFalse(valid, "Malformed signature with zero owner must not return true");
+    }
+
+    /// @notice Tests validateSignatureWithData: valid signature for non-zero signer with zero owner data must be rejected
+    function test_ValidateSignatureWithData_ZeroOwnerValidSig_WrongSigner_ReturnsFalse() public {
+        bytes32 testHash = keccak256("any hash");
+        bytes memory validBobSig = signMessage(BOB, testHash);
+        bytes memory zeroOwnerData = abi.encodePacked(address(0));
+
+        bool valid = validator.validateSignatureWithData(testHash, validBobSig, zeroOwnerData);
+        assertFalse(valid, "Valid signature with zero owner data must return false");
+    }
+
+    /// @notice Tests validateSignatureWithData: valid signature for correct owner must validate
+    function test_ValidateSignatureWithData_ValidOwnerValidSig_ReturnsTrue() public {
+        bytes32 testHash = keccak256("any hash");
+        bytes memory validBobSig = signMessage(BOB, testHash);
+        bytes memory bobOwnerData = abi.encodePacked(BOB_ADDRESS);
+
+        bool valid = validator.validateSignatureWithData(testHash, validBobSig, bobOwnerData);
+        assertTrue(valid, "Valid signature with matching owner data must return true");
+    }
+
+    /// @notice Tests validateSignatureWithData: malformed signature for legitimate owner must be rejected
+    function test_ValidateSignatureWithData_NonZeroOwnerMalformedSig_ReturnsFalse() public {
+        bytes32 testHash = keccak256("any hash");
+        bytes memory malformedSig = hex"";
+        bytes memory bobOwnerData = abi.encodePacked(BOB_ADDRESS);
+
+        bool valid = validator.validateSignatureWithData(testHash, malformedSig, bobOwnerData);
+        assertFalse(valid, "Malformed signature with matching owner data must return false");
+    }
+
     /// @notice Generates an ERC-1271 hash for personal sign
     /// @param childHash The child hash
     /// @return The ERC-1271 hash for personal sign
