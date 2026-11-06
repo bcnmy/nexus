@@ -258,8 +258,11 @@ contract K1Validator is IValidator, ERC7739Validator {
     function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
         // verify signer
         // owner can not be zero address in this contract
-        if (_recoverSigner(hash, signature) == owner) return true;
-        if (_recoverSigner(hash.toEthSignedMessageHash(), signature) == owner) return true;
+        if (owner == address(0)) return false;
+        address signer = _recoverSigner(hash, signature);
+        if (signer != address(0) && signer == owner) return true;
+        address ethSigner = _recoverSigner(hash.toEthSignedMessageHash(), signature);
+        if (ethSigner != address(0) && ethSigner == owner) return true;
         return false;
     }
 
