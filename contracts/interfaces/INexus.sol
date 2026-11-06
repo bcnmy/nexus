@@ -33,4 +33,9 @@ interface INexus is IERC4337Account, IERC7579Account, INexusEventsAndErrors {
     /// Can be called directly or via a factory.
     /// @param initData Encoded data used for the account's configuration during initialization.
     function initializeAccount(bytes calldata initData) external payable;
+
+    /// @notice Returns the EIP-712 digest for initializing an ERC-7702 account via relayer.
+    /// @param initData The initialization calldata.
+    /// @return The EIP-712 digest bound to this account and chain.
+    function getERC7702InitDigest(bytes calldata initData) external view returns (bytes32);
 }

@@ -278,8 +278,8 @@ contract TestEIP7702 is NexusTest_Base {
         // Prepare the actual initialization data (without signature and nonce)
         bytes memory actualInitData = _getInitData();
 
-        // Calculate the hash that needs to be signed
-        bytes32 initDataHash = keccak256(actualInitData);
+        // Calculate the EIP-712 chain-bound hash that needs to be signed
+        bytes32 initDataHash = INexus(account).getERC7702InitDigest(actualInitData);
 
         // Sign the hash with the EOA's private key
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
@@ -309,8 +309,8 @@ contract TestEIP7702 is NexusTest_Base {
         // Prepare initialization data
         bytes memory actualInitData = _getInitData();
 
-        // Sign the initialization
-        bytes32 initDataHash = keccak256(actualInitData);
+        // Sign the initialization with EIP-712 chain-bound digest
+        bytes32 initDataHash = INexus(account).getERC7702InitDigest(actualInitData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaKey, initDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
@@ -341,7 +341,7 @@ contract TestEIP7702 is NexusTest_Base {
 
         // Sign with a different key (wrong signature)
         uint256 wrongKey = uint256(999);
-        bytes32 initDataHash = keccak256(actualInitData);
+        bytes32 initDataHash = INexus(account).getERC7702InitDigest(actualInitData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongKey, initDataHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 

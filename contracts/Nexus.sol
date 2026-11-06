@@ -31,7 +31,8 @@ import {
     MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739,
     VALIDATION_SUCCESS,
-    VALIDATION_FAILED
+    VALIDATION_FAILED,
+    ERC7702_INITIALIZE_ACCOUNT_TYPE_HASH
 } from "./types/Constants.sol";
 import {
     ModeLib,
@@ -315,17 +316,17 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 AccountStorage storage $accountStorage = _getAccountStorage();
                 // Remove the signature  from the initData
                 initData = initData[65:];
-                // Calculate the hash of the initData
-                bytes32 initDataHash = keccak256(initData);
+                // Calculate the hash of the initData bound to chain and account via EIP-712
+                bytes32 initDataDigest = getERC7702InitDigest(initData);
                 // Make sure the account has not been already initialized
                 // Means relay can not re-initialize the account
                 require(!isInitialized(), AccountAlreadyInitialized());
                 // Make sure the initHash is not already used
-                require(!$accountStorage.erc7702InitHashes[initDataHash], AccountAlreadyInitialized());
+                require(!$accountStorage.erc7702InitHashes[initDataDigest], AccountAlreadyInitialized());
                 // Check if the signature is valid
-                require(ECDSA.recover(initDataHash, signature) == address(this), InvalidSignature());
+                require(ECDSA.recover(initDataDigest, signature) == address(this), InvalidSignature());
                 // Mark the initDataHash as used
-                $accountStorage.erc7702InitHashes[initDataHash] = true;
+                $accountStorage.erc7702InitHashes[initDataDigest] = true;
             } else {
                 Initializable.requireInitializable();
             }
@@ -445,6 +446,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// this method should not introduce huge gas overhead.
     function isInitialized() public view returns (bool) {
         return (IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this)) || _areSentinelListsInitialized());
+    }
+
+    /// @inheritdoc INexus
+    function getERC7702InitDigest(bytes calldata initData) public view virtual returns (bytes32) {
+        return _hashTypedData(keccak256(abi.encode(ERC7702_INITIALIZE_ACCOUNT_TYPE_HASH, keccak256(initData))));
     }
 
     /// Returns the account's implementation ID.
