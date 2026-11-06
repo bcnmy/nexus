@@ -234,6 +234,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     /// @param validator The address of the validator to be uninstalled.
     /// @param data De-initialization data to configure the validator upon uninstallation.
     function _uninstallValidator(address validator, bytes calldata data) internal virtual {
+        if (validator == _DEFAULT_VALIDATOR) {
+            revert CanNotRemoveLastValidator();
+        }
         SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
 
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
@@ -597,6 +600,9 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
     /// @param validator The address of the validator to check.
     /// @return True if the validator is installed, otherwise false.
     function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
+        if (validator == _DEFAULT_VALIDATOR) {
+            return IValidator(_DEFAULT_VALIDATOR).isInitialized(address(this));
+        }
         return _getAccountStorage().validators.contains(validator);
     }
 
@@ -635,7 +641,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager, RegistryAdap
 
     /// @dev Returns the validator address to use
     function _handleValidator(address validator) internal view returns (address) {
-        if (validator == address(0)) {
+        if (validator == address(0) || validator == _DEFAULT_VALIDATOR) {
             return _DEFAULT_VALIDATOR;
         } else {
             require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
