@@ -125,6 +125,29 @@ contract TestERC1271Account_IsValidSignature is NexusTest_Base {
         );
     }
 
+    /// @notice Tests that isValidSignature returns 0xffffffff for short or empty non-detection signatures instead of reverting
+    function test_isValidSignature_ShortSignature_ReturnsInvalid() public view {
+        bytes32 ordinaryHash = keccak256("ordinary hash");
+
+        assertEq(
+            ALICE_ACCOUNT.isValidSignature(ordinaryHash, ""),
+            bytes4(0xffffffff),
+            "empty non-detection signature should be reported invalid"
+        );
+
+        assertEq(
+            ALICE_ACCOUNT.isValidSignature(ordinaryHash, hex"1234"),
+            bytes4(0xffffffff),
+            "short signature (< 20 bytes) should be reported invalid"
+        );
+
+        assertEq(
+            ALICE_ACCOUNT.isValidSignature(ordinaryHash, hex"01020304050607080910111213141516171819"),
+            bytes4(0xffffffff),
+            "19-byte signature should be reported invalid"
+        );
+    }
+
     /// @notice Generates an ERC-1271 hash for the given contents and account.
     /// @param contents The contents hash.
     /// @param account The account address.
