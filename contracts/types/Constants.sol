@@ -50,6 +50,9 @@ bytes32 constant MODULE_ENABLE_MODE_TYPE_HASH = 0xf6c866c1cd985ce61f030431e576c0
 // keccak256("EmergencyUninstall(address hook,uint256 hookType,bytes deInitData,uint256 nonce)")
 bytes32 constant EMERGENCY_UNINSTALL_TYPE_HASH = 0xd3ddfc12654178cc44d4a7b6b969cfdce7ffe6342326ba37825314cffa0fba9c;
 
+// keccak256("InitializeAccount(bytes initData)")
+bytes32 constant ERC7702_INITIALIZE_ACCOUNT_TYPE_HASH = 0x98e24872cd0bff4760d32dcb8b1c77a903f906db449c529c2a838ad27ac9f79d;
+
 // Validation modes
 bytes1 constant MODE_VALIDATION = 0x00;
 bytes1 constant MODE_MODULE_ENABLE = 0x01;
